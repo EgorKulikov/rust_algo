@@ -1,3 +1,4 @@
+use std::convert::{TryFrom, TryInto};
 use std::fmt::Display;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
 
@@ -41,17 +42,3 @@ signed_integer_impl!(i32, i64);
 signed_integer_impl!(i64, i128);
 signed_integer_impl!(i128, i128);
 signed_integer_impl!(isize, i128);
-
-// impl SignedInteger for i8 {
-//     type W = i16;
-//
-//     fn wide_mul(lhs: Self, rhs: Self) -> W {
-//         lhs.into() * rhs.into()
-//     }
-// }
-
-// impl SignedInteger for i16 {}
-// impl SignedInteger for i32 {}
-// impl SignedInteger for i64 {}
-// impl SignedInteger for i128 {}
-// impl SignedInteger for isize {}

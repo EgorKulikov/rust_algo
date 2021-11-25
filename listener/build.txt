@@ -204,7 +204,8 @@ fn main() {
     let input = input.unwrap();
     match input.r#type.as_str() {
         "stdin" => {
-            code.push("    let input = Input::new(&mut std::io::stdin());".to_string());
+            code.push("    let mut sin = std::io::stdin();".to_string());
+            code.push("    let input = Input::new(&mut sin);".to_string());
         }
         "file" => {
             code.push(format!(
@@ -220,7 +221,8 @@ fn main() {
     let output = output.unwrap();
     match output.r#type.as_str() {
         "stdout" => {
-            code.push("    let output = Output::new(&mut std::io::stdout());".to_string());
+            code.push("    let mut sout = std::io::stdout();".to_string());
+            code.push("    let output = Output::new(&mut sout);".to_string());
         }
         "file" => {
             code.push(format!(

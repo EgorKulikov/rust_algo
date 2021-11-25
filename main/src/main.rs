@@ -1,18 +1,20 @@
-use std::ops::SubAssign;
-use std::fmt::Display;
-use std::ops::RemAssign;
-use std::ops::Mul;
-use std::ops::Add;
-use std::ops::IndexMut;
-use std::ops::MulAssign;
-use std::io::Read;
-use std::ops::DivAssign;
-use std::ops::Div;
-use std::ops::Index;
-use std::ops::Sub;
 use std::io::Write;
+use std::ops::IndexMut;
+use std::convert::TryInto;
+use std::ops::Index;
+use std::ops::RemAssign;
+use std::ops::MulAssign;
 use std::ops::AddAssign;
+use std::ops::SubAssign;
+use std::io::Read;
 use std::ops::Rem;
+use std::ops::Add;
+use std::convert::TryFrom;
+use std::ops::DivAssign;
+use std::ops::Mul;
+use std::ops::Div;
+use std::fmt::Display;
+use std::ops::Sub;
 
 pub struct Arr2d<T> {
     d1: usize,
@@ -121,20 +123,6 @@ signed_integer_impl!(i32, i64);
 signed_integer_impl!(i64, i128);
 signed_integer_impl!(i128, i128);
 signed_integer_impl!(isize, i128);
-
-// impl SignedInteger for i8 {
-//     type W = i16;
-//
-//     fn wide_mul(lhs: Self, rhs: Self) -> W {
-//         lhs.into() * rhs.into()
-//     }
-// }
-
-// impl SignedInteger for i16 {}
-// impl SignedInteger for i32 {}
-// impl SignedInteger for i64 {}
-// impl SignedInteger for i128 {}
-// impl SignedInteger for isize {}
 
 pub trait UnsignedInteger:
     Add<Output = Self>
@@ -535,19 +523,39 @@ impl<'a> Output<'a> {
     }
 }
 
-fn solve(input: &mut Input, output: &mut Output, _test_case: usize) {}
+fn solve(input: &mut Input, output: &mut Output, _test_case: usize) {
+    let n = input.read();
+    let s: Vec<char> = input.read_vec(n);
+
+    let mut res = 0u64;
+    let mut has = 0u64;
+    for (i, c) in s.iter().rev().enumerate() {
+        if *c == '0' {
+            has += 1;
+        } else if has > 0 {
+            has -= 1;
+            res += (n - i) as u64;
+        } else {
+            has += 1;
+        }
+    }
+    output.write_line(&res);
+}
 
 fn run(mut input: Input, mut output: Output) -> bool {
-    solve(&mut input, &mut output, 1);
+    let t = input.read();
+    for i in 0usize..t {
+        solve(&mut input, &mut output, i + 1);
+    }
     output.flush();
     input.skip_whitespace();
     !input.peek().is_some()
 }
 
 fn main() {
-    let mut in_file = std::fs::File::open("input.txt").unwrap();
-    let input = Input::new(&mut in_file);
-    let mut out_file = std::fs::File::create("output.txt").unwrap();
-    let output = Output::new(&mut out_file);
+    let mut sin = std::io::stdin();
+    let input = Input::new(&mut sin);
+    let mut sout = std::io::stdout();
+    let output = Output::new(&mut sout);
     run(input, output);
 }
