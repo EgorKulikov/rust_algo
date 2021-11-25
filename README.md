@@ -2,15 +2,15 @@ This is work in progress
 
 Competitive programming helper for Rust
 
--Run listener from ./listener
+- Run listener from ./listener
 
--Add 4244 to custom ports in Competitive Companion
+- Add 4244 to custom ports in Competitive Companion
 
--Parse task
+- Parse task
 
--Testing should be done by running main.rs in corresponding crate
+- Testing should be done by running main.rs in corresponding crate
 from . . CLion do this by default
 
--Submit ./main/src/main.rs
+- Submit ./main/src/main.rs
 
 Currently task deletion is by hand
