@@ -1,0 +1,248 @@
+use crate::BuildResult::Children;
+use serde::Deserialize;
+use std::collections::HashSet;
+use std::fs::File;
+use std::io;
+use std::io::{BufRead, Write};
+use std::path::Path;
+
+fn read_lines<P>(filename: P) -> io::Lines<io::BufReader<File>>
+where
+    P: AsRef<Path>,
+{
+    let file = File::open(filename).unwrap();
+    io::BufReader::new(file).lines()
+}
+
+struct UsageTree {
+    tag: String,
+    children: Vec<UsageTree>,
+}
+
+enum BuildResult {
+    Usage(UsageTree),
+    Children(Vec<UsageTree>),
+}
+
+fn build_use_tree(usage: &str) -> BuildResult {
+    let usage = usage.trim().chars().collect::<Vec<_>>();
+    if usage[0usize] == '{' {
+        let mut level = 0usize;
+        let mut res = Vec::new();
+        let mut start = 1usize;
+        for i in 1usize..usage.len() - 1usize {
+            if usage[i] == '{' {
+                level += 1;
+            } else if usage[i] == '}' {
+                level -= 1;
+            } else if usage[i] == ',' && level == 0usize {
+                match build_use_tree(usage[start..i].iter().cloned().collect::<String>().as_str()) {
+                    BuildResult::Usage(usage) => {
+                        res.push(usage);
+                    }
+                    Children(_) => {
+                        unreachable!()
+                    }
+                }
+                start = i + 1;
+            }
+        }
+        match build_use_tree(
+            usage[start..usage.len() - 1usize]
+                .iter()
+                .cloned()
+                .collect::<String>()
+                .as_str(),
+        ) {
+            BuildResult::Usage(usage) => {
+                res.push(usage);
+            }
+            Children(_) => {
+                unreachable!()
+            }
+        }
+        BuildResult::Children(res)
+    } else {
+        match usage.iter().position(|&r| r == ':') {
+            None => BuildResult::Usage(UsageTree {
+                tag: usage.iter().cloned().collect(),
+                children: Vec::new(),
+            }),
+            Some(pos) => {
+                let children = match build_use_tree(
+                    usage[pos + 2usize..]
+                        .iter()
+                        .cloned()
+                        .collect::<String>()
+                        .as_str(),
+                ) {
+                    BuildResult::Usage(usage) => {
+                        vec![usage]
+                    }
+                    Children(children) => children,
+                };
+                BuildResult::Usage(UsageTree {
+                    tag: usage[..pos].iter().cloned().collect(),
+                    children,
+                })
+            }
+        }
+    }
+}
+
+fn all_files_impl(usages: &Vec<UsageTree>, prefix: String) -> Vec<String> {
+    let mut res = Vec::new();
+    let mut add = false;
+    for usage in usages.iter() {
+        if usage.children.is_empty() {
+            add = true;
+        } else {
+            res.append(&mut all_files_impl(
+                &usage.children,
+                format!("{}/{}", prefix, usage.tag),
+            ));
+        }
+    }
+    if add {
+        res.push(prefix + ".rs");
+    }
+    res
+}
+
+fn all_files(usage_tree: &UsageTree) -> Vec<String> {
+    all_files_impl(&usage_tree.children, "../algo_lib/src/".to_string())
+}
+
+fn all_usages_impl(usages: &Vec<UsageTree>, prefix: String) -> Vec<String> {
+    let mut res = Vec::new();
+    for usage in usages.iter() {
+        if usage.children.is_empty() {
+            res.push(format!("{}::{};", prefix, usage.tag));
+        } else {
+            res.append(&mut all_usages_impl(
+                &usage.children,
+                format!("{}::{}", prefix, usage.tag),
+            ));
+        }
+    }
+    res
+}
+
+fn all_usages(usage_tree: &UsageTree) -> Vec<String> {
+    all_usages_impl(&usage_tree.children, format!("use {}", usage_tree.tag))
+}
+
+//noinspection RsFieldNaming
+#[derive(Deserialize, Debug)]
+struct IOType {
+    r#type: String,
+    fileName: Option<String>,
+}
+
+fn find_usages_and_code(
+    file: &str,
+    prefix: &str,
+    processed: &mut HashSet<String>,
+) -> (HashSet<String>, Vec<String>, Option<IOType>, Option<IOType>) {
+    let mut usages = HashSet::new();
+    let mut code = Vec::new();
+    let mut skip = false;
+    let mut input = None;
+    let mut output = None;
+
+    let mut lines = read_lines(file);
+    if prefix == "algo_lib" {
+        let inp = lines.next().unwrap().unwrap()[2..].to_string();
+        input = Some(serde_json::from_str::<IOType>(inp.as_str()).unwrap());
+        let out = lines.next().unwrap().unwrap()[2..].to_string();
+        output = Some(serde_json::from_str::<IOType>(out.as_str()).unwrap());
+    }
+    for line in lines {
+        let line = line.unwrap();
+        if line.starts_with("use") {
+            match build_use_tree(&line[4..(line.len() - 1)]) {
+                BuildResult::Usage(usage) => {
+                    if usage.tag.as_str() == prefix {
+                        let all = all_files(&usage);
+                        for file in all {
+                            if !processed.contains(&file) {
+                                processed.insert(file.clone());
+                                let (call_usages, mut call_code, ..) =
+                                    find_usages_and_code(file.as_str(), "crate", processed);
+                                usages.extend(call_usages);
+                                code.append(&mut call_code);
+                            }
+                        }
+                    } else {
+                        usages.extend(all_usages(&usage));
+                    }
+                }
+                Children(_) => {
+                    unreachable!()
+                }
+            }
+        } else {
+            if line.as_str() == "//START SKIP" {
+                skip = true;
+            }
+            if !skip {
+                code.push(line.clone());
+            }
+            if line.as_str() == "//END SKIP" {
+                skip = false;
+            }
+        }
+    }
+
+    (usages, code, input, output)
+}
+
+fn main() {
+    let (usages, mut code, input, output) =
+        find_usages_and_code("src/main.rs", "algo_lib", &mut HashSet::new());
+    code.push("fn main() {".to_string());
+    let input = input.unwrap();
+    match input.r#type.as_str() {
+        "stdin" => {
+            code.push("    let input = Input::new(&mut std::io::stdin());".to_string());
+        }
+        "file" => {
+            code.push(format!(
+                "    let mut in_file = std::fs::File::open(\"{}\").unwrap();",
+                input.fileName.unwrap()
+            ));
+            code.push(format!("    let input = Input::new(&mut in_file);"))
+        }
+        _ => {
+            unreachable!()
+        }
+    }
+    let output = output.unwrap();
+    match output.r#type.as_str() {
+        "stdout" => {
+            code.push("    let output = Output::new(&mut std::io::stdout());".to_string());
+        }
+        "file" => {
+            code.push(format!(
+                "    let mut out_file = std::fs::File::create(\"{}\").unwrap();",
+                output.fileName.unwrap()
+            ));
+            code.push(format!("    let output = Output::new(&mut out_file);"))
+        }
+        _ => {
+            unreachable!()
+        }
+    }
+    code.push("    run(input, output);".to_string());
+    code.push("}".to_string());
+    let mut out = std::fs::File::create("../main/src/main.rs").unwrap();
+    for usage in usages {
+        out.write(usage.as_bytes()).unwrap();
+        out.write("\n".as_bytes()).unwrap();
+    }
+    for line in code {
+        out.write(line.as_bytes()).unwrap();
+        out.write("\n".as_bytes()).unwrap();
+    }
+    out.flush().unwrap();
+}

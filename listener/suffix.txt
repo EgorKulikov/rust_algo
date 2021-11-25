@@ -1,0 +1,108 @@
+        .unwrap()
+        .map(|res| res.unwrap())
+        .collect::<Vec<_>>();
+    paths.sort_by(|a, b| a.path().cmp(&b.path()));
+    let mut test_failed = 0usize;
+    let mut test_total = 0usize;
+    for path in paths {
+        let sub_path = path;
+        if sub_path.file_type().unwrap().is_file() {
+            let path = sub_path.path();
+            match path.extension() {
+                None => {}
+                Some(extension) => {
+                    if extension.to_str() == Some("in") {
+                        println!("=====================================================");
+                        test_total += 1;
+                        let name = path.file_name().unwrap().to_str().unwrap();
+                        let name = &name[..name.len() - 3];
+                        println!("{}Test {}{}", blue, name, def);
+                        println!("{}Input:{}", blue, def);
+                        println!("{}", std::fs::read_to_string(&path).unwrap());
+                        let expected = match std::fs::read_to_string(
+                            path.parent().unwrap().join(format!("{}.out", name)),
+                        ) {
+                            Ok(res) => Some(res),
+                            Err(_) => None,
+                        };
+                        println!("{}Expected:{}", blue, def);
+                        match &expected {
+                            None => {
+                                println!("{}Not provided{}", yellow, def);
+                            }
+                            Some(expected) => {
+                                println!("{}", expected);
+                            }
+                        }
+                        println!("{}Output:{}", blue, def);
+                        match std::panic::catch_unwind(|| {
+                            let mut file = std::fs::File::open(&path).unwrap();
+                            let input = Input::new(&mut file);
+                            let mut output = Vec::new();
+                            let started = std::time::Instant::now();
+                            let is_exhausted = run(input, Output::new(&mut output));
+                            let res = started.elapsed();
+                            println!("{}", String::from_utf8_lossy(&output));
+                            (output, res, is_exhausted)
+                        }) {
+                            Ok((output, duration, is_exhausted)) => {
+                                println!(
+                                    "{}Time elapsed: {:.3}s{}",
+                                    blue,
+                                    (duration.as_millis() as f64) / 1000.,
+                                    def,
+                                );
+                                if !is_exhausted {
+                                    println!("{}Input not exhausted{}", red, def);
+                                }
+                                if let Some(expected) = expected {
+                                    let mut expected_bytes = expected.as_bytes().clone();
+                                    match check(&mut expected_bytes, &mut &output[..]) {
+                                        Ok(_) => {}
+                                        Err(err) => {
+                                            println!(
+                                                "{}Verdict: {}Wrong Answer ({}){}",
+                                                blue, red, err, def
+                                            );
+                                            test_failed += 1;
+                                            continue;
+                                        }
+                                    }
+                                }
+                                if duration > time_limit {
+                                    test_failed += 1;
+                                    println!("{}Verdict: {}Time Limit{}", blue, red, def);
+                                } else {
+                                    println!("{}Verdict: {}OK{}", blue, green, def)
+                                }
+                            }
+                            Err(err) => {
+                                test_failed += 1;
+                                println!(
+                                    "{}Verdict: {}RuntimeError ({:#?}){}",
+                                    blue, red, err, def
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if test_failed == 0 {
+        println!(
+            "{}All {}{}{} tests passed{}",
+            blue, green, test_total, blue, def
+        );
+    } else {
+        println!(
+            "{}{}/{}{} tests failed{}",
+            red, test_failed, test_total, blue, def
+        );
+    }
+}
+
+fn main() {
+    run_tests();
+}
+//END SKIP

@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "algo_lib",
+    "listener",
+    "main",
+]
