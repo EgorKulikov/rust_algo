@@ -1,6 +1,5 @@
 use crate::collections::arr2d::Arr2d;
-use crate::numbers::signed_integers::SignedInteger;
-use crate::numbers::unisigned_integers::UnsignedInteger;
+use crate::numbers::integer::Integer;
 use std::io::Read;
 
 pub struct Input<'s> {
@@ -113,30 +112,33 @@ impl<'s> Input<'s> {
         res
     }
 
-    fn read_signed_integer<T: SignedInteger>(&mut self) -> T {
+    fn read_integer<T: Integer>(&mut self) -> T {
         self.skip_whitespace();
         let mut c = self.get().unwrap();
         let sgn = if c == b'-' {
+            if !T::SIGNED {
+                panic!("negative integer")
+            }
             c = self.get().unwrap();
-            -1i8
+            true
         } else if c == b'+' {
             c = self.get().unwrap();
-            1i8
+            false
         } else {
-            1i8
+            false
         };
-        let mut res: T = 0i8.into();
+        let mut res = T::zero();
         loop {
             if !char::from(c).is_digit(10) {
                 panic!(
                     "expected integer, found {}{}{}",
-                    if sgn == 1 { "" } else { "-" },
+                    if sgn { "" } else { "-" },
                     res,
                     char::from(c)
                 );
             }
-            res *= 10i8.into();
-            res += ((c - b'0') as i8).into();
+            res *= T::from_u8(10);
+            res += T::from_u8(c - b'0');
             match self.get() {
                 None => {
                     break;
@@ -150,35 +152,9 @@ impl<'s> Input<'s> {
                 }
             }
         }
-        res *= sgn.into();
-        res
-    }
-
-    fn read_unsigned_integer<T: UnsignedInteger>(&mut self) -> T {
-        self.skip_whitespace();
-        let mut c = self.get().unwrap();
-        if c == b'+' {
-            c = self.get().unwrap();
-        }
-        let mut res: T = 0u8.into();
-        loop {
-            if !char::from(c).is_digit(10) {
-                panic!("expected integer, found {}{}", res, char::from(c));
-            }
-            res *= 10u8.into();
-            res += (c - b'0').into();
-            match self.get() {
-                None => {
-                    break;
-                }
-                Some(ch) => {
-                    if char::from(ch).is_whitespace() {
-                        break;
-                    } else {
-                        c = ch;
-                    }
-                }
-            }
+        if sgn {
+            debug_assert!(T::SIGNED);
+            res = T::zero() - res
         }
         res
     }
@@ -249,38 +225,28 @@ impl<T: Readable> Readable for Arr2d<T> {
     }
 }
 
-macro_rules! write_signed_integers {
+macro_rules! read_integer {
     ($t:ident) => {
         impl Readable for $t {
             fn read(input: &mut Input) -> Self {
-                input.read_signed_integer()
+                input.read_integer()
             }
         }
     };
 }
 
-write_signed_integers!(i8);
-write_signed_integers!(i16);
-write_signed_integers!(i32);
-write_signed_integers!(i64);
-write_signed_integers!(i128);
-
-macro_rules! write_unsigned_integers {
-    ($t:ident) => {
-        impl Readable for $t {
-            fn read(input: &mut Input) -> Self {
-                input.read_unsigned_integer()
-            }
-        }
-    };
-}
-
-write_unsigned_integers!(u8);
-write_unsigned_integers!(u16);
-write_unsigned_integers!(u32);
-write_unsigned_integers!(u64);
-write_unsigned_integers!(u128);
-write_unsigned_integers!(usize);
+read_integer!(i8);
+read_integer!(i16);
+read_integer!(i32);
+read_integer!(i64);
+read_integer!(i128);
+read_integer!(isize);
+read_integer!(u8);
+read_integer!(u16);
+read_integer!(u32);
+read_integer!(u64);
+read_integer!(u128);
+read_integer!(usize);
 
 macro_rules! tuple_readable {
     ( $( $name:ident )+ ) => {

@@ -7,7 +7,7 @@ name = "algo_lib"
 version = "0.1.0"
 
 [[package]]
-name = "i_p_t_s_d"
+name = "d_tri_sina"
 version = "0.1.0"
 dependencies = [
  "algo_lib",

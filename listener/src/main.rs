@@ -139,18 +139,18 @@ fn process(request: &str) {
     main.append(&mut read_lines("prefix.txt"));
     match task.testType.as_str() {
         "single" => {
-            main.push("    solve(&mut input, &mut output, 1);".to_string());
+            main.push("    solve(&mut input, 1);".to_string());
         }
         "multiNumber" => {
             main.push("    let t = input.read();".to_string());
             main.push("    for i in 0usize..t {".to_string());
-            main.push("        solve(&mut input, &mut output, i + 1);".to_string());
+            main.push("        solve(&mut input, i + 1);".to_string());
             main.push("    }".to_string());
         }
         "multiEOF" => {
             main.push("    let mut i = 0usize;".to_string());
             main.push("    while input.peek().is_some() {".to_string());
-            main.push("        solve(&mut input, &mut output, i + 1);".to_string());
+            main.push("        solve(&mut input, i + 1);".to_string());
             main.push("        i += 1;".to_string());
             main.push("    }".to_string());
         }

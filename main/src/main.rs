@@ -1,20 +1,214 @@
-use std::io::Write;
-use std::ops::IndexMut;
-use std::convert::TryInto;
-use std::ops::Index;
-use std::ops::RemAssign;
-use std::ops::MulAssign;
-use std::ops::AddAssign;
-use std::ops::SubAssign;
-use std::io::Read;
-use std::ops::Rem;
-use std::ops::Add;
-use std::convert::TryFrom;
 use std::ops::DivAssign;
-use std::ops::Mul;
-use std::ops::Div;
-use std::fmt::Display;
 use std::ops::Sub;
+use std::fmt::Display;
+use std::ops::RemAssign;
+use std::io::Write;
+use std::convert::TryInto;
+use std::ops::Mul;
+use std::ops::IndexMut;
+use std::io::Read;
+use std::ops::Index;
+use std::ops::Rem;
+use std::ops::Div;
+use std::ops::SubAssign;
+use std::ops::MulAssign;
+use std::ops::Add;
+use std::ops::AddAssign;
+
+
+pub struct Output {
+    output: Box<dyn Write>,
+    buf: Vec<u8>,
+    at: usize,
+    autoflush: bool,
+}
+
+impl Output {
+    const DEFAULT_BUF_SIZE: usize = 4096;
+
+    pub fn new(output: Box<dyn Write>) -> Self {
+        Self {
+            output,
+            buf: vec![0; Self::DEFAULT_BUF_SIZE],
+            at: 0,
+            autoflush: false,
+        }
+    }
+
+    pub fn new_with_autoflush(output: Box<dyn Write>) -> Self {
+        Self {
+            output,
+            buf: vec![0; Self::DEFAULT_BUF_SIZE],
+            at: 0,
+            autoflush: true,
+        }
+    }
+
+    pub fn flush(&mut self) {
+        if self.at != 0 {
+            self.output.write(&self.buf[..self.at]).unwrap();
+            self.at = 0;
+        }
+    }
+
+    pub fn print<T: Writable>(&mut self, s: &T) {
+        s.write(self);
+    }
+
+    pub fn put(&mut self, b: u8) {
+        self.buf[self.at] = b;
+        self.at += 1;
+        if self.at == self.buf.len() {
+            self.flush();
+        }
+    }
+
+    pub fn print_per_line<T: Writable>(&mut self, arg: &[T]) {
+        for i in arg {
+            i.write(self);
+            self.put(b'\n');
+        }
+    }
+}
+
+impl Write for Output {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let mut start = 0usize;
+        let mut rem = buf.len();
+        while rem > 0 {
+            let len = (self.buf.len() - self.at).min(rem);
+            self.buf[self.at..self.at + len].copy_from_slice(&buf[start..start + len]);
+            self.at += len;
+            if self.at == self.buf.len() {
+                self.flush();
+            }
+            start += len;
+            rem -= len;
+        }
+        if self.autoflush {
+            self.flush();
+        }
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.flush();
+        Ok(())
+    }
+}
+
+pub trait Writable {
+    fn write(&self, output: &mut Output);
+}
+
+impl Writable for &str {
+    fn write(&self, output: &mut Output) {
+        output.write(&self.as_bytes()).unwrap();
+    }
+}
+
+impl Writable for String {
+    fn write(&self, output: &mut Output) {
+        output.write(&self.as_bytes()).unwrap();
+    }
+}
+
+impl Writable for char {
+    fn write(&self, output: &mut Output) {
+        output.put(*self as u8);
+    }
+}
+
+impl<T: Writable> Writable for [T] {
+    fn write(&self, output: &mut Output) {
+        let mut first = true;
+        for e in self.iter() {
+            if first {
+                first = false;
+            } else {
+                output.put(b' ');
+            }
+            e.write(output);
+        }
+    }
+}
+
+impl<T: Writable> Writable for Vec<T> {
+    fn write(&self, output: &mut Output) {
+        self[..].write(output);
+    }
+}
+
+macro_rules! write_to_string {
+    ($t:ident) => {
+        impl Writable for $t {
+            fn write(&self, output: &mut Output) {
+                self.to_string().write(output);
+            }
+        }
+    };
+}
+
+write_to_string!(u8);
+write_to_string!(u16);
+write_to_string!(u32);
+write_to_string!(u64);
+write_to_string!(u128);
+write_to_string!(usize);
+write_to_string!(i8);
+write_to_string!(i16);
+write_to_string!(i32);
+write_to_string!(i64);
+write_to_string!(i128);
+
+impl<T: Writable, U: Writable> Writable for (T, U) {
+    fn write(&self, output: &mut Output) {
+        self.0.write(output);
+        output.put(b' ');
+        self.1.write(output);
+    }
+}
+
+impl<T: Writable, U: Writable, V: Writable> Writable for (T, U, V) {
+    fn write(&self, output: &mut Output) {
+        self.0.write(output);
+        output.put(b' ');
+        self.1.write(output);
+        output.put(b' ');
+        self.2.write(output);
+    }
+}
+
+pub static mut OUTPUT: Option<Output> = None;
+
+pub fn output() -> &'static mut Output {
+    unsafe {
+        match &mut OUTPUT {
+            None => {
+                panic!("Panic");
+            }
+            Some(output) => output,
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! out {
+    ($first: expr $(,$args:expr )*) => {
+        output().print(&$first);
+        $(output().put(b' ');
+        output().print(&$args);
+        )*
+    }
+}
+
+#[macro_export]
+macro_rules! out_line {
+    ($first: expr $(, $args:expr )* ) => {
+        out!($first $(,$args)*);
+        output().put(b'\n');
+    }
+}
 
 pub struct Arr2d<T> {
     d1: usize,
@@ -83,72 +277,106 @@ impl<T> IndexMut<usize> for Arr2d<T> {
     }
 }
 
-pub trait SignedInteger:
+impl<T: Writable> Writable for Arr2d<T> {
+    fn write(&self, output: &mut Output) {
+        let mut at = 0usize;
+        for i in 0usize..self.d1 {
+            if i != 0 {
+                output.put(b'\n');
+            }
+            for j in 0usize..self.d2 {
+                if j != 0 {
+                    output.put(b' ');
+                }
+                self.data[at].write(output);
+                at += 1;
+            }
+        }
+    }
+}
+
+pub trait BasicInteger:
     Add<Output = Self>
     + AddAssign
     + Div<Output = Self>
     + DivAssign
     + Mul<Output = Self>
     + MulAssign
-    + Rem<Output = Self>
-    + RemAssign
     + Sub<Output = Self>
     + SubAssign
     + PartialEq
-    + PartialOrd
-    + From<i8>
     + Display
-    + Clone
+    + Sized
 {
-    type W: TryInto<Self> + TryFrom<Self> + Mul<Output = Self::W> + Rem<Output = Self::W>;
+    type W: TryInto<Self> + From<Self> + Add<Output = Self> + AddAssign;
+
+    const ZERO: Self;
+    const ONE: Self;
+    const TEN: Self;
 
     fn wide_mul(lhs: Self, rhs: Self) -> Self::W;
+    fn accumulate(w: &mut Self::W, rhs: Self);
+    fn downcast(w: Self::W) -> Self;
 }
 
-macro_rules! signed_integer_impl {
-    ($t: ident, $w: ident) => {
-        impl SignedInteger for $t {
+trait BoundedInteger: BasicInteger<W = Self::BoundedType> {
+    type BoundedType: Rem<Output = Self::W>;
+}
+
+impl<T> BoundedTypeHelper for T
+where
+    T: BasicInteger,
+    Self::W: Rem<Output = Self::W>,
+{
+    type BoundedType = Self::W;
+}
+
+pub trait Integer: BoundedInteger + Clone + PartialOrd + Rem<Output = Self> + RemAssign {
+    const SMALL: [Self; 10];
+    const SIGNED: bool;
+}
+
+macro_rules! integer_impl {
+    ($t: ident, $w: ident, $s: expr) => {
+        impl BasicInteger for $t {
             type W = $w;
 
+            const ZERO: Self = 0;
+            const ONE: Self = 1;
+            const TEN: Self = 10;
+
             fn wide_mul(lhs: Self, rhs: Self) -> Self::W {
-                $w::try_from(lhs).unwrap() * $w::try_from(rhs).unwrap()
+                (lhs as $w) * (rhs as $w)
             }
+
+            fn accumulate(w: &mut Self::W, rhs: Self) {
+                *w += rhs as Self::W;
+            }
+
+            fn downcast(w: Self::W) -> Self {
+                w as $t
+            }
+        }
+
+        impl Integer for $t {
+            const SMALL: [Self; 10] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+            const SIGNED: bool = $s;
         }
     };
 }
 
-signed_integer_impl!(i8, i16);
-signed_integer_impl!(i16, i32);
-signed_integer_impl!(i32, i64);
-signed_integer_impl!(i64, i128);
-signed_integer_impl!(i128, i128);
-signed_integer_impl!(isize, i128);
-
-pub trait UnsignedInteger:
-    Add<Output = Self>
-    + AddAssign
-    + Div<Output = Self>
-    + DivAssign
-    + Mul<Output = Self>
-    + MulAssign
-    + Rem<Output = Self>
-    + RemAssign
-    + Sub<Output = Self>
-    + SubAssign
-    + PartialEq
-    + PartialOrd
-    + From<u8>
-    + Display
-    + Clone
-{
-}
-
-impl UnsignedInteger for u8 {}
-impl UnsignedInteger for u16 {}
-impl UnsignedInteger for u32 {}
-impl UnsignedInteger for u64 {}
-impl UnsignedInteger for u128 {}
-impl UnsignedInteger for usize {}
+integer_impl!(i8, i16, true);
+integer_impl!(i16, i32, true);
+integer_impl!(i32, i64, true);
+integer_impl!(i64, i128, true);
+integer_impl!(i128, i128, true);
+integer_impl!(isize, isize, true);
+integer_impl!(u8, u16, false);
+integer_impl!(u16, u32, false);
+integer_impl!(u32, u64, false);
+integer_impl!(u64, u128, false);
+integer_impl!(u128, u128, false);
+integer_impl!(usize, usize, false);
 
 pub struct Input<'s> {
     input: &'s mut dyn Read,
@@ -260,30 +488,33 @@ impl<'s> Input<'s> {
         res
     }
 
-    fn read_signed_integer<T: SignedInteger>(&mut self) -> T {
+    fn read_integer<T: Integer>(&mut self) -> T {
         self.skip_whitespace();
         let mut c = self.get().unwrap();
         let sgn = if c == b'-' {
+            if !T::SIGNED {
+                panic!("negative integer")
+            }
             c = self.get().unwrap();
-            -1i8
+            true
         } else if c == b'+' {
             c = self.get().unwrap();
-            1i8
+            false
         } else {
-            1i8
+            false
         };
-        let mut res: T = 0i8.into();
+        let mut res = T::ZERO;
         loop {
             if !char::from(c).is_digit(10) {
                 panic!(
                     "expected integer, found {}{}{}",
-                    if sgn == 1 { "" } else { "-" },
+                    if sgn { "" } else { "-" },
                     res,
                     char::from(c)
                 );
             }
-            res *= 10i8.into();
-            res += ((c - b'0') as i8).into();
+            res *= T::TEN;
+            res += T::SMALL[(c - b'0') as usize].clone();
             match self.get() {
                 None => {
                     break;
@@ -297,35 +528,9 @@ impl<'s> Input<'s> {
                 }
             }
         }
-        res *= sgn.into();
-        res
-    }
-
-    fn read_unsigned_integer<T: UnsignedInteger>(&mut self) -> T {
-        self.skip_whitespace();
-        let mut c = self.get().unwrap();
-        if c == b'+' {
-            c = self.get().unwrap();
-        }
-        let mut res: T = 0u8.into();
-        loop {
-            if !char::from(c).is_digit(10) {
-                panic!("expected integer, found {}{}", res, char::from(c));
-            }
-            res *= 10u8.into();
-            res += (c - b'0').into();
-            match self.get() {
-                None => {
-                    break;
-                }
-                Some(ch) => {
-                    if char::from(ch).is_whitespace() {
-                        break;
-                    } else {
-                        c = ch;
-                    }
-                }
-            }
+        if sgn {
+            debug_assert!(T::SIGNED);
+            res = T::ZERO - res
         }
         res
     }
@@ -396,39 +601,28 @@ impl<T: Readable> Readable for Arr2d<T> {
     }
 }
 
-macro_rules! signed_integers {
+macro_rules! read_integer {
     ($t:ident) => {
         impl Readable for $t {
             fn read(input: &mut Input) -> Self {
-                input.read_signed_integer()
+                input.read_integer()
             }
         }
     };
 }
 
-signed_integers!(i8);
-signed_integers!(i16);
-signed_integers!(i32);
-signed_integers!(i64);
-signed_integers!(i128);
-signed_integers!(isize);
-
-macro_rules! unsigned_integers {
-    ($t:ident) => {
-        impl Readable for $t {
-            fn read(input: &mut Input) -> Self {
-                input.read_unsigned_integer()
-            }
-        }
-    };
-}
-
-unsigned_integers!(u8);
-unsigned_integers!(u16);
-unsigned_integers!(u32);
-unsigned_integers!(u64);
-unsigned_integers!(u128);
-unsigned_integers!(usize);
+read_integer!(i8);
+read_integer!(i16);
+read_integer!(i32);
+read_integer!(i64);
+read_integer!(i128);
+read_integer!(isize);
+read_integer!(u8);
+read_integer!(u16);
+read_integer!(u32);
+read_integer!(u64);
+read_integer!(u128);
+read_integer!(usize);
 
 macro_rules! tuple_readable {
     ( $( $name:ident )+ ) => {
@@ -453,109 +647,21 @@ tuple_readable! {T U V X Y Z A B C D}
 tuple_readable! {T U V X Y Z A B C D E}
 tuple_readable! {T U V X Y Z A B C D E F}
 
-pub struct Output<'a> {
-    output: &'a mut dyn Write,
-    buf: Vec<u8>,
-    at: usize,
-    autoflush: bool,
-}
+fn solve(input: &mut Input, _test_case: usize) {}
 
-impl<'a> Output<'a> {
-    const DEFAULT_BUF_SIZE: usize = 4096;
-
-    pub fn new(output: &'a mut dyn Write) -> Self {
-        Self {
-            output,
-            buf: vec![0; Self::DEFAULT_BUF_SIZE],
-            at: 0,
-            autoflush: false,
-        }
-    }
-
-    pub fn new_with_autoflush(output: &'a mut dyn Write) -> Self {
-        Self {
-            output,
-            buf: vec![0; Self::DEFAULT_BUF_SIZE],
-            at: 0,
-            autoflush: true,
-        }
-    }
-
-    pub fn flush(&mut self) {
-        if self.at != 0 {
-            self.output.write(&self.buf[..self.at]).unwrap();
-            self.at = 0;
-        }
-    }
-
-    pub fn print(&mut self, s: &str) {
-        for b in s.as_bytes() {
-            self.put(*b);
-        }
-        if self.autoflush {
-            self.flush();
-        }
-    }
-
-    pub fn write<T: Display>(&mut self, s: &T) {
-        self.print(format!("{}", s).as_str())
-    }
-
-    pub fn write_line<T: Display>(&mut self, s: &T) {
-        self.line(format!("{}", s).as_str())
-    }
-
-    pub fn new_line(&mut self) {
-        self.print("\n");
-    }
-
-    pub fn line(&mut self, s: &str) {
-        self.print(s);
-        self.new_line();
-    }
-
-    fn put(&mut self, b: u8) {
-        self.buf[self.at] = b;
-        self.at += 1;
-        if self.at == self.buf.len() {
-            self.flush();
-        }
-    }
-}
-
-fn solve(input: &mut Input, output: &mut Output, _test_case: usize) {
-    let n = input.read();
-    let s: Vec<char> = input.read_vec(n);
-
-    let mut res = 0u64;
-    let mut has = 0u64;
-    for (i, c) in s.iter().rev().enumerate() {
-        if *c == '0' {
-            has += 1;
-        } else if has > 0 {
-            has -= 1;
-            res += (n - i) as u64;
-        } else {
-            has += 1;
-        }
-    }
-    output.write_line(&res);
-}
-
-fn run(mut input: Input, mut output: Output) -> bool {
-    let t = input.read();
-    for i in 0usize..t {
-        solve(&mut input, &mut output, i + 1);
-    }
-    output.flush();
+fn run(mut input: Input) -> bool {
+    solve(&mut input, 1);
+    output().flush();
     input.skip_whitespace();
     !input.peek().is_some()
 }
 
 fn main() {
-    let mut sin = std::io::stdin();
-    let input = Input::new(&mut sin);
-    let mut sout = std::io::stdout();
-    let output = Output::new(&mut sout);
-    run(input, output);
+    let mut in_file = std::fs::File::open("input.txt").unwrap();
+    let input = Input::new(&mut in_file);
+    let out_file = std::fs::File::create("output.txt").unwrap();
+    unsafe {
+        OUTPUT = Some(Output::new(Box::new(out_file)));
+    }
+    run(input);
 }
