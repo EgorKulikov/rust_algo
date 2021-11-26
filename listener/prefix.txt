@@ -1,6 +1,8 @@
+
 use algo_lib::io::input::Input;
-use algo_lib::io::output::Output;
+use algo_lib::io::output::{output, Output, OUTPUT};
+use algo_lib::{out, out_line};
 
-fn solve(input: &mut Input, output: &mut Output, _test_case: usize) {}
+fn solve(input: &mut Input, _test_case: usize) {}
 
-fn run(mut input: Input, mut output: Output) -> bool {
+fn run(mut input: Input) -> bool {

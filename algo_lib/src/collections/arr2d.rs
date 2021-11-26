@@ -1,3 +1,4 @@
+use crate::io::output::{Output, Writable};
 use std::ops::{Index, IndexMut};
 
 pub struct Arr2d<T> {
@@ -64,5 +65,23 @@ impl<T> IndexMut<(usize, usize)> for Arr2d<T> {
 impl<T> IndexMut<usize> for Arr2d<T> {
     fn index_mut(&mut self, index: usize) -> &mut [T] {
         &mut self.data[self.d2 * index..self.d2 * (index + 1)]
+    }
+}
+
+impl<T: Writable> Writable for Arr2d<T> {
+    fn write(&self, output: &mut Output) {
+        let mut at = 0usize;
+        for i in 0usize..self.d1 {
+            if i != 0 {
+                output.put(b'\n');
+            }
+            for j in 0usize..self.d2 {
+                if j != 0 {
+                    output.put(b' ');
+                }
+                self.data[at].write(output);
+                at += 1;
+            }
+        }
     }
 }

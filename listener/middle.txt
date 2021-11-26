@@ -1,4 +1,4 @@
-    output.flush();
+    output().flush();
     input.skip_whitespace();
     !input.peek().is_some()
 }
@@ -31,6 +31,23 @@ fn check(expected: &mut &[u8], actual: &mut &[u8]) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+static mut OUT: Vec<u8> = Vec::new();
+
+struct WriteDelegate {}
+
+impl std::io::Write for WriteDelegate {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        unsafe {
+            OUT.append(&mut Vec::from(buf));
+        }
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
 }
 
 fn run_tests() {

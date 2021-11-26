@@ -1,7 +1,7 @@
 use crate::numbers::signed_integers::SignedInteger;
 use crate::numbers::value::Value;
 use std::marker::PhantomData;
-use std::ops::{Add, AddAssign, MulAssign};
+use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
 
 pub struct ModInt<T: SignedInteger + Copy, V: Value<T>> {
     n: T,
@@ -19,9 +19,9 @@ impl<T: SignedInteger + Copy, V: Value<T>> ModInt<T, V> {
     }
 
     fn safe(&mut self) -> &mut Self {
-        if self.n < 0.into() {
-            self.n += V::VAL;
-        } else if self.n >= V::VAL {
+        debug_assert!(self.n >= T::zero());
+        debug_assert!(self.n < V::VAL + V::VAL);
+        if self.n >= V::VAL {
             self.n -= V::VAL;
         }
         self
@@ -50,12 +50,34 @@ impl<T: SignedInteger + Copy, V: Value<T>> Add for ModInt<T, V> {
     }
 }
 
+impl<T: SignedInteger + Copy, V: Value<T>> SubAssign for ModInt<T, V> {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.n += V::VAL - rhs.n;
+        self.safe();
+    }
+}
+
+impl<T: SignedInteger + Copy, V: Value<T>> Sub for ModInt<T, V> {
+    type Output = Self;
+
+    fn sub(mut self, rhs: Self) -> Self::Output {
+        self -= rhs;
+        self
+    }
+}
+
 impl<T: SignedInteger + Copy, V: Value<T>> MulAssign for ModInt<T, V> {
     fn mul_assign(&mut self, rhs: Self) {
-        self.n = (T::wide_mul(self.n, rhs.n)
-            % T::W::try_from(V::VAL).unwrap_or_else(|_| panic!("")))
-        .try_into()
-        .unwrap_or_else(|_| panic!(""));
+        self.n = T::downcast(T::wide_mul(self.n, rhs.n) % T::W::from(V::VAL));
         self.safe();
+    }
+}
+
+impl<T: SignedInteger + Copy, V: Value<T>> Mul for ModInt<T, V> {
+    type Output = Self;
+
+    fn mul(mut self, rhs: Self) -> Self::Output {
+        self *= rhs;
+        self
     }
 }

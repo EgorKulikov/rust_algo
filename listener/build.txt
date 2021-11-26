@@ -90,7 +90,7 @@ fn build_use_tree(usage: &str) -> BuildResult {
     }
 }
 
-fn all_files_impl(usages: &Vec<UsageTree>, prefix: String) -> Vec<String> {
+fn all_files_impl(usages: &Vec<UsageTree>, prefix: String, root: bool) -> Vec<String> {
     let mut res = Vec::new();
     let mut add = false;
     for usage in usages.iter() {
@@ -100,17 +100,18 @@ fn all_files_impl(usages: &Vec<UsageTree>, prefix: String) -> Vec<String> {
             res.append(&mut all_files_impl(
                 &usage.children,
                 format!("{}/{}", prefix, usage.tag),
+                false,
             ));
         }
     }
-    if add {
+    if add && !root {
         res.push(prefix + ".rs");
     }
     res
 }
 
 fn all_files(usage_tree: &UsageTree) -> Vec<String> {
-    all_files_impl(&usage_tree.children, "../algo_lib/src/".to_string())
+    all_files_impl(&usage_tree.children, "../algo_lib/src/".to_string(), true)
 }
 
 fn all_usages_impl(usages: &Vec<UsageTree>, prefix: String) -> Vec<String> {
@@ -221,21 +222,28 @@ fn main() {
     let output = output.unwrap();
     match output.r#type.as_str() {
         "stdout" => {
-            code.push("    let mut sout = std::io::stdout();".to_string());
-            code.push("    let output = Output::new(&mut sout);".to_string());
+            code.push("    unsafe {".to_string());
+            code.push(format!(
+                "        OUTPUT = Some(Output::new(Box::new(std::io::stdout())));"
+            ));
+            code.push("    }".to_string());
         }
         "file" => {
             code.push(format!(
-                "    let mut out_file = std::fs::File::create(\"{}\").unwrap();",
+                "    let out_file = std::fs::File::create(\"{}\").unwrap();",
                 output.fileName.unwrap()
             ));
-            code.push(format!("    let output = Output::new(&mut out_file);"))
+            code.push("    unsafe {".to_string());
+            code.push(format!(
+                "        OUTPUT = Some(Output::new(Box::new(out_file)));"
+            ));
+            code.push("    }".to_string());
         }
         _ => {
             unreachable!()
         }
     }
-    code.push("    run(input, output);".to_string());
+    code.push("    run(input);".to_string());
     code.push("}".to_string());
     let mut out = std::fs::File::create("../main/src/main.rs").unwrap();
     for usage in usages {

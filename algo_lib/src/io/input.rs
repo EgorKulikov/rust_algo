@@ -249,7 +249,7 @@ impl<T: Readable> Readable for Arr2d<T> {
     }
 }
 
-macro_rules! signed_integers {
+macro_rules! write_signed_integers {
     ($t:ident) => {
         impl Readable for $t {
             fn read(input: &mut Input) -> Self {
@@ -259,14 +259,13 @@ macro_rules! signed_integers {
     };
 }
 
-signed_integers!(i8);
-signed_integers!(i16);
-signed_integers!(i32);
-signed_integers!(i64);
-signed_integers!(i128);
-signed_integers!(isize);
+write_signed_integers!(i8);
+write_signed_integers!(i16);
+write_signed_integers!(i32);
+write_signed_integers!(i64);
+write_signed_integers!(i128);
 
-macro_rules! unsigned_integers {
+macro_rules! write_unsigned_integers {
     ($t:ident) => {
         impl Readable for $t {
             fn read(input: &mut Input) -> Self {
@@ -276,12 +275,12 @@ macro_rules! unsigned_integers {
     };
 }
 
-unsigned_integers!(u8);
-unsigned_integers!(u16);
-unsigned_integers!(u32);
-unsigned_integers!(u64);
-unsigned_integers!(u128);
-unsigned_integers!(usize);
+write_unsigned_integers!(u8);
+write_unsigned_integers!(u16);
+write_unsigned_integers!(u32);
+write_unsigned_integers!(u64);
+write_unsigned_integers!(u128);
+write_unsigned_integers!(usize);
 
 macro_rules! tuple_readable {
     ( $( $name:ident )+ ) => {
