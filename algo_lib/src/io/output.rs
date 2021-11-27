@@ -144,6 +144,7 @@ write_to_string!(i16);
 write_to_string!(i32);
 write_to_string!(i64);
 write_to_string!(i128);
+write_to_string!(isize);
 
 impl<T: Writable, U: Writable> Writable for (T, U) {
     fn write(&self, output: &mut Output) {

@@ -1,3 +1,5 @@
+use crate::io::input::Readable;
+use crate::io::output::Writable;
 use std::fmt::Display;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
 
@@ -13,6 +15,8 @@ pub trait WeakInteger:
     + PartialEq
     + Display
     + Copy
+    + Readable
+    + Writable
 {
     type W: From<Self> + WeakInteger;
 

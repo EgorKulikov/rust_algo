@@ -1,19 +1,22 @@
-use std::ops::DivAssign;
-use std::ops::Sub;
-use std::fmt::Display;
-use std::ops::RemAssign;
-use std::io::Write;
-use std::convert::TryInto;
-use std::ops::Mul;
-use std::ops::IndexMut;
-use std::io::Read;
-use std::ops::Index;
-use std::ops::Rem;
-use std::ops::Div;
-use std::ops::SubAssign;
-use std::ops::MulAssign;
-use std::ops::Add;
 use std::ops::AddAssign;
+use std::fmt::Formatter;
+use std::ops::Neg;
+use std::ops::IndexMut;
+use std::hash::Hash;
+use std::io::Read;
+use std::ops::Mul;
+use std::ops::DivAssign;
+use std::ops::SubAssign;
+use std::ops::Sub;
+use std::ops::RemAssign;
+use std::ops::MulAssign;
+use std::fmt::Display;
+use std::ops::Div;
+use std::ops::Rem;
+use std::ops::Add;
+use std::ops::Index;
+use std::io::Write;
+use std::marker::PhantomData;
 
 
 pub struct Output {
@@ -160,6 +163,7 @@ write_to_string!(i16);
 write_to_string!(i32);
 write_to_string!(i64);
 write_to_string!(i128);
+write_to_string!(isize);
 
 impl<T: Writable, U: Writable> Writable for (T, U) {
     fn write(&self, output: &mut Output) {
@@ -295,7 +299,7 @@ impl<T: Writable> Writable for Arr2d<T> {
     }
 }
 
-pub trait BasicInteger:
+pub trait WeakInteger:
     Add<Output = Self>
     + AddAssign
     + Div<Output = Self>
@@ -306,51 +310,41 @@ pub trait BasicInteger:
     + SubAssign
     + PartialEq
     + Display
-    + Sized
+    + Copy
+    + Readable
+    + Writable
 {
-    type W: TryInto<Self> + From<Self> + Add<Output = Self> + AddAssign;
+    type W: From<Self> + WeakInteger;
 
-    const ZERO: Self;
-    const ONE: Self;
-    const TEN: Self;
-
-    fn wide_mul(lhs: Self, rhs: Self) -> Self::W;
-    fn accumulate(w: &mut Self::W, rhs: Self);
+    fn zero() -> Self;
+    fn one() -> Self;
+    fn from_u8(n: u8) -> Self;
     fn downcast(w: Self::W) -> Self;
 }
 
-trait BoundedInteger: BasicInteger<W = Self::BoundedType> {
-    type BoundedType: Rem<Output = Self::W>;
-}
+pub trait Integer: WeakInteger + Ord + Rem<Output = Self> + RemAssign {
+    type W: From<Self> + Integer;
 
-impl<T> BoundedTypeHelper for T
-where
-    T: BasicInteger,
-    Self::W: Rem<Output = Self::W>,
-{
-    type BoundedType = Self::W;
-}
-
-pub trait Integer: BoundedInteger + Clone + PartialOrd + Rem<Output = Self> + RemAssign {
-    const SMALL: [Self; 10];
     const SIGNED: bool;
+
+    fn downcast(w: <Self as Integer>::W) -> Self;
 }
 
 macro_rules! integer_impl {
     ($t: ident, $w: ident, $s: expr) => {
-        impl BasicInteger for $t {
+        impl WeakInteger for $t {
             type W = $w;
 
-            const ZERO: Self = 0;
-            const ONE: Self = 1;
-            const TEN: Self = 10;
-
-            fn wide_mul(lhs: Self, rhs: Self) -> Self::W {
-                (lhs as $w) * (rhs as $w)
+            fn zero() -> Self {
+                0
             }
 
-            fn accumulate(w: &mut Self::W, rhs: Self) {
-                *w += rhs as Self::W;
+            fn one() -> Self {
+                0
+            }
+
+            fn from_u8(n: u8) -> Self {
+                n as $t
             }
 
             fn downcast(w: Self::W) -> Self {
@@ -359,23 +353,28 @@ macro_rules! integer_impl {
         }
 
         impl Integer for $t {
-            const SMALL: [Self; 10] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+            type W = $w;
+
             const SIGNED: bool = $s;
+
+            fn downcast(w: <Self as Integer>::W) -> Self {
+                w as $t
+            }
         }
     };
 }
 
-integer_impl!(i8, i16, true);
-integer_impl!(i16, i32, true);
-integer_impl!(i32, i64, true);
-integer_impl!(i64, i128, true);
 integer_impl!(i128, i128, true);
+integer_impl!(i64, i128, true);
+integer_impl!(i32, i64, true);
+integer_impl!(i16, i32, true);
+integer_impl!(i8, i16, true);
 integer_impl!(isize, isize, true);
-integer_impl!(u8, u16, false);
-integer_impl!(u16, u32, false);
-integer_impl!(u32, u64, false);
-integer_impl!(u64, u128, false);
 integer_impl!(u128, u128, false);
+integer_impl!(u64, u128, false);
+integer_impl!(u32, u64, false);
+integer_impl!(u16, u32, false);
+integer_impl!(u8, u16, false);
 integer_impl!(usize, usize, false);
 
 pub struct Input<'s> {
@@ -503,7 +502,7 @@ impl<'s> Input<'s> {
         } else {
             false
         };
-        let mut res = T::ZERO;
+        let mut res = T::zero();
         loop {
             if !char::from(c).is_digit(10) {
                 panic!(
@@ -513,8 +512,8 @@ impl<'s> Input<'s> {
                     char::from(c)
                 );
             }
-            res *= T::TEN;
-            res += T::SMALL[(c - b'0') as usize].clone();
+            res *= T::from_u8(10);
+            res += T::from_u8(c - b'0');
             match self.get() {
                 None => {
                     break;
@@ -530,7 +529,7 @@ impl<'s> Input<'s> {
         }
         if sgn {
             debug_assert!(T::SIGNED);
-            res = T::ZERO - res
+            res = T::zero() - res
         }
         res
     }
@@ -647,7 +646,454 @@ tuple_readable! {T U V X Y Z A B C D}
 tuple_readable! {T U V X Y Z A B C D E}
 tuple_readable! {T U V X Y Z A B C D E F}
 
-fn solve(input: &mut Input, _test_case: usize) {}
+pub fn extended_gcd<T: Integer>(a: T, b: T) -> (T, <T as Integer>::W, <T as Integer>::W) {
+    if a == T::zero() {
+        (b, <T as Integer>::W::zero(), <T as Integer>::W::one())
+    } else {
+        let (d, y, mut x) = extended_gcd(b % a, a);
+        x -= <T as Integer>::W::from(b / a) * y;
+        (d, x, y)
+    }
+}
+pub trait Value<T>: Copy + Eq {
+    const VAL: T;
+}
+
+#[macro_export]
+macro_rules! value {
+    ($name: ident, $t: ty, $val: expr) => {
+        #[derive(Copy, Clone, Eq, PartialEq)]
+        pub struct $name {}
+
+        impl Value<$t> for $name {
+            const VAL: $t = $val;
+        }
+    };
+}
+
+pub trait DynamicValue<T>: Copy + Eq {
+    fn set_val(t: T);
+    fn val() -> T;
+}
+
+#[macro_export]
+macro_rules! dynamic_value {
+    ($name: ident, $val_name: ident, $t: ty, $base: expr) => {
+        static mut $val_name: $t = $base;
+
+        #[derive(Copy, Clone, Eq, PartialEq)]
+        pub struct $name {}
+
+        impl DynamicValue<$t> for $name {
+            fn set_val(t: $t) {
+                unsafe {
+                    $val_name = t;
+                }
+            }
+
+            fn val() -> $t {
+                unsafe { $val_name }
+            }
+        }
+    };
+}
+
+dynamic_value!(DV1, VAL1, u32, 0u32);
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
+pub struct DynModInt<T: Integer, V: DynamicValue<T>> {
+    n: T,
+    phantom: PhantomData<V>,
+}
+
+impl<T: Integer, V: DynamicValue<T>> DynModInt<T, V> {
+    pub fn new(n: T) -> Self {
+        let mut res = Self {
+            n: n % (V::val()) + V::val(),
+            phantom: Default::default(),
+        };
+        res.safe();
+        res
+    }
+
+    pub fn new_from_long(n: <T as Integer>::W) -> Self {
+        let mut res = Self {
+            n: <T as Integer>::downcast(n % (V::val()).into()) + V::val(),
+            phantom: Default::default(),
+        };
+        res.safe();
+        res
+    }
+
+    pub fn inverse(&self) -> Option<Self> {
+        let (g, x, _) = extended_gcd(self.n, V::val());
+        if g != T::one() {
+            None
+        } else {
+            Some(Self::new_from_long(x))
+        }
+    }
+
+    fn safe(&mut self) -> &mut Self {
+        debug_assert!(self.n >= T::zero());
+        debug_assert!(self.n < V::val() + V::val());
+        if self.n >= V::val() {
+            self.n -= V::val();
+        }
+        self
+    }
+}
+
+impl<T: Integer, V: DynamicValue<T>> From<T> for DynModInt<T, V> {
+    fn from(n: T) -> Self {
+        Self::new(n)
+    }
+}
+
+impl<T: Integer, V: DynamicValue<T>> AddAssign for DynModInt<T, V> {
+    fn add_assign(&mut self, rhs: Self) {
+        self.n += rhs.n;
+        self.safe();
+    }
+}
+
+impl<T: Integer, V: DynamicValue<T>> Add for DynModInt<T, V> {
+    type Output = Self;
+
+    fn add(mut self, rhs: Self) -> Self::Output {
+        self += rhs;
+        self
+    }
+}
+
+impl<T: Integer, V: DynamicValue<T>> SubAssign for DynModInt<T, V> {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.n += V::val() - rhs.n;
+        self.safe();
+    }
+}
+
+impl<T: Integer, V: DynamicValue<T>> Sub for DynModInt<T, V> {
+    type Output = Self;
+
+    fn sub(mut self, rhs: Self) -> Self::Output {
+        self -= rhs;
+        self
+    }
+}
+
+impl<T: Integer, V: DynamicValue<T>> MulAssign for DynModInt<T, V> {
+    fn mul_assign(&mut self, rhs: Self) {
+        self.n = <T as Integer>::downcast(
+            <T as Integer>::W::from(self.n) * <T as Integer>::W::from(rhs.n)
+                % <T as Integer>::W::from(V::val()),
+        );
+    }
+}
+
+impl<T: Integer, V: DynamicValue<T>> Mul for DynModInt<T, V> {
+    type Output = Self;
+
+    fn mul(mut self, rhs: Self) -> Self::Output {
+        self *= rhs;
+        self
+    }
+}
+
+impl<T: Integer, V: DynamicValue<T>> DivAssign for DynModInt<T, V> {
+    fn div_assign(&mut self, rhs: Self) {
+        *self *= rhs.inverse().unwrap();
+    }
+}
+
+impl<T: Integer, V: DynamicValue<T>> Div for DynModInt<T, V> {
+    type Output = Self;
+
+    fn div(mut self, rhs: Self) -> Self::Output {
+        self /= rhs;
+        self
+    }
+}
+
+impl<T: Integer, V: DynamicValue<T>> Neg for DynModInt<T, V> {
+    type Output = Self;
+
+    fn neg(mut self) -> Self::Output {
+        self.n = V::val() - self.n;
+        self.safe();
+        self
+    }
+}
+
+impl<T: Integer, V: DynamicValue<T>> Display for DynModInt<T, V> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.n.fmt(f)
+    }
+}
+
+impl<T: Integer, V: DynamicValue<T>> Readable for DynModInt<T, V> {
+    fn read(input: &mut Input) -> Self {
+        Self::new(T::read(input))
+    }
+}
+
+impl<T: Integer, V: DynamicValue<T>> Writable for DynModInt<T, V> {
+    fn write(&self, output: &mut Output) {
+        self.n.write(output);
+    }
+}
+
+impl<T: Integer, V: DynamicValue<T>> WeakInteger for DynModInt<T, V> {
+    type W = Self;
+    fn zero() -> Self {
+        Self::new(T::zero())
+    }
+
+    fn one() -> Self {
+        Self::new(T::one())
+    }
+
+    fn from_u8(n: u8) -> Self {
+        Self::new(T::from_u8(n))
+    }
+
+    fn downcast(w: Self::W) -> Self {
+        w
+    }
+}
+
+impl<T: Integer, V: DynamicValue<T>> std::fmt::Debug for DynModInt<T, V> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let max = T::from_u8(100);
+        if self.n <= max {
+            write!(f, "{}", self.n)
+        } else if self.n >= V::val() - max {
+            write!(f, "-{}", V::val() - self.n)
+        } else {
+            let mut denum = T::one();
+            while denum < max {
+                let mut num = T::one();
+                while num < max {
+                    if Self::new(num) / Self::new(denum) == *self {
+                        return write!(f, "{}/{}", num, denum);
+                    }
+                    if -Self::new(num) / Self::new(denum) == *self {
+                        return write!(f, "{}/{}", num, denum);
+                    }
+                    num += T::one();
+                }
+                denum += T::one();
+            }
+            write!(f, "(?? {} ??)", self.n)
+        }
+    }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
+pub struct ModInt<T: Integer, V: Value<T>> {
+    n: T,
+    phantom: PhantomData<V>,
+}
+
+impl<T: Integer, V: Value<T>> ModInt<T, V> {
+    pub fn new(n: T) -> Self {
+        let mut res = Self {
+            n: n % (V::VAL) + V::VAL,
+            phantom: Default::default(),
+        };
+        res.safe();
+        res
+    }
+
+    pub fn new_from_long(n: <T as Integer>::W) -> Self {
+        let mut res = Self {
+            n: <T as Integer>::downcast(n % (V::VAL).into()) + V::VAL,
+            phantom: Default::default(),
+        };
+        res.safe();
+        res
+    }
+
+    pub fn inverse(&self) -> Option<Self> {
+        let (g, x, _) = extended_gcd(self.n, V::VAL);
+        if g != T::one() {
+            None
+        } else {
+            Some(Self::new_from_long(x))
+        }
+    }
+
+    fn safe(&mut self) {
+        debug_assert!(self.n >= T::zero());
+        debug_assert!(self.n < V::VAL + V::VAL);
+        if self.n >= V::VAL {
+            self.n -= V::VAL;
+        }
+    }
+}
+
+impl<T: Integer, V: Value<T>> From<T> for ModInt<T, V> {
+    fn from(n: T) -> Self {
+        Self::new(n)
+    }
+}
+
+impl<T: Integer, V: Value<T>> AddAssign for ModInt<T, V> {
+    fn add_assign(&mut self, rhs: Self) {
+        self.n += rhs.n;
+        self.safe();
+    }
+}
+
+impl<T: Integer, V: Value<T>> Add for ModInt<T, V> {
+    type Output = Self;
+
+    fn add(mut self, rhs: Self) -> Self::Output {
+        self += rhs;
+        self
+    }
+}
+
+impl<T: Integer, V: Value<T>> SubAssign for ModInt<T, V> {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.n += V::VAL - rhs.n;
+        self.safe();
+    }
+}
+
+impl<T: Integer, V: Value<T>> Sub for ModInt<T, V> {
+    type Output = Self;
+
+    fn sub(mut self, rhs: Self) -> Self::Output {
+        self -= rhs;
+        self
+    }
+}
+
+impl<T: Integer, V: Value<T>> MulAssign for ModInt<T, V> {
+    fn mul_assign(&mut self, rhs: Self) {
+        self.n = <T as Integer>::downcast(
+            <T as Integer>::W::from(self.n) * <T as Integer>::W::from(rhs.n)
+                % <T as Integer>::W::from(V::VAL),
+        );
+    }
+}
+
+impl<T: Integer, V: Value<T>> Mul for ModInt<T, V> {
+    type Output = Self;
+
+    fn mul(mut self, rhs: Self) -> Self::Output {
+        self *= rhs;
+        self
+    }
+}
+
+impl<T: Integer, V: Value<T>> DivAssign for ModInt<T, V> {
+    fn div_assign(&mut self, rhs: Self) {
+        *self *= rhs.inverse().unwrap();
+    }
+}
+
+impl<T: Integer, V: Value<T>> Div for ModInt<T, V> {
+    type Output = Self;
+
+    fn div(mut self, rhs: Self) -> Self::Output {
+        self /= rhs;
+        self
+    }
+}
+
+impl<T: Integer, V: Value<T>> Neg for ModInt<T, V> {
+    type Output = Self;
+
+    fn neg(mut self) -> Self::Output {
+        self.n = V::VAL - self.n;
+        self.safe();
+        self
+    }
+}
+
+impl<T: Integer, V: Value<T>> Display for ModInt<T, V> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.n.fmt(f)
+    }
+}
+
+impl<T: Integer, V: Value<T>> Readable for ModInt<T, V> {
+    fn read(input: &mut Input) -> Self {
+        Self::new(T::read(input))
+    }
+}
+
+impl<T: Integer, V: Value<T>> Writable for ModInt<T, V> {
+    fn write(&self, output: &mut Output) {
+        self.n.write(output);
+    }
+}
+
+impl<T: Integer, V: Value<T>> WeakInteger for ModInt<T, V> {
+    type W = Self;
+    fn zero() -> Self {
+        Self::new(T::zero())
+    }
+
+    fn one() -> Self {
+        Self::new(T::one())
+    }
+
+    fn from_u8(n: u8) -> Self {
+        Self::new(T::from_u8(n))
+    }
+
+    fn downcast(w: Self::W) -> Self {
+        w
+    }
+}
+
+impl<T: Integer, V: Value<T>> std::fmt::Debug for ModInt<T, V> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let max = T::from_u8(100);
+        if self.n <= max {
+            write!(f, "{}", self.n)
+        } else if self.n >= V::VAL - max {
+            write!(f, "-{}", V::VAL - self.n)
+        } else {
+            let mut denum = T::one();
+            while denum < max {
+                let mut num = T::one();
+                while num < max {
+                    if Self::new(num) / Self::new(denum) == *self {
+                        return write!(f, "{}/{}", num, denum);
+                    }
+                    if -Self::new(num) / Self::new(denum) == *self {
+                        return write!(f, "{}/{}", num, denum);
+                    }
+                    num += T::one();
+                }
+                denum += T::one();
+            }
+            write!(f, "(?? {} ??)", self.n)
+        }
+    }
+}
+
+value!(Val7, u32, 1_000_000_007);
+pub type ModInt7 = ModInt<u32, Val7>;
+
+value!(Val9, u32, 1_000_000_009);
+pub type ModInt9 = ModInt<u32, Val9>;
+
+value!(ValF, u32, 998_244_353);
+pub type ModIntF = ModInt<u32, ValF>;
+
+fn solve(input: &mut Input, _test_case: usize) {
+    let n = input.read();
+    dynamic_value!(DynV1, VAL1, u32, 0);
+    DynV1::set_val(n);
+    type DynMod1 = DynModInt<u32, DynV1>;
+    out_line!(std::mem::size_of::<ModInt7>());
+    out_line!(std::mem::size_of::<DynMod1>());
+}
 
 fn run(mut input: Input) -> bool {
     solve(&mut input, 1);
