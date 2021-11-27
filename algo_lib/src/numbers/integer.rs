@@ -1,6 +1,7 @@
 use crate::io::input::Readable;
 use crate::io::output::Writable;
 use std::fmt::Display;
+use std::hash::Hash;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
 
 pub trait WeakInteger:
@@ -17,6 +18,7 @@ pub trait WeakInteger:
     + Copy
     + Readable
     + Writable
+    + Hash
 {
     type W: From<Self> + WeakInteger;
 

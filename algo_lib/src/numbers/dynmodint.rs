@@ -3,6 +3,7 @@ use crate::io::output::{Output, Writable};
 use crate::numbers::gcd::extended_gcd;
 use crate::numbers::integer::{Integer, WeakInteger};
 use crate::numbers::value::DynamicValue;
+use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::marker::PhantomData;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -32,12 +33,38 @@ impl<T: Integer, V: DynamicValue<T>> DynModInt<T, V> {
         res
     }
 
-    pub fn inverse(&self) -> Option<Self> {
+    pub fn inv(&self) -> Option<Self> {
         let (g, x, _) = extended_gcd(self.n, V::val());
         if g != T::one() {
             None
         } else {
             Some(Self::new_from_long(x))
+        }
+    }
+
+    pub fn log(&self, alpha: Self) -> T {
+        let mut base = HashMap::new();
+        let mut exp = T::zero();
+        let mut pow = Self::one();
+        let mut inv = *self;
+        let alpha_inv = alpha.inv().unwrap();
+        while exp * exp < V::val() {
+            if inv == Self::one() {
+                return exp;
+            }
+            base.insert(inv, exp);
+            exp += T::one();
+            pow *= alpha;
+            inv *= alpha_inv;
+        }
+        let step = pow;
+        let mut i = T::one();
+        loop {
+            if let Some(b) = base.get(&pow) {
+                break exp * i + *b;
+            }
+            pow *= step;
+            i += T::one();
         }
     }
 
@@ -109,7 +136,7 @@ impl<T: Integer, V: DynamicValue<T>> Mul for DynModInt<T, V> {
 
 impl<T: Integer, V: DynamicValue<T>> DivAssign for DynModInt<T, V> {
     fn div_assign(&mut self, rhs: Self) {
-        *self *= rhs.inverse().unwrap();
+        *self *= rhs.inv().unwrap();
     }
 }
 
