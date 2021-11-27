@@ -4,7 +4,7 @@ pub mod numbers;
 
 #[cfg(test)]
 mod tests {
-    use crate::numbers::modint::ModInt;
+    use crate::numbers::mod_int::ModInt;
     use crate::numbers::value::Value;
 
     #[test]

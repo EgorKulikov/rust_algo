@@ -46,7 +46,7 @@ macro_rules! integer_impl {
             }
 
             fn one() -> Self {
-                0
+                1
             }
 
             fn from_u8(n: u8) -> Self {

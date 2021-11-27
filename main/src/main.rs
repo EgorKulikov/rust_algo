@@ -1,22 +1,23 @@
-use std::ops::AddAssign;
-use std::fmt::Formatter;
-use std::ops::Neg;
-use std::ops::IndexMut;
-use std::hash::Hash;
-use std::io::Read;
-use std::ops::Mul;
-use std::ops::DivAssign;
-use std::ops::SubAssign;
-use std::ops::Sub;
-use std::ops::RemAssign;
-use std::ops::MulAssign;
-use std::fmt::Display;
-use std::ops::Div;
-use std::ops::Rem;
 use std::ops::Add;
+use std::hash::Hash;
+use std::ops::RemAssign;
+use std::ops::AddAssign;
+use std::ops::SubAssign;
+use std::ops::MulAssign;
+use std::ops::Sub;
+use std::ops::IndexMut;
+use std::fmt::Display;
+use std::ops::Rem;
+use std::ops::Mul;
 use std::ops::Index;
-use std::io::Write;
+use std::ops::DivAssign;
 use std::marker::PhantomData;
+use std::ops::Neg;
+use std::fmt::Formatter;
+use std::collections::HashMap;
+use std::ops::Div;
+use std::io::Write;
+use std::io::Read;
 
 
 pub struct Output {
@@ -313,6 +314,7 @@ pub trait WeakInteger:
     + Copy
     + Readable
     + Writable
+    + Hash
 {
     type W: From<Self> + WeakInteger;
 
@@ -340,7 +342,7 @@ macro_rules! integer_impl {
             }
 
             fn one() -> Self {
-                0
+                1
             }
 
             fn from_u8(n: u8) -> Self {
@@ -655,14 +657,15 @@ pub fn extended_gcd<T: Integer>(a: T, b: T) -> (T, <T as Integer>::W, <T as Inte
         (d, x, y)
     }
 }
-pub trait Value<T>: Copy + Eq {
+
+pub trait Value<T>: Copy + Eq + Hash {
     const VAL: T;
 }
 
 #[macro_export]
 macro_rules! value {
     ($name: ident, $t: ty, $val: expr) => {
-        #[derive(Copy, Clone, Eq, PartialEq)]
+        #[derive(Copy, Clone, Eq, PartialEq, Hash)]
         pub struct $name {}
 
         impl Value<$t> for $name {
@@ -671,7 +674,7 @@ macro_rules! value {
     };
 }
 
-pub trait DynamicValue<T>: Copy + Eq {
+pub trait DynamicValue<T>: Copy + Eq + Hash {
     fn set_val(t: T);
     fn val() -> T;
 }
@@ -681,7 +684,7 @@ macro_rules! dynamic_value {
     ($name: ident, $val_name: ident, $t: ty, $base: expr) => {
         static mut $val_name: $t = $base;
 
-        #[derive(Copy, Clone, Eq, PartialEq)]
+        #[derive(Copy, Clone, Eq, PartialEq, Hash)]
         pub struct $name {}
 
         impl DynamicValue<$t> for $name {
@@ -725,12 +728,38 @@ impl<T: Integer, V: DynamicValue<T>> DynModInt<T, V> {
         res
     }
 
-    pub fn inverse(&self) -> Option<Self> {
+    pub fn inv(&self) -> Option<Self> {
         let (g, x, _) = extended_gcd(self.n, V::val());
         if g != T::one() {
             None
         } else {
             Some(Self::new_from_long(x))
+        }
+    }
+
+    pub fn log(&self, alpha: Self) -> T {
+        let mut base = HashMap::new();
+        let mut exp = T::zero();
+        let mut pow = Self::one();
+        let mut inv = *self;
+        let alpha_inv = alpha.inv().unwrap();
+        while exp * exp < V::val() {
+            if inv == Self::one() {
+                return exp;
+            }
+            base.insert(inv, exp);
+            exp += T::one();
+            pow *= alpha;
+            inv *= alpha_inv;
+        }
+        let step = pow;
+        let mut i = T::one();
+        loop {
+            if let Some(b) = base.get(&pow) {
+                break exp * i + *b;
+            }
+            pow *= step;
+            i += T::one();
         }
     }
 
@@ -802,7 +831,7 @@ impl<T: Integer, V: DynamicValue<T>> Mul for DynModInt<T, V> {
 
 impl<T: Integer, V: DynamicValue<T>> DivAssign for DynModInt<T, V> {
     fn div_assign(&mut self, rhs: Self) {
-        *self *= rhs.inverse().unwrap();
+        *self *= rhs.inv().unwrap();
     }
 }
 
@@ -914,12 +943,38 @@ impl<T: Integer, V: Value<T>> ModInt<T, V> {
         res
     }
 
-    pub fn inverse(&self) -> Option<Self> {
+    pub fn inv(&self) -> Option<Self> {
         let (g, x, _) = extended_gcd(self.n, V::VAL);
         if g != T::one() {
             None
         } else {
             Some(Self::new_from_long(x))
+        }
+    }
+
+    pub fn log(&self, alpha: Self) -> T {
+        let mut base = HashMap::new();
+        let mut exp = T::zero();
+        let mut pow = Self::one();
+        let mut inv = *self;
+        let alpha_inv = alpha.inv().unwrap();
+        while exp * exp < V::VAL {
+            if inv == Self::one() {
+                return exp;
+            }
+            base.insert(inv, exp);
+            exp += T::one();
+            pow *= alpha;
+            inv *= alpha_inv;
+        }
+        let step = pow;
+        let mut i = T::one();
+        loop {
+            if let Some(b) = base.get(&pow) {
+                break exp * i + *b;
+            }
+            pow *= step;
+            i += T::one();
         }
     }
 
@@ -990,7 +1045,7 @@ impl<T: Integer, V: Value<T>> Mul for ModInt<T, V> {
 
 impl<T: Integer, V: Value<T>> DivAssign for ModInt<T, V> {
     fn div_assign(&mut self, rhs: Self) {
-        *self *= rhs.inverse().unwrap();
+        *self *= rhs.inv().unwrap();
     }
 }
 
@@ -1087,12 +1142,34 @@ value!(ValF, u32, 998_244_353);
 pub type ModIntF = ModInt<u32, ValF>;
 
 fn solve(input: &mut Input, _test_case: usize) {
-    let n = input.read();
+    /*let n = input.read();
     dynamic_value!(DynV1, VAL1, u32, 0);
     DynV1::set_val(n);
     type DynMod1 = DynModInt<u32, DynV1>;
     out_line!(std::mem::size_of::<ModInt7>());
-    out_line!(std::mem::size_of::<DynMod1>());
+    out_line!(std::mem::size_of::<DynMod1>());*/
+    /*let n = input.read();
+    dynamic_value!(DynV1, VAL1, u32, 0);
+    DynV1::set_val(n);
+    type DynMod1 = DynModInt<u32, DynV1>;
+    use DynMod1 as ModInt;
+    // use ModInt7 as ModInt;
+    let mut res = ModInt::one();
+    for i in 1u32..500_000_000 {
+        res *= i.into();
+    }
+    out_line!(res);*/
+    // const MOD: u32 = 1_000_000_007;
+    let MOD: u32 = input.read();
+    out_line!(MOD);
+    let mut res = 1u32;
+    for i in 1u32..500_000_000 {
+        res = ((res as u64) * (i as u64) % (MOD as u64)) as u32;
+        // if res >= MOD {
+        //     res -= MOD;
+        // }
+    }
+    out_line!(res);
 }
 
 fn run(mut input: Input) -> bool {

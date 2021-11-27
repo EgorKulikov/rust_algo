@@ -1,5 +1,5 @@
-pub mod dynmodint;
+pub mod dyn_mod_int;
 pub mod gcd;
 pub mod integer;
-pub mod modint;
+pub mod mod_int;
 pub mod value;
