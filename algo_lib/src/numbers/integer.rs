@@ -30,7 +30,7 @@ pub trait WeakInteger:
     fn downcast(w: Self::W) -> Self;
 }
 
-pub trait Integer: WeakInteger + Ord + Rem<Output = Self> + RemAssign {
+pub trait Integer: WeakInteger + Ord + Rem<Output = Self> + RemAssign + 'static {
     type W: From<Self> + Integer;
 
     const SIGNED: bool;

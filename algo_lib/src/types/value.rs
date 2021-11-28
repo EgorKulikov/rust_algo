@@ -1,7 +1,17 @@
 use std::hash::Hash;
 
 pub trait Value<T>: Copy + Eq + Hash {
+    fn val() -> T;
+}
+
+pub trait ConstValue<T>: Value<T> {
     const VAL: T;
+}
+
+impl<T, V: ConstValue<T>> Value<T> for V {
+    fn val() -> T {
+        Self::VAL
+    }
 }
 
 #[macro_export]
@@ -10,15 +20,15 @@ macro_rules! value {
         #[derive(Copy, Clone, Eq, PartialEq, Hash)]
         pub struct $name {}
 
-        impl Value<$t> for $name {
+        impl ConstValue<$t> for $name {
             const VAL: $t = $val;
         }
     };
 }
 
-pub trait DynamicValue<T>: Copy + Eq + Hash {
+pub trait DynamicValue<T>: Value<T> {
+    //noinspection RsSelfConvention
     fn set_val(t: T);
-    fn val() -> T;
 }
 
 #[macro_export]
@@ -35,12 +45,12 @@ macro_rules! dynamic_value {
                     $val_name = t;
                 }
             }
+        }
 
+        impl Value<$t> for $name {
             fn val() -> $t {
                 unsafe { $val_name }
             }
         }
     };
 }
-
-dynamic_value!(DV1, VAL1, u32, 0u32);
