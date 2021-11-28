@@ -15,9 +15,11 @@ pub trait WeakInteger:
     + SubAssign
     + PartialEq
     + Display
+    + std::fmt::Debug
     + Copy
     + Readable
     + Writable
+    + Eq
     + Hash
 {
     type W: From<Self> + WeakInteger;

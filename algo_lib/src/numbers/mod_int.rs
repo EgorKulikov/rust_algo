@@ -1,10 +1,9 @@
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
-use crate::numbers::gcd::extended_gcd;
 use crate::numbers::integer::{Integer, WeakInteger};
+use crate::numbers::raw_mod_int::RawModInt;
 use crate::numbers::value::Value;
 use crate::value;
-use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 use std::marker::PhantomData;
@@ -16,65 +15,26 @@ pub struct ModInt<T: Integer, V: Value<T>> {
     phantom: PhantomData<V>,
 }
 
-impl<T: Integer, V: Value<T>> ModInt<T, V> {
-    pub fn new(n: T) -> Self {
-        let mut res = Self {
-            n: n % (V::VAL) + V::VAL,
+impl<T: Integer, V: Value<T>> RawModInt<T> for ModInt<T, V> {
+    type T = T;
+
+    fn module() -> T {
+        V::VAL
+    }
+
+    fn n(&self) -> T {
+        self.n
+    }
+
+    fn n_mut(&mut self) -> &mut T {
+        &mut self.n
+    }
+
+    fn safe_new(n: T) -> Self {
+        assert!(n < V::VAL && n >= T::zero());
+        Self {
+            n,
             phantom: Default::default(),
-        };
-        res.safe();
-        res
-    }
-
-    pub fn new_from_long(n: <T as Integer>::W) -> Self {
-        let mut res = Self {
-            n: <T as Integer>::downcast(n % (V::VAL).into()) + V::VAL,
-            phantom: Default::default(),
-        };
-        res.safe();
-        res
-    }
-
-    pub fn inv(&self) -> Option<Self> {
-        let (g, x, _) = extended_gcd(self.n, V::VAL);
-        if g != T::one() {
-            None
-        } else {
-            Some(Self::new_from_long(x))
-        }
-    }
-
-    pub fn log(&self, alpha: Self) -> T {
-        let mut base = HashMap::new();
-        let mut exp = T::zero();
-        let mut pow = Self::one();
-        let mut inv = *self;
-        let alpha_inv = alpha.inv().unwrap();
-        while exp * exp < V::VAL {
-            if inv == Self::one() {
-                return exp;
-            }
-            base.insert(inv, exp);
-            exp += T::one();
-            pow *= alpha;
-            inv *= alpha_inv;
-        }
-        let step = pow;
-        let mut i = T::one();
-        loop {
-            if let Some(b) = base.get(&pow) {
-                break exp * i + *b;
-            }
-            pow *= step;
-            i += T::one();
-        }
-    }
-
-    fn safe(&mut self) {
-        debug_assert!(self.n >= T::zero());
-        debug_assert!(self.n < V::VAL + V::VAL);
-        if self.n >= V::VAL {
-            self.n -= V::VAL;
         }
     }
 }
@@ -88,7 +48,7 @@ impl<T: Integer, V: Value<T>> From<T> for ModInt<T, V> {
 impl<T: Integer, V: Value<T>> AddAssign for ModInt<T, V> {
     fn add_assign(&mut self, rhs: Self) {
         self.n += rhs.n;
-        self.safe();
+        self.make_safe();
     }
 }
 
@@ -104,7 +64,7 @@ impl<T: Integer, V: Value<T>> Add for ModInt<T, V> {
 impl<T: Integer, V: Value<T>> SubAssign for ModInt<T, V> {
     fn sub_assign(&mut self, rhs: Self) {
         self.n += V::VAL - rhs.n;
-        self.safe();
+        self.make_safe();
     }
 }
 
@@ -155,14 +115,14 @@ impl<T: Integer, V: Value<T>> Neg for ModInt<T, V> {
 
     fn neg(mut self) -> Self::Output {
         self.n = V::VAL - self.n;
-        self.safe();
+        self.make_safe();
         self
     }
 }
 
 impl<T: Integer, V: Value<T>> Display for ModInt<T, V> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.n.fmt(f)
+        <T as Display>::fmt(&self.n, f)
     }
 }
 
@@ -213,7 +173,7 @@ impl<T: Integer, V: Value<T>> std::fmt::Debug for ModInt<T, V> {
                         return write!(f, "{}/{}", num, denum);
                     }
                     if -Self::new(num) / Self::new(denum) == *self {
-                        return write!(f, "{}/{}", num, denum);
+                        return write!(f, "-{}/{}", num, denum);
                     }
                     num += T::one();
                 }

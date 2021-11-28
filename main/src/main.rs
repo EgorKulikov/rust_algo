@@ -1,23 +1,23 @@
-use std::ops::Add;
-use std::hash::Hash;
-use std::ops::RemAssign;
-use std::ops::AddAssign;
-use std::ops::SubAssign;
-use std::ops::MulAssign;
-use std::ops::Sub;
-use std::ops::IndexMut;
-use std::fmt::Display;
-use std::ops::Rem;
-use std::ops::Mul;
-use std::ops::Index;
 use std::ops::DivAssign;
-use std::marker::PhantomData;
-use std::ops::Neg;
+use std::ops::IndexMut;
+use std::ops::MulAssign;
 use std::fmt::Formatter;
+use std::ops::RemAssign;
+use std::fmt::Display;
+use std::ops::SubAssign;
+use std::hash::Hash;
 use std::collections::HashMap;
+use std::ops::Index;
+use std::marker::PhantomData;
+use std::ops::Sub;
 use std::ops::Div;
+use std::ops::Mul;
 use std::io::Write;
+use std::ops::AddAssign;
+use std::ops::Neg;
+use std::ops::Add;
 use std::io::Read;
+use std::ops::Rem;
 
 
 pub struct Output {
@@ -314,6 +314,7 @@ pub trait WeakInteger:
     + Copy
     + Readable
     + Writable
+    + Eq
     + Hash
 {
     type W: From<Self> + WeakInteger;
@@ -907,7 +908,7 @@ impl<T: Integer, V: DynamicValue<T>> std::fmt::Debug for DynModInt<T, V> {
                         return write!(f, "{}/{}", num, denum);
                     }
                     if -Self::new(num) / Self::new(denum) == *self {
-                        return write!(f, "{}/{}", num, denum);
+                        return write!(f, "-{}/{}", num, denum);
                     }
                     num += T::one();
                 }
@@ -918,33 +919,26 @@ impl<T: Integer, V: DynamicValue<T>> std::fmt::Debug for DynModInt<T, V> {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash)]
-pub struct ModInt<T: Integer, V: Value<T>> {
-    n: T,
-    phantom: PhantomData<V>,
-}
+pub trait RawModInt<T: Integer>: WeakInteger {
+    type T;
 
-impl<T: Integer, V: Value<T>> ModInt<T, V> {
-    pub fn new(n: T) -> Self {
-        let mut res = Self {
-            n: n % (V::VAL) + V::VAL,
-            phantom: Default::default(),
-        };
-        res.safe();
-        res
+    fn module() -> T;
+    fn n(&self) -> T;
+    fn n_mut<'s>(&'s mut self) -> &'s mut T;
+    fn safe_new(n: T) -> Self;
+
+    fn new(n: T) -> Self {
+        Self::safe_new(Self::safe(n % (Self::module()) + Self::module()))
     }
 
-    pub fn new_from_long(n: <T as Integer>::W) -> Self {
-        let mut res = Self {
-            n: <T as Integer>::downcast(n % (V::VAL).into()) + V::VAL,
-            phantom: Default::default(),
-        };
-        res.safe();
-        res
+    fn new_from_long(n: <T as Integer>::W) -> Self {
+        Self::safe_new(Self::safe(
+            <T as Integer>::downcast(n % (Self::module()).into()) + Self::module(),
+        ))
     }
 
-    pub fn inv(&self) -> Option<Self> {
-        let (g, x, _) = extended_gcd(self.n, V::VAL);
+    fn inv(&self) -> Option<Self> {
+        let (g, x, _) = extended_gcd(self.n(), Self::module());
         if g != T::one() {
             None
         } else {
@@ -952,13 +946,13 @@ impl<T: Integer, V: Value<T>> ModInt<T, V> {
         }
     }
 
-    pub fn log(&self, alpha: Self) -> T {
+    fn log(&self, alpha: Self) -> T {
         let mut base = HashMap::new();
         let mut exp = T::zero();
         let mut pow = Self::one();
         let mut inv = *self;
         let alpha_inv = alpha.inv().unwrap();
-        while exp * exp < V::VAL {
+        while exp * exp < Self::module() {
             if inv == Self::one() {
                 return exp;
             }
@@ -978,11 +972,45 @@ impl<T: Integer, V: Value<T>> ModInt<T, V> {
         }
     }
 
-    fn safe(&mut self) {
-        debug_assert!(self.n >= T::zero());
-        debug_assert!(self.n < V::VAL + V::VAL);
-        if self.n >= V::VAL {
-            self.n -= V::VAL;
+    fn safe(mut n: T) -> T {
+        assert!(n < Self::module() + Self::module() && n >= T::zero());
+        if n >= Self::module() {
+            n -= Self::module();
+        }
+        n
+    }
+
+    fn make_safe(&mut self) {
+        *self.n_mut() = Self::safe(self.n());
+    }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
+pub struct ModInt<T: Integer, V: Value<T>> {
+    n: T,
+    phantom: PhantomData<V>,
+}
+
+impl<T: Integer, V: Value<T>> RawModInt<T> for ModInt<T, V> {
+    type T = T;
+
+    fn module() -> T {
+        V::VAL
+    }
+
+    fn n(&self) -> T {
+        self.n
+    }
+
+    fn n_mut(&mut self) -> &mut T {
+        &mut self.n
+    }
+
+    fn safe_new(n: T) -> Self {
+        assert!(n < V::VAL && n >= T::zero());
+        Self {
+            n,
+            phantom: Default::default(),
         }
     }
 }
@@ -996,7 +1024,7 @@ impl<T: Integer, V: Value<T>> From<T> for ModInt<T, V> {
 impl<T: Integer, V: Value<T>> AddAssign for ModInt<T, V> {
     fn add_assign(&mut self, rhs: Self) {
         self.n += rhs.n;
-        self.safe();
+        self.make_safe();
     }
 }
 
@@ -1012,7 +1040,7 @@ impl<T: Integer, V: Value<T>> Add for ModInt<T, V> {
 impl<T: Integer, V: Value<T>> SubAssign for ModInt<T, V> {
     fn sub_assign(&mut self, rhs: Self) {
         self.n += V::VAL - rhs.n;
-        self.safe();
+        self.make_safe();
     }
 }
 
@@ -1063,7 +1091,7 @@ impl<T: Integer, V: Value<T>> Neg for ModInt<T, V> {
 
     fn neg(mut self) -> Self::Output {
         self.n = V::VAL - self.n;
-        self.safe();
+        self.make_safe();
         self
     }
 }
@@ -1121,7 +1149,7 @@ impl<T: Integer, V: Value<T>> std::fmt::Debug for ModInt<T, V> {
                         return write!(f, "{}/{}", num, denum);
                     }
                     if -Self::new(num) / Self::new(denum) == *self {
-                        return write!(f, "{}/{}", num, denum);
+                        return write!(f, "-{}/{}", num, denum);
                     }
                     num += T::one();
                 }
@@ -1152,15 +1180,15 @@ fn solve(input: &mut Input, _test_case: usize) {
     dynamic_value!(DynV1, VAL1, u32, 0);
     DynV1::set_val(n);
     type DynMod1 = DynModInt<u32, DynV1>;
-    use DynMod1 as ModInt;
-    // use ModInt7 as ModInt;
+    use DynMod1 as ModInt;*/
+    use ModInt7 as ModInt;
     let mut res = ModInt::one();
     for i in 1u32..500_000_000 {
         res *= i.into();
     }
-    out_line!(res);*/
+    out_line!(res);
     // const MOD: u32 = 1_000_000_007;
-    let MOD: u32 = input.read();
+    /*let MOD: u32 = input.read();
     out_line!(MOD);
     let mut res = 1u32;
     for i in 1u32..500_000_000 {
@@ -1169,7 +1197,7 @@ fn solve(input: &mut Input, _test_case: usize) {
         //     res -= MOD;
         // }
     }
-    out_line!(res);
+    out_line!(res);*/
 }
 
 fn run(mut input: Input) -> bool {

@@ -1,9 +1,8 @@
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
-use crate::numbers::gcd::extended_gcd;
 use crate::numbers::integer::{Integer, WeakInteger};
+use crate::numbers::raw_mod_int::RawModInt;
 use crate::numbers::value::DynamicValue;
-use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::marker::PhantomData;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -14,67 +13,27 @@ pub struct DynModInt<T: Integer, V: DynamicValue<T>> {
     phantom: PhantomData<V>,
 }
 
-impl<T: Integer, V: DynamicValue<T>> DynModInt<T, V> {
-    pub fn new(n: T) -> Self {
-        let mut res = Self {
-            n: n % (V::val()) + V::val(),
+impl<T: Integer, V: DynamicValue<T>> RawModInt<T> for DynModInt<T, V> {
+    type T = T;
+
+    fn module() -> T {
+        V::val()
+    }
+
+    fn n(&self) -> T {
+        self.n
+    }
+
+    fn n_mut(&mut self) -> &mut T {
+        &mut self.n
+    }
+
+    fn safe_new(n: T) -> Self {
+        assert!(n < V::val() && n >= T::zero());
+        Self {
+            n,
             phantom: Default::default(),
-        };
-        res.safe();
-        res
-    }
-
-    pub fn new_from_long(n: <T as Integer>::W) -> Self {
-        let mut res = Self {
-            n: <T as Integer>::downcast(n % (V::val()).into()) + V::val(),
-            phantom: Default::default(),
-        };
-        res.safe();
-        res
-    }
-
-    pub fn inv(&self) -> Option<Self> {
-        let (g, x, _) = extended_gcd(self.n, V::val());
-        if g != T::one() {
-            None
-        } else {
-            Some(Self::new_from_long(x))
         }
-    }
-
-    pub fn log(&self, alpha: Self) -> T {
-        let mut base = HashMap::new();
-        let mut exp = T::zero();
-        let mut pow = Self::one();
-        let mut inv = *self;
-        let alpha_inv = alpha.inv().unwrap();
-        while exp * exp < V::val() {
-            if inv == Self::one() {
-                return exp;
-            }
-            base.insert(inv, exp);
-            exp += T::one();
-            pow *= alpha;
-            inv *= alpha_inv;
-        }
-        let step = pow;
-        let mut i = T::one();
-        loop {
-            if let Some(b) = base.get(&pow) {
-                break exp * i + *b;
-            }
-            pow *= step;
-            i += T::one();
-        }
-    }
-
-    fn safe(&mut self) -> &mut Self {
-        debug_assert!(self.n >= T::zero());
-        debug_assert!(self.n < V::val() + V::val());
-        if self.n >= V::val() {
-            self.n -= V::val();
-        }
-        self
     }
 }
 
@@ -87,7 +46,7 @@ impl<T: Integer, V: DynamicValue<T>> From<T> for DynModInt<T, V> {
 impl<T: Integer, V: DynamicValue<T>> AddAssign for DynModInt<T, V> {
     fn add_assign(&mut self, rhs: Self) {
         self.n += rhs.n;
-        self.safe();
+        self.make_safe();
     }
 }
 
@@ -103,7 +62,7 @@ impl<T: Integer, V: DynamicValue<T>> Add for DynModInt<T, V> {
 impl<T: Integer, V: DynamicValue<T>> SubAssign for DynModInt<T, V> {
     fn sub_assign(&mut self, rhs: Self) {
         self.n += V::val() - rhs.n;
-        self.safe();
+        self.make_safe();
     }
 }
 
@@ -154,14 +113,14 @@ impl<T: Integer, V: DynamicValue<T>> Neg for DynModInt<T, V> {
 
     fn neg(mut self) -> Self::Output {
         self.n = V::val() - self.n;
-        self.safe();
+        self.make_safe();
         self
     }
 }
 
 impl<T: Integer, V: DynamicValue<T>> Display for DynModInt<T, V> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.n.fmt(f)
+        <T as Display>::fmt(&self.n, f)
     }
 }
 
@@ -212,7 +171,7 @@ impl<T: Integer, V: DynamicValue<T>> std::fmt::Debug for DynModInt<T, V> {
                         return write!(f, "{}/{}", num, denum);
                     }
                     if -Self::new(num) / Self::new(denum) == *self {
-                        return write!(f, "{}/{}", num, denum);
+                        return write!(f, "-{}/{}", num, denum);
                     }
                     num += T::one();
                 }
