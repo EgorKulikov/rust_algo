@@ -13,4 +13,5 @@ from . . CLion do this by default
 
 - Submit ./main/src/main.rs
 
-Currently task deletion is by hand
+- After you finish contest run archiver from ./archiver
+- 
