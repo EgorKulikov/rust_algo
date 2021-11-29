@@ -1,8 +1,10 @@
+use algo_lib::io::input::Input;
 use serde::{Deserialize, Serialize};
 use std::fs::{create_dir, File};
 use std::io::{BufRead, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
+use std::ptr::read;
 use std::{io, thread};
 
 //noinspection RsFieldNaming
@@ -100,6 +102,8 @@ fn write_lines(filename: &str, lines: Vec<String>) {
 }
 
 fn process(request: &str) {
+    let mut stdin = std::io::stdin();
+    let mut input = Input::new(&mut stdin);
     let task: Task = serde_json::from_slice(request.as_bytes()).unwrap();
     let name = task.task_name();
     let mut lines = Vec::new();
@@ -113,6 +117,8 @@ fn process(request: &str) {
             lines.push(format!("    \"{}\",", name));
         }
     }
+    println!("input type? 0 - single test, 1 - num test known, 2 - until eof");
+    let t = input.read::<u8>();
     create_dir(format!("../{}", name).as_str()).unwrap();
     create_dir(format!("../{}/src", name).as_str()).unwrap();
     create_dir(format!("../{}/tests", name).as_str()).unwrap();
@@ -138,17 +144,17 @@ fn process(request: &str) {
         serde_json::to_string(&task.output).unwrap()
     ));
     main.append(&mut read_lines("prefix.txt"));
-    match task.testType.as_str() {
-        "single" => {
+    match t {
+        0 => {
             main.push("    solve(&mut input, 1);".to_string());
         }
-        "multiNumber" => {
+        1 => {
             main.push("    let t = input.read();".to_string());
             main.push("    for i in 0usize..t {".to_string());
             main.push("        solve(&mut input, i + 1);".to_string());
             main.push("    }".to_string());
         }
-        "multiEOF" => {
+        2 => {
             main.push("    let mut i = 0usize;".to_string());
             main.push("    while input.peek().is_some() {".to_string());
             main.push("        solve(&mut input, i + 1);".to_string());

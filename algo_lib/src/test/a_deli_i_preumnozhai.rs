@@ -6,14 +6,13 @@ use crate::collections::base_algo::MinimMaxim;
 use crate::io::input::Input;
 use crate::io::output::{output, Output, OUTPUT};
 use crate::{out, out_line};
-use std::fs::read;
 
 fn solve(input: &mut Input, _test_case: usize) {
     let n = input.read();
     let a: Vec<u64> = input.read_vec(n);
     let mut ans = 0u64;
     for i in 0..n {
-        let mut b = a.clone();
+        let b = a.clone();
         let mut res = 0u64;
         let mut bi = b[i];
         for (j, mut v) in b.into_iter().enumerate() {
