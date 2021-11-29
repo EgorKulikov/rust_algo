@@ -3,6 +3,13 @@
 version = 3
 
 [[package]]
+name = "advent"
+version = "0.1.0"
+dependencies = [
+ "algo_lib",
+]
+
+[[package]]
 name = "algo_lib"
 version = "0.1.0"
 

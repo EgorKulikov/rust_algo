@@ -1,20 +1,19 @@
-use std::ops::Sub;
-use std::io::Read;
-use std::fmt::Display;
-use std::ops::Index;
-use std::ops::Mul;
-use std::ops::Rem;
-use std::ops::IndexMut;
-use std::ops::RemAssign;
 use std::ops::Add;
 use std::hash::Hash;
+use std::ops::SubAssign;
+use std::io::Read;
+use std::fmt::Display;
 use std::ops::AddAssign;
 use std::ops::MulAssign;
+use std::ops::RemAssign;
+use std::ops::Mul;
 use std::ops::Div;
+use std::ops::IndexMut;
+use std::ops::Rem;
+use std::ops::Index;
+use std::ops::Sub;
 use std::ops::DivAssign;
-use std::fs::read;
 use std::io::Write;
-use std::ops::SubAssign;
 
 pub fn create_order(n: usize) -> Vec<usize> {
     let mut res = Vec::with_capacity(n);
@@ -693,26 +692,29 @@ tuple_readable! {T U V X Y Z A B C D E F}
 
 fn solve(input: &mut Input, _test_case: usize) {
     let n = input.read();
-    let a: Vec<u64> = input.read_vec(n);
-    let mut ans = 0u64;
-    for i in 0..n {
-        let mut b = a.clone();
-        let mut res = 0u64;
-        let mut bi = b[i];
-        for (j, mut v) in b.into_iter().enumerate() {
-            if j == i {
-                continue;
-            }
-            while v % 2 == 0 {
-                v /= 2;
-                bi *= 2;
-            }
-            res += v;
+    let mut a = input.read_vec::<u32>(n);
+
+    let min = *a.iter().min().unwrap();
+    let mut res = Vec::new();
+    for (i, v) in a.iter().enumerate() {
+        if *v == min {
+            res = a[i..].iter().cloned().collect::<Vec<_>>();
+            res.extend(&a[..i].iter().cloned().collect::<Vec<_>>());
+            break;
         }
-        res += bi;
-        ans.maxim(res);
     }
-    out_line!(ans);
+    a = res;
+    let mut answer = 0u32;
+    let mut last = 0usize;
+    for (i, v) in a.iter().enumerate() {
+        if *v == min {
+            answer.maxim((i - last) as u32);
+            last = i + 1;
+        }
+    }
+    answer.maxim((n - last) as u32);
+    answer += (n as u32) * (min);
+    out_line!(answer);
 }
 
 fn run(mut input: Input) -> bool {

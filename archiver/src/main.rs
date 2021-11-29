@@ -56,7 +56,12 @@ fn main() {
             String::from_utf8_lossy(&(line[1..line.len() - 2].iter().cloned().collect::<Vec<_>>()))
                 .to_string();
         let task = task.as_str();
-        if task == "archiver" || task == "listener" || task == "algo_lib" || task == "main" {
+        if task == "archiver"
+            || task == "listener"
+            || task == "algo_lib"
+            || task == "main"
+            || task == "advent"
+        {
             result.push(or_line);
             continue;
         }

@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "advent",
     "algo_lib",
     "archiver",
     "listener",
