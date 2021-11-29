@@ -28,6 +28,21 @@ pub trait WeakInteger:
     fn one() -> Self;
     fn from_u8(n: u8) -> Self;
     fn downcast(w: Self::W) -> Self;
+
+    fn two() -> Self {
+        Self::one() + Self::one()
+    }
+
+    fn power<T: Integer>(&self, exp: T) -> Self {
+        if exp == T::zero() {
+            Self::one()
+        } else if exp % T::two() == T::zero() {
+            let res = self.power(exp / T::two());
+            res * res
+        } else {
+            self.power(exp - T::one()) * (*self)
+        }
+    }
 }
 
 pub trait Integer: WeakInteger + Ord + Rem<Output = Self> + RemAssign + 'static {

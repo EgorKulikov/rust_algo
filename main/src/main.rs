@@ -1,25 +1,50 @@
-use std::ops::Div;
+use std::ops::Sub;
+use std::io::Read;
+use std::fmt::Display;
+use std::ops::Index;
+use std::ops::Mul;
+use std::ops::Rem;
+use std::ops::IndexMut;
+use std::ops::RemAssign;
 use std::ops::Add;
 use std::hash::Hash;
-use std::ops::RemAssign;
-use std::mem::swap;
-use std::ops::MulAssign;
-use std::ops::IndexMut;
-use std::marker::PhantomData;
-use std::collections::HashMap;
-use std::ops::Sub;
-use std::fmt::Formatter;
-use std::fmt::Display;
 use std::ops::AddAssign;
-use std::ops::Rem;
-use std::io::Write;
-use std::ops::Index;
+use std::ops::MulAssign;
+use std::ops::Div;
 use std::ops::DivAssign;
-use std::ops::Mul;
-use std::ops::Neg;
-use std::io::Read;
+use std::fs::read;
+use std::io::Write;
 use std::ops::SubAssign;
 
+pub fn create_order(n: usize) -> Vec<usize> {
+    let mut res = Vec::with_capacity(n);
+    for i in 0..n {
+        res.push(i);
+    }
+    res
+}
+
+pub trait MinimMaxim: PartialOrd + Sized {
+    fn minim(&mut self, other: Self) -> bool {
+        if other < *self {
+            *self = other;
+            true
+        } else {
+            false
+        }
+    }
+
+    fn maxim(&mut self, other: Self) -> bool {
+        if other > *self {
+            *self = other;
+            true
+        } else {
+            false
+        }
+    }
+}
+
+impl<T: PartialOrd + Sized> MinimMaxim for T {}
 
 pub struct Output {
     output: Box<dyn Write>,
@@ -325,6 +350,21 @@ pub trait WeakInteger:
     fn one() -> Self;
     fn from_u8(n: u8) -> Self;
     fn downcast(w: Self::W) -> Self;
+
+    fn two() -> Self {
+        Self::one() + Self::one()
+    }
+
+    fn power<T: Integer>(&self, exp: T) -> Self {
+        if exp == T::zero() {
+            Self::one()
+        } else if exp % T::two() == T::zero() {
+            let res = self.power(exp / T::two());
+            res * res
+        } else {
+            self.power(exp - T::one()) * (*self)
+        }
+    }
 }
 
 pub trait Integer: WeakInteger + Ord + Rem<Output = Self> + RemAssign + 'static {
@@ -651,377 +691,45 @@ tuple_readable! {T U V X Y Z A B C D}
 tuple_readable! {T U V X Y Z A B C D E}
 tuple_readable! {T U V X Y Z A B C D E F}
 
-pub fn extended_gcd<T: Integer>(a: T, b: T) -> (T, <T as Integer>::W, <T as Integer>::W) {
-    if a == T::zero() {
-        (b, <T as Integer>::W::zero(), <T as Integer>::W::one())
-    } else {
-        let (d, y, mut x) = extended_gcd(b % a, a);
-        x -= <T as Integer>::W::from(b / a) * y;
-        (d, x, y)
-    }
-}
-
-pub fn gcd<T: Integer>(mut a: T, mut b: T) -> T {
-    while b != T::zero() {
-        a %= b;
-        swap(&mut a, &mut b);
-    }
-    a
-}
-
-pub fn lcm<T: Integer>(a: T, b: T) -> T {
-    (a / gcd(a, b)) * b
-}
-
-pub trait Value<T>: Copy + Eq + Hash {
-    fn val() -> T;
-}
-
-pub trait ConstValue<T>: Value<T> {
-    const VAL: T;
-}
-
-impl<T, V: ConstValue<T>> Value<T> for V {
-    fn val() -> T {
-        Self::VAL
-    }
-}
-
-#[macro_export]
-macro_rules! value {
-    ($name: ident, $t: ty, $val: expr) => {
-        #[derive(Copy, Clone, Eq, PartialEq, Hash)]
-        pub struct $name {}
-
-        impl ConstValue<$t> for $name {
-            const VAL: $t = $val;
-        }
-    };
-}
-
-pub trait DynamicValue<T>: Value<T> {
-    //noinspection RsSelfConvention
-    fn set_val(t: T);
-}
-
-#[macro_export]
-macro_rules! dynamic_value {
-    ($name: ident, $val_name: ident, $t: ty, $base: expr) => {
-        static mut $val_name: $t = $base;
-
-        #[derive(Copy, Clone, Eq, PartialEq, Hash)]
-        pub struct $name {}
-
-        impl DynamicValue<$t> for $name {
-            fn set_val(t: $t) {
-                unsafe {
-                    $val_name = t;
-                }
-            }
-        }
-
-        impl Value<$t> for $name {
-            fn val() -> $t {
-                unsafe { $val_name }
-            }
-        }
-    };
-}
-
-pub trait BaseModInt: WeakInteger + Neg {
-    type T: Integer;
-
-    fn module() -> Self::T;
-    fn n(&self) -> Self::T;
-    fn n_mut<'s>(&'s mut self) -> &'s mut Self::T;
-    fn safe_new(n: Self::T) -> Self;
-
-    fn new(n: Self::T) -> Self {
-        Self::safe_new(Self::safe(n % (Self::module()) + Self::module()))
-    }
-
-    fn new_from_long(n: <Self::T as Integer>::W) -> Self {
-        Self::safe_new(Self::safe(
-            <Self::T as Integer>::downcast(n % (Self::module()).into()) + Self::module(),
-        ))
-    }
-
-    fn inv(&self) -> Option<Self> {
-        let (g, x, _) = extended_gcd(self.n(), Self::module());
-        if g != Self::T::one() {
-            None
-        } else {
-            Some(Self::new_from_long(x))
-        }
-    }
-
-    fn log(&self, alpha: Self) -> Self::T {
-        let mut base = HashMap::new();
-        let mut exp = Self::T::zero();
-        let mut pow = Self::one();
-        let mut inv = *self;
-        let alpha_inv = alpha.inv().unwrap();
-        while exp * exp < Self::module() {
-            if inv == Self::one() {
-                return exp;
-            }
-            base.insert(inv, exp);
-            exp += Self::T::one();
-            pow *= alpha;
-            inv *= alpha_inv;
-        }
-        let step = pow;
-        let mut i = Self::T::one();
-        loop {
-            if let Some(b) = base.get(&pow) {
-                break exp * i + *b;
-            }
-            pow *= step;
-            i += Self::T::one();
-        }
-    }
-
-    fn safe(mut n: Self::T) -> Self::T {
-        assert!(n < Self::module() + Self::module() && n >= Self::T::zero());
-        if n >= Self::module() {
-            n -= Self::module();
-        }
-        n
-    }
-
-    fn make_safe(&mut self) {
-        *self.n_mut() = Self::safe(self.n());
-    }
-}
-
-#[derive(Copy, Clone, Eq, PartialEq, Hash)]
-pub struct ModInt<T: Integer, V: DynamicValue<T>> {
-    n: T,
-    phantom: PhantomData<V>,
-}
-
-impl<T: Integer, V: DynamicValue<T>> BaseModInt for ModInt<T, V> {
-    type T = T;
-
-    fn module() -> T {
-        V::val()
-    }
-
-    fn n(&self) -> T {
-        self.n
-    }
-
-    fn n_mut(&mut self) -> &mut T {
-        &mut self.n
-    }
-
-    fn safe_new(n: T) -> Self {
-        assert!(n < V::val() && n >= T::zero());
-        Self {
-            n,
-            phantom: Default::default(),
-        }
-    }
-}
-
-impl<T: Integer, V: DynamicValue<T>> From<T> for ModInt<T, V> {
-    fn from(n: T) -> Self {
-        Self::new(n)
-    }
-}
-
-impl<T: Integer, V: DynamicValue<T>> AddAssign for ModInt<T, V> {
-    fn add_assign(&mut self, rhs: Self) {
-        self.n += rhs.n;
-        self.make_safe();
-    }
-}
-
-impl<T: Integer, V: DynamicValue<T>> Add for ModInt<T, V> {
-    type Output = Self;
-
-    fn add(mut self, rhs: Self) -> Self::Output {
-        self += rhs;
-        self
-    }
-}
-
-impl<T: Integer, V: DynamicValue<T>> SubAssign for ModInt<T, V> {
-    fn sub_assign(&mut self, rhs: Self) {
-        self.n += V::val() - rhs.n;
-        self.make_safe();
-    }
-}
-
-impl<T: Integer, V: DynamicValue<T>> Sub for ModInt<T, V> {
-    type Output = Self;
-
-    fn sub(mut self, rhs: Self) -> Self::Output {
-        self -= rhs;
-        self
-    }
-}
-
-impl<T: Integer, V: DynamicValue<T>> MulAssign for ModInt<T, V> {
-    fn mul_assign(&mut self, rhs: Self) {
-        self.n = <T as Integer>::downcast(
-            <T as Integer>::W::from(self.n) * <T as Integer>::W::from(rhs.n)
-                % <T as Integer>::W::from(V::val()),
-        );
-    }
-}
-
-impl<T: Integer, V: DynamicValue<T>> Mul for ModInt<T, V> {
-    type Output = Self;
-
-    fn mul(mut self, rhs: Self) -> Self::Output {
-        self *= rhs;
-        self
-    }
-}
-
-impl<T: Integer, V: DynamicValue<T>> DivAssign for ModInt<T, V> {
-    fn div_assign(&mut self, rhs: Self) {
-        *self *= rhs.inv().unwrap();
-    }
-}
-
-impl<T: Integer, V: DynamicValue<T>> Div for ModInt<T, V> {
-    type Output = Self;
-
-    fn div(mut self, rhs: Self) -> Self::Output {
-        self /= rhs;
-        self
-    }
-}
-
-impl<T: Integer, V: DynamicValue<T>> Neg for ModInt<T, V> {
-    type Output = Self;
-
-    fn neg(mut self) -> Self::Output {
-        self.n = V::val() - self.n;
-        self.make_safe();
-        self
-    }
-}
-
-impl<T: Integer, V: DynamicValue<T>> Display for ModInt<T, V> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        <T as Display>::fmt(&self.n, f)
-    }
-}
-
-impl<T: Integer, V: DynamicValue<T>> Readable for ModInt<T, V> {
-    fn read(input: &mut Input) -> Self {
-        Self::new(T::read(input))
-    }
-}
-
-impl<T: Integer, V: DynamicValue<T>> Writable for ModInt<T, V> {
-    fn write(&self, output: &mut Output) {
-        self.n.write(output);
-    }
-}
-
-impl<T: Integer, V: DynamicValue<T>> WeakInteger for ModInt<T, V> {
-    type W = Self;
-    fn zero() -> Self {
-        Self::new(T::zero())
-    }
-
-    fn one() -> Self {
-        Self::new(T::one())
-    }
-
-    fn from_u8(n: u8) -> Self {
-        Self::new(T::from_u8(n))
-    }
-
-    fn downcast(w: Self::W) -> Self {
-        w
-    }
-}
-
-impl<T: Integer, V: DynamicValue<T>> std::fmt::Debug for ModInt<T, V> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let max = T::from_u8(100);
-        if self.n <= max {
-            write!(f, "{}", self.n)
-        } else if self.n >= V::val() - max {
-            write!(f, "-{}", V::val() - self.n)
-        } else {
-            let mut denum = T::one();
-            while denum < max {
-                let mut num = T::one();
-                while num < max {
-                    if Self::new(num) / Self::new(denum) == *self {
-                        return write!(f, "{}/{}", num, denum);
-                    }
-                    if -Self::new(num) / Self::new(denum) == *self {
-                        return write!(f, "-{}/{}", num, denum);
-                    }
-                    num += T::one();
-                }
-                denum += T::one();
-            }
-            write!(f, "(?? {} ??)", self.n)
-        }
-    }
-}
-
-value!(Val7, u32, 1_000_000_007);
-pub type ModInt7 = ModInt<u32, Val7>;
-
-value!(Val9, u32, 1_000_000_009);
-pub type ModInt9 = ModInt<u32, Val9>;
-
-value!(ValF, u32, 998_244_353);
-pub type ModIntF = ModInt<u32, ValF>;
-
 fn solve(input: &mut Input, _test_case: usize) {
-    /*let n = input.read();
-    dynamic_value!(DynV1, VAL1, u32, 0);
-    DynV1::set_val(n);
-    type DynMod1 = DynModInt<u32, DynV1>;
-    out_line!(std::mem::size_of::<ModInt7>());
-    out_line!(std::mem::size_of::<DynMod1>());*/
     let n = input.read();
-    dynamic_value!(DynV1, VAL1, u32, 0);
-    DynV1::set_val(n);
-    type DynMod1 = ModInt<u32, DynV1>;
-    use DynMod1 as CModInt;
-    // use ModInt7 as CModInt;
-    let mut res = CModInt::one();
-    for i in 1u32..500_000_000 {
-        res *= i.into();
+    let a: Vec<u64> = input.read_vec(n);
+    let mut ans = 0u64;
+    for i in 0..n {
+        let mut b = a.clone();
+        let mut res = 0u64;
+        let mut bi = b[i];
+        for (j, mut v) in b.into_iter().enumerate() {
+            if j == i {
+                continue;
+            }
+            while v % 2 == 0 {
+                v /= 2;
+                bi *= 2;
+            }
+            res += v;
+        }
+        res += bi;
+        ans.maxim(res);
     }
-    out_line!(res);
-    // const MOD: u32 = 1_000_000_007;
-    /*let MOD: u32 = input.read();
-    out_line!(MOD);
-    let mut res = 1u32;
-    for i in 1u32..500_000_000 {
-        res = ((res as u64) * (i as u64) % (MOD as u64)) as u32;
-        // if res >= MOD {
-        //     res -= MOD;
-        // }
-    }
-    out_line!(res);*/
+    out_line!(ans);
 }
 
 fn run(mut input: Input) -> bool {
-    solve(&mut input, 1);
+    let t = input.read();
+    for i in 0usize..t {
+        solve(&mut input, i + 1);
+    }
     output().flush();
     input.skip_whitespace();
     !input.peek().is_some()
 }
 
 fn main() {
-    let mut in_file = std::fs::File::open("input.txt").unwrap();
-    let input = Input::new(&mut in_file);
-    let out_file = std::fs::File::create("output.txt").unwrap();
+    let mut sin = std::io::stdin();
+    let input = Input::new(&mut sin);
     unsafe {
-        OUTPUT = Some(Output::new(Box::new(out_file)));
+        OUTPUT = Some(Output::new(Box::new(std::io::stdout())));
     }
     run(input);
 }

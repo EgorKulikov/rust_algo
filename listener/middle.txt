@@ -50,7 +50,7 @@ impl std::io::Write for WriteDelegate {
     }
 }
 
-fn run_tests() {
+fn run_tests() -> bool {
     let blue = "\x1B[34m";
     let red = "\x1B[31m";
     let green = "\x1B[32m";

@@ -1,7 +1,7 @@
 [workspace]
 members = [
-    "d_tri_sina",
     "algo_lib",
+    "archiver",
     "listener",
     "main",
 ]

@@ -153,6 +153,7 @@ fn find_usages_and_code(
 
     let mut lines = read_lines(file);
     if prefix == "algo_lib" {
+        lines.next().unwrap();
         let inp = lines.next().unwrap().unwrap()[2..].to_string();
         input = Some(serde_json::from_str::<IOType>(inp.as_str()).unwrap());
         let out = lines.next().unwrap().unwrap()[2..].to_string();

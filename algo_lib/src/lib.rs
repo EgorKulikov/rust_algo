@@ -4,4 +4,4 @@ pub mod numbers;
 pub mod types;
 
 #[cfg(test)]
-mod tests {}
+mod test;

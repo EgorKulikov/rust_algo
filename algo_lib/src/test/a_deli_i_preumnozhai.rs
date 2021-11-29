@@ -1,3 +1,102 @@
+//Codeforces - Deltix Round, Autumn 2021 (open for everyone, rated, Div. 1 + Div. 2)
+//{"type":"stdin","fileName":null}
+//{"type":"stdout","fileName":null}
+
+use crate::collections::base_algo::MinimMaxim;
+use crate::io::input::Input;
+use crate::io::output::{output, Output, OUTPUT};
+use crate::{out, out_line};
+use std::fs::read;
+
+fn solve(input: &mut Input, _test_case: usize) {
+    let n = input.read();
+    let a: Vec<u64> = input.read_vec(n);
+    let mut ans = 0u64;
+    for i in 0..n {
+        let mut b = a.clone();
+        let mut res = 0u64;
+        let mut bi = b[i];
+        for (j, mut v) in b.into_iter().enumerate() {
+            if j == i {
+                continue;
+            }
+            while v % 2 == 0 {
+                v /= 2;
+                bi *= 2;
+            }
+            res += v;
+        }
+        res += bi;
+        ans.maxim(res);
+    }
+    out_line!(ans);
+}
+
+fn run(mut input: Input) -> bool {
+    let t = input.read();
+    for i in 0usize..t {
+        solve(&mut input, i + 1);
+    }
+    output().flush();
+    input.skip_whitespace();
+    !input.peek().is_some()
+}
+
+//START SKIP
+fn check(expected: &mut &[u8], actual: &mut &[u8]) -> Result<(), String> {
+    let mut expected = Input::new(expected);
+    let mut actual = Input::new(actual);
+    let mut token_num = 0usize;
+    loop {
+        let expected_token = expected.next_token();
+        let actual_token = actual.next_token();
+        if expected_token != actual_token {
+            if expected_token.is_none() {
+                return Err(format!("Expected has only {} tokens", token_num));
+            } else if actual_token.is_none() {
+                return Err(format!("Actual has only {} tokens", token_num));
+            } else {
+                return Err(format!(
+                    "Token #{} differs, expectes {}, actual {}",
+                    token_num,
+                    expected_token.unwrap(),
+                    actual_token.unwrap()
+                ));
+            }
+        }
+        token_num += 1;
+        if actual_token.is_none() {
+            break;
+        }
+    }
+    Ok(())
+}
+
+static mut OUT: Vec<u8> = Vec::new();
+
+struct WriteDelegate {}
+
+impl std::io::Write for WriteDelegate {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        unsafe {
+            OUT.append(&mut Vec::from(buf));
+        }
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+fn run_tests() -> bool {
+    let blue = "\x1B[34m";
+    let red = "\x1B[31m";
+    let green = "\x1B[32m";
+    let yellow = "\x1B[33m";
+    let def = "\x1B[0m";
+    let time_limit = std::time::Duration::from_millis(1000);
+    let mut paths = std::fs::read_dir("./src/test/a_deli_i_preumnozhai/")
         .unwrap()
         .map(|res| res.unwrap())
         .collect::<Vec<_>>();
@@ -112,9 +211,8 @@
     test_failed == 0
 }
 
-//BEGIN MAIN
-fn main() {
-    run_tests();
-}
-//END MAIN
 //END SKIP
+#[test]
+fn a_deli_i_preumnozhai() {
+    assert!(run_tests());
+}

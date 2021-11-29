@@ -131,6 +131,7 @@ fn process(request: &str) {
         read_lines("build.txt"),
     );
     let mut main = Vec::new();
+    main.push(format!("//{}", task.group));
     main.push(format!("//{}", serde_json::to_string(&task.input).unwrap()));
     main.push(format!(
         "//{}",
