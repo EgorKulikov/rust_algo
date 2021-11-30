@@ -53,6 +53,30 @@ impl Output {
             self.put(b'\n');
         }
     }
+
+    pub fn print_iter<T: Writable, I: Iterator<Item = T>>(&mut self, iter: I) {
+        let mut first = true;
+        for e in iter {
+            if first {
+                first = false;
+            } else {
+                self.put(b' ');
+            }
+            e.write(self);
+        }
+    }
+
+    pub fn print_iter_ref<'a, T: 'a + Writable, I: Iterator<Item = &'a T>>(&mut self, iter: I) {
+        let mut first = true;
+        for e in iter {
+            if first {
+                first = false;
+            } else {
+                self.put(b' ');
+            }
+            e.write(self);
+        }
+    }
 }
 
 impl Write for Output {
@@ -105,15 +129,7 @@ impl Writable for char {
 
 impl<T: Writable> Writable for [T] {
     fn write(&self, output: &mut Output) {
-        let mut first = true;
-        for e in self.iter() {
-            if first {
-                first = false;
-            } else {
-                output.put(b' ');
-            }
-            e.write(output);
-        }
+        output.print_iter_ref(self.iter());
     }
 }
 

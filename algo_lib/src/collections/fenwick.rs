@@ -1,4 +1,4 @@
-use crate::collections::base_algo::MinimMaxim;
+use crate::collections::min_max::MinimMaxim;
 use crate::numbers::integer::WeakInteger;
 
 pub struct FenwickTree<T: WeakInteger> {

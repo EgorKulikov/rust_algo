@@ -2,7 +2,7 @@
 //{"type":"stdin","fileName":null}
 //{"type":"stdout","fileName":null}
 
-use crate::collections::base_algo::MinimMaxim;
+use crate::collections::min_max::MinimMaxim;
 use crate::io::input::Input;
 use crate::io::output::{output, Output, OUTPUT};
 use crate::{out, out_line};
