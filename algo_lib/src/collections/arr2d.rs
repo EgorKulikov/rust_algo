@@ -1,5 +1,8 @@
+use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
+use std::iter::{Skip, StepBy};
 use std::ops::{Index, IndexMut};
+use std::slice::{Iter, IterMut};
 
 pub struct Arr2d<T> {
     d1: usize,
@@ -7,7 +10,7 @@ pub struct Arr2d<T> {
     data: Vec<T>,
 }
 
-impl<T: Copy> Arr2d<T> {
+impl<T: Clone> Arr2d<T> {
     pub fn new(d1: usize, d2: usize, value: T) -> Self {
         Self {
             d1,
@@ -38,13 +41,31 @@ impl<T> Arr2d<T> {
     pub fn d2(&self) -> usize {
         self.d2
     }
+
+    pub fn iter(&self) -> Iter<T> {
+        self.data.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> IterMut<T> {
+        self.data.iter_mut()
+    }
+
+    pub fn column(&self, col: usize) -> StepBy<Skip<Iter<T>>> {
+        assert!(col < self.d2);
+        self.data.iter().skip(col).step_by(self.d2)
+    }
+
+    pub fn column_mut(&mut self, col: usize) -> StepBy<Skip<IterMut<T>>> {
+        assert!(col < self.d2);
+        self.data.iter_mut().skip(col).step_by(self.d2)
+    }
 }
 
 impl<T> Index<(usize, usize)> for Arr2d<T> {
     type Output = T;
 
-    fn index(&self, index: (usize, usize)) -> &Self::Output {
-        &self.data[self.d2 * index.0 + index.1]
+    fn index(&self, (row, col): (usize, usize)) -> &Self::Output {
+        &self.data[self.d2 * row + col]
     }
 }
 
@@ -57,8 +78,8 @@ impl<T> Index<usize> for Arr2d<T> {
 }
 
 impl<T> IndexMut<(usize, usize)> for Arr2d<T> {
-    fn index_mut(&mut self, index: (usize, usize)) -> &mut T {
-        &mut self.data[self.d2 * index.0 + index.1]
+    fn index_mut(&mut self, (row, col): (usize, usize)) -> &mut T {
+        &mut self.data[self.d2 * row + col]
     }
 }
 
@@ -83,5 +104,23 @@ impl<T: Writable> Writable for Arr2d<T> {
                 at += 1;
             }
         }
+    }
+}
+
+pub trait Arr2dRead {
+    fn read_table<T: Readable>(&mut self, d1: usize, d2: usize) -> Arr2d<T>;
+}
+
+impl Arr2dRead for Input<'_> {
+    fn read_table<T: Readable>(&mut self, d1: usize, d2: usize) -> Arr2d<T> {
+        Arr2d::generate(d1, d2, |_, _| self.read())
+    }
+}
+
+impl<T: Readable> Readable for Arr2d<T> {
+    fn read(input: &mut Input) -> Self {
+        let d1 = input.read();
+        let d2 = input.read();
+        input.read_table(d1, d2)
     }
 }

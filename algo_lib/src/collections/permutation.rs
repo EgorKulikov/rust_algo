@@ -1,9 +1,9 @@
 use crate::collections::base_algo::create_order;
-use crate::io::input::Input;
+use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::ops::Mul;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Permutation {
     p: Vec<usize>,
     base: usize,
@@ -60,6 +60,14 @@ impl Permutation {
     }
 }
 
+impl PartialEq<Self> for Permutation {
+    fn eq(&self, other: &Self) -> bool {
+        self.p == other.p
+    }
+}
+
+impl Eq for Permutation {}
+
 pub trait PermutationRead {
     fn read_permutation(&mut self, size: usize) -> Permutation {
         self.read_permutation_with_base(size, 1)
@@ -70,6 +78,13 @@ pub trait PermutationRead {
 impl PermutationRead for Input<'_> {
     fn read_permutation_with_base(&mut self, size: usize, base: usize) -> Permutation {
         Permutation::new_with_base(self.read_vec(size), base)
+    }
+}
+
+impl Readable for Permutation {
+    fn read(input: &mut Input) -> Self {
+        let size = input.read();
+        input.read_permutation(size)
     }
 }
 

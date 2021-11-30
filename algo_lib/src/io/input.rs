@@ -1,4 +1,3 @@
-use crate::collections::arr2d::Arr2d;
 use crate::numbers::integer::Integer;
 use std::fmt::Display;
 use std::io::Read;
@@ -90,10 +89,6 @@ impl<'s> Input<'s> {
             res.push(self.read());
         }
         res
-    }
-
-    pub fn read_table<T: Readable>(&mut self, d1: usize, d2: usize) -> Arr2d<T> {
-        Arr2d::generate(d1, d2, |_, _| self.read())
     }
 
     pub fn read_line(&mut self) -> String {
@@ -218,11 +213,13 @@ impl<T: Readable> Readable for Vec<T> {
     }
 }
 
-impl<T: Readable> Readable for Arr2d<T> {
+impl<T: Readable, const N: usize> Readable for [T; N] {
     fn read(input: &mut Input) -> Self {
-        let d1 = input.read();
-        let d2 = input.read();
-        input.read_table(d1, d2)
+        let mut arr: [T; N] = unsafe { std::mem::MaybeUninit::uninit().assume_init() };
+        for i in 0..N {
+            arr[i] = T::read(input);
+        }
+        arr
     }
 }
 

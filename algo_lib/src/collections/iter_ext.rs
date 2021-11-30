@@ -26,7 +26,7 @@ pub trait EnumerateSortBy<T>: Iterator<Item = T> + Sized {
     }
 }
 
-impl<T, V: Iterator<Item = T> + Sized> EnumerateSortBy<T> for V {}
+impl<T, I: Iterator<Item = T> + Sized> EnumerateSortBy<T> for I {}
 
 pub trait EnumerateSort<T: Ord>: EnumerateSortBy<T> {
     fn enumerate_sort(self) -> Vec<(usize, T)> {
@@ -34,4 +34,12 @@ pub trait EnumerateSort<T: Ord>: EnumerateSortBy<T> {
     }
 }
 
-impl<T: Ord, V: Iterator<Item = T> + Sized> EnumerateSort<T> for V {}
+impl<T: Ord, I: Iterator<Item = T> + Sized> EnumerateSort<T> for I {}
+
+pub trait CollectVec<T>: Iterator<Item = T> + Sized {
+    fn collect_vec(self) -> Vec<T> {
+        self.collect()
+    }
+}
+
+impl<T, I: Iterator<Item = T> + Sized> CollectVec<T> for I {}
