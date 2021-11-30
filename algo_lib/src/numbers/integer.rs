@@ -1,24 +1,15 @@
-use crate::io::input::Readable;
-use crate::io::output::Writable;
-use std::fmt::Display;
 use std::hash::Hash;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
 
 pub trait WeakInteger:
     Add<Output = Self>
     + AddAssign
-    + Div<Output = Self>
-    + DivAssign
     + Mul<Output = Self>
     + MulAssign
     + Sub<Output = Self>
     + SubAssign
     + PartialEq
-    + Display
-    + std::fmt::Debug
     + Copy
-    + Readable
-    + Writable
     + Eq
     + Hash
 {
@@ -45,7 +36,9 @@ pub trait WeakInteger:
     }
 }
 
-pub trait Integer: WeakInteger + Ord + Rem<Output = Self> + RemAssign + 'static {
+pub trait Integer:
+    WeakInteger + Ord + Div<Output = Self> + DivAssign + Rem<Output = Self> + RemAssign + 'static
+{
     type W: From<Self> + Integer;
 
     const SIGNED: bool;

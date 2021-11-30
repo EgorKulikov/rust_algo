@@ -181,19 +181,19 @@ impl<T: Integer, V: Value<T>> Neg for ModInt<T, V> {
     }
 }
 
-impl<T: Integer, V: Value<T>> Display for ModInt<T, V> {
+impl<T: Integer + Display, V: Value<T>> Display for ModInt<T, V> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         <T as Display>::fmt(&self.n, f)
     }
 }
 
-impl<T: Integer, V: Value<T>> Readable for ModInt<T, V> {
+impl<T: Integer + Readable, V: Value<T>> Readable for ModInt<T, V> {
     fn read(input: &mut Input) -> Self {
         Self::new(T::read(input))
     }
 }
 
-impl<T: Integer, V: Value<T>> Writable for ModInt<T, V> {
+impl<T: Integer + Writable, V: Value<T>> Writable for ModInt<T, V> {
     fn write(&self, output: &mut Output) {
         self.n.write(output);
     }
@@ -218,7 +218,7 @@ impl<T: Integer, V: Value<T>> WeakInteger for ModInt<T, V> {
     }
 }
 
-impl<T: Integer, V: Value<T>> std::fmt::Debug for ModInt<T, V> {
+impl<T: Integer + Display, V: Value<T>> std::fmt::Debug for ModInt<T, V> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let max = T::from_u8(100);
         if self.n <= max {

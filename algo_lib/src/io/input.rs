@@ -1,5 +1,6 @@
 use crate::collections::arr2d::Arr2d;
 use crate::numbers::integer::Integer;
+use std::fmt::Display;
 use std::io::Read;
 
 pub struct Input<'s> {
@@ -112,7 +113,7 @@ impl<'s> Input<'s> {
         res
     }
 
-    fn read_integer<T: Integer>(&mut self) -> T {
+    fn read_integer<T: Integer + Display>(&mut self) -> T {
         self.skip_whitespace();
         let mut c = self.get().unwrap();
         let sgn = if c == b'-' {
