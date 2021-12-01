@@ -1,7 +1,8 @@
 use crate::collections::dsu::DSU;
 use crate::graph::edge_trait::EdgeTrait;
-use std::ops::{Index, IndexMut};
-// use std::slice::Iter;
+use crate::graph::flow_edge_trait::FlowEdgeTrait;
+use crate::numbers::integer::Integer;
+use std::ops::Index;
 
 pub struct Graph<E: EdgeTrait> {
     edges: Vec<Vec<E>>,
@@ -68,16 +69,25 @@ impl<E: EdgeTrait> Graph<E> {
     }
 }
 
+pub trait FlowGraph<C: Integer, E: FlowEdgeTrait<C>> {
+    fn push_flow(&mut self, push_data: (usize, usize, C));
+}
+
+impl<C: Integer, E: FlowEdgeTrait<C>> FlowGraph<C, E> for Graph<E> {
+    fn push_flow(&mut self, (to, reverse_id, flow): (usize, usize, C)) {
+        *self.edges[to][reverse_id].capacity_mut() += flow;
+        let from = self.edges[to][reverse_id].to();
+        let direct_id = self.edges[to][reverse_id].reverse_id();
+        let direct = &mut self.edges[from][direct_id];
+        assert!(flow >= C::zero() && flow <= direct.capacity());
+        *direct.capacity_mut() -= flow;
+    }
+}
+
 impl<E: EdgeTrait> Index<usize> for Graph<E> {
     type Output = [E];
 
     fn index(&self, index: usize) -> &Self::Output {
         &self.edges[index]
-    }
-}
-
-impl<E: EdgeTrait> IndexMut<usize> for Graph<E> {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.edges[index]
     }
 }

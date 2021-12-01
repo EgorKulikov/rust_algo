@@ -77,12 +77,6 @@ impl<W: Integer, C: Integer, Id: EdgeId> FlowEdgeTrait<C> for WeightedFlowEdgeRa
     fn flow(&self, graph: &Graph<Self>) -> C {
         graph[self.to as usize][self.reverse_id as usize].capacity
     }
-
-    fn push_flow(&mut self, flow: C, graph: &mut Graph<Self>) {
-        debug_assert!(flow >= C::zero() && flow <= self.capacity);
-        self.capacity -= flow;
-        graph[self.to as usize][self.reverse_id as usize].capacity += flow;
-    }
 }
 
 pub type WeightedFlowEdge<W, C> = WeightedFlowEdgeRaw<W, C, NoId>;

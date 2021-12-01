@@ -64,12 +64,6 @@ impl<C: Integer, Id: EdgeId> FlowEdgeTrait<C> for FlowEdgeRaw<C, Id> {
     fn flow(&self, graph: &Graph<Self>) -> C {
         graph[self.to as usize][self.reverse_id as usize].capacity
     }
-
-    fn push_flow(&mut self, flow: C, graph: &mut Graph<Self>) {
-        debug_assert!(flow >= C::zero() && flow <= self.capacity);
-        self.capacity -= flow;
-        graph[self.to as usize][self.reverse_id as usize].capacity += flow;
-    }
 }
 
 pub type FlowEdge<C> = FlowEdgeRaw<C, NoId>;
