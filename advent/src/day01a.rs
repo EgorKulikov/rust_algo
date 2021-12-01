@@ -5,17 +5,17 @@ fn main() {
     let mut inp = Input::new(&mut sin);
 
     let mut ans = 0usize;
-    let mut last = Vec::new();
+    let mut last: u16 = inp.read();
     loop {
         inp.skip_whitespace();
         if inp.peek().is_none() {
             break;
         }
         let cur: u16 = inp.read();
-        if last.len() >= 3 && last[last.len() - 3] < cur {
+        if cur > last {
             ans += 1;
         }
-        last.push(cur);
+        last = cur;
     }
     println!("{}", ans);
 }
