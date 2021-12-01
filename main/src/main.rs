@@ -1,274 +1,26 @@
-use std::ops::Add;
-use std::marker::PhantomData;
 use std::ops::Div;
-use std::hash::Hash;
 use std::ops::MulAssign;
-use std::io::Read;
-use std::io::Write;
-use std::cmp;
-use std::ops::AddAssign;
-use std::ops::DivAssign;
+use std::slice::Iter;
 use std::ops::RemAssign;
-use std::ops::IndexMut;
+use std::ops::SubAssign;
 use std::ops::Index;
-use std::ops::Mul;
-use std::ops::Rem;
+use std::io::Write;
+use std::ops::IndexMut;
+use std::marker::PhantomData;
+use std::slice::IterMut;
+use std::iter::Skip;
+use std::collections::VecDeque;
 use std::fmt::Display;
 use std::ops::Sub;
-use std::ops::SubAssign;
+use std::io::Read;
+use std::ops::Add;
+use std::ops::Rem;
+use std::hash::Hash;
+use std::ops::Mul;
+use std::ops::AddAssign;
+use std::iter::StepBy;
+use std::ops::DivAssign;
 
-pub trait EdgeTrait: Clone {
-    const REVERSABLE: bool;
-    const BIDIRECTIONAL: bool;
-
-    fn to(&self) -> usize;
-    fn id(&self) -> usize;
-    fn set_id(&mut self, id: usize);
-    fn reverse_id(&self) -> usize;
-    fn set_reverse_id(&mut self, reverse_id: usize);
-    fn reverse_edge(&self, from: usize) -> Self;
-}
-
-pub trait BiEdgeTrait: EdgeTrait {}
-pub trait EdgeId: Clone {
-    fn new() -> Self;
-    fn id(&self) -> usize;
-    fn set_id(&mut self, id: usize);
-}
-
-#[derive(Clone)]
-pub struct WithId {
-    id: u32,
-}
-
-impl EdgeId for WithId {
-    fn new() -> Self {
-        Self { id: 0 }
-    }
-
-    fn id(&self) -> usize {
-        self.id as usize
-    }
-
-    fn set_id(&mut self, id: usize) {
-        self.id = id as u32;
-    }
-}
-
-#[derive(Clone)]
-pub struct NoId {}
-
-impl EdgeId for NoId {
-    fn new() -> Self {
-        Self {}
-    }
-
-    fn id(&self) -> usize {
-        panic!("Id called on no id")
-    }
-
-    fn set_id(&mut self, _: usize) {}
-}
-
-#[derive(Clone)]
-pub struct BiEdgeRaw<Id: EdgeId> {
-    to: u32,
-    id: Id,
-}
-
-impl<Id: EdgeId> BiEdgeRaw<Id> {
-    pub fn new(to: usize) -> Self {
-        Self {
-            to: to as u32,
-            id: Id::new(),
-        }
-    }
-}
-
-impl<Id: EdgeId> EdgeTrait for BiEdgeRaw<Id> {
-    const REVERSABLE: bool = true;
-    const BIDIRECTIONAL: bool = true;
-
-    fn to(&self) -> usize {
-        self.to as usize
-    }
-
-    fn id(&self) -> usize {
-        self.id.id()
-    }
-
-    fn set_id(&mut self, id: usize) {
-        self.id.set_id(id);
-    }
-
-    fn reverse_id(&self) -> usize {
-        panic!("no reverse id")
-    }
-
-    fn set_reverse_id(&mut self, _: usize) {}
-
-    fn reverse_edge(&self, from: usize) -> Self {
-        Self::new(from)
-    }
-}
-
-impl<Id: EdgeId> BiEdgeTrait for BiEdgeRaw<Id> {}
-
-pub type BiEdge = BiEdgeRaw<NoId>;
-pub type BiEdgeWithId = BiEdgeRaw<WithId>;
-pub fn create_order(size: usize) -> Vec<usize> {
-    create_order_with_base(size, 0)
-}
-
-pub fn create_order_with_base(size: usize, base: usize) -> Vec<usize> {
-    let mut res = Vec::with_capacity(size);
-    for i in base..(size + base) {
-        res.push(i);
-    }
-    res
-}
-
-pub struct DSU {
-    id: Vec<usize>,
-    size: Vec<usize>,
-    count: usize,
-}
-
-impl DSU {
-    pub fn new(n: usize) -> Self {
-        Self {
-            id: create_order(n),
-            size: vec![1; n],
-            count: n,
-        }
-    }
-
-    pub fn size(&self, i: usize) -> usize {
-        self.size[self[i]]
-    }
-
-    pub fn count(&self) -> usize {
-        self.count
-    }
-
-    pub fn join(&mut self, mut a: usize, mut b: usize) -> bool {
-        a = self[a];
-        b = self[b];
-        if a == b {
-            false
-        } else {
-            self.size[a] += self.size[b];
-            self.id[b] = a;
-            self.count -= 1;
-            true
-        }
-    }
-
-    pub fn clear(&mut self) {
-        self.count = self.id.len();
-        self.size.fill(1);
-        for i in 0..self.count {
-            self.id[i] = i;
-        }
-    }
-}
-
-impl Index<usize> for DSU {
-    type Output = usize;
-
-    fn index(&self, i: usize) -> &Self::Output {
-        if self.id[i] != i {
-            let res = self[self.id[i]];
-            unsafe {
-                let const_ptr = self as *const Self;
-                let mut_ptr = const_ptr as *mut Self;
-                let mut_self = &mut *mut_ptr;
-                mut_self.id[i] = res;
-            }
-        }
-        &self.id[i]
-    }
-}
-// use std::slice::Iter;
-
-pub struct Graph<E: EdgeTrait> {
-    edges: Vec<Vec<E>>,
-    edge_count: usize,
-}
-
-impl<E: EdgeTrait> Graph<E> {
-    pub fn new(vertex_count: usize) -> Self {
-        Self {
-            edges: vec![Vec::new(); vertex_count],
-            edge_count: 0,
-        }
-    }
-
-    pub fn add_edge(&mut self, from: usize, mut edge: E) -> usize {
-        let to = edge.to();
-        assert!(to < self.edges.len());
-        let direct_id = self.edges[from].len();
-        edge.set_id(self.edge_count);
-        self.edges[from].push(edge);
-        if E::REVERSABLE {
-            let rev_id = self.edges[to].len();
-            self.edges[from][direct_id].set_reverse_id(rev_id);
-            let mut rev_edge = self.edges[from][direct_id].reverse_edge(from);
-            rev_edge.set_id(self.edge_count);
-            rev_edge.set_reverse_id(direct_id);
-            self.edges[to].push(rev_edge);
-        }
-        self.edge_count += 1;
-        direct_id
-    }
-
-    pub fn add_vertices(&mut self, cnt: usize) {
-        self.edges.resize(self.edges.len() + cnt, Vec::new());
-    }
-
-    pub fn clear(&mut self) {
-        self.edge_count = 0;
-        for ve in self.edges.iter_mut() {
-            ve.clear();
-        }
-    }
-
-    pub fn vertex_count(&self) -> usize {
-        self.edges.len()
-    }
-
-    pub fn edge_count(&self) -> usize {
-        self.edge_count
-    }
-
-    pub fn is_tree(&self) -> bool {
-        if !E::BIDIRECTIONAL || self.edge_count + 1 != self.vertex_count() {
-            false
-        } else {
-            let mut dsu = DSU::new(self.vertex_count());
-            for i in 0..self.vertex_count() {
-                for e in self[i].iter() {
-                    dsu.join(i, e.to());
-                }
-            }
-            dsu.count() == 1
-        }
-    }
-}
-
-impl<E: EdgeTrait> Index<usize> for Graph<E> {
-    type Output = [E];
-
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.edges[index]
-    }
-}
-
-impl<E: EdgeTrait> IndexMut<usize> for Graph<E> {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.edges[index]
-    }
-}
 
 pub trait WeakInteger:
     Add<Output = Self>
@@ -312,6 +64,8 @@ pub trait Integer:
 
     const SIGNED: bool;
 
+    fn max() -> Self;
+    fn min() -> Self;
     fn downcast(w: <Self as Integer>::W) -> Self;
 }
 
@@ -341,6 +95,14 @@ macro_rules! integer_impl {
             type W = $w;
 
             const SIGNED: bool = $s;
+
+            fn max() -> Self {
+                $t::MAX
+            }
+
+            fn min() -> Self {
+                $t::MIN
+            }
 
             fn downcast(w: <Self as Integer>::W) -> Self {
                 w as $t
@@ -840,79 +602,286 @@ macro_rules! out_line {
     }
 }
 
-pub trait Callable<Args, Output> {
-    fn call(&mut self, args: Args) -> Output;
+pub struct Arr2d<T> {
+    d1: usize,
+    d2: usize,
+    data: Vec<T>,
 }
 
-pub struct RecursiveFunction<F, Args, Output>
-where
-    F: FnMut(&mut dyn Callable<Args, Output>, Args) -> Output,
-{
-    f: F,
-    phantom_args: PhantomData<Args>,
-    phantom_output: PhantomData<Output>,
-}
-
-impl<F, Args, Output> RecursiveFunction<F, Args, Output>
-where
-    F: FnMut(&mut dyn Callable<Args, Output>, Args) -> Output,
-{
-    pub fn new(f: F) -> Self {
+impl<T: Clone> Arr2d<T> {
+    pub fn new(d1: usize, d2: usize, value: T) -> Self {
         Self {
-            f,
-            phantom_args: Default::default(),
-            phantom_output: Default::default(),
+            d1,
+            d2,
+            data: vec![value; d1 * d2],
         }
     }
 }
 
-impl<F, Args, Output> Callable<Args, Output> for RecursiveFunction<F, Args, Output>
-where
-    F: FnMut(&mut dyn Callable<Args, Output>, Args) -> Output,
-{
-    fn call(&mut self, args: Args) -> Output {
-        let const_ptr = &self.f as *const F;
-        let mut_ptr = const_ptr as *mut F;
-        unsafe { (&mut *mut_ptr)(self, args) }
+impl<T> Arr2d<T> {
+    pub fn generate<F>(d1: usize, d2: usize, mut gen: F) -> Self
+    where
+        F: FnMut(usize, usize) -> T,
+    {
+        let mut data = Vec::with_capacity(d1 * d2);
+        for i in 0usize..d1 {
+            for j in 0usize..d2 {
+                data.push(gen(i, j));
+            }
+        }
+        Self { d1, d2, data }
+    }
+
+    pub fn d1(&self) -> usize {
+        self.d1
+    }
+
+    pub fn d2(&self) -> usize {
+        self.d2
+    }
+
+    pub fn iter(&self) -> Iter<T> {
+        self.data.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> IterMut<T> {
+        self.data.iter_mut()
+    }
+
+    pub fn column(&self, col: usize) -> StepBy<Skip<Iter<T>>> {
+        assert!(col < self.d2);
+        self.data.iter().skip(col).step_by(self.d2)
+    }
+
+    pub fn column_mut(&mut self, col: usize) -> StepBy<Skip<IterMut<T>>> {
+        assert!(col < self.d2);
+        self.data.iter_mut().skip(col).step_by(self.d2)
     }
 }
+
+impl<T> Index<(usize, usize)> for Arr2d<T> {
+    type Output = T;
+
+    fn index(&self, (row, col): (usize, usize)) -> &Self::Output {
+        &self.data[self.d2 * row + col]
+    }
+}
+
+impl<T> Index<usize> for Arr2d<T> {
+    type Output = [T];
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.data[self.d2 * index..self.d2 * (index + 1)]
+    }
+}
+
+impl<T> IndexMut<(usize, usize)> for Arr2d<T> {
+    fn index_mut(&mut self, (row, col): (usize, usize)) -> &mut T {
+        &mut self.data[self.d2 * row + col]
+    }
+}
+
+impl<T> IndexMut<usize> for Arr2d<T> {
+    fn index_mut(&mut self, index: usize) -> &mut [T] {
+        &mut self.data[self.d2 * index..self.d2 * (index + 1)]
+    }
+}
+
+impl<T: Writable> Writable for Arr2d<T> {
+    fn write(&self, output: &mut Output) {
+        let mut at = 0usize;
+        for i in 0usize..self.d1 {
+            if i != 0 {
+                output.put(b'\n');
+            }
+            for j in 0usize..self.d2 {
+                if j != 0 {
+                    output.put(b' ');
+                }
+                self.data[at].write(output);
+                at += 1;
+            }
+        }
+    }
+}
+
+pub trait Arr2dRead {
+    fn read_table<T: Readable>(&mut self, d1: usize, d2: usize) -> Arr2d<T>;
+}
+
+impl Arr2dRead for Input<'_> {
+    fn read_table<T: Readable>(&mut self, d1: usize, d2: usize) -> Arr2d<T> {
+        Arr2d::generate(d1, d2, |_, _| self.read())
+    }
+}
+
+impl<T: Readable> Readable for Arr2d<T> {
+    fn read(input: &mut Input) -> Self {
+        let d1 = input.read();
+        let d2 = input.read();
+        input.read_table(d1, d2)
+    }
+}
+
+pub trait Value<T>: Copy + Eq + Hash {
+    fn val() -> T;
+}
+
+pub trait ConstValue<T>: Value<T> {
+    const VAL: T;
+}
+
+impl<T, V: ConstValue<T>> Value<T> for V {
+    fn val() -> T {
+        Self::VAL
+    }
+}
+
+#[macro_export]
+macro_rules! value {
+    ($name: ident, $t: ty, $val: expr) => {
+        #[derive(Copy, Clone, Eq, PartialEq, Hash)]
+        pub struct $name {}
+
+        impl ConstValue<$t> for $name {
+            const VAL: $t = $val;
+        }
+    };
+}
+
+pub trait DynamicValue<T>: Value<T> {
+    //noinspection RsSelfConvention
+    fn set_val(t: T);
+}
+
+#[macro_export]
+macro_rules! dynamic_value {
+    ($name: ident, $val_name: ident, $t: ty, $base: expr) => {
+        static mut $val_name: $t = $base;
+
+        #[derive(Copy, Clone, Eq, PartialEq, Hash)]
+        pub struct $name {}
+
+        impl DynamicValue<$t> for $name {
+            fn set_val(t: $t) {
+                unsafe {
+                    $val_name = t;
+                }
+            }
+        }
+
+        impl Value<$t> for $name {
+            fn val() -> $t {
+                unsafe { $val_name }
+            }
+        }
+    };
+}
+
+pub struct Directions<V: Value<[(isize, isize); N]>, const N: usize> {
+    phantom: PhantomData<V>,
+}
+
+impl<V: Value<[(isize, isize); N]>, const N: usize> Directions<V, N> {
+    pub fn iter(row: usize, col: usize, n: usize, m: usize) -> DirectionsIter<V, N> {
+        DirectionsIter {
+            row,
+            col,
+            n,
+            m,
+            at: 0,
+            phantom: Default::default(),
+        }
+    }
+}
+
+pub struct DirectionsIter<V: Value<[(isize, isize); N]>, const N: usize> {
+    row: usize,
+    col: usize,
+    n: usize,
+    m: usize,
+    at: usize,
+    phantom: PhantomData<V>,
+}
+
+impl<V: Value<[(isize, isize); N]>, const N: usize> Iterator for DirectionsIter<V, N> {
+    type Item = (usize, usize);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.at < N {
+            let nrow = (self.row as isize) + V::val()[self.at].0;
+            let ncol = (self.col as isize) + V::val()[self.at].1;
+            self.at += 1;
+            if nrow >= 0 && (nrow as usize) < self.n && ncol >= 0 && (ncol as usize) < self.m {
+                return Some((nrow as usize, ncol as usize));
+            }
+        }
+        None
+    }
+}
+
+value!(
+    D4Dirs,
+    [(isize, isize); 4],
+    [
+        (1isize, 0isize),
+        (0isize, 1isize),
+        (-1isize, 0isize),
+        (0isize, -1isize)
+    ]
+);
+
+pub type D4 = Directions<D4Dirs, 4>;
 
 fn solve(input: &mut Input, _test_case: usize) {
     let n = input.read();
-    let ranges = input.read_vec::<(i32, i32)>(n);
-    let edges = input.read_vec::<(usize, usize)>(n - 1);
+    let m = input.read();
+    let mut grid = input.read_table::<char>(n, m);
 
-    let mut graph = Graph::new(n);
-    for (from, to) in edges {
-        graph.add_edge(from - 1, BiEdge::new(to - 1));
-    }
-    assert!(graph.is_tree());
-    let mut index = 0usize;
-    let mut dfs = RecursiveFunction::new(|f, (vert, parent): (usize, usize)| -> (u64, u64) {
-        let mut low = 0u64;
-        let mut high = 0u64;
-        index += 1;
-        for e in graph[vert].iter() {
-            let next = e.to();
-            if next == parent {
+    let mut degree = Arr2d::new(n, m, 0u8);
+    let mut li = n;
+    let mut lj = m;
+    for i in 0..n {
+        for j in 0..m {
+            if grid[(i, j)] == '#' {
                 continue;
             }
-            let (clow, chigh) = f.call((next, vert));
-            low += cmp::max(
-                (ranges[vert].0 - ranges[next].0).abs() as u64 + clow,
-                (ranges[vert].0 - ranges[next].1).abs() as u64 + chigh,
-            );
-            high += cmp::max(
-                (ranges[vert].1 - ranges[next].0).abs() as u64 + clow,
-                (ranges[vert].1 - ranges[next].1).abs() as u64 + chigh,
-            );
+            if grid[(i, j)] == 'L' {
+                li = i;
+                lj = j;
+            }
+            if i > 0 && grid[(i - 1, j)] != '#' {
+                degree[(i - 1, j)] += 1;
+                degree[(i, j)] += 1;
+            }
+            if j > 0 && grid[(i, j - 1)] != '#' {
+                degree[(i, j - 1)] += 1;
+                degree[(i, j)] += 1;
+            }
         }
-        (low, high)
-    });
-    let res = dfs.call((0, n));
-    assert_eq!(index, n);
-    out_line!(res.0.max(res.1));
+    }
+    let mut q = VecDeque::new();
+    q.push_back((li, lj));
+    while !q.is_empty() {
+        let (r, c) = q.pop_front().unwrap();
+        for (nr, nc) in D4::iter(r, c, n, m) {
+            if grid[(nr, nc)] == '.' {
+                degree[(nr, nc)] -= 1;
+                if degree[(nr, nc)] <= 1 {
+                    q.push_back((nr, nc));
+                    grid[(nr, nc)] = '+';
+                }
+            }
+        }
+    }
+    for i in 0..n {
+        for j in 0..m {
+            out!(grid[(i, j)]);
+        }
+        out_line!("");
+    }
 }
+
 
 fn run(mut input: Input) -> bool {
     let t = input.read();

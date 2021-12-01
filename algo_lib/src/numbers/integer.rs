@@ -43,6 +43,8 @@ pub trait Integer:
 
     const SIGNED: bool;
 
+    fn max() -> Self;
+    fn min() -> Self;
     fn downcast(w: <Self as Integer>::W) -> Self;
 }
 
@@ -72,6 +74,14 @@ macro_rules! integer_impl {
             type W = $w;
 
             const SIGNED: bool = $s;
+
+            fn max() -> Self {
+                $t::MAX
+            }
+
+            fn min() -> Self {
+                $t::MIN
+            }
 
             fn downcast(w: <Self as Integer>::W) -> Self {
                 w as $t

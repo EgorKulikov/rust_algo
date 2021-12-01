@@ -4,11 +4,11 @@ use std::fs::{create_dir, File};
 use std::io::{BufRead, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
-use std::ptr::read;
 use std::{io, thread};
 
 //noinspection RsFieldNaming
 #[derive(Deserialize, Serialize, Debug)]
+#[allow(non_snake_case)]
 struct IOType {
     r#type: String,
     fileName: Option<String>,
@@ -22,6 +22,7 @@ struct Test {
 
 //noinspection RsFieldNaming
 #[derive(Deserialize, Serialize, Debug)]
+#[allow(non_snake_case)]
 struct TaskClass {
     taskClass: String,
 }
@@ -33,6 +34,7 @@ struct Languages {
 
 //noinspection RsFieldNaming
 #[derive(Deserialize, Serialize, Debug)]
+#[allow(non_snake_case)]
 struct Task {
     name: String,
     group: String,

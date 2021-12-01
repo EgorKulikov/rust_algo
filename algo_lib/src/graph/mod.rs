@@ -10,6 +10,8 @@ pub mod flow_edge_trait;
 pub mod graph;
 pub mod hl_decomposition;
 pub mod lca;
+pub mod max_flow;
+pub mod topological_sort;
 pub mod weighted_edge;
 pub mod weighted_edge_trait;
 pub mod weighted_flow_edge;

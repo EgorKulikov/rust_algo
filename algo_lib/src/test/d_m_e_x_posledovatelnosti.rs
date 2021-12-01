@@ -1,3 +1,168 @@
+//Codeforces - Educational Codeforces Round 118 (рейтинговый для Div. 2)
+//{"type":"stdin","fileName":null}
+//{"type":"stdout","fileName":null}
+
+use crate::io::input::Input;
+use crate::io::output::{output, Output, OUTPUT};
+use crate::numbers::integer::WeakInteger;
+use crate::numbers::mod_int::{ModInt, ModIntF};
+use crate::types::recursive_function::{Callable, RecursiveFunction};
+use crate::{out, out_line};
+
+fn solve_impl(n: usize, a: Vec<usize>) -> ModIntF {
+    type Mod = ModIntF;
+    let mut exact = vec![Mod::zero(); n + 3];
+    let mut seq = vec![Mod::zero(); n + 3];
+    let mut ans = Mod::zero();
+    for i in a {
+        ans += exact[i];
+        exact[i] *= Mod::two();
+        ans += exact[i + 2];
+        exact[i + 2] *= Mod::two();
+        let mut cseq = seq[i];
+        if i > 0 {
+            cseq += seq[i - 1];
+        } else {
+            cseq += Mod::one();
+        }
+        ans += cseq;
+        seq[i] += cseq;
+        if i > 1 {
+            ans += seq[i - 2];
+            exact[i] += seq[i - 2];
+        } else if i == 1 {
+            ans += Mod::one();
+            exact[i] += Mod::one();
+        }
+    }
+    ans
+}
+
+fn solve(input: &mut Input, _test_case: usize) {
+    let n = input.read();
+    let a = input.read_vec::<usize>(n);
+
+    out_line!(solve_impl(n, a));
+}
+
+//START SKIP
+#[test]
+fn stress() {
+    let mex = |a: &[usize]| -> usize {
+        let set = a.iter().cloned().collect::<std::collections::HashSet<_>>();
+        let mut i = 0usize;
+        loop {
+            if !set.contains(&i) {
+                break i;
+            }
+            i += 1;
+        }
+    };
+    let mut do_stress = RecursiveFunction::new(|f, (n, a): (_, Vec<usize>)| {
+        if a.len() == n {
+            let mut res = ModIntF::zero();
+            for i in 1u32..(1 << n) {
+                let mut b = Vec::new();
+                for j in 0..n {
+                    if ((i >> j) & 1) == 1 {
+                        b.push(a[j]);
+                    }
+                }
+                let mut good = true;
+                for j in 1..=b.len() {
+                    if ((b[j - 1] as isize) - (mex(&b[0..j]) as isize)).abs() > 1 {
+                        good = false;
+                        break;
+                    }
+                }
+                if good {
+                    res += ModIntF::one();
+                }
+            }
+            let act = solve_impl(n, a.clone());
+            if res != act {
+                panic!("");
+            }
+        } else {
+            for i in 0..=n {
+                let mut b = a.clone();
+                b.push(i);
+                f.call((n, b));
+            }
+        }
+    });
+    for n in 1..=5 {
+        do_stress.call((n, Vec::new()));
+    }
+}
+
+//END SKIP
+
+fn run(mut input: Input) -> bool {
+    let t = input.read();
+    for i in 0usize..t {
+        solve(&mut input, i + 1);
+    }
+    output().flush();
+    input.skip_whitespace();
+    !input.peek().is_some()
+}
+
+//START SKIP
+fn check(expected: &mut &[u8], actual: &mut &[u8]) -> Result<(), String> {
+    let mut expected = Input::new(expected);
+    let mut actual = Input::new(actual);
+    let mut token_num = 0usize;
+    loop {
+        let expected_token = expected.next_token();
+        let actual_token = actual.next_token();
+        if expected_token != actual_token {
+            if expected_token.is_none() {
+                return Err(format!("Expected has only {} tokens", token_num));
+            } else if actual_token.is_none() {
+                return Err(format!("Actual has only {} tokens", token_num));
+            } else {
+                return Err(format!(
+                    "Token #{} differs, expectes {}, actual {}",
+                    token_num,
+                    expected_token.unwrap(),
+                    actual_token.unwrap()
+                ));
+            }
+        }
+        token_num += 1;
+        if actual_token.is_none() {
+            break;
+        }
+    }
+    Ok(())
+}
+
+static mut OUT: Vec<u8> = Vec::new();
+
+struct WriteDelegate {}
+
+impl std::io::Write for WriteDelegate {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        unsafe {
+            OUT.append(&mut Vec::from(buf));
+        }
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+fn run_tests() -> bool {
+    let blue = "\x1B[34m";
+    let red = "\x1B[31m";
+    let green = "\x1B[32m";
+    let yellow = "\x1B[33m";
+    let def = "\x1B[0m";
+    let time_limit = std::time::Duration::from_millis(2000);
+    let mut paths = std::fs::read_dir("./src/test/d_m_e_x_posledovatelnosti/")
         .unwrap()
         .map(|res| res.unwrap())
         .collect::<Vec<_>>();
@@ -112,3 +277,7 @@
     test_failed == 0
 }
 //END SKIP
+#[test]
+fn d_m_e_x_posledovatelnosti() {
+    assert!(run_tests());
+}
