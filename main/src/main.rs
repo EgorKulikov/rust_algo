@@ -1,19 +1,20 @@
-use std::cmp;
-use std::ops::Rem;
-use std::ops::RemAssign;
-use std::ops::MulAssign;
-use std::ops::DivAssign;
-use std::fmt::Display;
-use std::ops::Index;
 use std::ops::Add;
-use std::ops::IndexMut;
-use std::ops::AddAssign;
-use std::ops::Sub;
-use std::hash::Hash;
-use std::ops::Mul;
-use std::io::Read;
+use std::marker::PhantomData;
 use std::ops::Div;
+use std::hash::Hash;
+use std::ops::MulAssign;
+use std::io::Read;
 use std::io::Write;
+use std::cmp;
+use std::ops::AddAssign;
+use std::ops::DivAssign;
+use std::ops::RemAssign;
+use std::ops::IndexMut;
+use std::ops::Index;
+use std::ops::Mul;
+use std::ops::Rem;
+use std::fmt::Display;
+use std::ops::Sub;
 use std::ops::SubAssign;
 
 pub trait EdgeTrait: Clone {
@@ -137,7 +138,7 @@ impl DSU {
     pub fn new(n: usize) -> Self {
         Self {
             id: create_order(n),
-            size: vec![n; 1],
+            size: vec![1; n],
             count: n,
         }
     }
@@ -253,58 +254,7 @@ impl<E: EdgeTrait> Graph<E> {
             dsu.count() == 1
         }
     }
-
-    // pub fn dfs_with_root<F, Args, Output>(&self, f: F, root: usize, args: Args) -> Output
-    // where
-    //     F: Fn(
-    //         &dyn Fn(usize, usize, Args) -> Output,
-    //         usize,
-    //         Args,
-    //         &dyn Iterator<Item = &E>,
-    //     ) -> Output,
-    // {
-    //     self.call_dfs(&f, root, self.vertex_count(), args)
-    // }
-    //
-    // fn call_dfs<F, Args, Output>(&self, f: &F, root: usize, parent: usize, args: Args) -> Output
-    // where
-    //     F: Fn(
-    //         &dyn Fn(usize, usize, Args) -> Output,
-    //         usize,
-    //         Args,
-    //         &dyn Iterator<Item = &E>,
-    //     ) -> Output,
-    // {
-    //     let iter = DFSIter {
-    //         iter: self[root].iter(),
-    //         skip: parent,
-    //     };
-    //     f(
-    //         &|root, parent, args| self.call_dfs(f, root, parent, args),
-    //         root,
-    //         args,
-    //         &iter,
-    //     )
-    // }
 }
-
-// struct DFSIter<'a, E: EdgeTrait> {
-//     iter: Iter<'a, E>,
-//     skip: usize,
-// }
-//
-// impl<'a, E: EdgeTrait> Iterator for DFSIter<'a, E> {
-//     type Item = &'a E;
-//
-//     fn next(&mut self) -> Option<Self::Item> {
-//         while let Some(e) = self.iter.next() {
-//             if e.to() == self.skip {
-//                 return Some(e);
-//             }
-//         }
-//         None
-//     }
-// }
 
 impl<E: EdgeTrait> Index<usize> for Graph<E> {
     type Output = [E];
@@ -890,6 +840,43 @@ macro_rules! out_line {
     }
 }
 
+pub trait Callable<Args, Output> {
+    fn call(&mut self, args: Args) -> Output;
+}
+
+pub struct RecursiveFunction<F, Args, Output>
+where
+    F: FnMut(&mut dyn Callable<Args, Output>, Args) -> Output,
+{
+    f: F,
+    phantom_args: PhantomData<Args>,
+    phantom_output: PhantomData<Output>,
+}
+
+impl<F, Args, Output> RecursiveFunction<F, Args, Output>
+where
+    F: FnMut(&mut dyn Callable<Args, Output>, Args) -> Output,
+{
+    pub fn new(f: F) -> Self {
+        Self {
+            f,
+            phantom_args: Default::default(),
+            phantom_output: Default::default(),
+        }
+    }
+}
+
+impl<F, Args, Output> Callable<Args, Output> for RecursiveFunction<F, Args, Output>
+where
+    F: FnMut(&mut dyn Callable<Args, Output>, Args) -> Output,
+{
+    fn call(&mut self, args: Args) -> Output {
+        let const_ptr = &self.f as *const F;
+        let mut_ptr = const_ptr as *mut F;
+        unsafe { (&mut *mut_ptr)(self, args) }
+    }
+}
+
 fn solve(input: &mut Input, _test_case: usize) {
     let n = input.read();
     let ranges = input.read_vec::<(i32, i32)>(n);
@@ -900,39 +887,30 @@ fn solve(input: &mut Input, _test_case: usize) {
         graph.add_edge(from - 1, BiEdge::new(to - 1));
     }
     assert!(graph.is_tree());
-    let mut index = 0;
-    struct Context<'s> {
-        graph: &'s Graph<BiEdge>,
-        ranges: &'s Vec<(i32, i32)>,
-        index: &'s mut i32,
-    }
-    fn dfs(vert: usize, parent: usize, ctx: &mut Context) -> (u64, u64) {
+    let mut index = 0usize;
+    let mut dfs = RecursiveFunction::new(|f, (vert, parent): (usize, usize)| -> (u64, u64) {
         let mut low = 0u64;
         let mut high = 0u64;
-        *ctx.index += 1;
-        for e in ctx.graph[vert].iter() {
+        index += 1;
+        for e in graph[vert].iter() {
             let next = e.to();
             if next == parent {
                 continue;
             }
-            let (clow, chigh) = dfs(next, vert, ctx);
+            let (clow, chigh) = f.call((next, vert));
             low += cmp::max(
-                (ctx.ranges[vert].0 - ctx.ranges[next].0).abs() as u64 + clow,
-                (ctx.ranges[vert].0 - ctx.ranges[next].1).abs() as u64 + chigh,
+                (ranges[vert].0 - ranges[next].0).abs() as u64 + clow,
+                (ranges[vert].0 - ranges[next].1).abs() as u64 + chigh,
             );
             high += cmp::max(
-                (ctx.ranges[vert].1 - ctx.ranges[next].0).abs() as u64 + clow,
-                (ctx.ranges[vert].1 - ctx.ranges[next].1).abs() as u64 + chigh,
+                (ranges[vert].1 - ranges[next].0).abs() as u64 + clow,
+                (ranges[vert].1 - ranges[next].1).abs() as u64 + chigh,
             );
         }
         (low, high)
-    }
-    let mut ctx = Context {
-        graph: &graph,
-        ranges: &ranges,
-        index: &mut index,
-    };
-    let res = dfs(0, n, &mut ctx);
+    });
+    let res = dfs.call((0, n));
+    assert_eq!(index, n);
     out_line!(res.0.max(res.1));
 }
 

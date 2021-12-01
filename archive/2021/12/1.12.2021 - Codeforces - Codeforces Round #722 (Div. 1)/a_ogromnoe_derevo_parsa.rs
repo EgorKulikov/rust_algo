@@ -7,6 +7,7 @@ use algo_lib::graph::edge_trait::EdgeTrait;
 use algo_lib::graph::graph::Graph;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::{output, Output, OUTPUT};
+use algo_lib::types::recursive_function::{Callable, RecursiveFunction};
 use algo_lib::{out, out_line};
 use std::cmp;
 
@@ -20,39 +21,30 @@ fn solve(input: &mut Input, _test_case: usize) {
         graph.add_edge(from - 1, BiEdge::new(to - 1));
     }
     assert!(graph.is_tree());
-    let mut index = 0;
-    struct Context<'s> {
-        graph: &'s Graph<BiEdge>,
-        ranges: &'s Vec<(i32, i32)>,
-        index: &'s mut i32,
-    }
-    fn dfs(vert: usize, parent: usize, ctx: &mut Context) -> (u64, u64) {
+    let mut index = 0usize;
+    let mut dfs = RecursiveFunction::new(|f, (vert, parent): (usize, usize)| -> (u64, u64) {
         let mut low = 0u64;
         let mut high = 0u64;
-        *ctx.index += 1;
-        for e in ctx.graph[vert].iter() {
+        index += 1;
+        for e in graph[vert].iter() {
             let next = e.to();
             if next == parent {
                 continue;
             }
-            let (clow, chigh) = dfs(next, vert, ctx);
+            let (clow, chigh) = f.call((next, vert));
             low += cmp::max(
-                (ctx.ranges[vert].0 - ctx.ranges[next].0).abs() as u64 + clow,
-                (ctx.ranges[vert].0 - ctx.ranges[next].1).abs() as u64 + chigh,
+                (ranges[vert].0 - ranges[next].0).abs() as u64 + clow,
+                (ranges[vert].0 - ranges[next].1).abs() as u64 + chigh,
             );
             high += cmp::max(
-                (ctx.ranges[vert].1 - ctx.ranges[next].0).abs() as u64 + clow,
-                (ctx.ranges[vert].1 - ctx.ranges[next].1).abs() as u64 + chigh,
+                (ranges[vert].1 - ranges[next].0).abs() as u64 + clow,
+                (ranges[vert].1 - ranges[next].1).abs() as u64 + chigh,
             );
         }
         (low, high)
-    }
-    let mut ctx = Context {
-        graph: &graph,
-        ranges: &ranges,
-        index: &mut index,
-    };
-    let res = dfs(0, n, &mut ctx);
+    });
+    let res = dfs.call((0, n));
+    assert_eq!(index, n);
     out_line!(res.0.max(res.1));
 }
 
