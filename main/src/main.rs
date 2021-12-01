@@ -1,345 +1,334 @@
-use std::fmt::Display;
-use std::hash::Hash;
-use std::io::Read;
-use std::io::Write;
-use std::ops::Add;
-use std::ops::AddAssign;
-use std::ops::Div;
-use std::ops::DivAssign;
-use std::ops::Index;
-use std::ops::IndexMut;
-use std::ops::Mul;
-use std::ops::MulAssign;
+use std::cmp;
 use std::ops::Rem;
 use std::ops::RemAssign;
+use std::ops::MulAssign;
+use std::ops::DivAssign;
+use std::fmt::Display;
+use std::ops::Index;
+use std::ops::Add;
+use std::ops::IndexMut;
+use std::ops::AddAssign;
 use std::ops::Sub;
+use std::hash::Hash;
+use std::ops::Mul;
+use std::io::Read;
+use std::ops::Div;
+use std::io::Write;
 use std::ops::SubAssign;
 
-pub fn create_order(n: usize) -> Vec<usize> {
-    let mut res = Vec::with_capacity(n);
-    for i in 0..n {
+pub trait EdgeTrait: Clone {
+    const REVERSABLE: bool;
+    const BIDIRECTIONAL: bool;
+
+    fn to(&self) -> usize;
+    fn id(&self) -> usize;
+    fn set_id(&mut self, id: usize);
+    fn reverse_id(&self) -> usize;
+    fn set_reverse_id(&mut self, reverse_id: usize);
+    fn reverse_edge(&self, from: usize) -> Self;
+}
+
+pub trait BiEdgeTrait: EdgeTrait {}
+pub trait EdgeId: Clone {
+    fn new() -> Self;
+    fn id(&self) -> usize;
+    fn set_id(&mut self, id: usize);
+}
+
+#[derive(Clone)]
+pub struct WithId {
+    id: u32,
+}
+
+impl EdgeId for WithId {
+    fn new() -> Self {
+        Self { id: 0 }
+    }
+
+    fn id(&self) -> usize {
+        self.id as usize
+    }
+
+    fn set_id(&mut self, id: usize) {
+        self.id = id as u32;
+    }
+}
+
+#[derive(Clone)]
+pub struct NoId {}
+
+impl EdgeId for NoId {
+    fn new() -> Self {
+        Self {}
+    }
+
+    fn id(&self) -> usize {
+        panic!("Id called on no id")
+    }
+
+    fn set_id(&mut self, _: usize) {}
+}
+
+#[derive(Clone)]
+pub struct BiEdgeRaw<Id: EdgeId> {
+    to: u32,
+    id: Id,
+}
+
+impl<Id: EdgeId> BiEdgeRaw<Id> {
+    pub fn new(to: usize) -> Self {
+        Self {
+            to: to as u32,
+            id: Id::new(),
+        }
+    }
+}
+
+impl<Id: EdgeId> EdgeTrait for BiEdgeRaw<Id> {
+    const REVERSABLE: bool = true;
+    const BIDIRECTIONAL: bool = true;
+
+    fn to(&self) -> usize {
+        self.to as usize
+    }
+
+    fn id(&self) -> usize {
+        self.id.id()
+    }
+
+    fn set_id(&mut self, id: usize) {
+        self.id.set_id(id);
+    }
+
+    fn reverse_id(&self) -> usize {
+        panic!("no reverse id")
+    }
+
+    fn set_reverse_id(&mut self, _: usize) {}
+
+    fn reverse_edge(&self, from: usize) -> Self {
+        Self::new(from)
+    }
+}
+
+impl<Id: EdgeId> BiEdgeTrait for BiEdgeRaw<Id> {}
+
+pub type BiEdge = BiEdgeRaw<NoId>;
+pub type BiEdgeWithId = BiEdgeRaw<WithId>;
+pub fn create_order(size: usize) -> Vec<usize> {
+    create_order_with_base(size, 0)
+}
+
+pub fn create_order_with_base(size: usize, base: usize) -> Vec<usize> {
+    let mut res = Vec::with_capacity(size);
+    for i in base..(size + base) {
         res.push(i);
     }
     res
 }
 
-pub trait MinimMaxim: PartialOrd + Sized {
-    fn minim(&mut self, other: Self) -> bool {
-        if other < *self {
-            *self = other;
-            true
-        } else {
+pub struct DSU {
+    id: Vec<usize>,
+    size: Vec<usize>,
+    count: usize,
+}
+
+impl DSU {
+    pub fn new(n: usize) -> Self {
+        Self {
+            id: create_order(n),
+            size: vec![n; 1],
+            count: n,
+        }
+    }
+
+    pub fn size(&self, i: usize) -> usize {
+        self.size[self[i]]
+    }
+
+    pub fn count(&self) -> usize {
+        self.count
+    }
+
+    pub fn join(&mut self, mut a: usize, mut b: usize) -> bool {
+        a = self[a];
+        b = self[b];
+        if a == b {
             false
-        }
-    }
-
-    fn maxim(&mut self, other: Self) -> bool {
-        if other > *self {
-            *self = other;
-            true
         } else {
+            self.size[a] += self.size[b];
+            self.id[b] = a;
+            self.count -= 1;
+            true
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.count = self.id.len();
+        self.size.fill(1);
+        for i in 0..self.count {
+            self.id[i] = i;
+        }
+    }
+}
+
+impl Index<usize> for DSU {
+    type Output = usize;
+
+    fn index(&self, i: usize) -> &Self::Output {
+        if self.id[i] != i {
+            let res = self[self.id[i]];
+            unsafe {
+                let const_ptr = self as *const Self;
+                let mut_ptr = const_ptr as *mut Self;
+                let mut_self = &mut *mut_ptr;
+                mut_self.id[i] = res;
+            }
+        }
+        &self.id[i]
+    }
+}
+// use std::slice::Iter;
+
+pub struct Graph<E: EdgeTrait> {
+    edges: Vec<Vec<E>>,
+    edge_count: usize,
+}
+
+impl<E: EdgeTrait> Graph<E> {
+    pub fn new(vertex_count: usize) -> Self {
+        Self {
+            edges: vec![Vec::new(); vertex_count],
+            edge_count: 0,
+        }
+    }
+
+    pub fn add_edge(&mut self, from: usize, mut edge: E) -> usize {
+        let to = edge.to();
+        assert!(to < self.edges.len());
+        let direct_id = self.edges[from].len();
+        edge.set_id(self.edge_count);
+        self.edges[from].push(edge);
+        if E::REVERSABLE {
+            let rev_id = self.edges[to].len();
+            self.edges[from][direct_id].set_reverse_id(rev_id);
+            let mut rev_edge = self.edges[from][direct_id].reverse_edge(from);
+            rev_edge.set_id(self.edge_count);
+            rev_edge.set_reverse_id(direct_id);
+            self.edges[to].push(rev_edge);
+        }
+        self.edge_count += 1;
+        direct_id
+    }
+
+    pub fn add_vertices(&mut self, cnt: usize) {
+        self.edges.resize(self.edges.len() + cnt, Vec::new());
+    }
+
+    pub fn clear(&mut self) {
+        self.edge_count = 0;
+        for ve in self.edges.iter_mut() {
+            ve.clear();
+        }
+    }
+
+    pub fn vertex_count(&self) -> usize {
+        self.edges.len()
+    }
+
+    pub fn edge_count(&self) -> usize {
+        self.edge_count
+    }
+
+    pub fn is_tree(&self) -> bool {
+        if !E::BIDIRECTIONAL || self.edge_count + 1 != self.vertex_count() {
             false
-        }
-    }
-}
-
-impl<T: PartialOrd + Sized> MinimMaxim for T {}
-
-pub struct Output {
-    output: Box<dyn Write>,
-    buf: Vec<u8>,
-    at: usize,
-    autoflush: bool,
-}
-
-impl Output {
-    const DEFAULT_BUF_SIZE: usize = 4096;
-
-    pub fn new(output: Box<dyn Write>) -> Self {
-        Self {
-            output,
-            buf: vec![0; Self::DEFAULT_BUF_SIZE],
-            at: 0,
-            autoflush: false,
-        }
-    }
-
-    pub fn new_with_autoflush(output: Box<dyn Write>) -> Self {
-        Self {
-            output,
-            buf: vec![0; Self::DEFAULT_BUF_SIZE],
-            at: 0,
-            autoflush: true,
-        }
-    }
-
-    pub fn flush(&mut self) {
-        if self.at != 0 {
-            self.output.write(&self.buf[..self.at]).unwrap();
-            self.at = 0;
-        }
-    }
-
-    pub fn print<T: Writable>(&mut self, s: &T) {
-        s.write(self);
-    }
-
-    pub fn put(&mut self, b: u8) {
-        self.buf[self.at] = b;
-        self.at += 1;
-        if self.at == self.buf.len() {
-            self.flush();
-        }
-    }
-
-    pub fn print_per_line<T: Writable>(&mut self, arg: &[T]) {
-        for i in arg {
-            i.write(self);
-            self.put(b'\n');
-        }
-    }
-}
-
-impl Write for Output {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        let mut start = 0usize;
-        let mut rem = buf.len();
-        while rem > 0 {
-            let len = (self.buf.len() - self.at).min(rem);
-            self.buf[self.at..self.at + len].copy_from_slice(&buf[start..start + len]);
-            self.at += len;
-            if self.at == self.buf.len() {
-                self.flush();
+        } else {
+            let mut dsu = DSU::new(self.vertex_count());
+            for i in 0..self.vertex_count() {
+                for e in self[i].iter() {
+                    dsu.join(i, e.to());
+                }
             }
-            start += len;
-            rem -= len;
-        }
-        if self.autoflush {
-            self.flush();
-        }
-        Ok(buf.len())
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        self.flush();
-        Ok(())
-    }
-}
-
-pub trait Writable {
-    fn write(&self, output: &mut Output);
-}
-
-impl Writable for &str {
-    fn write(&self, output: &mut Output) {
-        output.write(&self.as_bytes()).unwrap();
-    }
-}
-
-impl Writable for String {
-    fn write(&self, output: &mut Output) {
-        output.write(&self.as_bytes()).unwrap();
-    }
-}
-
-impl Writable for char {
-    fn write(&self, output: &mut Output) {
-        output.put(*self as u8);
-    }
-}
-
-impl<T: Writable> Writable for [T] {
-    fn write(&self, output: &mut Output) {
-        let mut first = true;
-        for e in self.iter() {
-            if first {
-                first = false;
-            } else {
-                output.put(b' ');
-            }
-            e.write(output);
+            dsu.count() == 1
         }
     }
+
+    // pub fn dfs_with_root<F, Args, Output>(&self, f: F, root: usize, args: Args) -> Output
+    // where
+    //     F: Fn(
+    //         &dyn Fn(usize, usize, Args) -> Output,
+    //         usize,
+    //         Args,
+    //         &dyn Iterator<Item = &E>,
+    //     ) -> Output,
+    // {
+    //     self.call_dfs(&f, root, self.vertex_count(), args)
+    // }
+    //
+    // fn call_dfs<F, Args, Output>(&self, f: &F, root: usize, parent: usize, args: Args) -> Output
+    // where
+    //     F: Fn(
+    //         &dyn Fn(usize, usize, Args) -> Output,
+    //         usize,
+    //         Args,
+    //         &dyn Iterator<Item = &E>,
+    //     ) -> Output,
+    // {
+    //     let iter = DFSIter {
+    //         iter: self[root].iter(),
+    //         skip: parent,
+    //     };
+    //     f(
+    //         &|root, parent, args| self.call_dfs(f, root, parent, args),
+    //         root,
+    //         args,
+    //         &iter,
+    //     )
+    // }
 }
 
-impl<T: Writable> Writable for Vec<T> {
-    fn write(&self, output: &mut Output) {
-        self[..].write(output);
-    }
-}
+// struct DFSIter<'a, E: EdgeTrait> {
+//     iter: Iter<'a, E>,
+//     skip: usize,
+// }
+//
+// impl<'a, E: EdgeTrait> Iterator for DFSIter<'a, E> {
+//     type Item = &'a E;
+//
+//     fn next(&mut self) -> Option<Self::Item> {
+//         while let Some(e) = self.iter.next() {
+//             if e.to() == self.skip {
+//                 return Some(e);
+//             }
+//         }
+//         None
+//     }
+// }
 
-macro_rules! write_to_string {
-    ($t:ident) => {
-        impl Writable for $t {
-            fn write(&self, output: &mut Output) {
-                self.to_string().write(output);
-            }
-        }
-    };
-}
-
-write_to_string!(u8);
-write_to_string!(u16);
-write_to_string!(u32);
-write_to_string!(u64);
-write_to_string!(u128);
-write_to_string!(usize);
-write_to_string!(i8);
-write_to_string!(i16);
-write_to_string!(i32);
-write_to_string!(i64);
-write_to_string!(i128);
-write_to_string!(isize);
-
-impl<T: Writable, U: Writable> Writable for (T, U) {
-    fn write(&self, output: &mut Output) {
-        self.0.write(output);
-        output.put(b' ');
-        self.1.write(output);
-    }
-}
-
-impl<T: Writable, U: Writable, V: Writable> Writable for (T, U, V) {
-    fn write(&self, output: &mut Output) {
-        self.0.write(output);
-        output.put(b' ');
-        self.1.write(output);
-        output.put(b' ');
-        self.2.write(output);
-    }
-}
-
-pub static mut OUTPUT: Option<Output> = None;
-
-pub fn output() -> &'static mut Output {
-    unsafe {
-        match &mut OUTPUT {
-            None => {
-                panic!("Panic");
-            }
-            Some(output) => output,
-        }
-    }
-}
-
-#[macro_export]
-macro_rules! out {
-    ($first: expr $(,$args:expr )*) => {
-        output().print(&$first);
-        $(output().put(b' ');
-        output().print(&$args);
-        )*
-    }
-}
-
-#[macro_export]
-macro_rules! out_line {
-    ($first: expr $(, $args:expr )* ) => {
-        out!($first $(,$args)*);
-        output().put(b'\n');
-    }
-}
-
-pub struct Arr2d<T> {
-    d1: usize,
-    d2: usize,
-    data: Vec<T>,
-}
-
-impl<T: Copy> Arr2d<T> {
-    pub fn new(d1: usize, d2: usize, value: T) -> Self {
-        Self {
-            d1,
-            d2,
-            data: vec![value; d1 * d2],
-        }
-    }
-}
-
-impl<T> Arr2d<T> {
-    pub fn generate<F>(d1: usize, d2: usize, mut gen: F) -> Self
-    where
-        F: FnMut(usize, usize) -> T,
-    {
-        let mut data = Vec::with_capacity(d1 * d2);
-        for i in 0usize..d1 {
-            for j in 0usize..d2 {
-                data.push(gen(i, j));
-            }
-        }
-        Self { d1, d2, data }
-    }
-
-    pub fn d1(&self) -> usize {
-        self.d1
-    }
-
-    pub fn d2(&self) -> usize {
-        self.d2
-    }
-}
-
-impl<T> Index<(usize, usize)> for Arr2d<T> {
-    type Output = T;
-
-    fn index(&self, index: (usize, usize)) -> &Self::Output {
-        &self.data[self.d2 * index.0 + index.1]
-    }
-}
-
-impl<T> Index<usize> for Arr2d<T> {
-    type Output = [T];
+impl<E: EdgeTrait> Index<usize> for Graph<E> {
+    type Output = [E];
 
     fn index(&self, index: usize) -> &Self::Output {
-        &self.data[self.d2 * index..self.d2 * (index + 1)]
+        &self.edges[index]
     }
 }
 
-impl<T> IndexMut<(usize, usize)> for Arr2d<T> {
-    fn index_mut(&mut self, index: (usize, usize)) -> &mut T {
-        &mut self.data[self.d2 * index.0 + index.1]
-    }
-}
-
-impl<T> IndexMut<usize> for Arr2d<T> {
-    fn index_mut(&mut self, index: usize) -> &mut [T] {
-        &mut self.data[self.d2 * index..self.d2 * (index + 1)]
-    }
-}
-
-impl<T: Writable> Writable for Arr2d<T> {
-    fn write(&self, output: &mut Output) {
-        let mut at = 0usize;
-        for i in 0usize..self.d1 {
-            if i != 0 {
-                output.put(b'\n');
-            }
-            for j in 0usize..self.d2 {
-                if j != 0 {
-                    output.put(b' ');
-                }
-                self.data[at].write(output);
-                at += 1;
-            }
-        }
+impl<E: EdgeTrait> IndexMut<usize> for Graph<E> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.edges[index]
     }
 }
 
 pub trait WeakInteger:
     Add<Output = Self>
     + AddAssign
-    + Div<Output = Self>
-    + DivAssign
     + Mul<Output = Self>
     + MulAssign
     + Sub<Output = Self>
     + SubAssign
     + PartialEq
-    + Display
-    + std::fmt::Debug
     + Copy
-    + Readable
-    + Writable
     + Eq
     + Hash
 {
@@ -366,7 +355,9 @@ pub trait WeakInteger:
     }
 }
 
-pub trait Integer: WeakInteger + Ord + Rem<Output = Self> + RemAssign + 'static {
+pub trait Integer:
+    WeakInteger + Ord + Div<Output = Self> + DivAssign + Rem<Output = Self> + RemAssign + 'static
+{
     type W: From<Self> + Integer;
 
     const SIGNED: bool;
@@ -510,10 +501,6 @@ impl<'s> Input<'s> {
         res
     }
 
-    pub fn read_table<T: Readable>(&mut self, d1: usize, d2: usize) -> Arr2d<T> {
-        Arr2d::generate(d1, d2, |_, _| self.read())
-    }
-
     pub fn read_line(&mut self) -> String {
         let mut res = String::new();
         while let Some(c) = self.get() {
@@ -531,7 +518,7 @@ impl<'s> Input<'s> {
         res
     }
 
-    fn read_integer<T: Integer>(&mut self) -> T {
+    fn read_integer<T: Integer + Display>(&mut self) -> T {
         self.skip_whitespace();
         let mut c = self.get().unwrap();
         let sgn = if c == b'-' {
@@ -636,11 +623,13 @@ impl<T: Readable> Readable for Vec<T> {
     }
 }
 
-impl<T: Readable> Readable for Arr2d<T> {
+impl<T: Readable, const N: usize> Readable for [T; N] {
     fn read(input: &mut Input) -> Self {
-        let d1 = input.read();
-        let d2 = input.read();
-        input.read_table(d1, d2)
+        let mut arr: [T; N] = unsafe { std::mem::MaybeUninit::uninit().assume_init() };
+        for i in 0..N {
+            arr[i] = T::read(input);
+        }
+        arr
     }
 }
 
@@ -690,31 +679,261 @@ tuple_readable! {T U V X Y Z A B C D}
 tuple_readable! {T U V X Y Z A B C D E}
 tuple_readable! {T U V X Y Z A B C D E F}
 
+pub struct Output {
+    output: Box<dyn Write>,
+    buf: Vec<u8>,
+    at: usize,
+    autoflush: bool,
+}
+
+impl Output {
+    const DEFAULT_BUF_SIZE: usize = 4096;
+
+    pub fn new(output: Box<dyn Write>) -> Self {
+        Self {
+            output,
+            buf: vec![0; Self::DEFAULT_BUF_SIZE],
+            at: 0,
+            autoflush: false,
+        }
+    }
+
+    pub fn new_with_autoflush(output: Box<dyn Write>) -> Self {
+        Self {
+            output,
+            buf: vec![0; Self::DEFAULT_BUF_SIZE],
+            at: 0,
+            autoflush: true,
+        }
+    }
+
+    pub fn flush(&mut self) {
+        if self.at != 0 {
+            self.output.write(&self.buf[..self.at]).unwrap();
+            self.at = 0;
+        }
+    }
+
+    pub fn print<T: Writable>(&mut self, s: &T) {
+        s.write(self);
+    }
+
+    pub fn put(&mut self, b: u8) {
+        self.buf[self.at] = b;
+        self.at += 1;
+        if self.at == self.buf.len() {
+            self.flush();
+        }
+    }
+
+    pub fn print_per_line<T: Writable>(&mut self, arg: &[T]) {
+        for i in arg {
+            i.write(self);
+            self.put(b'\n');
+        }
+    }
+
+    pub fn print_iter<T: Writable, I: Iterator<Item = T>>(&mut self, iter: I) {
+        let mut first = true;
+        for e in iter {
+            if first {
+                first = false;
+            } else {
+                self.put(b' ');
+            }
+            e.write(self);
+        }
+    }
+
+    pub fn print_iter_ref<'a, T: 'a + Writable, I: Iterator<Item = &'a T>>(&mut self, iter: I) {
+        let mut first = true;
+        for e in iter {
+            if first {
+                first = false;
+            } else {
+                self.put(b' ');
+            }
+            e.write(self);
+        }
+    }
+}
+
+impl Write for Output {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let mut start = 0usize;
+        let mut rem = buf.len();
+        while rem > 0 {
+            let len = (self.buf.len() - self.at).min(rem);
+            self.buf[self.at..self.at + len].copy_from_slice(&buf[start..start + len]);
+            self.at += len;
+            if self.at == self.buf.len() {
+                self.flush();
+            }
+            start += len;
+            rem -= len;
+        }
+        if self.autoflush {
+            self.flush();
+        }
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.flush();
+        Ok(())
+    }
+}
+
+pub trait Writable {
+    fn write(&self, output: &mut Output);
+}
+
+impl Writable for &str {
+    fn write(&self, output: &mut Output) {
+        output.write(&self.as_bytes()).unwrap();
+    }
+}
+
+impl Writable for String {
+    fn write(&self, output: &mut Output) {
+        output.write(&self.as_bytes()).unwrap();
+    }
+}
+
+impl Writable for char {
+    fn write(&self, output: &mut Output) {
+        output.put(*self as u8);
+    }
+}
+
+impl<T: Writable> Writable for [T] {
+    fn write(&self, output: &mut Output) {
+        output.print_iter_ref(self.iter());
+    }
+}
+
+impl<T: Writable> Writable for Vec<T> {
+    fn write(&self, output: &mut Output) {
+        self[..].write(output);
+    }
+}
+
+macro_rules! write_to_string {
+    ($t:ident) => {
+        impl Writable for $t {
+            fn write(&self, output: &mut Output) {
+                self.to_string().write(output);
+            }
+        }
+    };
+}
+
+write_to_string!(u8);
+write_to_string!(u16);
+write_to_string!(u32);
+write_to_string!(u64);
+write_to_string!(u128);
+write_to_string!(usize);
+write_to_string!(i8);
+write_to_string!(i16);
+write_to_string!(i32);
+write_to_string!(i64);
+write_to_string!(i128);
+write_to_string!(isize);
+
+impl<T: Writable, U: Writable> Writable for (T, U) {
+    fn write(&self, output: &mut Output) {
+        self.0.write(output);
+        output.put(b' ');
+        self.1.write(output);
+    }
+}
+
+impl<T: Writable, U: Writable, V: Writable> Writable for (T, U, V) {
+    fn write(&self, output: &mut Output) {
+        self.0.write(output);
+        output.put(b' ');
+        self.1.write(output);
+        output.put(b' ');
+        self.2.write(output);
+    }
+}
+
+pub static mut OUTPUT: Option<Output> = None;
+
+pub fn output() -> &'static mut Output {
+    unsafe {
+        match &mut OUTPUT {
+            None => {
+                panic!("Panic");
+            }
+            Some(output) => output,
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! out {
+    ($first: expr $(,$args:expr )*) => {
+        output().print(&$first);
+        $(output().put(b' ');
+        output().print(&$args);
+        )*
+    }
+}
+
+#[macro_export]
+macro_rules! out_line {
+    ($first: expr $(, $args:expr )* ) => {
+        out!($first $(,$args)*);
+        output().put(b'\n');
+    }
+}
+
 fn solve(input: &mut Input, _test_case: usize) {
     let n = input.read();
-    let mut a = input.read_vec::<u32>(n);
+    let ranges = input.read_vec::<(i32, i32)>(n);
+    let edges = input.read_vec::<(usize, usize)>(n - 1);
 
-    let min = *a.iter().min().unwrap();
-    let mut res = Vec::new();
-    for (i, v) in a.iter().enumerate() {
-        if *v == min {
-            res = a[i..].iter().cloned().collect::<Vec<_>>();
-            res.extend(&a[..i].iter().cloned().collect::<Vec<_>>());
-            break;
-        }
+    let mut graph = Graph::new(n);
+    for (from, to) in edges {
+        graph.add_edge(from - 1, BiEdge::new(to - 1));
     }
-    a = res;
-    let mut answer = 0u32;
-    let mut last = 0usize;
-    for (i, v) in a.iter().enumerate() {
-        if *v == min {
-            answer.maxim((i - last) as u32);
-            last = i + 1;
-        }
+    assert!(graph.is_tree());
+    let mut index = 0;
+    struct Context<'s> {
+        graph: &'s Graph<BiEdge>,
+        ranges: &'s Vec<(i32, i32)>,
+        index: &'s mut i32,
     }
-    answer.maxim((n - last) as u32);
-    answer += (n as u32) * (min);
-    out_line!(answer);
+    fn dfs(vert: usize, parent: usize, ctx: &mut Context) -> (u64, u64) {
+        let mut low = 0u64;
+        let mut high = 0u64;
+        *ctx.index += 1;
+        for e in ctx.graph[vert].iter() {
+            let next = e.to();
+            if next == parent {
+                continue;
+            }
+            let (clow, chigh) = dfs(next, vert, ctx);
+            low += cmp::max(
+                (ctx.ranges[vert].0 - ctx.ranges[next].0).abs() as u64 + clow,
+                (ctx.ranges[vert].0 - ctx.ranges[next].1).abs() as u64 + chigh,
+            );
+            high += cmp::max(
+                (ctx.ranges[vert].1 - ctx.ranges[next].0).abs() as u64 + clow,
+                (ctx.ranges[vert].1 - ctx.ranges[next].1).abs() as u64 + chigh,
+            );
+        }
+        (low, high)
+    }
+    let mut ctx = Context {
+        graph: &graph,
+        ranges: &ranges,
+        index: &mut index,
+    };
+    let res = dfs(0, n, &mut ctx);
+    out_line!(res.0.max(res.1));
 }
 
 fn run(mut input: Input) -> bool {

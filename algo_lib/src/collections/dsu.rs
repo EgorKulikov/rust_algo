@@ -11,7 +11,7 @@ impl DSU {
     pub fn new(n: usize) -> Self {
         Self {
             id: create_order(n),
-            size: vec![n; 1],
+            size: vec![1; n],
             count: n,
         }
     }
