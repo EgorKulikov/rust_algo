@@ -6,6 +6,7 @@ fn main() {
 
     let mut pos = 0usize;
     let mut depth = 0usize;
+    let mut aim = 0usize;
     loop {
         inp.skip_whitespace();
         if inp.peek().is_none() {
@@ -14,9 +15,12 @@ fn main() {
         let dir: String = inp.read();
         let cur: usize = inp.read();
         match dir.as_str() {
-            "forward" => pos += cur,
-            "up" => depth -= cur,
-            "down" => depth += cur,
+            "forward" => {
+                pos += cur;
+                depth += aim * cur;
+            }
+            "up" => aim -= cur,
+            "down" => aim += cur,
             _ => unreachable!(),
         }
     }
