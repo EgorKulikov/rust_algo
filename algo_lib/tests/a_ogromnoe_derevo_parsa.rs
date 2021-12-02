@@ -2,13 +2,13 @@
 //{"type":"stdin","fileName":null}
 //{"type":"stdout","fileName":null}
 
-use crate::graph::bi_edge::BiEdge;
-use crate::graph::edge_trait::EdgeTrait;
-use crate::graph::graph::Graph;
-use crate::io::input::Input;
-use crate::io::output::{output, Output, OUTPUT};
-use crate::types::recursive_function::{Callable, RecursiveFunction};
-use crate::{out, out_line};
+use algo_lib::graph::bi_edge::BiEdge;
+use algo_lib::graph::edge_trait::EdgeTrait;
+use algo_lib::graph::graph::Graph;
+use algo_lib::io::input::Input;
+use algo_lib::io::output::{output, Output, OUTPUT};
+use algo_lib::types::recursive_function::{Callable2, RecursiveFunction2};
+use algo_lib::{out, out_line};
 use std::cmp;
 
 fn solve(input: &mut Input, _test_case: usize) {
@@ -22,7 +22,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     }
     assert!(graph.is_tree());
     let mut index = 0usize;
-    let mut dfs = RecursiveFunction::new(|f, (vert, parent): (usize, usize)| -> (u64, u64) {
+    let mut dfs = RecursiveFunction2::new(|f, vert: usize, parent: usize| -> (u64, u64) {
         let mut low = 0u64;
         let mut high = 0u64;
         index += 1;
@@ -31,7 +31,7 @@ fn solve(input: &mut Input, _test_case: usize) {
             if next == parent {
                 continue;
             }
-            let (clow, chigh) = f.call((next, vert));
+            let (clow, chigh) = f.call(next, vert);
             low += cmp::max(
                 (ranges[vert].0 - ranges[next].0).abs() as u64 + clow,
                 (ranges[vert].0 - ranges[next].1).abs() as u64 + chigh,
@@ -43,7 +43,7 @@ fn solve(input: &mut Input, _test_case: usize) {
         }
         (low, high)
     });
-    let res = dfs.call((0, n));
+    let res = dfs.call(0, n);
     assert_eq!(index, n);
     out_line!(res.0.max(res.1));
 }
@@ -112,7 +112,7 @@ fn run_tests() -> bool {
     let yellow = "\x1B[33m";
     let def = "\x1B[0m";
     let time_limit = std::time::Duration::from_millis(1000);
-    let mut paths = std::fs::read_dir("./src/test/a_ogromnoe_derevo_parsa/")
+    let mut paths = std::fs::read_dir("./tests/a_ogromnoe_derevo_parsa/")
         .unwrap()
         .map(|res| res.unwrap())
         .collect::<Vec<_>>();

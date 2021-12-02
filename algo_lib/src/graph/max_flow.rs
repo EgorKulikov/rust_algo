@@ -1,7 +1,7 @@
 use crate::graph::flow_edge_trait::FlowEdgeTrait;
 use crate::graph::graph::{FlowGraph, Graph};
 use crate::numbers::integer::Integer;
-use crate::types::recursive_function::{Callable, RecursiveFunction};
+use crate::types::recursive_function::{Callable2, RecursiveFunction2};
 use std::collections::VecDeque;
 
 pub trait MaxFlow<C: Integer> {
@@ -36,7 +36,7 @@ impl<C: Integer, E: FlowEdgeTrait<C>> MaxFlow<C> for Graph<E> {
                 break;
             }
             next_edge.fill(0);
-            let mut dinic_impl = RecursiveFunction::new(|f, (source, mut flow): (usize, C)| -> C {
+            let mut dinic_impl = RecursiveFunction2::new(|f, source, mut flow| -> C {
                 if source == destination {
                     flow
                 } else if flow == C::zero() || dist[source] == dist[destination] {
@@ -46,7 +46,7 @@ impl<C: Integer, E: FlowEdgeTrait<C>> MaxFlow<C> for Graph<E> {
                     while (next_edge[source] as usize) < self[source].len() {
                         let edge = &self[source][next_edge[source] as usize];
                         if edge.capacity() != C::zero() && dist[edge.to()] == dist[source] + 1 {
-                            let pushed = f.call((edge.to(), flow.min(edge.capacity())));
+                            let pushed = f.call(edge.to(), flow.min(edge.capacity()));
                             if pushed != C::zero() {
                                 let push_data = edge.push_flow(pushed);
                                 self.push_flow(push_data);
@@ -62,7 +62,7 @@ impl<C: Integer, E: FlowEdgeTrait<C>> MaxFlow<C> for Graph<E> {
                     total_pushed
                 }
             });
-            total_flow += dinic_impl.call((source, inf));
+            total_flow += dinic_impl.call(source, inf);
         }
         total_flow
     }

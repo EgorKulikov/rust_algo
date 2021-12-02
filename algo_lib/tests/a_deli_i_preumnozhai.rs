@@ -2,10 +2,10 @@
 //{"type":"stdin","fileName":null}
 //{"type":"stdout","fileName":null}
 
-use crate::collections::min_max::MinimMaxim;
-use crate::io::input::Input;
-use crate::io::output::{output, Output, OUTPUT};
-use crate::{out, out_line};
+use algo_lib::collections::min_max::MinimMaxim;
+use algo_lib::io::input::Input;
+use algo_lib::io::output::{output, Output, OUTPUT};
+use algo_lib::{out, out_line};
 
 fn solve(input: &mut Input, _test_case: usize) {
     let n = input.read();
@@ -95,7 +95,7 @@ fn run_tests() -> bool {
     let yellow = "\x1B[33m";
     let def = "\x1B[0m";
     let time_limit = std::time::Duration::from_millis(1000);
-    let mut paths = std::fs::read_dir("./src/test/a_deli_i_preumnozhai/")
+    let mut paths = std::fs::read_dir("./tests/a_deli_i_preumnozhai/")
         .unwrap()
         .map(|res| res.unwrap())
         .collect::<Vec<_>>();

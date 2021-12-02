@@ -1,6 +1,6 @@
 use crate::graph::edge_trait::EdgeTrait;
 use crate::graph::graph::Graph;
-use crate::types::recursive_function::{Callable, RecursiveFunction};
+use crate::types::recursive_function::{Callable2, RecursiveFunction2};
 
 pub trait HLDecomposition {
     fn hl_decomposition_with_root(&self, root: usize) -> (Vec<Vec<usize>>, Vec<usize>, Vec<usize>);
@@ -17,20 +17,20 @@ impl<E: EdgeTrait> HLDecomposition for Graph<E> {
         let mut id = vec![0; n];
         let mut pos = vec![0; n];
         let mut size = vec![0u32; n];
-        let mut calc_size = RecursiveFunction::new(|f, (vert, last)| {
+        let mut calc_size = RecursiveFunction2::new(|f, vert, last| {
             size[vert] = 1;
             for e in self[vert].iter() {
                 let next = e.to();
                 if next == last {
                     continue;
                 }
-                size[vert] += f.call((next, vert));
+                size[vert] += f.call(next, vert);
             }
             size[vert]
         });
-        calc_size.call((root, root));
+        calc_size.call(root, root);
         paths.push(vec![root]);
-        let mut build = RecursiveFunction::new(|f, (vert, last): (usize, _)| {
+        let mut build = RecursiveFunction2::new(|f, vert: usize, last| {
             if vert != root {
                 if 2 * size[vert] >= size[last] {
                     id[vert] = id[last];
@@ -46,10 +46,10 @@ impl<E: EdgeTrait> HLDecomposition for Graph<E> {
                 if next == last {
                     continue;
                 }
-                f.call((next, vert));
+                f.call(next, vert);
             }
         });
-        build.call((root, root));
+        build.call(root, root);
         (paths, id, pos)
     }
 }

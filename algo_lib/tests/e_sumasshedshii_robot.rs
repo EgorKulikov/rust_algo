@@ -2,11 +2,11 @@
 //{"type":"stdin","fileName":null}
 //{"type":"stdout","fileName":null}
 
-use crate::collections::arr2d::{Arr2d, Arr2dRead};
-use crate::io::input::Input;
-use crate::io::output::{output, Output, OUTPUT};
-use crate::misc::dirs::D4;
-use crate::{out, out_line};
+use algo_lib::collections::arr2d::{Arr2d, Arr2dRead};
+use algo_lib::io::input::Input;
+use algo_lib::io::output::{output, Output, OUTPUT};
+use algo_lib::misc::dirs::D4;
+use algo_lib::{out, out_line};
 use std::collections::VecDeque;
 
 fn solve(input: &mut Input, _test_case: usize) {
@@ -125,7 +125,7 @@ fn run_tests() -> bool {
     let yellow = "\x1B[33m";
     let def = "\x1B[0m";
     let time_limit = std::time::Duration::from_millis(2000);
-    let mut paths = std::fs::read_dir("./src/test/e_sumasshedshii_robot/")
+    let mut paths = std::fs::read_dir("./tests/e_sumasshedshii_robot/")
         .unwrap()
         .map(|res| res.unwrap())
         .collect::<Vec<_>>();

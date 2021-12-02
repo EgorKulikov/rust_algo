@@ -2,12 +2,12 @@
 //{"type":"stdin","fileName":null}
 //{"type":"stdout","fileName":null}
 
-use crate::io::input::Input;
-use crate::io::output::{output, Output, OUTPUT};
-use crate::numbers::integer::WeakInteger;
-use crate::numbers::mod_int::{ModInt, ModIntF};
-use crate::types::recursive_function::{Callable, RecursiveFunction};
-use crate::{out, out_line};
+use algo_lib::io::input::Input;
+use algo_lib::io::output::{output, Output, OUTPUT};
+use algo_lib::numbers::integer::WeakInteger;
+use algo_lib::numbers::mod_int::ModIntF;
+use algo_lib::types::recursive_function::{Callable2, RecursiveFunction2};
+use algo_lib::{out, out_line};
 
 fn solve_impl(n: usize, a: Vec<usize>) -> ModIntF {
     type Mod = ModIntF;
@@ -58,7 +58,7 @@ fn stress() {
             i += 1;
         }
     };
-    let mut do_stress = RecursiveFunction::new(|f, (n, a): (_, Vec<usize>)| {
+    let mut do_stress = RecursiveFunction2::new(|f, n, a: Vec<usize>| {
         if a.len() == n {
             let mut res = ModIntF::zero();
             for i in 1u32..(1 << n) {
@@ -87,12 +87,12 @@ fn stress() {
             for i in 0..=n {
                 let mut b = a.clone();
                 b.push(i);
-                f.call((n, b));
+                f.call(n, b);
             }
         }
     });
     for n in 1..=5 {
-        do_stress.call((n, Vec::new()));
+        do_stress.call(n, Vec::new());
     }
 }
 
@@ -162,7 +162,7 @@ fn run_tests() -> bool {
     let yellow = "\x1B[33m";
     let def = "\x1B[0m";
     let time_limit = std::time::Duration::from_millis(2000);
-    let mut paths = std::fs::read_dir("./src/test/d_m_e_x_posledovatelnosti/")
+    let mut paths = std::fs::read_dir("./tests/d_m_e_x_posledovatelnosti/")
         .unwrap()
         .map(|res| res.unwrap())
         .collect::<Vec<_>>();

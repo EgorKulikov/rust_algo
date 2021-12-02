@@ -1,6 +1,5 @@
 use algo_lib::io::input::Input;
 use chrono::{Datelike, Utc};
-use std::collections::HashSet;
 use std::fs::File;
 use std::io;
 use std::io::{BufRead, Write};
@@ -99,26 +98,16 @@ fn main() {
             println!("test?");
             let test = get_input(&mut input);
             if test {
-                let mut test_mod = read_lines("../algo_lib/src/test/mod.rs");
-                let set = test_mod.iter().cloned().collect::<HashSet<_>>();
-                let mut task_name = task.to_string();
-                while set.contains(&format!("mod {};", task_name)) {
-                    task_name.push('_');
-                }
-                test_mod.push(format!("mod {};", task_name));
                 let mut test_lines = Vec::new();
                 let mut in_main = false;
                 for mut line in lines {
-                    if line.starts_with("use algo_lib") {
-                        line = line.replace("use algo_lib", "use crate");
-                    }
                     if line
                         .trim()
                         .starts_with("let mut paths = std::fs::read_dir(")
                     {
                         line = format!(
-                            "    let mut paths = std::fs::read_dir(\"./src/test/{}/\")",
-                            task_name,
+                            "    let mut paths = std::fs::read_dir(\"./tests/{}/\")",
+                            task,
                         );
                     }
                     if line == "//BEGIN MAIN".to_string() {
@@ -136,12 +125,11 @@ fn main() {
                 test_lines.push("    assert!(run_tests());".to_string());
                 test_lines.push("}".to_string());
                 write_lines(
-                    format!("../algo_lib/src/test/{}.rs", task_name).as_str(),
+                    format!("../algo_lib/tests/{}.rs", task).as_str(),
                     test_lines,
                 );
                 let from = format!("../{}/tests", task);
-                std::fs::rename(from, format!("../algo_lib/src/test/{}", task_name)).unwrap();
-                write_lines("../algo_lib/src/test/mod.rs", test_mod);
+                std::fs::rename(from, format!("../algo_lib/tests/{}", task)).unwrap();
             }
         }
         std::fs::remove_dir_all(format!("../{}/", task)).unwrap();
