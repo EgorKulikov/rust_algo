@@ -1,6 +1,8 @@
 use crate::graph::edge_id::{EdgeId, NoId, WithId};
 use crate::graph::edge_trait::EdgeTrait;
+use crate::graph::graph::Graph;
 use crate::graph::weighted_edge_trait::WeightedEdgeTrait;
+use crate::io::input::{Input, Readable};
 use crate::numbers::integer::Integer;
 
 #[derive(Clone)]
@@ -61,3 +63,33 @@ impl<W: Integer, Id: EdgeId> WeightedEdgeTrait<W> for WeightedEdgeRaw<W, Id> {
 
 pub type WeightedEdge<W> = WeightedEdgeRaw<W, NoId>;
 pub type WeightedEdgeWithId<W> = WeightedEdgeRaw<W, WithId>;
+
+pub trait ReadWeightedEdgeGraph {
+    fn read_graph<W: Integer + Readable, Id: EdgeId>(
+        &mut self,
+        n: usize,
+        m: usize,
+    ) -> Graph<WeightedEdgeRaw<W, Id>>;
+}
+
+impl ReadWeightedEdgeGraph for Input<'_> {
+    fn read_graph<W: Integer + Readable, Id: EdgeId>(
+        &mut self,
+        n: usize,
+        m: usize,
+    ) -> Graph<WeightedEdgeRaw<W, Id>> {
+        let mut graph = Graph::new(n);
+        for _ in 0..m {
+            graph.add_edge(self.read(), WeightedEdgeRaw::new(self.read(), self.read()));
+        }
+        graph
+    }
+}
+
+impl<W: Integer + Readable, Id: EdgeId> Readable for Graph<WeightedEdgeRaw<W, Id>> {
+    fn read(input: &mut Input) -> Self {
+        let n = input.read();
+        let m = input.read();
+        <Input as ReadWeightedEdgeGraph>::read_graph(input, n, m)
+    }
+}

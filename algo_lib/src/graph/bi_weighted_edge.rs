@@ -1,7 +1,9 @@
 use crate::graph::bi_edge_trait::BiEdgeTrait;
 use crate::graph::edge_id::{EdgeId, NoId, WithId};
 use crate::graph::edge_trait::EdgeTrait;
+use crate::graph::graph::Graph;
 use crate::graph::weighted_edge_trait::WeightedEdgeTrait;
+use crate::io::input::{Input, Readable};
 use crate::numbers::integer::Integer;
 
 #[derive(Clone)]
@@ -62,3 +64,43 @@ impl<W: Integer, Id: EdgeId> WeightedEdgeTrait<W> for BiWeightedEdgeRaw<W, Id> {
 
 pub type BiWeightedEdge<W> = BiWeightedEdgeRaw<W, NoId>;
 pub type BiWeightedEdgeWithId<W> = BiWeightedEdgeRaw<W, WithId>;
+
+pub trait ReadBiWeightedEdgeGraph {
+    fn read_graph<W: Integer + Readable, Id: EdgeId>(
+        &mut self,
+        n: usize,
+        m: usize,
+    ) -> Graph<BiWeightedEdgeRaw<W, Id>>;
+
+    fn read_tree<W: Integer + Readable, Id: EdgeId>(
+        &mut self,
+        n: usize,
+    ) -> Graph<BiWeightedEdgeRaw<W, Id>> {
+        self.read_graph(n, n - 1)
+    }
+}
+
+impl ReadBiWeightedEdgeGraph for Input<'_> {
+    fn read_graph<W: Integer + Readable, Id: EdgeId>(
+        &mut self,
+        n: usize,
+        m: usize,
+    ) -> Graph<BiWeightedEdgeRaw<W, Id>> {
+        let mut graph = Graph::new(n);
+        for _ in 0..m {
+            graph.add_edge(
+                self.read(),
+                BiWeightedEdgeRaw::new(self.read(), self.read()),
+            );
+        }
+        graph
+    }
+}
+
+impl<W: Integer + Readable, Id: EdgeId> Readable for Graph<BiWeightedEdgeRaw<W, Id>> {
+    fn read(input: &mut Input) -> Self {
+        let n = input.read();
+        let m = input.read();
+        <Input as ReadBiWeightedEdgeGraph>::read_graph(input, n, m)
+    }
+}

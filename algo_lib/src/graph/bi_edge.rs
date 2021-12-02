@@ -1,6 +1,8 @@
 use crate::graph::bi_edge_trait::BiEdgeTrait;
 use crate::graph::edge_id::{EdgeId, NoId, WithId};
 use crate::graph::edge_trait::EdgeTrait;
+use crate::graph::graph::Graph;
+use crate::io::input::{Input, Readable};
 
 #[derive(Clone)]
 pub struct BiEdgeRaw<Id: EdgeId> {
@@ -48,3 +50,29 @@ impl<Id: EdgeId> BiEdgeTrait for BiEdgeRaw<Id> {}
 
 pub type BiEdge = BiEdgeRaw<NoId>;
 pub type BiEdgeWithId = BiEdgeRaw<WithId>;
+
+pub trait ReadBiEdgeGraph {
+    fn read_graph<Id: EdgeId>(&mut self, n: usize, m: usize) -> Graph<BiEdgeRaw<Id>>;
+
+    fn read_tree<Id: EdgeId>(&mut self, n: usize) -> Graph<BiEdgeRaw<Id>> {
+        self.read_graph(n, n - 1)
+    }
+}
+
+impl ReadBiEdgeGraph for Input<'_> {
+    fn read_graph<Id: EdgeId>(&mut self, n: usize, m: usize) -> Graph<BiEdgeRaw<Id>> {
+        let mut graph = Graph::new(n);
+        for _ in 0..m {
+            graph.add_edge(self.read(), BiEdgeRaw::new(self.read()));
+        }
+        graph
+    }
+}
+
+impl<Id: EdgeId> Readable for Graph<BiEdgeRaw<Id>> {
+    fn read(input: &mut Input) -> Self {
+        let n = input.read();
+        let m = input.read();
+        <Input as ReadBiEdgeGraph>::read_graph(input, n, m)
+    }
+}
