@@ -1,26 +1,26 @@
-use std::ops::Div;
-use std::ops::MulAssign;
-use std::slice::Iter;
-use std::ops::RemAssign;
-use std::ops::SubAssign;
-use std::ops::Index;
-use std::io::Write;
-use std::ops::IndexMut;
-use std::marker::PhantomData;
-use std::slice::IterMut;
-use std::iter::Skip;
+#![feature(trait_alias)]
 use std::collections::VecDeque;
 use std::fmt::Display;
-use std::ops::Sub;
-use std::io::Read;
-use std::ops::Add;
-use std::ops::Rem;
 use std::hash::Hash;
-use std::ops::Mul;
-use std::ops::AddAssign;
+use std::io::Read;
+use std::io::Write;
+use std::iter::Skip;
 use std::iter::StepBy;
+use std::marker::PhantomData;
+use std::ops::Add;
+use std::ops::AddAssign;
+use std::ops::Div;
 use std::ops::DivAssign;
-
+use std::ops::Index;
+use std::ops::IndexMut;
+use std::ops::Mul;
+use std::ops::MulAssign;
+use std::ops::Rem;
+use std::ops::RemAssign;
+use std::ops::Sub;
+use std::ops::SubAssign;
+use std::slice::Iter;
+use std::slice::IterMut;
 
 pub trait WeakInteger:
     Add<Output = Self>
@@ -804,7 +804,9 @@ pub struct DirectionsIter<V: Value<[(isize, isize); N]>, const N: usize> {
     phantom: PhantomData<V>,
 }
 
-impl<V: Value<[(isize, isize); N]>, const N: usize> Iterator for DirectionsIter<V, N> {
+pub trait MyIterator = Iterator;
+
+impl<V: Value<[(isize, isize); N]>, const N: usize> MyIterator for DirectionsIter<V, N> {
     type Item = (usize, usize);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -881,7 +883,6 @@ fn solve(input: &mut Input, _test_case: usize) {
         out_line!("");
     }
 }
-
 
 fn run(mut input: Input) -> bool {
     let t = input.read();

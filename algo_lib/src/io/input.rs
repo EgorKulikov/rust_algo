@@ -1,4 +1,8 @@
-use crate::numbers::integer::Integer;
+use crate::numbers::num_traits::add_sub::AddSub;
+use crate::numbers::num_traits::from_u8::FromU8;
+use crate::numbers::num_traits::mul_div_rem::Multable;
+use crate::numbers::num_traits::sign::IsSigned;
+use crate::numbers::num_traits::zero_one::ZeroOne;
 use std::fmt::Display;
 use std::io::Read;
 
@@ -108,7 +112,7 @@ impl<'s> Input<'s> {
         res
     }
 
-    fn read_integer<T: Integer + Display>(&mut self) -> T {
+    fn read_integer<T: IsSigned + ZeroOne + FromU8 + AddSub + Multable + Display>(&mut self) -> T {
         self.skip_whitespace();
         let mut c = self.get().unwrap();
         let sgn = if c == b'-' {

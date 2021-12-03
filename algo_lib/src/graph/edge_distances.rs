@@ -1,5 +1,5 @@
 use crate::collections::iter_ext::IterOrdExt;
-use crate::graph::edge_trait::EdgeTrait;
+use crate::graph::edges::edge_trait::EdgeTrait;
 use crate::graph::graph::Graph;
 use std::collections::VecDeque;
 

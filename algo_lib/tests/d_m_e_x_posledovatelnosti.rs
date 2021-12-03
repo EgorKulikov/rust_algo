@@ -4,8 +4,8 @@
 
 use algo_lib::io::input::Input;
 use algo_lib::io::output::{output, Output, OUTPUT};
-use algo_lib::numbers::integer::WeakInteger;
 use algo_lib::numbers::mod_int::ModIntF;
+use algo_lib::numbers::num_traits::zero_one::ZeroOne;
 use algo_lib::types::recursive_function::{Callable2, RecursiveFunction2};
 use algo_lib::{out, out_line};
 

@@ -1,9 +1,11 @@
 use crate::collections::indexed_heap::IndexedHeap;
+use crate::collections::min_max::MinimMaxim;
+use crate::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
 use crate::graph::graph::Graph;
-use crate::graph::weighted_edge_trait::WeightedEdgeTrait;
-use crate::numbers::integer::Integer;
+use crate::numbers::num_traits::add_sub::Addable;
+use crate::numbers::num_traits::zero_one::ZeroOne;
 
-pub trait Distances<W: Integer> {
+pub trait Distances<W: Addable + PartialOrd + Copy + ZeroOne> {
     fn distances_from(&self, source: usize) -> Vec<Option<(W, usize, usize)>>;
 
     fn distance(&self, source: usize, mut destination: usize) -> Option<(W, Vec<(usize, usize)>)> {
@@ -24,7 +26,7 @@ pub trait Distances<W: Integer> {
     }
 }
 
-impl<W: Integer, E: WeightedEdgeTrait<W>> Distances<W> for Graph<E> {
+impl<W: Addable + PartialOrd + Copy + ZeroOne, E: WeightedEdgeTrait<W>> Distances<W> for Graph<E> {
     fn distances_from(&self, source: usize) -> Vec<Option<(W, usize, usize)>> {
         let n = self.vertex_count();
         let mut res = vec![None; n];
@@ -37,11 +39,11 @@ impl<W: Integer, E: WeightedEdgeTrait<W>> Distances<W> for Graph<E> {
             for (i, e) in self[cur].iter().enumerate() {
                 let next = e.to();
                 let total = dist + e.weight();
-                let next_dist = (total, cur, i).min(heap.value(next).cloned().unwrap_or((
-                    <W as Integer>::max(),
-                    0,
-                    0,
-                )));
+                let was = heap.value(next);
+                let mut next_dist = (total, cur, i);
+                if let Some(was) = was {
+                    next_dist.minim(was.clone());
+                }
                 heap.add_or_adjust(next, next_dist);
             }
         }

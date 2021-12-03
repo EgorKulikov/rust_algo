@@ -1,12 +1,17 @@
-use crate::graph::edge_id::{EdgeId, NoId, WithId};
-use crate::graph::edge_trait::EdgeTrait;
-use crate::graph::flow_edge_trait::FlowEdgeTrait;
+use crate::graph::edges::edge_id::{EdgeId, NoId, WithId};
+use crate::graph::edges::edge_trait::EdgeTrait;
+use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
+use crate::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
 use crate::graph::graph::Graph;
-use crate::graph::weighted_edge_trait::WeightedEdgeTrait;
-use crate::numbers::integer::Integer;
+use crate::numbers::num_traits::add_sub::{AddSub, Addable};
+use crate::numbers::num_traits::zero_one::ZeroOne;
 
 #[derive(Clone)]
-pub struct WeightedFlowEdgeRaw<W: Integer, C: Integer, Id: EdgeId> {
+pub struct WeightedFlowEdgeRaw<
+    W: Addable + PartialOrd + Copy + ZeroOne,
+    C: AddSub + PartialOrd + Copy + ZeroOne,
+    Id: EdgeId,
+> {
     to: u32,
     weight: W,
     capacity: C,
@@ -14,7 +19,12 @@ pub struct WeightedFlowEdgeRaw<W: Integer, C: Integer, Id: EdgeId> {
     id: Id,
 }
 
-impl<W: Integer, C: Integer, Id: EdgeId> WeightedFlowEdgeRaw<W, C, Id> {
+impl<
+        W: Addable + PartialOrd + Copy + ZeroOne,
+        C: AddSub + PartialOrd + Copy + ZeroOne,
+        Id: EdgeId,
+    > WeightedFlowEdgeRaw<W, C, Id>
+{
     pub fn new(to: usize, w: W, c: C) -> Self {
         Self {
             to: to as u32,
@@ -26,7 +36,12 @@ impl<W: Integer, C: Integer, Id: EdgeId> WeightedFlowEdgeRaw<W, C, Id> {
     }
 }
 
-impl<W: Integer, C: Integer, Id: EdgeId> EdgeTrait for WeightedFlowEdgeRaw<W, C, Id> {
+impl<
+        W: Addable + PartialOrd + Copy + ZeroOne,
+        C: AddSub + PartialOrd + Copy + ZeroOne,
+        Id: EdgeId,
+    > EdgeTrait for WeightedFlowEdgeRaw<W, C, Id>
+{
     const REVERSABLE: bool = false;
     const BIDIRECTIONAL: bool = false;
 
@@ -55,7 +70,12 @@ impl<W: Integer, C: Integer, Id: EdgeId> EdgeTrait for WeightedFlowEdgeRaw<W, C,
     }
 }
 
-impl<W: Integer, C: Integer, Id: EdgeId> WeightedEdgeTrait<W> for WeightedFlowEdgeRaw<W, C, Id> {
+impl<
+        W: Addable + PartialOrd + Copy + ZeroOne,
+        C: AddSub + PartialOrd + Copy + ZeroOne,
+        Id: EdgeId,
+    > WeightedEdgeTrait<W> for WeightedFlowEdgeRaw<W, C, Id>
+{
     fn weight(&self) -> W {
         self.weight
     }
@@ -65,7 +85,12 @@ impl<W: Integer, C: Integer, Id: EdgeId> WeightedEdgeTrait<W> for WeightedFlowEd
     }
 }
 
-impl<W: Integer, C: Integer, Id: EdgeId> FlowEdgeTrait<C> for WeightedFlowEdgeRaw<W, C, Id> {
+impl<
+        W: Addable + PartialOrd + Copy + ZeroOne,
+        C: AddSub + PartialOrd + Copy + ZeroOne,
+        Id: EdgeId,
+    > FlowEdgeTrait<C> for WeightedFlowEdgeRaw<W, C, Id>
+{
     fn capacity(&self) -> C {
         self.capacity
     }

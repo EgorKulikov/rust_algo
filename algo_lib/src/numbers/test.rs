@@ -1,6 +1,6 @@
 mod mod_int {
-    use crate::numbers::integer::WeakInteger;
     use crate::numbers::mod_int::{BaseModInt, ModInt};
+    use crate::numbers::num_traits::zero_one::ZeroOne;
     use crate::types::value::ConstValue;
     use crate::value;
 

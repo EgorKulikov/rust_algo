@@ -1,19 +1,20 @@
-use crate::graph::edge_id::{EdgeId, NoId, WithId};
-use crate::graph::edge_trait::EdgeTrait;
-use crate::graph::flow_edge_trait::FlowEdgeTrait;
+use crate::graph::edges::edge_id::{EdgeId, NoId, WithId};
+use crate::graph::edges::edge_trait::EdgeTrait;
+use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
 use crate::graph::graph::Graph;
 use crate::io::input::{Input, Readable};
-use crate::numbers::integer::Integer;
+use crate::numbers::num_traits::add_sub::AddSub;
+use crate::numbers::num_traits::zero_one::ZeroOne;
 
 #[derive(Clone)]
-pub struct FlowEdgeRaw<C: Integer, Id: EdgeId> {
+pub struct FlowEdgeRaw<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId> {
     to: u32,
     capacity: C,
     reverse_id: u32,
     id: Id,
 }
 
-impl<C: Integer, Id: EdgeId> FlowEdgeRaw<C, Id> {
+impl<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId> FlowEdgeRaw<C, Id> {
     pub fn new(to: usize, c: C) -> Self {
         Self {
             to: to as u32,
@@ -24,7 +25,7 @@ impl<C: Integer, Id: EdgeId> FlowEdgeRaw<C, Id> {
     }
 }
 
-impl<C: Integer, Id: EdgeId> EdgeTrait for FlowEdgeRaw<C, Id> {
+impl<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId> EdgeTrait for FlowEdgeRaw<C, Id> {
     const REVERSABLE: bool = false;
     const BIDIRECTIONAL: bool = false;
 
@@ -53,7 +54,7 @@ impl<C: Integer, Id: EdgeId> EdgeTrait for FlowEdgeRaw<C, Id> {
     }
 }
 
-impl<C: Integer, Id: EdgeId> FlowEdgeTrait<C> for FlowEdgeRaw<C, Id> {
+impl<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId> FlowEdgeTrait<C> for FlowEdgeRaw<C, Id> {
     fn capacity(&self) -> C {
         self.capacity
     }
@@ -71,7 +72,7 @@ pub type FlowEdge<C> = FlowEdgeRaw<C, NoId>;
 pub type FlowEdgeWithId<C> = FlowEdgeRaw<C, WithId>;
 
 pub trait ReadFlowEdgeGraph {
-    fn read_graph<C: Integer + Readable, Id: EdgeId>(
+    fn read_graph<C: AddSub + PartialOrd + Copy + ZeroOne + Readable, Id: EdgeId>(
         &mut self,
         n: usize,
         m: usize,
@@ -79,7 +80,7 @@ pub trait ReadFlowEdgeGraph {
 }
 
 impl ReadFlowEdgeGraph for Input<'_> {
-    fn read_graph<C: Integer + Readable, Id: EdgeId>(
+    fn read_graph<C: AddSub + PartialOrd + Copy + ZeroOne + Readable, Id: EdgeId>(
         &mut self,
         n: usize,
         m: usize,
@@ -92,7 +93,9 @@ impl ReadFlowEdgeGraph for Input<'_> {
     }
 }
 
-impl<W: Integer + Readable, Id: EdgeId> Readable for Graph<FlowEdgeRaw<W, Id>> {
+impl<C: AddSub + PartialOrd + Copy + ZeroOne + Readable, Id: EdgeId> Readable
+    for Graph<FlowEdgeRaw<C, Id>>
+{
     fn read(input: &mut Input) -> Self {
         let n = input.read();
         let m = input.read();

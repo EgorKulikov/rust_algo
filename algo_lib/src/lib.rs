@@ -1,3 +1,4 @@
+#![feature(trait_alias)]
 pub mod collections;
 pub mod graph;
 pub mod io;

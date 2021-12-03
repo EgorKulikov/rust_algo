@@ -1,19 +1,23 @@
-use crate::graph::flow_edge_trait::FlowEdgeTrait;
+use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
 use crate::graph::graph::{FlowGraph, Graph};
-use crate::numbers::integer::Integer;
+use crate::numbers::num_traits::add_sub::AddSub;
+use crate::numbers::num_traits::ord::MinMax;
+use crate::numbers::num_traits::zero_one::ZeroOne;
 use crate::types::recursive_function::{Callable2, RecursiveFunction2};
 use std::collections::VecDeque;
 
-pub trait MaxFlow<C: Integer> {
+pub trait MaxFlow<C: AddSub + PartialOrd + Copy + ZeroOne + MinMax> {
     fn max_flow(&mut self, source: usize, destination: usize) -> C;
 }
 
-impl<C: Integer, E: FlowEdgeTrait<C>> MaxFlow<C> for Graph<E> {
+impl<C: AddSub + PartialOrd + Copy + ZeroOne + MinMax, E: FlowEdgeTrait<C>> MaxFlow<C>
+    for Graph<E>
+{
     fn max_flow(&mut self, source: usize, destination: usize) -> C {
         let n = self.vertex_count();
         let mut dist = vec![0u32; n];
         let mut next_edge = vec![0u32; n];
-        let inf = <C as Integer>::max();
+        let inf = C::max_val();
         let mut total_flow = C::zero();
         let mut q = VecDeque::new();
         loop {

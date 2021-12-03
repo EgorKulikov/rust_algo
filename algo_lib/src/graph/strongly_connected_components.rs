@@ -1,6 +1,6 @@
 use crate::collections::bit_set::BitSet;
-use crate::graph::edge::Edge;
-use crate::graph::edge_trait::EdgeTrait;
+use crate::graph::edges::edge::Edge;
+use crate::graph::edges::edge_trait::EdgeTrait;
 use crate::graph::graph::Graph;
 use crate::types::recursive_function::{Callable, RecursiveFunction};
 

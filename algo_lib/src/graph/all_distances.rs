@@ -1,17 +1,21 @@
 use crate::collections::arr2d::Arr2d;
 use crate::collections::min_max::MinimMaxim;
+use crate::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
 use crate::graph::graph::Graph;
-use crate::graph::weighted_edge_trait::WeightedEdgeTrait;
-use crate::numbers::integer::Integer;
+use crate::numbers::num_traits::add_sub::Addable;
+use crate::numbers::num_traits::ord::MinMax;
+use crate::numbers::num_traits::zero_one::ZeroOne;
 
-pub trait AllDistances<W: Integer> {
+pub trait AllDistances<W: Addable + PartialOrd + Copy + ZeroOne + MinMax> {
     fn all_distances(&self) -> Arr2d<W>;
 }
 
-impl<W: Integer, E: WeightedEdgeTrait<W>> AllDistances<W> for Graph<E> {
+impl<W: Addable + PartialOrd + Copy + ZeroOne + MinMax, E: WeightedEdgeTrait<W>> AllDistances<W>
+    for Graph<E>
+{
     fn all_distances(&self) -> Arr2d<W> {
         let n = self.vertex_count();
-        let inf = <W as Integer>::max();
+        let inf = W::max_val();
         let mut res = Arr2d::new(n, n, inf);
         for i in 0..n {
             res[(i, i)] = W::zero();

@@ -1,7 +1,8 @@
 use crate::collections::dsu::DSU;
-use crate::graph::edge_trait::EdgeTrait;
-use crate::graph::flow_edge_trait::FlowEdgeTrait;
-use crate::numbers::integer::Integer;
+use crate::graph::edges::edge_trait::EdgeTrait;
+use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
+use crate::numbers::num_traits::add_sub::AddSub;
+use crate::numbers::num_traits::zero_one::ZeroOne;
 use std::ops::Index;
 
 pub struct Graph<E: EdgeTrait> {
@@ -69,11 +70,11 @@ impl<E: EdgeTrait> Graph<E> {
     }
 }
 
-pub trait FlowGraph<C: Integer, E: FlowEdgeTrait<C>> {
+pub trait FlowGraph<C: AddSub + PartialOrd + Copy + ZeroOne, E: FlowEdgeTrait<C>> {
     fn push_flow(&mut self, push_data: (usize, usize, C));
 }
 
-impl<C: Integer, E: FlowEdgeTrait<C>> FlowGraph<C, E> for Graph<E> {
+impl<C: AddSub + PartialOrd + Copy + ZeroOne, E: FlowEdgeTrait<C>> FlowGraph<C, E> for Graph<E> {
     fn push_flow(&mut self, (to, reverse_id, flow): (usize, usize, C)) {
         *self.edges[to][reverse_id].capacity_mut() += flow;
         let from = self.edges[to][reverse_id].to();

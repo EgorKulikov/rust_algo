@@ -1,5 +1,6 @@
-use crate::numbers::integer::WeakInteger;
 use crate::numbers::mod_int::BaseModInt;
+use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::numbers::number_ext::Power;
 
 pub struct PrimeFFT<M: BaseModInt> {
     root: M,
@@ -19,7 +20,7 @@ impl<M: BaseModInt> PrimeFFT<M> {
             root_power += root_power;
             pw += M::T::one();
         }
-        let i = M::two();
+        let i = M::one() + M::one();
         loop {
             if i.power(exp) != M::one() && i.power(root_power) == M::one() {
                 break Self {
@@ -138,7 +139,7 @@ impl<M: BaseModInt> PrimeFFT<M> {
         }
 
         let mut len = 2;
-        let mut len_t = M::T::two();
+        let mut len_t = M::T::one() + M::T::one();
         while len <= a.len() {
             let mut wlen = root;
             let mut i = len_t;

@@ -65,12 +65,12 @@ impl<T> Clone for Opt<T> {
     }
 }
 
-pub struct IndexedHeap<T: Ord> {
+pub struct IndexedHeap<T: PartialOrd> {
     heap: Vec<u32>,
     pos: Vec<Opt<T>>,
 }
 
-impl<T: Ord> IndexedHeap<T> {
+impl<T: PartialOrd> IndexedHeap<T> {
     pub fn new(capacity: usize) -> Self {
         Self {
             heap: Vec::with_capacity(capacity),

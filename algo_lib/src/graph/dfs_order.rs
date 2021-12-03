@@ -1,4 +1,4 @@
-use crate::graph::edge_trait::EdgeTrait;
+use crate::graph::edges::edge_trait::EdgeTrait;
 use crate::graph::graph::Graph;
 
 pub trait DFSOrder {

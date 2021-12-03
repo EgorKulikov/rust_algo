@@ -1,6 +1,6 @@
-use crate::graph::bi_edge_trait::BiEdgeTrait;
-use crate::graph::edge_id::{EdgeId, NoId, WithId};
-use crate::graph::edge_trait::EdgeTrait;
+use crate::graph::edges::bi_edge_trait::BiEdgeTrait;
+use crate::graph::edges::edge_id::{EdgeId, NoId, WithId};
+use crate::graph::edges::edge_trait::EdgeTrait;
 use crate::graph::graph::Graph;
 use crate::io::input::{Input, Readable};
 

@@ -1,11 +1,12 @@
 use crate::collections::min_max::MinimMaxim;
-use crate::numbers::integer::WeakInteger;
+use crate::numbers::num_traits::add_sub::AddSub;
+use crate::numbers::num_traits::zero_one::ZeroOne;
 
-pub struct FenwickTree<T: WeakInteger> {
+pub struct FenwickTree<T: AddSub + ZeroOne> {
     value: Vec<T>,
 }
 
-impl<T: WeakInteger> FenwickTree<T> {
+impl<T: AddSub + ZeroOne> FenwickTree<T> {
     pub fn new(size: usize) -> Self {
         Self {
             value: vec![T::zero(); size],
