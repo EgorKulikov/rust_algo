@@ -1,24 +1,24 @@
-use std::marker::PhantomData;
-use std::ops::Add;
-use std::convert::From;
-use std::ops::SubAssign;
-use std::ops::Mul;
-use std::mem::swap;
-use std::ops::Neg;
-use std::ops::Div;
+use std::hash::Hash;
 use std::fmt::Formatter;
-use std::io::Read;
+use std::marker::PhantomData;
+use std::ops::AddAssign;
 use std::io::Write;
 use std::hash::Hasher;
-use std::ops::Rem;
-use std::ops::MulAssign;
-use std::hash::Hash;
 use std::ops::RemAssign;
-use std::ops::AddAssign;
+use std::convert::From;
+use std::ops::Neg;
+use std::ops::Mul;
+use std::mem::swap;
+use std::ops::MulAssign;
+use std::ops::SubAssign;
+use std::io::Read;
+use std::ops::Rem;
+use std::collections::HashMap;
+use std::ops::Add;
+use std::ops::Sub;
 use std::ops::DivAssign;
 use std::fmt::Display;
-use std::ops::Sub;
-use std::collections::HashMap;
+use std::ops::Div;
 
 pub trait MinimMaxim: PartialOrd + Sized {
     fn minim(&mut self, other: Self) -> bool {
@@ -699,6 +699,61 @@ macro_rules! out_line {
     };
 }
 
+pub trait Value<T>: Copy + Eq + Hash {
+    fn val() -> T;
+}
+
+pub trait ConstValue<T>: Value<T> {
+    const VAL: T;
+}
+
+impl<T, V: ConstValue<T>> Value<T> for V {
+    fn val() -> T {
+        Self::VAL
+    }
+}
+
+#[macro_export]
+macro_rules! value {
+    ($name: ident, $t: ty, $val: expr) => {
+        #[derive(Copy, Clone, Eq, PartialEq, Hash)]
+        pub struct $name {}
+
+        impl ConstValue<$t> for $name {
+            const VAL: $t = $val;
+        }
+    };
+}
+
+pub trait DynamicValue<T>: Value<T> {
+    //noinspection RsSelfConvention
+    fn set_val(t: T);
+}
+
+#[macro_export]
+macro_rules! dynamic_value {
+    ($name: ident, $val_name: ident, $t: ty, $base: expr) => {
+        static mut $val_name: $t = $base;
+
+        #[derive(Copy, Clone, Eq, PartialEq, Hash)]
+        pub struct $name {}
+
+        impl DynamicValue<$t> for $name {
+            fn set_val(t: $t) {
+                unsafe {
+                    $val_name = t;
+                }
+            }
+        }
+
+        impl Value<$t> for $name {
+            fn val() -> $t {
+                unsafe { $val_name }
+            }
+        }
+    };
+}
+
 pub trait Wideable: Sized {
     type W: From<Self>;
 
@@ -760,63 +815,8 @@ pub fn lcm<T: Copy + ZeroOne + MulDivRem + PartialEq>(a: T, b: T) -> T {
     (a / gcd(a, b)) * b
 }
 
-pub trait Value<T>: Copy + Eq + Hash {
-    fn val() -> T;
-}
-
-pub trait ConstValue<T>: Value<T> {
-    const VAL: T;
-}
-
-impl<T, V: ConstValue<T>> Value<T> for V {
-    fn val() -> T {
-        Self::VAL
-    }
-}
-
-#[macro_export]
-macro_rules! value {
-    ($name: ident, $t: ty, $val: expr) => {
-        #[derive(Copy, Clone, Eq, PartialEq, Hash)]
-        pub struct $name {}
-
-        impl ConstValue<$t> for $name {
-            const VAL: $t = $val;
-        }
-    };
-}
-
-pub trait DynamicValue<T>: Value<T> {
-    //noinspection RsSelfConvention
-    fn set_val(t: T);
-}
-
-#[macro_export]
-macro_rules! dynamic_value {
-    ($name: ident, $val_name: ident, $t: ty, $base: expr) => {
-        static mut $val_name: $t = $base;
-
-        #[derive(Copy, Clone, Eq, PartialEq, Hash)]
-        pub struct $name {}
-
-        impl DynamicValue<$t> for $name {
-            fn set_val(t: $t) {
-                unsafe {
-                    $val_name = t;
-                }
-            }
-        }
-
-        impl Value<$t> for $name {
-            fn val() -> $t {
-                unsafe { $val_name }
-            }
-        }
-    };
-}
-
 pub trait BaseModInt: AddSub + MulDiv + Neg + Copy + ZeroOne + PartialEq {
-    type W: AddSub + MulDivRem + Copy + ZeroOne;
+    type W: AddSub + MulDivRem + Copy + ZeroOne + From<Self::T>;
     type T: AddSub + MulDivRem + Copy + PartialEq + ZeroOne + Wideable<W = Self::W> + Ord;
 
     fn new(n: Self::T) -> Self;
@@ -1180,6 +1180,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let mut last_pos = HashMap::new();
     let mut ft: FenwickTree<Mod> = FenwickTree::new(n);
     ft.add(0, Mod::one());
+
     for (i, v) in a.into_iter().enumerate() {
         if i == n - 1 {
             break;

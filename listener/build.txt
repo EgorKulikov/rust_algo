@@ -206,7 +206,7 @@ fn main() {
     code.push("fn main() {".to_string());
     let input = input.unwrap();
     match input.r#type.as_str() {
-        "stdin" => {
+        "stdin" | "regex" => {
             code.push("    let mut sin = std::io::stdin();".to_string());
             code.push("    let input = Input::new(&mut sin);".to_string());
         }

@@ -1,0 +1,20 @@
+0
+fn solve(input: &mut Input, _test_case: usize) {
+    #[derive(Clone, Default)]
+    struct Job {
+    }
+
+    impl ParallelJob for Job {
+        fn read_input(&mut self, input: &mut Input) {
+        }
+
+        fn solve(&mut self) {
+        }
+
+        fn write_output(&mut self, test_case: usize) {
+            out_line!(format!("Case #{}: ", test_case));
+        }
+    }
+
+    parallel_run::<Job>(input);
+}

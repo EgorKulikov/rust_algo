@@ -1,4 +1,6 @@
+use algo_lib::collections::iter_ext::IterExt;
 use algo_lib::io::input::Input;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fs::{create_dir, File};
 use std::io::{BufRead, Read, Write};
@@ -12,6 +14,7 @@ use std::{io, thread};
 struct IOType {
     r#type: String,
     fileName: Option<String>,
+    pattern: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -38,6 +41,7 @@ struct Languages {
 struct Task {
     name: String,
     group: String,
+    url: String,
     interactive: bool,
     timeLimit: u64,
     tests: Vec<Test>,
@@ -94,6 +98,24 @@ where
     res
 }
 
+fn try_read_lines<P>(filename: P) -> Option<Vec<String>>
+where
+    P: AsRef<Path>,
+{
+    let file = File::open(filename);
+    let file = match file {
+        Ok(file) => file,
+        Err(_) => {
+            return None;
+        }
+    };
+    let mut res = Vec::new();
+    for line in io::BufReader::new(file).lines() {
+        res.push(line.unwrap());
+    }
+    Some(res)
+}
+
 fn write_lines(filename: &str, lines: Vec<String>) {
     let mut file = File::create(filename).unwrap();
     for line in lines {
@@ -119,8 +141,26 @@ fn process(request: &str) {
             lines.push(format!("    \"{}\",", name));
         }
     }
-    println!("input type? 0 - single test, 1 - num test known, 2 - until eof");
-    let t = input.read::<u8>();
+    let site = task.url.clone();
+    let re = Regex::new(r"https?://(?:www.)?([^.]*)[.].*").unwrap();
+    let mut matches = re.captures_iter(site.as_str());
+    let site = matches.next().unwrap();
+    let site = match site.get(1) {
+        None => "default",
+        Some(s) => s.as_str(),
+    };
+    eprintln!("{}", site);
+    let solve = try_read_lines(format!("{}.txt", site));
+    let solve = match solve {
+        None => read_lines("default.txt"),
+        Some(solve) => solve,
+    };
+    let mut t = solve[0].parse::<i8>().unwrap();
+    let mut solve = solve[1..].iter().cloned().collect_vec();
+    if t == -1 {
+        println!("input type? 0 - single test, 1 - num test known, 2 - until eof");
+        t = input.read();
+    }
     create_dir(format!("../{}", name).as_str()).unwrap();
     create_dir(format!("../{}/src", name).as_str()).unwrap();
     create_dir(format!("../{}/tests", name).as_str()).unwrap();
@@ -146,6 +186,8 @@ fn process(request: &str) {
         serde_json::to_string(&task.output).unwrap()
     ));
     main.append(&mut read_lines("prefix.txt"));
+    main.append(&mut solve);
+    main.append(&mut read_lines("after_solve.txt"));
     match t {
         0 => {
             main.push("    solve(&mut input, 1);".to_string());

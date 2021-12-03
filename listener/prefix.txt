@@ -3,14 +3,3 @@ use algo_lib::io::input::Input;
 use algo_lib::io::output::{output, Output, OUTPUT};
 use algo_lib::{out, out_line};
 
-fn solve(input: &mut Input, _test_case: usize) {}
-
-//START SKIP
-//BEGIN MAIN
-fn main() {
-    run_tests();
-}
-//END MAIN
-//END SKIP
-
-fn run(mut input: Input) -> bool {

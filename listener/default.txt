@@ -1,0 +1,2 @@
+-1
+fn solve(input: &mut Input, _test_case: usize) {}

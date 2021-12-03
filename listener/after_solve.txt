@@ -1,0 +1,10 @@
+
+//START SKIP
+//BEGIN MAIN
+fn main() {
+    run_tests();
+}
+//END MAIN
+//END SKIP
+
+fn run(mut input: Input) -> bool {

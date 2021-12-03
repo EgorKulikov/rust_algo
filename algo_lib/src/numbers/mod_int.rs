@@ -15,7 +15,7 @@ use std::marker::PhantomData;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 pub trait BaseModInt: AddSub + MulDiv + Neg + Copy + ZeroOne + PartialEq {
-    type W: AddSub + MulDivRem + Copy + ZeroOne;
+    type W: AddSub + MulDivRem + Copy + ZeroOne + From<Self::T>;
     type T: AddSub + MulDivRem + Copy + PartialEq + ZeroOne + Wideable<W = Self::W> + Ord;
 
     fn new(n: Self::T) -> Self;
