@@ -52,19 +52,11 @@ macro_rules! min_max_float_impl {
             }
 
             fn min(self, other: Self) -> Self {
-                if self < other {
-                    self
-                } else {
-                    other
-                }
+                $t::min(self, other)
             }
 
             fn max(self, other: Self) -> Self {
-                if self > other {
-                    self
-                } else {
-                    other
-                }
+                $t::max(self, other)
             }
         }
     };
