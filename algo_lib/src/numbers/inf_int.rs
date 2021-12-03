@@ -1,7 +1,7 @@
+use crate::misc::value::Value;
 use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::mul_div_rem::MulDiv;
 use crate::numbers::num_traits::zero_one::ZeroOne;
-use crate::types::value::Value;
 use std::marker::PhantomData;
 use std::ops::{Add, AddAssign, Mul, MulAssign};
 

@@ -7,7 +7,7 @@ use algo_lib::graph::edges::edge_trait::EdgeTrait;
 use algo_lib::graph::graph::Graph;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::{output, Output, OUTPUT};
-use algo_lib::types::recursive_function::{Callable2, RecursiveFunction2};
+use algo_lib::misc::recursive_function::{Callable2, RecursiveFunction2};
 use algo_lib::{out, out_line};
 use std::cmp;
 

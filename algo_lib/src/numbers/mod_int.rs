@@ -1,12 +1,12 @@
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
+use crate::misc::value::{ConstValue, Value};
 use crate::numbers::gcd::extended_gcd;
 use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::from_u8::FromU8;
 use crate::numbers::num_traits::mul_div_rem::{MulDiv, MulDivRem};
 use crate::numbers::num_traits::wideable::Wideable;
 use crate::numbers::num_traits::zero_one::ZeroOne;
-use crate::types::value::{ConstValue, Value};
 use crate::value;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};

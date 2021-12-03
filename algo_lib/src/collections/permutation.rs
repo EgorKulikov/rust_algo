@@ -48,6 +48,10 @@ impl Permutation {
         }
     }
 
+    pub fn set_base(&mut self, b: usize) {
+        self.base = b;
+    }
+
     fn check(p: &Vec<usize>) -> bool {
         let mut was = vec![false; p.len()];
         for i in p {

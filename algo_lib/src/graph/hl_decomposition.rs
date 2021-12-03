@@ -1,6 +1,6 @@
 use crate::graph::edges::edge_trait::EdgeTrait;
 use crate::graph::graph::Graph;
-use crate::types::recursive_function::{Callable2, RecursiveFunction2};
+use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
 
 pub trait HLDecomposition {
     fn hl_decomposition_with_root(&self, root: usize) -> (Vec<Vec<usize>>, Vec<usize>, Vec<usize>);

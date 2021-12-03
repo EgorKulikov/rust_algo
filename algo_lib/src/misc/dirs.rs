@@ -1,4 +1,4 @@
-use crate::types::value::{ConstValue, Value};
+use crate::misc::value::{ConstValue, Value};
 use crate::value;
 use std::marker::PhantomData;
 

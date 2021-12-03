@@ -1,9 +1,9 @@
 use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
 use crate::graph::graph::{FlowGraph, Graph};
+use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
 use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::ord::MinMax;
 use crate::numbers::num_traits::zero_one::ZeroOne;
-use crate::types::recursive_function::{Callable2, RecursiveFunction2};
 use std::collections::VecDeque;
 
 pub trait MaxFlow<C: AddSub + PartialOrd + Copy + ZeroOne + MinMax> {
