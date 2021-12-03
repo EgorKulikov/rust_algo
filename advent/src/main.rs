@@ -4,21 +4,14 @@ fn main() {
     let mut sin = std::io::stdin();
     let mut inp = Input::new(&mut sin);
 
-    let mut pos = 0usize;
-    let mut depth = 0usize;
+    let mut vals = Vec::new();
     loop {
         inp.skip_whitespace();
         if inp.peek().is_none() {
             break;
         }
-        let dir: String = inp.read();
-        let cur: usize = inp.read();
-        match dir.as_str() {
-            "forward" => pos += cur,
-            "up" => depth -= cur,
-            "down" => depth += cur,
-            _ => unreachable!(),
-        }
+        let cur: String = inp.read();
+        vals.push(cur.parse::<u64>().unwrap());
     }
-    println!("{}", pos * depth);
+    println!("{}", vals.len());
 }
