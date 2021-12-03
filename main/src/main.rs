@@ -1,79 +1,60 @@
-#![feature(trait_alias)]
-use std::collections::VecDeque;
-use std::fmt::Display;
-use std::hash::Hash;
-use std::io::Read;
-use std::io::Write;
-use std::iter::Skip;
-use std::iter::StepBy;
 use std::marker::PhantomData;
 use std::ops::Add;
-use std::ops::AddAssign;
-use std::ops::Div;
-use std::ops::DivAssign;
-use std::ops::Index;
-use std::ops::IndexMut;
-use std::ops::Mul;
-use std::ops::MulAssign;
-use std::ops::Rem;
-use std::ops::RemAssign;
-use std::ops::Sub;
+use std::convert::From;
 use std::ops::SubAssign;
-use std::slice::Iter;
-use std::slice::IterMut;
+use std::ops::Mul;
+use std::mem::swap;
+use std::ops::Neg;
+use std::ops::Div;
+use std::fmt::Formatter;
+use std::io::Read;
+use std::io::Write;
+use std::hash::Hasher;
+use std::ops::Rem;
+use std::ops::MulAssign;
+use std::hash::Hash;
+use std::ops::RemAssign;
+use std::ops::AddAssign;
+use std::ops::DivAssign;
+use std::fmt::Display;
+use std::ops::Sub;
+use std::collections::HashMap;
 
-pub trait WeakInteger:
-    Add<Output = Self>
-    + AddAssign
-    + Mul<Output = Self>
-    + MulAssign
-    + Sub<Output = Self>
-    + SubAssign
-    + PartialEq
-    + Copy
-    + Eq
-    + Hash
-{
-    type W: From<Self> + WeakInteger;
-
-    fn zero() -> Self;
-    fn one() -> Self;
-    fn from_u8(n: u8) -> Self;
-    fn downcast(w: Self::W) -> Self;
-
-    fn two() -> Self {
-        Self::one() + Self::one()
+pub trait MinimMaxim: PartialOrd + Sized {
+    fn minim(&mut self, other: Self) -> bool {
+        if other < *self {
+            *self = other;
+            true
+        } else {
+            false
+        }
     }
 
-    fn power<T: Integer>(&self, exp: T) -> Self {
-        if exp == T::zero() {
-            Self::one()
-        } else if exp % T::two() == T::zero() {
-            let res = self.power(exp / T::two());
-            res * res
+    fn maxim(&mut self, other: Self) -> bool {
+        if other > *self {
+            *self = other;
+            true
         } else {
-            self.power(exp - T::one()) * (*self)
+            false
         }
     }
 }
 
-pub trait Integer:
-    WeakInteger + Ord + Div<Output = Self> + DivAssign + Rem<Output = Self> + RemAssign + 'static
-{
-    type W: From<Self> + Integer;
+impl<T: PartialOrd + Sized> MinimMaxim for T {}
 
-    const SIGNED: bool;
+pub trait Addable: Add<Output = Self> + AddAssign + Copy {}
+impl<T: Add<Output = Self> + AddAssign + Copy> Addable for T {}
 
-    fn max() -> Self;
-    fn min() -> Self;
-    fn downcast(w: <Self as Integer>::W) -> Self;
+pub trait AddSub: Addable + Sub<Output = Self> + SubAssign {}
+impl<T: Addable + Sub<Output = Self> + SubAssign> AddSub for T {}
+pub trait ZeroOne {
+    fn zero() -> Self;
+    fn one() -> Self;
 }
 
-macro_rules! integer_impl {
-    ($t: ident, $w: ident, $s: expr) => {
-        impl WeakInteger for $t {
-            type W = $w;
-
+macro_rules! zero_one_integer_impl {
+    ($t: ident) => {
+        impl ZeroOne for $t {
             fn zero() -> Self {
                 0
             }
@@ -81,48 +62,161 @@ macro_rules! integer_impl {
             fn one() -> Self {
                 1
             }
-
-            fn from_u8(n: u8) -> Self {
-                n as $t
-            }
-
-            fn downcast(w: Self::W) -> Self {
-                w as $t
-            }
         }
+    };
+}
 
-        impl Integer for $t {
-            type W = $w;
+zero_one_integer_impl!(i128);
+zero_one_integer_impl!(i64);
+zero_one_integer_impl!(i32);
+zero_one_integer_impl!(i16);
+zero_one_integer_impl!(i8);
+zero_one_integer_impl!(isize);
+zero_one_integer_impl!(u128);
+zero_one_integer_impl!(u64);
+zero_one_integer_impl!(u32);
+zero_one_integer_impl!(u16);
+zero_one_integer_impl!(u8);
+zero_one_integer_impl!(usize);
 
-            const SIGNED: bool = $s;
-
-            fn max() -> Self {
-                $t::MAX
+macro_rules! zero_one_float_impl {
+    ($t: ident) => {
+        impl ZeroOne for $t {
+            fn zero() -> Self {
+                0.
             }
 
-            fn min() -> Self {
-                $t::MIN
-            }
-
-            fn downcast(w: <Self as Integer>::W) -> Self {
-                w as $t
+            fn one() -> Self {
+                1.
             }
         }
     };
 }
 
-integer_impl!(i128, i128, true);
-integer_impl!(i64, i128, true);
-integer_impl!(i32, i64, true);
-integer_impl!(i16, i32, true);
-integer_impl!(i8, i16, true);
-integer_impl!(isize, isize, true);
-integer_impl!(u128, u128, false);
-integer_impl!(u64, u128, false);
-integer_impl!(u32, u64, false);
-integer_impl!(u16, u32, false);
-integer_impl!(u8, u16, false);
-integer_impl!(usize, usize, false);
+zero_one_float_impl!(f32);
+zero_one_float_impl!(f64);
+
+pub struct FenwickTree<T: AddSub + ZeroOne> {
+    value: Vec<T>,
+}
+
+impl<T: AddSub + ZeroOne> FenwickTree<T> {
+    pub fn new(size: usize) -> Self {
+        Self {
+            value: vec![T::zero(); size],
+        }
+    }
+
+    pub fn get_to(&self, mut to: usize) -> T {
+        to.minim(self.value.len());
+        let mut result = T::zero();
+        while to > 0 {
+            to -= 1;
+            result += self.value[to];
+            to &= to + 1;
+        }
+        result
+    }
+
+    pub fn get(&self, from: usize, to: usize) -> T {
+        if from >= to {
+            T::zero()
+        } else {
+            self.get_to(to) - self.get_to(from)
+        }
+    }
+
+    pub fn add(&mut self, mut at: usize, v: T) {
+        while at < self.value.len() {
+            self.value[at] += v;
+            at |= at + 1;
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.value.fill(T::zero());
+    }
+}
+pub trait FromU8 {
+    fn from_u8(val: u8) -> Self;
+}
+
+macro_rules! from_u8_impl {
+    ($t: ident) => {
+        impl FromU8 for $t {
+            fn from_u8(val: u8) -> Self {
+                val as $t
+            }
+        }
+    };
+}
+
+from_u8_impl!(i128);
+from_u8_impl!(i64);
+from_u8_impl!(i32);
+from_u8_impl!(i16);
+from_u8_impl!(i8);
+from_u8_impl!(isize);
+from_u8_impl!(u128);
+from_u8_impl!(u64);
+from_u8_impl!(u32);
+from_u8_impl!(u16);
+from_u8_impl!(u8);
+from_u8_impl!(usize);
+from_u8_impl!(f32);
+from_u8_impl!(f64);
+
+pub trait Multable: Mul<Output = Self> + MulAssign + Copy {}
+impl<T: Mul<Output = Self> + MulAssign + Copy> Multable for T {}
+
+pub trait MulDiv: Multable + Div<Output = Self> + DivAssign {}
+impl<T: Multable + Div<Output = Self> + DivAssign> MulDiv for T {}
+
+pub trait MulDivRem: MulDiv + Rem<Output = Self> + RemAssign {}
+impl<T: MulDiv + Rem<Output = Self> + RemAssign> MulDivRem for T {}
+pub trait IsSigned {
+    const SIGNED: bool;
+}
+
+pub trait Signed: IsSigned {}
+
+pub trait Unsigned: IsSigned {}
+
+macro_rules! unsigned_impl {
+    ($t: ident) => {
+        impl Unsigned for $t {}
+
+        impl IsSigned for $t {
+            const SIGNED: bool = false;
+        }
+    };
+}
+
+unsigned_impl!(u128);
+unsigned_impl!(u64);
+unsigned_impl!(u32);
+unsigned_impl!(u16);
+unsigned_impl!(u8);
+unsigned_impl!(usize);
+
+macro_rules! signed_impl {
+    ($t: ident) => {
+        impl Signed for $t {}
+
+        impl IsSigned for $t {
+            const SIGNED: bool = true;
+        }
+    };
+}
+
+signed_impl!(i128);
+signed_impl!(i64);
+signed_impl!(i32);
+signed_impl!(i16);
+signed_impl!(i8);
+signed_impl!(isize);
+signed_impl!(f64);
+signed_impl!(f32);
 
 pub struct Input<'s> {
     input: &'s mut dyn Read,
@@ -230,7 +324,7 @@ impl<'s> Input<'s> {
         res
     }
 
-    fn read_integer<T: Integer + Display>(&mut self) -> T {
+    fn read_integer<T: IsSigned + ZeroOne + FromU8 + AddSub + Multable + Display>(&mut self) -> T {
         self.skip_whitespace();
         let mut c = self.get().unwrap();
         let sgn = if c == b'-' {
@@ -335,7 +429,7 @@ impl<T: Readable> Readable for Vec<T> {
     }
 }
 
-impl<T: Readable, const N: usize> Readable for [T; N] {
+/*impl<T: Readable, const N: usize> Readable for [T; N] {
     fn read(input: &mut Input) -> Self {
         let mut arr: [T; N] = unsafe { std::mem::MaybeUninit::uninit().assume_init() };
         for i in 0..N {
@@ -343,7 +437,7 @@ impl<T: Readable, const N: usize> Readable for [T; N] {
         }
         arr
     }
-}
+}*/
 
 macro_rules! read_integer {
     ($t:ident) => {
@@ -599,128 +693,71 @@ macro_rules! out_line {
     ($first: expr $(, $args:expr )* ) => {
         out!($first $(,$args)*);
         output().put(b'\n');
-    }
+    };
+    () => {
+        output().put(b'\n');
+    };
 }
 
-pub struct Arr2d<T> {
-    d1: usize,
-    d2: usize,
-    data: Vec<T>,
+pub trait Wideable: Sized {
+    type W: From<Self>;
+
+    fn downcast(w: Self::W) -> Self;
 }
 
-impl<T: Clone> Arr2d<T> {
-    pub fn new(d1: usize, d2: usize, value: T) -> Self {
-        Self {
-            d1,
-            d2,
-            data: vec![value; d1 * d2],
-        }
-    }
-}
+macro_rules! wideable_impl {
+    ($t: ident, $w: ident) => {
+        impl Wideable for $t {
+            type W = $w;
 
-impl<T> Arr2d<T> {
-    pub fn generate<F>(d1: usize, d2: usize, mut gen: F) -> Self
-    where
-        F: FnMut(usize, usize) -> T,
-    {
-        let mut data = Vec::with_capacity(d1 * d2);
-        for i in 0usize..d1 {
-            for j in 0usize..d2 {
-                data.push(gen(i, j));
+            fn downcast(w: Self::W) -> Self {
+                w as $t
             }
         }
-        Self { d1, d2, data }
-    }
+    };
+}
 
-    pub fn d1(&self) -> usize {
-        self.d1
-    }
+wideable_impl!(i128, i128);
+wideable_impl!(i64, i128);
+wideable_impl!(i32, i64);
+wideable_impl!(i16, i32);
+wideable_impl!(i8, i16);
+wideable_impl!(isize, isize);
+wideable_impl!(u128, u128);
+wideable_impl!(u64, u128);
+wideable_impl!(u32, u64);
+wideable_impl!(u16, u32);
+wideable_impl!(u8, u16);
+wideable_impl!(usize, usize);
+wideable_impl!(f64, f64);
+wideable_impl!(f32, f64);
 
-    pub fn d2(&self) -> usize {
-        self.d2
-    }
-
-    pub fn iter(&self) -> Iter<T> {
-        self.data.iter()
-    }
-
-    pub fn iter_mut(&mut self) -> IterMut<T> {
-        self.data.iter_mut()
-    }
-
-    pub fn column(&self, col: usize) -> StepBy<Skip<Iter<T>>> {
-        assert!(col < self.d2);
-        self.data.iter().skip(col).step_by(self.d2)
-    }
-
-    pub fn column_mut(&mut self, col: usize) -> StepBy<Skip<IterMut<T>>> {
-        assert!(col < self.d2);
-        self.data.iter_mut().skip(col).step_by(self.d2)
+pub fn extended_gcd<T: Copy + ZeroOne + AddSub + MulDivRem + Wideable + PartialEq>(
+    a: T,
+    b: T,
+) -> (T, T::W, T::W)
+where
+    T::W: Copy + ZeroOne + AddSub + Multable,
+{
+    if a == T::zero() {
+        (b, T::W::zero(), T::W::one())
+    } else {
+        let (d, y, mut x) = extended_gcd(b % a, a);
+        x -= T::W::from(b / a) * y;
+        (d, x, y)
     }
 }
 
-impl<T> Index<(usize, usize)> for Arr2d<T> {
-    type Output = T;
-
-    fn index(&self, (row, col): (usize, usize)) -> &Self::Output {
-        &self.data[self.d2 * row + col]
+pub fn gcd<T: Copy + ZeroOne + MulDivRem + PartialEq>(mut a: T, mut b: T) -> T {
+    while b != T::zero() {
+        a %= b;
+        swap(&mut a, &mut b);
     }
+    a
 }
 
-impl<T> Index<usize> for Arr2d<T> {
-    type Output = [T];
-
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.data[self.d2 * index..self.d2 * (index + 1)]
-    }
-}
-
-impl<T> IndexMut<(usize, usize)> for Arr2d<T> {
-    fn index_mut(&mut self, (row, col): (usize, usize)) -> &mut T {
-        &mut self.data[self.d2 * row + col]
-    }
-}
-
-impl<T> IndexMut<usize> for Arr2d<T> {
-    fn index_mut(&mut self, index: usize) -> &mut [T] {
-        &mut self.data[self.d2 * index..self.d2 * (index + 1)]
-    }
-}
-
-impl<T: Writable> Writable for Arr2d<T> {
-    fn write(&self, output: &mut Output) {
-        let mut at = 0usize;
-        for i in 0usize..self.d1 {
-            if i != 0 {
-                output.put(b'\n');
-            }
-            for j in 0usize..self.d2 {
-                if j != 0 {
-                    output.put(b' ');
-                }
-                self.data[at].write(output);
-                at += 1;
-            }
-        }
-    }
-}
-
-pub trait Arr2dRead {
-    fn read_table<T: Readable>(&mut self, d1: usize, d2: usize) -> Arr2d<T>;
-}
-
-impl Arr2dRead for Input<'_> {
-    fn read_table<T: Readable>(&mut self, d1: usize, d2: usize) -> Arr2d<T> {
-        Arr2d::generate(d1, d2, |_, _| self.read())
-    }
-}
-
-impl<T: Readable> Readable for Arr2d<T> {
-    fn read(input: &mut Input) -> Self {
-        let d1 = input.read();
-        let d2 = input.read();
-        input.read_table(d1, d2)
-    }
+pub fn lcm<T: Copy + ZeroOne + MulDivRem + PartialEq>(a: T, b: T) -> T {
+    (a / gcd(a, b)) * b
 }
 
 pub trait Value<T>: Copy + Eq + Hash {
@@ -778,117 +815,385 @@ macro_rules! dynamic_value {
     };
 }
 
-pub struct Directions<V: Value<[(isize, isize); N]>, const N: usize> {
+pub trait BaseModInt: AddSub + MulDiv + Neg + Copy + ZeroOne + PartialEq {
+    type W: AddSub + MulDivRem + Copy + ZeroOne;
+    type T: AddSub + MulDivRem + Copy + PartialEq + ZeroOne + Wideable<W = Self::W> + Ord;
+
+    fn new(n: Self::T) -> Self;
+    fn new_from_long(n: <Self::T as Wideable>::W) -> Self;
+    fn inv(&self) -> Option<Self>;
+    fn module() -> Self::T;
+}
+
+#[derive(Copy, Clone, PartialEq)]
+pub struct ModInt<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    n: T,
     phantom: PhantomData<V>,
 }
 
-impl<V: Value<[(isize, isize); N]>, const N: usize> Directions<V, N> {
-    pub fn iter(row: usize, col: usize, n: usize, m: usize) -> DirectionsIter<V, N> {
-        DirectionsIter {
-            row,
-            col,
+impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    fn safe_new(n: T) -> Self {
+        debug_assert!(n >= T::zero() && n < V::val());
+        Self {
             n,
-            m,
-            at: 0,
             phantom: Default::default(),
         }
     }
-}
 
-pub struct DirectionsIter<V: Value<[(isize, isize); N]>, const N: usize> {
-    row: usize,
-    col: usize,
-    n: usize,
-    m: usize,
-    at: usize,
-    phantom: PhantomData<V>,
-}
-
-pub trait MyIterator = Iterator;
-
-impl<V: Value<[(isize, isize); N]>, const N: usize> MyIterator for DirectionsIter<V, N> {
-    type Item = (usize, usize);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        while self.at < N {
-            let nrow = (self.row as isize) + V::val()[self.at].0;
-            let ncol = (self.col as isize) + V::val()[self.at].1;
-            self.at += 1;
-            if nrow >= 0 && (nrow as usize) < self.n && ncol >= 0 && (ncol as usize) < self.m {
-                return Some((nrow as usize, ncol as usize));
-            }
+    fn safe(mut n: T) -> T {
+        assert!(n < V::val() + V::val() && n >= T::zero());
+        if n >= V::val() {
+            n -= V::val();
         }
-        None
+        n
+    }
+
+    fn make_safe(&mut self) {
+        self.n = Self::safe(self.n);
     }
 }
 
-value!(
-    D4Dirs,
-    [(isize, isize); 4],
-    [
-        (1isize, 0isize),
-        (0isize, 1isize),
-        (-1isize, 0isize),
-        (0isize, -1isize)
-    ]
-);
+impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord + Hash, V: Value<T>>
+    ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    pub fn log(&self, alpha: Self) -> T {
+        let mut base = HashMap::new();
+        let mut exp = T::zero();
+        let mut pow = Self::one();
+        let mut inv = *self;
+        let alpha_inv = alpha.inv().unwrap();
+        while exp * exp < Self::module() {
+            if inv == Self::one() {
+                return exp;
+            }
+            base.insert(inv, exp);
+            exp += T::one();
+            pow *= alpha;
+            inv *= alpha_inv;
+        }
+        let step = pow;
+        let mut i = T::one();
+        loop {
+            if let Some(b) = base.get(&pow) {
+                break exp * i + *b;
+            }
+            pow *= step;
+            i += T::one();
+        }
+    }
+}
 
-pub type D4 = Directions<D4Dirs, 4>;
+impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> BaseModInt
+    for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    type T = T;
+    type W = T::W;
+
+    fn new(n: T) -> Self {
+        Self::safe_new(Self::safe(n % (V::val()) + V::val()))
+    }
+
+    fn new_from_long(n: T::W) -> Self {
+        Self::safe_new(Self::safe(T::downcast(n % (V::val()).into()) + V::val()))
+    }
+
+    fn inv(&self) -> Option<Self> {
+        let (g, x, _) = extended_gcd(self.n, V::val());
+        if g != T::one() {
+            None
+        } else {
+            Some(Self::new_from_long(x))
+        }
+    }
+
+    fn module() -> T {
+        V::val()
+    }
+}
+
+impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> From<T>
+    for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    fn from(n: T) -> Self {
+        Self::new(n)
+    }
+}
+
+impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> AddAssign
+    for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    fn add_assign(&mut self, rhs: Self) {
+        self.n += rhs.n;
+        self.make_safe();
+    }
+}
+
+impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> Add
+    for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    type Output = Self;
+
+    fn add(mut self, rhs: Self) -> Self::Output {
+        self += rhs;
+        self
+    }
+}
+
+impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> SubAssign
+    for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    fn sub_assign(&mut self, rhs: Self) {
+        self.n += V::val() - rhs.n;
+        self.make_safe();
+    }
+}
+
+impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> Sub
+    for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    type Output = Self;
+
+    fn sub(mut self, rhs: Self) -> Self::Output {
+        self -= rhs;
+        self
+    }
+}
+
+impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> MulAssign
+    for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    fn mul_assign(&mut self, rhs: Self) {
+        self.n = T::downcast(T::W::from(self.n) * T::W::from(rhs.n) % T::W::from(V::val()));
+    }
+}
+
+impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> Mul
+    for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    type Output = Self;
+
+    fn mul(mut self, rhs: Self) -> Self::Output {
+        self *= rhs;
+        self
+    }
+}
+
+impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> DivAssign
+    for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    fn div_assign(&mut self, rhs: Self) {
+        *self *= rhs.inv().unwrap();
+    }
+}
+
+impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> Div
+    for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    type Output = Self;
+
+    fn div(mut self, rhs: Self) -> Self::Output {
+        self /= rhs;
+        self
+    }
+}
+
+impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> Neg
+    for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    type Output = Self;
+
+    fn neg(mut self) -> Self::Output {
+        self.n = V::val() - self.n;
+        self.make_safe();
+        self
+    }
+}
+
+impl<
+        T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord + Display,
+        V: Value<T>,
+    > Display for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        <T as Display>::fmt(&self.n, f)
+    }
+}
+
+impl<
+        T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord + Readable,
+        V: Value<T>,
+    > Readable for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    fn read(input: &mut Input) -> Self {
+        Self::new(T::read(input))
+    }
+}
+
+impl<
+        T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord + Writable,
+        V: Value<T>,
+    > Writable for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    fn write(&self, output: &mut Output) {
+        self.n.write(output);
+    }
+}
+
+impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> ZeroOne
+    for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    fn zero() -> Self {
+        Self::new(T::zero())
+    }
+
+    fn one() -> Self {
+        Self::new(T::one())
+    }
+}
+
+impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> Wideable
+    for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    type W = Self;
+
+    fn downcast(w: Self::W) -> Self {
+        w
+    }
+}
+
+impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord + FromU8, V: Value<T>>
+    FromU8 for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    fn from_u8(n: u8) -> Self {
+        Self::new(T::from_u8(n))
+    }
+}
+
+impl<
+        T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord + Display + FromU8,
+        V: Value<T>,
+    > std::fmt::Debug for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let max = T::from_u8(100);
+        if self.n <= max {
+            write!(f, "{}", self.n)
+        } else if self.n >= V::val() - max {
+            write!(f, "-{}", V::val() - self.n)
+        } else {
+            let mut denum = T::one();
+            while denum < max {
+                let mut num = T::one();
+                while num < max {
+                    if Self::new(num) / Self::new(denum) == *self {
+                        return write!(f, "{}/{}", num, denum);
+                    }
+                    if -Self::new(num) / Self::new(denum) == *self {
+                        return write!(f, "-{}/{}", num, denum);
+                    }
+                    num += T::one();
+                }
+                denum += T::one();
+            }
+            write!(f, "(?? {} ??)", self.n)
+        }
+    }
+}
+
+impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord + Hash, V: Value<T>> Hash
+    for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.n.hash(state)
+    }
+}
+
+impl<T: AddSub + MulDivRem + Copy + Eq + Wideable + Hash + ZeroOne + Ord, V: Value<T>> Eq
+    for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+}
+
+value!(Val7, u32, 1_000_000_007);
+pub type ModInt7 = ModInt<u32, Val7>;
+
+value!(Val9, u32, 1_000_000_009);
+pub type ModInt9 = ModInt<u32, Val9>;
+
+value!(ValF, u32, 998_244_353);
+pub type ModIntF = ModInt<u32, ValF>;
 
 fn solve(input: &mut Input, _test_case: usize) {
     let n = input.read();
-    let m = input.read();
-    let mut grid = input.read_table::<char>(n, m);
+    let a = input.read_vec::<i64>(n);
 
-    let mut degree = Arr2d::new(n, m, 0u8);
-    let mut li = n;
-    let mut lj = m;
-    for i in 0..n {
-        for j in 0..m {
-            if grid[(i, j)] == '#' {
-                continue;
-            }
-            if grid[(i, j)] == 'L' {
-                li = i;
-                lj = j;
-            }
-            if i > 0 && grid[(i - 1, j)] != '#' {
-                degree[(i - 1, j)] += 1;
-                degree[(i, j)] += 1;
-            }
-            if j > 0 && grid[(i, j - 1)] != '#' {
-                degree[(i, j - 1)] += 1;
-                degree[(i, j)] += 1;
-            }
+    let mut sum = 0i64;
+    type Mod = ModIntF;
+
+    let mut last_pos = HashMap::new();
+    let mut ft: FenwickTree<Mod> = FenwickTree::new(n);
+    ft.add(0, Mod::one());
+    for (i, v) in a.into_iter().enumerate() {
+        if i == n - 1 {
+            break;
         }
+        sum += v;
+        let from = last_pos.insert(sum, i + 1).unwrap_or(0);
+        ft.add(i + 1, ft.get(from, i + 1));
     }
-    let mut q = VecDeque::new();
-    q.push_back((li, lj));
-    while !q.is_empty() {
-        let (r, c) = q.pop_front().unwrap();
-        for (nr, nc) in D4::iter(r, c, n, m) {
-            if grid[(nr, nc)] == '.' {
-                degree[(nr, nc)] -= 1;
-                if degree[(nr, nc)] <= 1 {
-                    q.push_back((nr, nc));
-                    grid[(nr, nc)] = '+';
-                }
-            }
-        }
-    }
-    for i in 0..n {
-        for j in 0..m {
-            out!(grid[(i, j)]);
-        }
-        out_line!("");
-    }
+    out_line!(ft.get(0, n));
 }
 
+
 fn run(mut input: Input) -> bool {
-    let t = input.read();
-    for i in 0usize..t {
-        solve(&mut input, i + 1);
-    }
+    solve(&mut input, 1);
     output().flush();
     input.skip_whitespace();
     !input.peek().is_some()

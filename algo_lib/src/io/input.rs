@@ -217,7 +217,7 @@ impl<T: Readable> Readable for Vec<T> {
     }
 }
 
-impl<T: Readable, const N: usize> Readable for [T; N] {
+/*impl<T: Readable, const N: usize> Readable for [T; N] {
     fn read(input: &mut Input) -> Self {
         let mut arr: [T; N] = unsafe { std::mem::MaybeUninit::uninit().assume_init() };
         for i in 0..N {
@@ -225,7 +225,7 @@ impl<T: Readable, const N: usize> Readable for [T; N] {
         }
         arr
     }
-}
+}*/
 
 macro_rules! read_integer {
     ($t:ident) => {

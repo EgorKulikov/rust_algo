@@ -117,6 +117,23 @@ impl Arr2dRead for Input<'_> {
     }
 }
 
+pub trait Arr2dCharWrite {
+    fn print_table(&mut self, table: &Arr2d<char>);
+}
+
+impl Arr2dCharWrite for Output {
+    fn print_table(&mut self, table: &Arr2d<char>) {
+        let mut at = 0usize;
+        for _ in 0..table.d1 {
+            for _ in 0..table.d2 {
+                self.print(&table.data[at]);
+                at += 1;
+            }
+            self.put(b'\n');
+        }
+    }
+}
+
 impl<T: Readable> Readable for Arr2d<T> {
     fn read(input: &mut Input) -> Self {
         let d1 = input.read();

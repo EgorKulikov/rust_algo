@@ -1,109 +1,43 @@
-//Codeforces - Educational Codeforces Round 118 (рейтинговый для Div. 2)
+//AtCoder - AtCoder Beginner Contest 230
 //{"type":"stdin","fileName":null}
 //{"type":"stdout","fileName":null}
 
 use algo_lib::io::input::Input;
 use algo_lib::io::output::{output, Output, OUTPUT};
-use algo_lib::numbers::mod_int::ModIntF;
-use algo_lib::numbers::num_traits::from_u8::FromU8;
-use algo_lib::numbers::num_traits::zero_one::ZeroOne;
-use algo_lib::types::recursive_function::{Callable2, RecursiveFunction2};
 use algo_lib::{out, out_line};
 
-fn solve_impl(n: usize, a: Vec<usize>) -> ModIntF {
-    type Mod = ModIntF;
-    let mut exact = vec![Mod::zero(); n + 3];
-    let mut seq = vec![Mod::zero(); n + 3];
-    let mut ans = Mod::zero();
-    for i in a {
-        ans += exact[i];
-        exact[i] *= Mod::from_u8(2);
-        ans += exact[i + 2];
-        exact[i + 2] *= Mod::from_u8(2);
-        let mut cseq = seq[i];
-        if i > 0 {
-            cseq += seq[i - 1];
-        } else {
-            cseq += Mod::one();
-        }
-        ans += cseq;
-        seq[i] += cseq;
-        if i > 1 {
-            ans += seq[i - 2];
-            exact[i] += seq[i - 2];
-        } else if i == 1 {
-            ans += Mod::one();
-            exact[i] += Mod::one();
-        }
-    }
-    ans
-}
-
 fn solve(input: &mut Input, _test_case: usize) {
-    let n = input.read();
-    let a = input.read_vec::<usize>(n);
+    let n: u64 = input.read();
 
-    out_line!(solve_impl(n, a));
+    let mut i = 1u64;
+    let mut ans = 0u64;
+    while i * i <= n {
+        ans += n / i;
+        i += 1;
+    }
+    let mut start = i;
+    i -= 1;
+    while i > 0 {
+        let end = n / i + 1;
+        if end > start {
+            ans += i * (end - start);
+        }
+        start = end;
+        i -= 1;
+    }
+    out_line!(ans);
 }
 
 //START SKIP
-#[test]
-fn stress() {
-    let mex = |a: &[usize]| -> usize {
-        let set = a.iter().cloned().collect::<std::collections::HashSet<_>>();
-        let mut i = 0usize;
-        loop {
-            if !set.contains(&i) {
-                break i;
-            }
-            i += 1;
-        }
-    };
-    let mut do_stress = RecursiveFunction2::new(|f, n, a: Vec<usize>| {
-        if a.len() == n {
-            let mut res = ModIntF::zero();
-            for i in 1u32..(1 << n) {
-                let mut b = Vec::new();
-                for j in 0..n {
-                    if ((i >> j) & 1) == 1 {
-                        b.push(a[j]);
-                    }
-                }
-                let mut good = true;
-                for j in 1..=b.len() {
-                    if ((b[j - 1] as isize) - (mex(&b[0..j]) as isize)).abs() > 1 {
-                        good = false;
-                        break;
-                    }
-                }
-                if good {
-                    res += ModIntF::one();
-                }
-            }
-            let act = solve_impl(n, a.clone());
-            if res != act {
-                panic!("");
-            }
-        } else {
-            for i in 0..=n {
-                let mut b = a.clone();
-                b.push(i);
-                f.call(n, b);
-            }
-        }
-    });
-    for n in 1..=5 {
-        do_stress.call(n, Vec::new());
-    }
+//BEGIN MAIN
+fn main() {
+    run_tests();
 }
-
+//END MAIN
 //END SKIP
 
 fn run(mut input: Input) -> bool {
-    let t = input.read();
-    for i in 0usize..t {
-        solve(&mut input, i + 1);
-    }
+    solve(&mut input, 1);
     output().flush();
     input.skip_whitespace();
     !input.peek().is_some()
@@ -163,7 +97,7 @@ fn run_tests() -> bool {
     let yellow = "\x1B[33m";
     let def = "\x1B[0m";
     let time_limit = std::time::Duration::from_millis(2000);
-    let mut paths = std::fs::read_dir("./tests/d_m_e_x_posledovatelnosti/")
+    let mut paths = std::fs::read_dir("./e_fraction_floor_sum/tests/")
         .unwrap()
         .map(|res| res.unwrap())
         .collect::<Vec<_>>();
@@ -278,7 +212,3 @@ fn run_tests() -> bool {
     test_failed == 0
 }
 //END SKIP
-#[test]
-fn d_m_e_x_posledovatelnosti() {
-    assert!(run_tests());
-}

@@ -1,3 +1,5 @@
+use std::convert::From;
+
 pub trait Wideable: Sized {
     type W: From<Self>;
 

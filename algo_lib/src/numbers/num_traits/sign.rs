@@ -1,16 +1,8 @@
-use std::ops::Neg;
-
 pub trait IsSigned {
     const SIGNED: bool;
 }
 
-pub trait SignedInternal: IsSigned
-where
-    for<'r> &'r Self: Neg<Output = Self>,
-{
-}
-
-pub trait Signed = SignedInternal where for<'r> &'r Self: Neg<Output = Self>;
+pub trait Signed: IsSigned {}
 
 pub trait Unsigned: IsSigned {}
 
@@ -33,7 +25,7 @@ unsigned_impl!(usize);
 
 macro_rules! signed_impl {
     ($t: ident) => {
-        impl SignedInternal for $t {}
+        impl Signed for $t {}
 
         impl IsSigned for $t {
             const SIGNED: bool = true;

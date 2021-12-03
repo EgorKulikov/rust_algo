@@ -15,16 +15,13 @@ impl<T: AddSub + ZeroOne> FenwickTree<T> {
 
     pub fn get_to(&self, mut to: usize) -> T {
         to.minim(self.value.len());
-        to -= 1;
         let mut result = T::zero();
-        loop {
+        while to > 0 {
+            to -= 1;
             result += self.value[to];
             to &= to + 1;
-            if to == 0 {
-                break result;
-            }
-            to -= 1;
         }
+        result
     }
 
     pub fn get(&self, from: usize, to: usize) -> T {

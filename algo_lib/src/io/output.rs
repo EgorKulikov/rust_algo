@@ -208,5 +208,8 @@ macro_rules! out_line {
     ($first: expr $(, $args:expr )* ) => {
         out!($first $(,$args)*);
         output().put(b'\n');
-    }
+    };
+    () => {
+        output().put(b'\n');
+    };
 }
