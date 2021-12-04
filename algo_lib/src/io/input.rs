@@ -5,6 +5,7 @@ use crate::numbers::num_traits::sign::IsSigned;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 use std::fmt::Display;
 use std::io::Read;
+use std::marker::PhantomData;
 
 pub struct Input<'s> {
     input: &'s mut dyn Read,
@@ -112,6 +113,13 @@ impl<'s> Input<'s> {
         res
     }
 
+    pub fn into_iter<T: Readable>(self) -> InputIterator<'s, T> {
+        InputIterator {
+            input: self,
+            phantom: Default::default(),
+        }
+    }
+
     fn read_integer<T: IsSigned + ZeroOne + FromU8 + AddSub + Multable + Display>(&mut self) -> T {
         self.skip_whitespace();
         let mut c = self.get().unwrap();
@@ -214,6 +222,20 @@ impl<T: Readable> Readable for Vec<T> {
     fn read(input: &mut Input) -> Self {
         let size = input.read();
         input.read_vec(size)
+    }
+}
+
+pub struct InputIterator<'s, T: Readable> {
+    input: Input<'s>,
+    phantom: PhantomData<T>,
+}
+
+impl<'s, T: Readable> Iterator for InputIterator<'s, T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.input.skip_whitespace();
+        self.input.peek().map(|_| self.input.read())
     }
 }
 
