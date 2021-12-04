@@ -1,24 +1,17 @@
-use std::ops::Rem;
-use std::marker::PhantomData;
-use std::collections::HashMap;
-use std::convert::From;
-use std::ops::MulAssign;
-use std::hash::Hasher;
-use std::ops::Sub;
-use std::ops::Div;
-use std::hash::Hash;
-use std::fmt::Formatter;
-use std::ops::SubAssign;
-use std::io::Write;
-use std::ops::AddAssign;
-use std::fmt::Display;
-use std::ops::Neg;
-use std::ops::Add;
 use std::ops::DivAssign;
-use std::mem::swap;
-use std::ops::RemAssign;
-use std::io::Read;
+use std::fmt::Display;
+use std::ops::Add;
+use std::ops::Rem;
+use std::io::Write;
+use std::marker::PhantomData;
+use std::ops::Sub;
 use std::ops::Mul;
+use std::ops::MulAssign;
+use std::ops::AddAssign;
+use std::ops::SubAssign;
+use std::ops::Div;
+use std::io::Read;
+use std::ops::RemAssign;
 
 
 pub trait Addable: Add<Output = Self> + AddAssign + Copy {}
@@ -261,6 +254,13 @@ impl<'s> Input<'s> {
         res
     }
 
+    pub fn into_iter<T: Readable>(self) -> InputIterator<'s, T> {
+        InputIterator {
+            input: self,
+            phantom: Default::default(),
+        }
+    }
+
     fn read_integer<T: IsSigned + ZeroOne + FromU8 + AddSub + Multable + Display>(&mut self) -> T {
         self.skip_whitespace();
         let mut c = self.get().unwrap();
@@ -363,6 +363,20 @@ impl<T: Readable> Readable for Vec<T> {
     fn read(input: &mut Input) -> Self {
         let size = input.read();
         input.read_vec(size)
+    }
+}
+
+pub struct InputIterator<'s, T: Readable> {
+    input: Input<'s>,
+    phantom: PhantomData<T>,
+}
+
+impl<'s, T: Readable> Iterator for InputIterator<'s, T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.input.skip_whitespace();
+        self.input.peek().map(|_| self.input.read())
     }
 }
 
@@ -638,487 +652,7 @@ macro_rules! out_line {
     };
 }
 
-pub trait Value<T>: Copy + Eq + Hash {
-    fn val() -> T;
-}
-
-pub trait ConstValue<T>: Value<T> {
-    const VAL: T;
-}
-
-impl<T, V: ConstValue<T>> Value<T> for V {
-    fn val() -> T {
-        Self::VAL
-    }
-}
-
-#[macro_export]
-macro_rules! value {
-    ($name: ident, $t: ty, $val: expr) => {
-        #[derive(Copy, Clone, Eq, PartialEq, Hash)]
-        pub struct $name {}
-
-        impl ConstValue<$t> for $name {
-            const VAL: $t = $val;
-        }
-    };
-}
-
-pub trait DynamicValue<T>: Value<T> {
-    //noinspection RsSelfConvention
-    fn set_val(t: T);
-}
-
-#[macro_export]
-macro_rules! dynamic_value {
-    ($name: ident, $val_name: ident, $t: ty, $base: expr) => {
-        static mut $val_name: $t = $base;
-
-        #[derive(Copy, Clone, Eq, PartialEq, Hash)]
-        pub struct $name {}
-
-        impl DynamicValue<$t> for $name {
-            fn set_val(t: $t) {
-                unsafe {
-                    $val_name = t;
-                }
-            }
-        }
-
-        impl Value<$t> for $name {
-            fn val() -> $t {
-                unsafe { $val_name }
-            }
-        }
-    };
-}
-
-pub trait Wideable: Sized {
-    type W: From<Self>;
-
-    fn downcast(w: Self::W) -> Self;
-}
-
-macro_rules! wideable_impl {
-    ($t: ident, $w: ident) => {
-        impl Wideable for $t {
-            type W = $w;
-
-            fn downcast(w: Self::W) -> Self {
-                w as $t
-            }
-        }
-    };
-}
-
-wideable_impl!(i128, i128);
-wideable_impl!(i64, i128);
-wideable_impl!(i32, i64);
-wideable_impl!(i16, i32);
-wideable_impl!(i8, i16);
-wideable_impl!(isize, isize);
-wideable_impl!(u128, u128);
-wideable_impl!(u64, u128);
-wideable_impl!(u32, u64);
-wideable_impl!(u16, u32);
-wideable_impl!(u8, u16);
-wideable_impl!(usize, usize);
-wideable_impl!(f64, f64);
-wideable_impl!(f32, f64);
-
-pub fn extended_gcd<T: Copy + ZeroOne + AddSub + MulDivRem + Wideable + PartialEq>(
-    a: T,
-    b: T,
-) -> (T, T::W, T::W)
-where
-    T::W: Copy + ZeroOne + AddSub + Multable,
-{
-    if a == T::zero() {
-        (b, T::W::zero(), T::W::one())
-    } else {
-        let (d, y, mut x) = extended_gcd(b % a, a);
-        x -= T::W::from(b / a) * y;
-        (d, x, y)
-    }
-}
-
-pub fn gcd<T: Copy + ZeroOne + MulDivRem + PartialEq>(mut a: T, mut b: T) -> T {
-    while b != T::zero() {
-        a %= b;
-        swap(&mut a, &mut b);
-    }
-    a
-}
-
-pub fn lcm<T: Copy + ZeroOne + MulDivRem + PartialEq>(a: T, b: T) -> T {
-    (a / gcd(a, b)) * b
-}
-
-pub trait BaseModInt: AddSub + MulDiv + Neg + Copy + ZeroOne + PartialEq {
-    type W: AddSub + MulDivRem + Copy + ZeroOne + From<Self::T>;
-    type T: AddSub + MulDivRem + Copy + PartialEq + ZeroOne + Wideable<W = Self::W> + Ord;
-
-    fn new(n: Self::T) -> Self;
-    fn new_from_long(n: <Self::T as Wideable>::W) -> Self;
-    fn inv(&self) -> Option<Self>;
-    fn module() -> Self::T;
-}
-
-#[derive(Copy, Clone, PartialEq)]
-pub struct ModInt<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    n: T,
-    phantom: PhantomData<V>,
-}
-
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    fn safe_new(n: T) -> Self {
-        debug_assert!(n >= T::zero() && n < V::val());
-        Self {
-            n,
-            phantom: Default::default(),
-        }
-    }
-
-    fn safe(mut n: T) -> T {
-        assert!(n < V::val() + V::val() && n >= T::zero());
-        if n >= V::val() {
-            n -= V::val();
-        }
-        n
-    }
-
-    fn make_safe(&mut self) {
-        self.n = Self::safe(self.n);
-    }
-}
-
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord + Hash, V: Value<T>>
-    ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    pub fn log(&self, alpha: Self) -> T {
-        let mut base = HashMap::new();
-        let mut exp = T::zero();
-        let mut pow = Self::one();
-        let mut inv = *self;
-        let alpha_inv = alpha.inv().unwrap();
-        while exp * exp < Self::module() {
-            if inv == Self::one() {
-                return exp;
-            }
-            base.insert(inv, exp);
-            exp += T::one();
-            pow *= alpha;
-            inv *= alpha_inv;
-        }
-        let step = pow;
-        let mut i = T::one();
-        loop {
-            if let Some(b) = base.get(&pow) {
-                break exp * i + *b;
-            }
-            pow *= step;
-            i += T::one();
-        }
-    }
-}
-
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> BaseModInt
-    for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    type T = T;
-    type W = T::W;
-
-    fn new(n: T) -> Self {
-        Self::safe_new(Self::safe(n % (V::val()) + V::val()))
-    }
-
-    fn new_from_long(n: T::W) -> Self {
-        Self::safe_new(Self::safe(T::downcast(n % (V::val()).into()) + V::val()))
-    }
-
-    fn inv(&self) -> Option<Self> {
-        let (g, x, _) = extended_gcd(self.n, V::val());
-        if g != T::one() {
-            None
-        } else {
-            Some(Self::new_from_long(x))
-        }
-    }
-
-    fn module() -> T {
-        V::val()
-    }
-}
-
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> From<T>
-    for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    fn from(n: T) -> Self {
-        Self::new(n)
-    }
-}
-
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> AddAssign
-    for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    fn add_assign(&mut self, rhs: Self) {
-        self.n += rhs.n;
-        self.make_safe();
-    }
-}
-
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> Add
-    for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    type Output = Self;
-
-    fn add(mut self, rhs: Self) -> Self::Output {
-        self += rhs;
-        self
-    }
-}
-
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> SubAssign
-    for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    fn sub_assign(&mut self, rhs: Self) {
-        self.n += V::val() - rhs.n;
-        self.make_safe();
-    }
-}
-
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> Sub
-    for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    type Output = Self;
-
-    fn sub(mut self, rhs: Self) -> Self::Output {
-        self -= rhs;
-        self
-    }
-}
-
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> MulAssign
-    for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    fn mul_assign(&mut self, rhs: Self) {
-        self.n = T::downcast(T::W::from(self.n) * T::W::from(rhs.n) % T::W::from(V::val()));
-    }
-}
-
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> Mul
-    for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    type Output = Self;
-
-    fn mul(mut self, rhs: Self) -> Self::Output {
-        self *= rhs;
-        self
-    }
-}
-
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> DivAssign
-    for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    fn div_assign(&mut self, rhs: Self) {
-        *self *= rhs.inv().unwrap();
-    }
-}
-
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> Div
-    for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    type Output = Self;
-
-    fn div(mut self, rhs: Self) -> Self::Output {
-        self /= rhs;
-        self
-    }
-}
-
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> Neg
-    for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    type Output = Self;
-
-    fn neg(mut self) -> Self::Output {
-        self.n = V::val() - self.n;
-        self.make_safe();
-        self
-    }
-}
-
-impl<
-        T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord + Display,
-        V: Value<T>,
-    > Display for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        <T as Display>::fmt(&self.n, f)
-    }
-}
-
-impl<
-        T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord + Readable,
-        V: Value<T>,
-    > Readable for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    fn read(input: &mut Input) -> Self {
-        Self::new(T::read(input))
-    }
-}
-
-impl<
-        T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord + Writable,
-        V: Value<T>,
-    > Writable for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    fn write(&self, output: &mut Output) {
-        self.n.write(output);
-    }
-}
-
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> ZeroOne
-    for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    fn zero() -> Self {
-        Self::new(T::zero())
-    }
-
-    fn one() -> Self {
-        Self::new(T::one())
-    }
-}
-
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> Wideable
-    for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    type W = Self;
-
-    fn downcast(w: Self::W) -> Self {
-        w
-    }
-}
-
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord + FromU8, V: Value<T>>
-    FromU8 for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    fn from_u8(n: u8) -> Self {
-        Self::new(T::from_u8(n))
-    }
-}
-
-impl<
-        T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord + Display + FromU8,
-        V: Value<T>,
-    > std::fmt::Debug for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let max = T::from_u8(100);
-        if self.n <= max {
-            write!(f, "{}", self.n)
-        } else if self.n >= V::val() - max {
-            write!(f, "-{}", V::val() - self.n)
-        } else {
-            let mut denum = T::one();
-            while denum < max {
-                let mut num = T::one();
-                while num < max {
-                    if Self::new(num) / Self::new(denum) == *self {
-                        return write!(f, "{}/{}", num, denum);
-                    }
-                    if -Self::new(num) / Self::new(denum) == *self {
-                        return write!(f, "-{}/{}", num, denum);
-                    }
-                    num += T::one();
-                }
-                denum += T::one();
-            }
-            write!(f, "(?? {} ??)", self.n)
-        }
-    }
-}
-
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord + Hash, V: Value<T>> Hash
-    for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.n.hash(state)
-    }
-}
-
-impl<T: AddSub + MulDivRem + Copy + Eq + Wideable + Hash + ZeroOne + Ord, V: Value<T>> Eq
-    for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-}
-
-value!(Val7, u32, 1_000_000_007);
-pub type ModInt7 = ModInt<u32, Val7>;
-
-value!(Val9, u32, 1_000_000_009);
-pub type ModInt9 = ModInt<u32, Val9>;
-
-value!(ValF, u32, 998_244_353);
-pub type ModIntF = ModInt<u32, ValF>;
-
-fn solve(input: &mut Input, _test_case: usize) {
-    let n: usize = input.read();
-
-    type Mod = ModInt7;
-    let mut a = vec![0usize, 1];
-    while a.len() <= n {
-        a.push(a[a.len() - 2] + 9 * a.last().unwrap());
-    }
-    out_line!(a[n]);
-}
+fn solve(input: &mut Input, _test_case: usize) {}
 
 
 fn run(mut input: Input) -> bool {
