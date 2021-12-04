@@ -1,7 +1,6 @@
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::ops::{Index, IndexMut};
-use std::slice::{Iter, IterMut};
 
 pub struct Arr3d<T> {
     d1: usize,
@@ -49,11 +48,11 @@ impl<T> Arr3d<T> {
         self.d2
     }
 
-    pub fn iter(&self) -> Iter<T> {
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
         self.data.iter()
     }
 
-    pub fn iter_mut(&mut self) -> IterMut<T> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.data.iter_mut()
     }
 }

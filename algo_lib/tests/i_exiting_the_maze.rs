@@ -69,8 +69,8 @@ fn check(expected: &mut &[u8], actual: &mut &[u8]) -> Result<(), String> {
                 return Err(format!(
                     "Token #{} differs, expectes {}, actual {}",
                     token_num,
-                    expected_token.unwrap(),
-                    actual_token.unwrap()
+                    String::from_utf8(expected_token.unwrap()).unwrap(),
+                    String::from_utf8(actual_token.unwrap()).unwrap()
                 ));
             }
         }

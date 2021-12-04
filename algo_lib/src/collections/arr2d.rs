@@ -1,8 +1,6 @@
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
-use std::iter::{Skip, StepBy};
 use std::ops::{Index, IndexMut};
-use std::slice::{Iter, IterMut};
 
 pub struct Arr2d<T> {
     d1: usize,
@@ -42,20 +40,20 @@ impl<T> Arr2d<T> {
         self.d2
     }
 
-    pub fn iter(&self) -> Iter<T> {
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
         self.data.iter()
     }
 
-    pub fn iter_mut(&mut self) -> IterMut<T> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.data.iter_mut()
     }
 
-    pub fn column(&self, col: usize) -> StepBy<Skip<Iter<T>>> {
+    pub fn column(&self, col: usize) -> impl Iterator<Item = &T> {
         assert!(col < self.d2);
         self.data.iter().skip(col).step_by(self.d2)
     }
 
-    pub fn column_mut(&mut self, col: usize) -> StepBy<Skip<IterMut<T>>> {
+    pub fn column_mut(&mut self, col: usize) -> impl Iterator<Item = &mut T> {
         assert!(col < self.d2);
         self.data.iter_mut().skip(col).step_by(self.d2)
     }

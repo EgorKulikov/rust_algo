@@ -39,6 +39,13 @@ impl<T: AddSub + ZeroOne> FenwickTree<T> {
         }
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = T> + '_ {
+        self.value
+            .iter()
+            .enumerate()
+            .map(|(i, _)| self.get(i, i + 1))
+    }
+
     pub fn clear(&mut self) {
         self.value.fill(T::zero());
     }

@@ -62,15 +62,14 @@ impl<'s> Input<'s> {
         }
     }
 
-    pub fn next_token(&mut self) -> Option<String> {
+    pub fn next_token(&mut self) -> Option<Vec<u8>> {
         self.skip_whitespace();
-        let mut res = String::new();
+        let mut res = Vec::new();
         while let Some(c) = self.get() {
-            let ch = char::from(c);
-            if ch.is_whitespace() {
+            if char::from(c).is_whitespace() {
                 break;
             }
-            res.push(ch);
+            res.push(c);
         }
         if res.is_empty() {
             None
@@ -172,7 +171,7 @@ impl<'s> Input<'s> {
             None => {
                 panic!("Input exhausted");
             }
-            Some(res) => res,
+            Some(res) => unsafe { String::from_utf8_unchecked(res) },
         }
     }
 

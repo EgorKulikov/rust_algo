@@ -20,6 +20,17 @@ impl DSU {
         self.size[self[i]]
     }
 
+    pub fn len(&self) -> usize {
+        self.id.len()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = usize> + '_ {
+        self.id
+            .iter()
+            .enumerate()
+            .filter_map(|(i, id)| if i == *id { Some(i) } else { None })
+    }
+
     pub fn count(&self) -> usize {
         self.count
     }

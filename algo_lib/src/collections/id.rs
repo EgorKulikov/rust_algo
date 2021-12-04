@@ -29,6 +29,10 @@ impl<T: Hash + Eq> Id<T> {
             Some(res) => *res,
         }
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&T, &usize)> {
+        self.map.iter()
+    }
 }
 
 impl<T: Hash + Eq + Clone> Id<T> {

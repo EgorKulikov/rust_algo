@@ -52,6 +52,14 @@ impl Permutation {
         self.base = b;
     }
 
+    pub fn len(&self) -> usize {
+        self.p.len()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = usize> + '_ {
+        self.p.iter().map(|i| *i + self.base)
+    }
+
     fn check(p: &Vec<usize>) -> bool {
         let mut was = vec![false; p.len()];
         for i in p {

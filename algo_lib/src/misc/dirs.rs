@@ -7,8 +7,13 @@ pub struct Directions<V: Value<[(isize, isize); N]>, const N: usize> {
 }
 
 impl<V: Value<[(isize, isize); N]>, const N: usize> Directions<V, N> {
-    pub fn iter(row: usize, col: usize, n: usize, m: usize) -> DirectionsIter<V, N> {
-        DirectionsIter {
+    pub fn iter(
+        row: usize,
+        col: usize,
+        n: usize,
+        m: usize,
+    ) -> impl Iterator<Item = (usize, usize)> {
+        DirectionsIter::<V, N> {
             row,
             col,
             n,
@@ -19,7 +24,7 @@ impl<V: Value<[(isize, isize); N]>, const N: usize> Directions<V, N> {
     }
 }
 
-pub struct DirectionsIter<V: Value<[(isize, isize); N]>, const N: usize> {
+struct DirectionsIter<V: Value<[(isize, isize); N]>, const N: usize> {
     row: usize,
     col: usize,
     n: usize,
