@@ -4,5 +4,6 @@ pub mod mod_int;
 pub mod num_traits;
 pub mod number_ext;
 pub mod prime_fft;
+pub mod rational;
 #[cfg(test)]
 mod test;

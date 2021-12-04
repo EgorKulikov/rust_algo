@@ -1,142 +1,31 @@
+use std::ops::Rem;
+use std::marker::PhantomData;
+use std::collections::HashMap;
+use std::convert::From;
+use std::ops::MulAssign;
+use std::hash::Hasher;
+use std::ops::Sub;
+use std::ops::Div;
 use std::hash::Hash;
 use std::fmt::Formatter;
-use std::marker::PhantomData;
-use std::ops::AddAssign;
-use std::io::Write;
-use std::hash::Hasher;
-use std::ops::RemAssign;
-use std::convert::From;
-use std::ops::Neg;
-use std::ops::Mul;
-use std::mem::swap;
-use std::ops::MulAssign;
 use std::ops::SubAssign;
-use std::io::Read;
-use std::ops::Rem;
-use std::collections::HashMap;
-use std::ops::Add;
-use std::ops::Sub;
-use std::ops::DivAssign;
+use std::io::Write;
+use std::ops::AddAssign;
 use std::fmt::Display;
-use std::ops::Div;
+use std::ops::Neg;
+use std::ops::Add;
+use std::ops::DivAssign;
+use std::mem::swap;
+use std::ops::RemAssign;
+use std::io::Read;
+use std::ops::Mul;
 
-pub trait MinimMaxim: PartialOrd + Sized {
-    fn minim(&mut self, other: Self) -> bool {
-        if other < *self {
-            *self = other;
-            true
-        } else {
-            false
-        }
-    }
-
-    fn maxim(&mut self, other: Self) -> bool {
-        if other > *self {
-            *self = other;
-            true
-        } else {
-            false
-        }
-    }
-}
-
-impl<T: PartialOrd + Sized> MinimMaxim for T {}
 
 pub trait Addable: Add<Output = Self> + AddAssign + Copy {}
 impl<T: Add<Output = Self> + AddAssign + Copy> Addable for T {}
 
 pub trait AddSub: Addable + Sub<Output = Self> + SubAssign {}
 impl<T: Addable + Sub<Output = Self> + SubAssign> AddSub for T {}
-pub trait ZeroOne {
-    fn zero() -> Self;
-    fn one() -> Self;
-}
-
-macro_rules! zero_one_integer_impl {
-    ($t: ident) => {
-        impl ZeroOne for $t {
-            fn zero() -> Self {
-                0
-            }
-
-            fn one() -> Self {
-                1
-            }
-        }
-    };
-}
-
-zero_one_integer_impl!(i128);
-zero_one_integer_impl!(i64);
-zero_one_integer_impl!(i32);
-zero_one_integer_impl!(i16);
-zero_one_integer_impl!(i8);
-zero_one_integer_impl!(isize);
-zero_one_integer_impl!(u128);
-zero_one_integer_impl!(u64);
-zero_one_integer_impl!(u32);
-zero_one_integer_impl!(u16);
-zero_one_integer_impl!(u8);
-zero_one_integer_impl!(usize);
-
-macro_rules! zero_one_float_impl {
-    ($t: ident) => {
-        impl ZeroOne for $t {
-            fn zero() -> Self {
-                0.
-            }
-
-            fn one() -> Self {
-                1.
-            }
-        }
-    };
-}
-
-zero_one_float_impl!(f32);
-zero_one_float_impl!(f64);
-
-pub struct FenwickTree<T: AddSub + ZeroOne> {
-    value: Vec<T>,
-}
-
-impl<T: AddSub + ZeroOne> FenwickTree<T> {
-    pub fn new(size: usize) -> Self {
-        Self {
-            value: vec![T::zero(); size],
-        }
-    }
-
-    pub fn get_to(&self, mut to: usize) -> T {
-        to.minim(self.value.len());
-        let mut result = T::zero();
-        while to > 0 {
-            to -= 1;
-            result += self.value[to];
-            to &= to + 1;
-        }
-        result
-    }
-
-    pub fn get(&self, from: usize, to: usize) -> T {
-        if from >= to {
-            T::zero()
-        } else {
-            self.get_to(to) - self.get_to(from)
-        }
-    }
-
-    pub fn add(&mut self, mut at: usize, v: T) {
-        while at < self.value.len() {
-            self.value[at] += v;
-            at |= at + 1;
-        }
-    }
-
-    pub fn clear(&mut self) {
-        self.value.fill(T::zero());
-    }
-}
 pub trait FromU8 {
     fn from_u8(val: u8) -> Self;
 }
@@ -217,6 +106,54 @@ signed_impl!(i8);
 signed_impl!(isize);
 signed_impl!(f64);
 signed_impl!(f32);
+pub trait ZeroOne {
+    fn zero() -> Self;
+    fn one() -> Self;
+}
+
+macro_rules! zero_one_integer_impl {
+    ($t: ident) => {
+        impl ZeroOne for $t {
+            fn zero() -> Self {
+                0
+            }
+
+            fn one() -> Self {
+                1
+            }
+        }
+    };
+}
+
+zero_one_integer_impl!(i128);
+zero_one_integer_impl!(i64);
+zero_one_integer_impl!(i32);
+zero_one_integer_impl!(i16);
+zero_one_integer_impl!(i8);
+zero_one_integer_impl!(isize);
+zero_one_integer_impl!(u128);
+zero_one_integer_impl!(u64);
+zero_one_integer_impl!(u32);
+zero_one_integer_impl!(u16);
+zero_one_integer_impl!(u8);
+zero_one_integer_impl!(usize);
+
+macro_rules! zero_one_float_impl {
+    ($t: ident) => {
+        impl ZeroOne for $t {
+            fn zero() -> Self {
+                0.
+            }
+
+            fn one() -> Self {
+                1.
+            }
+        }
+    };
+}
+
+zero_one_float_impl!(f32);
+zero_one_float_impl!(f64);
 
 pub struct Input<'s> {
     input: &'s mut dyn Read,
@@ -646,6 +583,8 @@ write_to_string!(i32);
 write_to_string!(i64);
 write_to_string!(i128);
 write_to_string!(isize);
+write_to_string!(f32);
+write_to_string!(f64);
 
 impl<T: Writable, U: Writable> Writable for (T, U) {
     fn write(&self, output: &mut Output) {
@@ -1171,25 +1110,14 @@ value!(ValF, u32, 998_244_353);
 pub type ModIntF = ModInt<u32, ValF>;
 
 fn solve(input: &mut Input, _test_case: usize) {
-    let n = input.read();
-    let a = input.read_vec::<i64>(n);
+    let n: usize = input.read();
 
-    let mut sum = 0i64;
-    type Mod = ModIntF;
-
-    let mut last_pos = HashMap::new();
-    let mut ft: FenwickTree<Mod> = FenwickTree::new(n);
-    ft.add(0, Mod::one());
-
-    for (i, v) in a.into_iter().enumerate() {
-        if i == n - 1 {
-            break;
-        }
-        sum += v;
-        let from = last_pos.insert(sum, i + 1).unwrap_or(0);
-        ft.add(i + 1, ft.get(from, i + 1));
+    type Mod = ModInt7;
+    let mut a = vec![0usize, 1];
+    while a.len() <= n {
+        a.push(a[a.len() - 2] + 9 * a.last().unwrap());
     }
-    out_line!(ft.get(0, n));
+    out_line!(a[n]);
 }
 
 
