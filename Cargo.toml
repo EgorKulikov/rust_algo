@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "i_interesting_numbers",
     "c_find_set",
     "b_antigo",
     "a_mountains",
