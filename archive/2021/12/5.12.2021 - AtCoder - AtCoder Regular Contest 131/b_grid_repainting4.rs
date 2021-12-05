@@ -1,3 +1,124 @@
+//AtCoder - AtCoder Regular Contest 131
+//{"type":"stdin","fileName":null,"pattern":null}
+//{"type":"stdout","fileName":null,"pattern":null}
+
+use algo_lib::collections::arr2d::{Arr2dCharWrite, Arr2dRead};
+use algo_lib::io::input::Input;
+use algo_lib::io::output::{output, Output, OUTPUT};
+use algo_lib::numbers::num_traits::bit_ops::BitOps;
+use algo_lib::{out, out_line};
+use std::mem::swap;
+
+fn solve(input: &mut Input, _test_case: usize) {
+    let h = input.read();
+    let w = input.read();
+    let mut table = input.read_table::<char>(h, w);
+    for i in 0..h {
+        for j in 0..w {
+            if table[(i, j)] != '.' {
+                continue;
+            }
+            let mut dr = 1;
+            let mut dc = 0;
+            let mut used = 0;
+            for _ in 0..4 {
+                let nr = (i as i32) + dr;
+                let nc = (j as i32) + dc;
+                if nr >= 0 && (nr as usize) < h && nc >= 0 && (nc as usize) < w {
+                    let x = table[(nr as usize, nc as usize)];
+                    if x == '.' {
+                        dr = -dr;
+                        swap(&mut dr, &mut dc);
+                        continue;
+                    }
+                    let id = ((x as u8) - b'1') as usize;
+                    used.set_bit(id);
+                }
+                dr = -dr;
+                swap(&mut dr, &mut dc);
+            }
+            for bit in 0..5usize {
+                if !used.is_set(bit) {
+                    table[(i, j)] = (b'1' + (bit as u8)) as char;
+                    break;
+                }
+            }
+        }
+    }
+    output().print_table(&table);
+}
+
+//START SKIP
+//BEGIN MAIN
+fn main() {
+    run_tests();
+}
+//END MAIN
+//END SKIP
+
+fn run(mut input: Input) -> bool {
+    solve(&mut input, 1);
+    output().flush();
+    input.skip_whitespace();
+    !input.peek().is_some()
+}
+
+//START SKIP
+fn check(expected: &mut &[u8], actual: &mut &[u8], mut input: std::fs::File) -> Result<(), String> {
+    let mut expected = Input::new(expected);
+    let mut actual = Input::new(actual);
+    let mut _input = Input::new(&mut input);
+    let mut token_num = 0usize;
+    loop {
+        let expected_token = expected.next_token();
+        let actual_token = actual.next_token();
+        if expected_token != actual_token {
+            if expected_token.is_none() {
+                return Err(format!("Expected has only {} tokens", token_num));
+            } else if actual_token.is_none() {
+                return Err(format!("Actual has only {} tokens", token_num));
+            } else {
+                return Err(format!(
+                    "Token #{} differs, expected {}, actual {}",
+                    token_num,
+                    String::from_utf8(expected_token.unwrap()).unwrap(),
+                    String::from_utf8(actual_token.unwrap()).unwrap()
+                ));
+            }
+        }
+        token_num += 1;
+        if actual_token.is_none() {
+            break;
+        }
+    }
+    Ok(())
+}
+
+static mut OUT: Vec<u8> = Vec::new();
+
+struct WriteDelegate {}
+
+impl std::io::Write for WriteDelegate {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        unsafe {
+            OUT.append(&mut Vec::from(buf));
+        }
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+fn run_tests() -> bool {
+    let blue = "\x1B[34m";
+    let red = "\x1B[31m";
+    let green = "\x1B[32m";
+    let yellow = "\x1B[33m";
+    let def = "\x1B[0m";
+    let time_limit = std::time::Duration::from_millis(2000);
+    let mut paths = std::fs::read_dir("./b_grid_repainting4/tests/")
         .unwrap()
         .map(|res| res.unwrap())
         .collect::<Vec<_>>();

@@ -4,9 +4,10 @@
 }
 
 //START SKIP
-fn check(expected: &mut &[u8], actual: &mut &[u8]) -> Result<(), String> {
+fn check(expected: &mut &[u8], actual: &mut &[u8], mut input: std::fs::File) -> Result<(), String> {
     let mut expected = Input::new(expected);
     let mut actual = Input::new(actual);
+    let mut _input = Input::new(&mut input);
     let mut token_num = 0usize;
     loop {
         let expected_token = expected.next_token();

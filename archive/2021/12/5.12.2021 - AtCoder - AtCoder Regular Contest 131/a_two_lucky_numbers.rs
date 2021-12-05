@@ -1,3 +1,77 @@
+//AtCoder - AtCoder Regular Contest 131
+//{"type":"stdin","fileName":null,"pattern":null}
+//{"type":"stdout","fileName":null,"pattern":null}
+
+use algo_lib::io::input::Input;
+use algo_lib::io::output::{output, Output, OUTPUT};
+use algo_lib::string::string::Str;
+use algo_lib::{out, out_line};
+
+fn solve(input: &mut Input, _test_case: usize) {
+    let b: Str = input.read();
+    let a: u32 = input.read();
+
+    let mut ans: Str = "".into();
+    ans += (a * 5).to_string();
+    ans += b;
+    out_line!(ans);
+}
+
+//START SKIP
+//BEGIN MAIN
+fn main() {
+    run_tests();
+}
+//END MAIN
+//END SKIP
+
+fn run(mut input: Input) -> bool {
+    solve(&mut input, 1);
+    output().flush();
+    input.skip_whitespace();
+    !input.peek().is_some()
+}
+
+//START SKIP
+fn check(expected: &mut &[u8], actual: &mut &[u8], mut input: std::fs::File) -> Result<(), String> {
+    let mut _expected = Input::new(expected);
+    let mut actual = Input::new(actual);
+    let mut input = Input::new(&mut input);
+    let a: String = input.read();
+    let b: String = input.read();
+    let ans: u64 = actual.read();
+    if ans.to_string().contains(a.as_str()) && (2 * ans).to_string().contains(b.as_str()) {
+        Ok(())
+    } else {
+        Err("".into())
+    }
+}
+
+static mut OUT: Vec<u8> = Vec::new();
+
+struct WriteDelegate {}
+
+impl std::io::Write for WriteDelegate {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        unsafe {
+            OUT.append(&mut Vec::from(buf));
+        }
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+fn run_tests() -> bool {
+    let blue = "\x1B[34m";
+    let red = "\x1B[31m";
+    let green = "\x1B[32m";
+    let yellow = "\x1B[33m";
+    let def = "\x1B[0m";
+    let time_limit = std::time::Duration::from_millis(2000);
+    let mut paths = std::fs::read_dir("./a_two_lucky_numbers/tests/")
         .unwrap()
         .map(|res| res.unwrap())
         .collect::<Vec<_>>();
