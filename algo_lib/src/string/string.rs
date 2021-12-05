@@ -203,8 +203,9 @@ impl Readable for Str<'static> {
 impl Writable for Str<'_> {
     fn write(&self, output: &mut Output) {
         for c in self.as_slice() {
-            output.print(&char::from(*c));
+            output.put(*c);
         }
+        output.maybe_flush();
     }
 }
 

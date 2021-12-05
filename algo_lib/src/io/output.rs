@@ -30,7 +30,10 @@ impl Output {
 
     pub fn flush(&mut self) {
         if self.at != 0 {
-            self.output.write(&self.buf[..self.at]).unwrap();
+            let mut n = 0;
+            while n != self.at {
+                n += self.output.write(&self.buf[n..self.at]).unwrap();
+            }
             self.at = 0;
         }
     }
@@ -43,6 +46,12 @@ impl Output {
         self.buf[self.at] = b;
         self.at += 1;
         if self.at == self.buf.len() {
+            self.flush();
+        }
+    }
+
+    pub fn maybe_flush(&mut self) {
+        if self.autoflush {
             self.flush();
         }
     }
