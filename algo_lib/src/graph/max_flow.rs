@@ -50,7 +50,7 @@ impl<C: AddSub + PartialOrd + Copy + ZeroOne + MinMax, E: FlowEdgeTrait<C>> MaxF
                     while (next_edge[source] as usize) < self[source].len() {
                         let edge = &self[source][next_edge[source] as usize];
                         if edge.capacity() != C::zero() && dist[edge.to()] == dist[source] + 1 {
-                            let pushed = f.call(edge.to(), flow.min(edge.capacity()));
+                            let pushed = f.call(edge.to(), flow.minimum(edge.capacity()));
                             if pushed != C::zero() {
                                 let push_data = edge.push_flow(pushed);
                                 self.push_flow(push_data);

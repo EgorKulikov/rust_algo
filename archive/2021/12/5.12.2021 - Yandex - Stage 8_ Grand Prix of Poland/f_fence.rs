@@ -1,0 +1,293 @@
+//Yandex - Stage 8: Grand Prix of Poland
+//{"type":"stdin","fileName":null,"pattern":null}
+//{"type":"stdout","fileName":null,"pattern":null}
+
+use algo_lib::collections::min_max::MinimMaxim;
+use algo_lib::io::input::Input;
+use algo_lib::io::output::{output, Output, OUTPUT};
+use algo_lib::{out, out_line};
+use std::ops::{Deref, DerefMut};
+
+fn solve(input: &mut Input, _test_case: usize) {
+    let n = input.read();
+    let a = input.read_vec::<u32>(n);
+
+    struct Segment {
+        len: bool,
+        odd: u32,
+        even: u32,
+    }
+
+    enum Value {
+        Number(u32),
+        Segment(Segment),
+    }
+
+    struct Item {
+        next: Box<Option<Item>>,
+        value: Value,
+    }
+
+    impl Item {
+        fn process(&mut self, cur: u32, even: bool) -> u32 {
+            match &mut self.value {
+                Value::Number(_) => {}
+                Value::Segment(seg) => {
+                    while let Some(nxt) = &mut self.next.deref_mut() {
+                        if let Value::Segment(next) = &nxt.value {
+                            if seg.len {
+                                seg.odd += next.even;
+                                seg.even += next.odd;
+                            } else {
+                                seg.odd += next.odd;
+                                seg.even += next.even;
+                            }
+                            seg.len ^= next.len;
+                            self.next = Box::new(nxt.next.take());
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
+            let mut res = 0;
+            let mut neven;
+            match &self.value {
+                Value::Number(val) => {
+                    let val = *val;
+                    let last_part = val % (2 * cur);
+                    neven = even ^ (last_part > 0 && last_part <= cur);
+                    res += val / (2 * cur) * cur;
+                    if !even {
+                        res += (val % (2 * cur)).min(cur);
+                    } else {
+                        let rem = val % (2 * cur);
+                        if rem >= cur {
+                            res += rem - cur;
+                        }
+                    }
+                    if val == cur {
+                        self.value = Value::Segment(Segment {
+                            len: true,
+                            odd: val,
+                            even: 0,
+                        });
+                    }
+                }
+                Value::Segment(seg) => {
+                    neven = even ^ seg.len;
+                    if even {
+                        res += seg.even;
+                    } else {
+                        res += seg.odd;
+                    }
+                }
+            }
+            if let Some(next) = self.next.deref_mut() {
+                res += next.process(cur, neven);
+            }
+            res
+        }
+    }
+
+    let mut root = None;
+    let mut max = 0u32;
+    for i in a.into_iter().rev() {
+        max.maxim(i);
+        root = Some(Item {
+            next: Box::new(root),
+            value: Value::Number(i),
+        });
+    }
+    for i in 1..=max {
+        out_line!(root.as_mut().expect("").process(i, false));
+    }
+}
+
+//START SKIP
+//BEGIN MAIN
+fn main() {
+    run_tests();
+}
+//END MAIN
+//END SKIP
+
+fn run(mut input: Input) -> bool {
+    let t = input.read();
+    for i in 0usize..t {
+        solve(&mut input, i + 1);
+    }
+    output().flush();
+    input.skip_whitespace();
+    !input.peek().is_some()
+}
+
+//START SKIP
+fn check(expected: &mut &[u8], actual: &mut &[u8]) -> Result<(), String> {
+    let mut expected = Input::new(expected);
+    let mut actual = Input::new(actual);
+    let mut token_num = 0usize;
+    loop {
+        let expected_token = expected.next_token();
+        let actual_token = actual.next_token();
+        if expected_token != actual_token {
+            if expected_token.is_none() {
+                return Err(format!("Expected has only {} tokens", token_num));
+            } else if actual_token.is_none() {
+                return Err(format!("Actual has only {} tokens", token_num));
+            } else {
+                return Err(format!(
+                    "Token #{} differs, expected {}, actual {}",
+                    token_num,
+                    String::from_utf8(expected_token.unwrap()).unwrap(),
+                    String::from_utf8(actual_token.unwrap()).unwrap()
+                ));
+            }
+        }
+        token_num += 1;
+        if actual_token.is_none() {
+            break;
+        }
+    }
+    Ok(())
+}
+
+static mut OUT: Vec<u8> = Vec::new();
+
+struct WriteDelegate {}
+
+impl std::io::Write for WriteDelegate {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        unsafe {
+            OUT.append(&mut Vec::from(buf));
+        }
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+fn run_tests() -> bool {
+    let blue = "\x1B[34m";
+    let red = "\x1B[31m";
+    let green = "\x1B[32m";
+    let yellow = "\x1B[33m";
+    let def = "\x1B[0m";
+    let time_limit = std::time::Duration::from_millis(3000);
+    let mut paths = std::fs::read_dir("./f_fence/tests/")
+        .unwrap()
+        .map(|res| res.unwrap())
+        .collect::<Vec<_>>();
+    paths.sort_by(|a, b| a.path().cmp(&b.path()));
+    let mut test_failed = 0usize;
+    let mut test_total = 0usize;
+    for path in paths {
+        let sub_path = path;
+        if sub_path.file_type().unwrap().is_file() {
+            let path = sub_path.path();
+            match path.extension() {
+                None => {}
+                Some(extension) => {
+                    if extension.to_str() == Some("in") {
+                        println!("=====================================================");
+                        test_total += 1;
+                        let name = path.file_name().unwrap().to_str().unwrap();
+                        let name = &name[..name.len() - 3];
+                        println!("{}Test {}{}", blue, name, def);
+                        println!("{}Input:{}", blue, def);
+                        println!("{}", std::fs::read_to_string(&path).unwrap());
+                        let expected = match std::fs::read_to_string(
+                            path.parent().unwrap().join(format!("{}.out", name)),
+                        ) {
+                            Ok(res) => Some(res),
+                            Err(_) => None,
+                        };
+                        println!("{}Expected:{}", blue, def);
+                        match &expected {
+                            None => {
+                                println!("{}Not provided{}", yellow, def);
+                            }
+                            Some(expected) => {
+                                println!("{}", expected);
+                            }
+                        }
+                        println!("{}Output:{}", blue, def);
+                        match std::panic::catch_unwind(|| {
+                            unsafe {
+                                OUT.clear();
+                            }
+                            let mut file = std::fs::File::open(&path).unwrap();
+                            let input = Input::new(&mut file);
+                            let started = std::time::Instant::now();
+                            unsafe {
+                                OUTPUT = Some(Output::new(Box::new(WriteDelegate {})));
+                            }
+                            let is_exhausted = run(input);
+                            let res = started.elapsed();
+                            let output;
+                            unsafe {
+                                output = OUT.clone();
+                            }
+                            println!("{}", String::from_utf8_lossy(&output));
+                            (output, res, is_exhausted)
+                        }) {
+                            Ok((output, duration, is_exhausted)) => {
+                                println!(
+                                    "{}Time elapsed: {:.3}s{}",
+                                    blue,
+                                    (duration.as_millis() as f64) / 1000.,
+                                    def,
+                                );
+                                if !is_exhausted {
+                                    println!("{}Input not exhausted{}", red, def);
+                                }
+                                if let Some(expected) = expected {
+                                    let mut expected_bytes = expected.as_bytes().clone();
+                                    match check(&mut expected_bytes, &mut &output[..]) {
+                                        Ok(_) => {}
+                                        Err(err) => {
+                                            println!(
+                                                "{}Verdict: {}Wrong Answer ({}){}",
+                                                blue, red, err, def
+                                            );
+                                            test_failed += 1;
+                                            continue;
+                                        }
+                                    }
+                                }
+                                if duration > time_limit {
+                                    test_failed += 1;
+                                    println!("{}Verdict: {}Time Limit{}", blue, red, def);
+                                } else {
+                                    println!("{}Verdict: {}OK{}", blue, green, def)
+                                }
+                            }
+                            Err(err) => {
+                                test_failed += 1;
+                                println!(
+                                    "{}Verdict: {}RuntimeError ({:#?}){}",
+                                    blue, red, err, def
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if test_failed == 0 {
+        println!(
+            "{}All {}{}{} tests passed{}",
+            blue, green, test_total, blue, def
+        );
+    } else {
+        println!(
+            "{}{}/{}{} tests failed{}",
+            red, test_failed, test_total, blue, def
+        );
+    }
+    test_failed == 0
+}
+//END SKIP

@@ -61,7 +61,7 @@ impl<M: BaseModInt> PrimeFFT<M> {
         if self.aa.len() < size {
             let was_len = self.aa.len();
             self.aa.copy_from_slice(&a[..was_len]);
-            self.aa.extend(&mut a[was_len..].iter());
+            self.aa.extend_from_slice(&a[was_len..]);
         } else {
             self.aa.copy_from_slice(a);
         }
@@ -80,7 +80,7 @@ impl<M: BaseModInt> PrimeFFT<M> {
             if self.bb.len() < size {
                 let was_len = self.bb.len();
                 self.bb.copy_from_slice(&b[..was_len]);
-                self.bb.extend(&mut b[was_len..].iter());
+                self.bb.extend_from_slice(&b[was_len..]);
             } else {
                 self.bb.copy_from_slice(b);
             }
@@ -105,7 +105,7 @@ impl<M: BaseModInt> PrimeFFT<M> {
         if res.len() < res_len {
             let was_len = res.len();
             res.copy_from_slice(&self.aa[..was_len]);
-            res.extend(&mut self.aa[was_len..].iter());
+            res.extend_from_slice(&self.aa[was_len..]);
         } else {
             res.copy_from_slice(&self.aa[..]);
             res[self.aa.len()..].fill(M::zero());

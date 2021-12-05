@@ -1,8 +1,8 @@
 pub trait MinMax: PartialOrd {
     fn min_val() -> Self;
     fn max_val() -> Self;
-    fn min(self, other: Self) -> Self;
-    fn max(self, other: Self) -> Self;
+    fn minimum(self, other: Self) -> Self;
+    fn maximum(self, other: Self) -> Self;
 }
 
 macro_rules! min_max_integer_impl {
@@ -16,12 +16,12 @@ macro_rules! min_max_integer_impl {
                 $t::MAX
             }
 
-            fn min(self, other: Self) -> Self {
-                <Self as Ord>::min(self, other)
+            fn minimum(self, other: Self) -> Self {
+                Self::min(self, other)
             }
 
-            fn max(self, other: Self) -> Self {
-                <Self as Ord>::max(self, other)
+            fn maximum(self, other: Self) -> Self {
+                Self::max(self, other)
             }
         }
     };
@@ -51,11 +51,11 @@ macro_rules! min_max_float_impl {
                 $t::INFINITY
             }
 
-            fn min(self, other: Self) -> Self {
+            fn minimum(self, other: Self) -> Self {
                 $t::min(self, other)
             }
 
-            fn max(self, other: Self) -> Self {
+            fn maximum(self, other: Self) -> Self {
                 $t::max(self, other)
             }
         }

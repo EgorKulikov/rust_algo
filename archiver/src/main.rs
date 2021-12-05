@@ -93,6 +93,7 @@ fn main() {
                 )
                 .to_string()
             );
+            let path = path.replace(":", "_");
             std::fs::create_dir_all(path.clone()).unwrap();
             write_lines(format!("{}/{}.rs", path, task).as_str(), lines.clone());
             println!("test?");

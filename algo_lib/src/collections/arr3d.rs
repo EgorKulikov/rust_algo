@@ -61,12 +61,18 @@ impl<T> Index<(usize, usize, usize)> for Arr3d<T> {
     type Output = T;
 
     fn index(&self, (a1, a2, a3): (usize, usize, usize)) -> &Self::Output {
+        assert!(a1 < self.d1);
+        assert!(a2 < self.d2);
+        assert!(a3 < self.d3);
         &self.data[(a1 * self.d2 + a2) * self.d3 + a3]
     }
 }
 
 impl<T> IndexMut<(usize, usize, usize)> for Arr3d<T> {
     fn index_mut(&mut self, (a1, a2, a3): (usize, usize, usize)) -> &mut Self::Output {
+        assert!(a1 < self.d1);
+        assert!(a2 < self.d2);
+        assert!(a3 < self.d3);
         &mut self.data[(a1 * self.d2 + a2) * self.d3 + a3]
     }
 }

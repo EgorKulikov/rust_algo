@@ -1,3 +1,5 @@
+use crate::numbers::num_traits::add_sub::AddSub;
+use crate::numbers::num_traits::zero_one::ZeroOne;
 use std::mem::MaybeUninit;
 
 pub trait Qty {
@@ -94,4 +96,39 @@ pub fn compress<T: Eq + Ord + Clone, const N: usize>(vs: [&[T]; N]) -> (Vec<T>, 
         }
     }
     (all, unsafe { res.assume_init() })
+}
+
+pub trait IncDec {
+    fn inc_by_one(self) -> Self;
+    fn dec_by_one(self) -> Self;
+}
+
+impl<T: AddSub + ZeroOne> IncDec for Vec<T> {
+    fn inc_by_one(mut self) -> Self {
+        self.iter_mut().for_each(|i| *i += T::one());
+        self
+    }
+
+    fn dec_by_one(mut self) -> Self {
+        self.iter_mut().for_each(|i| *i -= T::one());
+        self
+    }
+}
+
+impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne> IncDec for Vec<(T, U)> {
+    fn inc_by_one(mut self) -> Self {
+        self.iter_mut().for_each(|(i, j)| {
+            *i += T::one();
+            *j += U::one();
+        });
+        self
+    }
+
+    fn dec_by_one(mut self) -> Self {
+        self.iter_mut().for_each(|(i, j)| {
+            *i -= T::one();
+            *j -= U::one();
+        });
+        self
+    }
 }

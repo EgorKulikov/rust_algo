@@ -63,6 +63,8 @@ impl<T> Index<(usize, usize)> for Arr2d<T> {
     type Output = T;
 
     fn index(&self, (row, col): (usize, usize)) -> &Self::Output {
+        assert!(row < self.d1);
+        assert!(col < self.d2);
         &self.data[self.d2 * row + col]
     }
 }
@@ -77,6 +79,8 @@ impl<T> Index<usize> for Arr2d<T> {
 
 impl<T> IndexMut<(usize, usize)> for Arr2d<T> {
     fn index_mut(&mut self, (row, col): (usize, usize)) -> &mut T {
+        assert!(row < self.d1);
+        assert!(col < self.d2);
         &mut self.data[self.d2 * row + col]
     }
 }
@@ -139,3 +143,11 @@ impl<T: Readable> Readable for Arr2d<T> {
         input.read_table(d1, d2)
     }
 }
+
+impl<T: PartialEq> PartialEq for Arr2d<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.d1 == other.d1 && self.d2 == other.d2 && self.data == other.data
+    }
+}
+
+impl<T: Eq> Eq for Arr2d<T> {}

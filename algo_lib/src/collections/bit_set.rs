@@ -1,3 +1,4 @@
+use crate::numbers::num_traits::bit_ops::BitOps;
 use std::ops::Index;
 
 static TRUE: bool = true;
@@ -24,9 +25,9 @@ impl BitSet {
     pub fn set(&mut self, at: usize, value: bool) {
         assert!(at < self.len);
         if value {
-            self.data[Self::index(at)] |= 1u64 << (at & 63);
+            self.data[Self::index(at)].set_bit(at & 63);
         } else {
-            self.data[Self::index(at)] &= !(1u64 << (at & 63));
+            self.data[Self::index(at)].unset_bit(at & 63);
         }
     }
 
@@ -48,7 +49,7 @@ impl Index<usize> for BitSet {
 
     fn index(&self, at: usize) -> &Self::Output {
         assert!(at < self.len);
-        if (self.data[Self::index(at)] >> (at & 63) & 1) == 1 {
+        if self.data[Self::index(at)].is_set(at & 63) {
             &TRUE
         } else {
             &FALSE

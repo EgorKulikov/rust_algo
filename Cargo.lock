@@ -3,6 +3,15 @@
 version = 3
 
 [[package]]
+name = "a_mountains"
+version = "0.1.0"
+dependencies = [
+ "algo_lib",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "advent"
 version = "0.1.0"
 dependencies = [
@@ -39,6 +48,24 @@ name = "autocfg"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
+
+[[package]]
+name = "b_antigo"
+version = "0.1.0"
+dependencies = [
+ "algo_lib",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "c_find_set"
+version = "0.1.0"
+dependencies = [
+ "algo_lib",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "cfg-if"
@@ -116,12 +143,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2022715d62ab30faffd124d40b76f4134a550a87792276512b18d63272333394"
 
 [[package]]
+name = "h_hidden_password"
+version = "0.1.0"
+dependencies = [
+ "algo_lib",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "hermit-abi"
 version = "0.1.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62b467343b94ba476dcb2500d242dadbb39557df889310ac77c5d99100aaac33"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "i_interesting_numbers"
+version = "0.1.0"
+dependencies = [
+ "algo_lib",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
