@@ -1,4 +1,4 @@
-use crate::collections::base_algo::create_order;
+use crate::collections::iter_ext::IterExt;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::ops::Mul;
@@ -28,7 +28,7 @@ impl Permutation {
 
     pub fn new_ident_with_base(size: usize, base: usize) -> Self {
         Self {
-            p: create_order(size),
+            p: (0..size).collect_vec(),
             base,
         }
     }

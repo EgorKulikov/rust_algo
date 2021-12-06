@@ -1,8 +1,8 @@
-use crate::collections::base_algo::create_order;
-use std::ops::Index;
+use crate::collections::iter_ext::IterExt;
+use std::cell::Cell;
 
 pub struct DSU {
-    id: Vec<usize>,
+    id: Vec<Cell<usize>>,
     size: Vec<usize>,
     count: usize,
 }
@@ -10,14 +10,14 @@ pub struct DSU {
 impl DSU {
     pub fn new(n: usize) -> Self {
         Self {
-            id: create_order(n),
+            id: (0..n).map(|i| Cell::new(i)).collect_vec(),
             size: vec![1; n],
             count: n,
         }
     }
 
     pub fn size(&self, i: usize) -> usize {
-        self.size[self[i]]
+        self.size[self.get(i)]
     }
 
     pub fn len(&self) -> usize {
@@ -28,7 +28,7 @@ impl DSU {
         self.id
             .iter()
             .enumerate()
-            .filter_map(|(i, id)| if i == *id { Some(i) } else { None })
+            .filter_map(|(i, id)| if i == id.get() { Some(i) } else { None })
     }
 
     pub fn count(&self) -> usize {
@@ -36,40 +36,31 @@ impl DSU {
     }
 
     pub fn join(&mut self, mut a: usize, mut b: usize) -> bool {
-        a = self[a];
-        b = self[b];
+        a = self.get(a);
+        b = self.get(b);
         if a == b {
             false
         } else {
             self.size[a] += self.size[b];
-            self.id[b] = a;
+            self.id[b].replace(a);
             self.count -= 1;
             true
         }
     }
 
+    pub fn get(&self, i: usize) -> usize {
+        if self.id[i].get() != i {
+            let res = self.get(self.id[i].get());
+            self.id[i].replace(res);
+        }
+        self.id[i].get()
+    }
+
     pub fn clear(&mut self) {
         self.count = self.id.len();
         self.size.fill(1);
-        for i in 0..self.count {
-            self.id[i] = i;
-        }
-    }
-}
-
-impl Index<usize> for DSU {
-    type Output = usize;
-
-    fn index(&self, i: usize) -> &Self::Output {
-        if self.id[i] != i {
-            let res = self[self.id[i]];
-            unsafe {
-                let const_ptr = self as *const Self;
-                let mut_ptr = const_ptr as *mut Self;
-                let mut_self = &mut *mut_ptr;
-                mut_self.id[i] = res;
-            }
-        }
-        &self.id[i]
+        self.id.iter().enumerate().for_each(|(i, id)| {
+            id.replace(i);
+        });
     }
 }

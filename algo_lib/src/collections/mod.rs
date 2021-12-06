@@ -1,6 +1,5 @@
 pub mod arr2d;
 pub mod arr3d;
-pub mod base_algo;
 pub mod bit_set;
 pub mod dsu;
 pub mod fenwick;
@@ -12,4 +11,5 @@ pub mod permutation;
 pub mod segment_tree;
 #[cfg(test)]
 mod test;
+pub mod treap;
 pub mod vec_ext;

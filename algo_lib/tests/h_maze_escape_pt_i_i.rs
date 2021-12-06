@@ -87,11 +87,9 @@ fn solve(input: &mut Input, _test_case: usize) {
             }
         }
     }
-    for i in 0..graph.vertex_count() {
-        if dsu[i] == i {
-            let sz = dsu.size(i) as u64;
-            ans += sz * (sz - 1) / 2;
-        }
+    for i in dsu.iter() {
+        let sz = dsu.size(i) as u64;
+        ans += sz * (sz - 1) / 2;
     }
     out_line!(ans);
 }
