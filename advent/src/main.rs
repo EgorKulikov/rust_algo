@@ -1,17 +1,27 @@
-use algo_lib::io::input::Input;
+use algo_lib::collections::iter_ext::IterExt;
+use algo_lib::io::input::{Input, Readable};
+
+pub trait CommaList {
+    fn read_list<T: Readable>(&mut self) -> Vec<T>;
+}
+
+impl CommaList for Input<'_> {
+    fn read_list<T: Readable>(&mut self) -> Vec<T> {
+        let mut s: String = self.read();
+        s = s.replace(",", " ");
+        let mut b = s.as_bytes();
+        let mut input = Input::new(&mut b);
+        input.into_iter().collect_vec()
+    }
+}
 
 fn main() {
     let mut sin = std::io::stdin();
     let mut inp = Input::new(&mut sin);
 
-    let mut vals = Vec::new();
-    loop {
-        inp.skip_whitespace();
-        if inp.peek().is_none() {
-            break;
-        }
-        let cur: String = inp.read();
-        vals.push(cur.parse::<u64>().unwrap());
+    let mut vals: Vec<usize> = inp.read_list();
+    for _ in 0..80 {
+        vals.push(vals.len());
     }
     println!("{}", vals.len());
 }
