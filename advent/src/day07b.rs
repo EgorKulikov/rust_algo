@@ -1,4 +1,5 @@
 use algo_lib::collections::iter_ext::IterExt;
+use algo_lib::collections::min_max::MinimMaxim;
 use algo_lib::io::input::{Input, Readable};
 
 pub trait CommaList {
@@ -23,5 +24,16 @@ fn main() {
     // for _ in 0..80 {
     //     vals.push(vals.len());
     // }
-    println!("{}", vals.len());
+    let n = vals.len();
+    vals.sort();
+    let to = vals[n - 1];
+    let mut ans = i64::MAX;
+    for i in 0..to {
+        let mut cand = 0i64;
+        for j in vals.iter() {
+            cand += (i - j).abs() * ((i - j).abs() + 1) / 2;
+        }
+        ans.minim(cand);
+    }
+    println!("{}", ans);
 }

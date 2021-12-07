@@ -19,9 +19,18 @@ fn main() {
     let mut sin = std::io::stdin();
     let mut inp = Input::new(&mut sin);
 
-    let mut vals: Vec<i64> = inp.read_list();
+    let mut vals: Vec<usize> = inp.read_list();
     // for _ in 0..80 {
     //     vals.push(vals.len());
     // }
+    vals.sort();
+    let mut ans = 0;
+    let n = vals.len();
+    for i in 0..n / 2 {
+        ans += vals[n / 2] - vals[i];
+    }
+    for i in n / 2..n {
+        ans += vals[i] - vals[n / 2];
+    }
     println!("{}", vals.len());
 }
