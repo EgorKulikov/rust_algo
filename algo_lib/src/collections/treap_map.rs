@@ -109,7 +109,7 @@ impl<T: Ord, V> TreapMap<T, V> {
         self.root.find(key).data().map(|data| &data.value)
     }
 
-    pub fn contains_key(&self, key: &T) -> bool {
+    pub fn contains(&self, key: &T) -> bool {
         self.root.find(key).is_some()
     }
 }
@@ -125,5 +125,13 @@ impl<T: Ord, V> Index<&T> for TreapMap<T, V> {
 
     fn index(&self, index: &T) -> &Self::Output {
         self.get(index).unwrap()
+    }
+}
+
+pub type TreapSet<T> = TreapMap<T, ()>;
+
+impl<T: Ord> TreapSet<T> {
+    pub fn add(&mut self, key: T) -> bool {
+        self.insert(key, ()).is_some()
     }
 }
