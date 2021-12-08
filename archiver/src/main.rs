@@ -40,6 +40,9 @@ fn get_input(input: &mut Input) -> bool {
 }
 
 fn main() {
+    let mut args = std::env::args();
+    args.next();
+    let filter = args.next().unwrap_or("".to_string());
     let lines = read_lines("../Cargo.toml");
     let mut stdin = std::io::stdin();
     let mut input = Input::new(&mut stdin);
@@ -61,6 +64,10 @@ fn main() {
             || task == "main"
             || task == "advent"
         {
+            result.push(or_line);
+            continue;
+        }
+        if !task.starts_with(filter.as_str()) {
             result.push(or_line);
             continue;
         }

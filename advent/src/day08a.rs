@@ -24,6 +24,14 @@ fn main() {
 
     let mut ans = 0usize;
 
+    let convert = |s: &Str| {
+        let mut res = 0u8;
+        for c in s {
+            res.set_bit(c - b'a');
+        }
+        res
+    };
+
     loop {
         inp.skip_whitespace();
         if inp.peek().is_none() {
@@ -42,5 +50,8 @@ fn main() {
             }
         }
     }
+    // for _ in 0..80 {
+    //     vals.push(vals.len());
+    // }
     println!("{}", ans);
 }

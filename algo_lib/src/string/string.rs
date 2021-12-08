@@ -69,6 +69,11 @@ impl<'s> Str<'s> {
         self.as_vec().iter_mut()
     }
 
+    pub fn sort(&mut self) {
+        self.to_vec();
+        self.as_vec().sort();
+    }
+
     //noinspection RsSelfConvention
     fn to_vec(&mut self) {
         match self {
