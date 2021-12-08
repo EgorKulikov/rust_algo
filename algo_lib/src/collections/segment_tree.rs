@@ -1,3 +1,4 @@
+use crate::collections::direction::Direction;
 use std::marker::PhantomData;
 
 pub trait SegmentTreeNode {
@@ -132,11 +133,11 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
             let res = if at < mid {
                 let res = self.do_point_operation(op, left_child, left, mid, at, args);
                 let (l, r) = self.nodes.split_at_mut(root);
-                (op.combine_val)(res, &mut l[right_child], &mut r[0], Side::Left, at)
+                (op.combine_val)(res, &mut l[right_child], &mut r[0], Direction::Left, at)
             } else {
                 let res = self.do_point_operation(op, right_child, mid, right, at, args);
                 let (l, r) = self.nodes.split_at_mut(root);
-                (op.combine_val)(res, &mut l[left_child], &mut r[0], Side::Right, at)
+                (op.combine_val)(res, &mut l[left_child], &mut r[0], Direction::Right, at)
             };
             self.join(root, mid, right);
             res
@@ -250,14 +251,9 @@ impl<Node: SegmentTreeNode + Copy> SegmentTree<Node> {
     }
 }
 
-pub enum Side {
-    Left,
-    Right,
-}
-
 pub struct PointOperation<'s, Node: SegmentTreeNode, Args, Res = Node> {
     adjust_leaf: Box<dyn FnMut(&mut Node, usize, Args) -> Res + 's>,
-    combine_val: Box<dyn FnMut(Res, &mut Node, &mut Node, Side, usize) -> Res + 's>,
+    combine_val: Box<dyn FnMut(Res, &mut Node, &mut Node, Direction, usize) -> Res + 's>,
     phantom_node: PhantomData<Node>,
     phantom_args: PhantomData<Args>,
     phantom_res: PhantomData<Res>,
@@ -267,7 +263,7 @@ impl<'s, Node: SegmentTreeNode, Args, Res> PointOperation<'s, Node, Args, Res> {
     pub fn new<F1, F2>(adjust_leaf: F1, combine_val: F2) -> Self
     where
         F1: FnMut(&mut Node, usize, Args) -> Res + 's,
-        F2: FnMut(Res, &mut Node, &mut Node, Side, usize) -> Res + 's,
+        F2: FnMut(Res, &mut Node, &mut Node, Direction, usize) -> Res + 's,
     {
         Self {
             adjust_leaf: Box::new(adjust_leaf),

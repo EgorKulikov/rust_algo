@@ -4,6 +4,7 @@ use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use std::ops::{Add, AddAssign, Deref, Index, IndexMut, Range};
+use std::vec::IntoIter;
 
 pub enum Str<'s> {
     String(String, PhantomData<&'s str>),
@@ -85,6 +86,19 @@ impl<'s> Str<'s> {
     fn as_vec(&mut self) -> &mut Vec<u8> {
         match self {
             Str::Vec(s, _) => s,
+            _ => panic!("unreachable"),
+        }
+    }
+}
+
+impl IntoIterator for Str<'_> {
+    type Item = u8;
+    type IntoIter = IntoIter<u8>;
+
+    fn into_iter(mut self) -> Self::IntoIter {
+        self.to_vec();
+        match self {
+            Str::Vec(v, _) => v.into_iter(),
             _ => panic!("unreachable"),
         }
     }

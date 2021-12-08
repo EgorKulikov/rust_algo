@@ -1,6 +1,7 @@
 pub mod arr2d;
 pub mod arr3d;
 pub mod bit_set;
+pub mod direction;
 pub mod dsu;
 pub mod fenwick;
 pub mod id;
@@ -12,4 +13,5 @@ pub mod segment_tree;
 #[cfg(test)]
 mod test;
 pub mod treap;
+pub mod treap_map;
 pub mod vec_ext;
