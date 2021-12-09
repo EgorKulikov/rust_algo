@@ -1,7 +1,6 @@
 use dialoguer::console::Term;
 use dialoguer::theme::ColorfulTheme;
 use dialoguer::{Input, Select};
-use regex::Regex;
 use std::fs;
 use std::process::Command;
 use util::{IOEnum, IOType, Languages, Task, TaskClass, Test, TestType};
@@ -49,15 +48,10 @@ fn select_test_type() -> TestType {
 }
 
 pub fn get_solve(task: &Task) -> String {
-    let site = task.url.clone();
-    let re = Regex::new(r"https?://(?:www.)?([^.]*)[.].*").unwrap();
-    let mut matches = re.captures_iter(site.as_str());
-    let site = match matches.next() {
-        None => "default",
-        Some(site) => match site.get(1) {
-            None => "default",
-            Some(s) => s.as_str(),
-        },
+    let mut spl = task.group.split(" ");
+    let site = match spl.next() {
+        None => "default".to_string(),
+        Some(site) => site.to_lowercase(),
     };
     let solve = std::fs::read_to_string(format!("templates/sites/{}.rs", site));
     match solve {

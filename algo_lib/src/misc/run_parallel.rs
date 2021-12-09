@@ -7,7 +7,7 @@ pub trait ParallelJob: Sync + Send + Default + Clone {
     fn write_output(&mut self, test_case: usize);
 }
 
-pub fn parallel_run<J: ParallelJob>(input: &mut Input) {
+pub fn run_parallel<J: ParallelJob>(input: &mut Input) {
     let t = input.read();
     let mut jobs = vec![J::default(); t];
     for job in jobs.iter_mut() {

@@ -1,3 +1,5 @@
+use algo_lib::misc::run_parallel::{run_parallel, ParallelJob};
+
 fn solve(input: &mut Input) {
     #[derive(Clone, Default)]
     struct Job {}

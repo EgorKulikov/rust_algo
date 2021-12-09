@@ -49,9 +49,9 @@ pub struct Languages {
 pub enum TestType {
     #[serde(rename = "single")]
     Single,
-    #[serde(rename = "multi_number")]
+    #[serde(rename = "multiNumber")]
     MultiNumber,
-    #[serde(rename = "multi_eof")]
+    #[serde(rename = "multiEof")]
     MultiEof,
 }
 

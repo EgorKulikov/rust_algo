@@ -145,7 +145,8 @@ pub fn archive() {
     }
 
     let selection = selection.unwrap();
-    let tasks = contest_list[selection].1.clone();
+    let mut tasks = contest_list[selection].1.clone();
+    tasks.sort();
 
     for task in tasks {
         ask_archive(task);
