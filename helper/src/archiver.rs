@@ -8,6 +8,13 @@ use std::fs;
 use std::io::{BufRead, BufReader};
 use util::Task;
 
+fn contest_name(group: &String) -> String {
+    match group.find("-") {
+        None => group.clone(),
+        Some(at) => group.split_at(at + 1).1.trim().to_string(),
+    }
+}
+
 fn contest_list() -> Vec<(String, Vec<String>)> {
     let lines = util::read_lines("../Cargo.toml");
     let mut result = BTreeMap::new();
@@ -36,10 +43,11 @@ fn contest_list() -> Vec<(String, Vec<String>)> {
         let json = first_line.chars().skip(2).collect::<String>();
         match serde_json::from_str::<Task>(json.as_str()) {
             Ok(task) => {
-                if !result.contains_key(&task.group) {
-                    result.insert(task.group.clone(), Vec::new());
+                let contest_name = contest_name(&task.group);
+                if !result.contains_key(&contest_name) {
+                    result.insert(contest_name.clone(), Vec::new());
                 }
-                result.get_mut(&task.group).unwrap().push(task_name);
+                result.get_mut(&contest_name).unwrap().push(task_name);
             }
             Err(_) => {}
         }
