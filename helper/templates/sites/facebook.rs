@@ -1,15 +1,13 @@
-0
-fn solve(input: &mut Input, _test_case: usize) {
+fn solve(input: &mut Input) {
     #[derive(Clone, Default)]
-    struct Job {
-    }
+    struct Job {}
 
     impl ParallelJob for Job {
         fn read_input(&mut self, input: &mut Input) {
+            $CARET
         }
 
-        fn solve(&mut self) {
-        }
+        fn solve(&mut self) {}
 
         fn write_output(&mut self, test_case: usize) {
             out_line!(format!("Case #{}: ", test_case));
@@ -17,4 +15,11 @@ fn solve(input: &mut Input, _test_case: usize) {
     }
 
     parallel_run::<Job>(input);
+}
+
+pub(crate) fn run(mut input: Input) -> bool {
+    solve(&mut input);
+    output().flush();
+    input.skip_whitespace();
+    !input.peek().is_some()
 }

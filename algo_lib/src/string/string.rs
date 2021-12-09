@@ -89,6 +89,17 @@ impl<'s> Str<'s> {
             _ => panic!("unreachable"),
         }
     }
+
+    pub fn into_string(self) -> String {
+        match self {
+            Str::String(s, _) => s,
+            Str::StringRef(s) => s.clone(),
+            Str::Str(s) => s.to_string(),
+            Str::Vec(v, _) => String::from_utf8(v).unwrap(),
+            Str::VecRef(v) => String::from_utf8(v.clone()).unwrap(),
+            Str::U8(v) => String::from_utf8_lossy(v).into_owned(),
+        }
+    }
 }
 
 impl IntoIterator for Str<'_> {

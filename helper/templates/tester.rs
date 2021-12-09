@@ -1,3 +1,60 @@
+use algo_lib::io::input::Input;
+use algo_lib::io::output::{Output, OUTPUT};
+
+fn check(expected: &mut &[u8], actual: &mut &[u8]) -> Result<(), String> {
+    let mut expected = Input::new(expected);
+    let mut actual = Input::new(actual);
+    let mut token_num = 0usize;
+    loop {
+        let expected_token = expected.next_token();
+        let actual_token = actual.next_token();
+        if expected_token != actual_token {
+            if expected_token.is_none() {
+                return Err(format!("Expected has only {} tokens", token_num));
+            } else if actual_token.is_none() {
+                return Err(format!("Actual has only {} tokens", token_num));
+            } else {
+                return Err(format!(
+                    "Token #{} differs, expected {}, actual {}",
+                    token_num,
+                    String::from_utf8(expected_token.unwrap()).unwrap(),
+                    String::from_utf8(actual_token.unwrap()).unwrap()
+                ));
+            }
+        }
+        token_num += 1;
+        if actual_token.is_none() {
+            break;
+        }
+    }
+    Ok(())
+}
+
+static mut OUT: Vec<u8> = Vec::new();
+
+struct WriteDelegate {}
+
+impl std::io::Write for WriteDelegate {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        unsafe {
+            OUT.append(&mut Vec::from(buf));
+        }
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+pub(crate) fn run_tests() -> bool {
+    let blue = "\x1B[34m";
+    let red = "\x1B[31m";
+    let green = "\x1B[32m";
+    let yellow = "\x1B[33m";
+    let def = "\x1B[0m";
+    let time_limit = std::time::Duration::from_millis($TIME_LIMIT);
+    let mut paths = std::fs::read_dir("./$TASK/tests/")
         .unwrap()
         .map(|res| res.unwrap())
         .collect::<Vec<_>>();
@@ -45,7 +102,7 @@
                             unsafe {
                                 OUTPUT = Some(Output::new(Box::new(WriteDelegate {})));
                             }
-                            let is_exhausted = run(input);
+                            let is_exhausted = crate::run(input);
                             let res = started.elapsed();
                             let output;
                             unsafe {
@@ -66,11 +123,7 @@
                                 }
                                 if let Some(expected) = expected {
                                     let mut expected_bytes = expected.as_bytes().clone();
-                                    match check(
-                                        &mut expected_bytes,
-                                        &mut &output[..],
-                                        std::fs::File::open(&path).unwrap(),
-                                    ) {
+                                    match check(&mut expected_bytes, &mut &output[..]) {
                                         Ok(_) => {}
                                         Err(err) => {
                                             println!(
@@ -115,4 +168,3 @@
     }
     test_failed == 0
 }
-//END SKIP

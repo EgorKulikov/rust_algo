@@ -1,14 +1,8 @@
 [workspace]
 members = [
-    "d_updating_inversions",
-    "e_rubik_string",
-    "g_xor_plains",
-    "c_find_set",
-    "b_antigo",
-    "a_mountains",
     "advent",
     "algo_lib",
-    "archiver",
-    "listener",
+    "helper",
     "main",
+    "util",
 ]

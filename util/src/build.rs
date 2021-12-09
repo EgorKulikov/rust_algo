@@ -1,18 +1,6 @@
-use crate::BuildResult::Children;
-use serde::Deserialize;
+use crate::{read_lines, IOEnum, Task};
 use std::collections::HashSet;
-use std::fs::File;
-use std::io;
-use std::io::{BufRead, Write};
-use std::path::Path;
-
-fn read_lines<P>(filename: P) -> io::Lines<io::BufReader<File>>
-where
-    P: AsRef<Path>,
-{
-    let file = File::open(filename).unwrap();
-    io::BufReader::new(file).lines()
-}
+use std::io::Write;
 
 struct UsageTree {
     tag: String,
@@ -40,7 +28,7 @@ fn build_use_tree(usage: &str) -> BuildResult {
                     BuildResult::Usage(usage) => {
                         res.push(usage);
                     }
-                    Children(_) => {
+                    BuildResult::Children(_) => {
                         unreachable!()
                     }
                 }
@@ -57,7 +45,7 @@ fn build_use_tree(usage: &str) -> BuildResult {
             BuildResult::Usage(usage) => {
                 res.push(usage);
             }
-            Children(_) => {
+            BuildResult::Children(_) => {
                 unreachable!()
             }
         }
@@ -79,7 +67,7 @@ fn build_use_tree(usage: &str) -> BuildResult {
                     BuildResult::Usage(usage) => {
                         vec![usage]
                     }
-                    Children(children) => children,
+                    BuildResult::Children(children) => children,
                 };
                 BuildResult::Usage(UsageTree {
                     tag: usage[..pos].iter().cloned().collect(),
@@ -133,35 +121,23 @@ fn all_usages(usage_tree: &UsageTree) -> Vec<String> {
     all_usages_impl(&usage_tree.children, format!("use {}", usage_tree.tag))
 }
 
-//noinspection RsFieldNaming
-#[derive(Deserialize, Debug)]
-#[allow(non_snake_case)]
-struct IOType {
-    r#type: String,
-    fileName: Option<String>,
-}
-
 fn find_usages_and_code(
     file: &str,
     prefix: &str,
     processed: &mut HashSet<String>,
-) -> (HashSet<String>, Vec<String>, Option<IOType>, Option<IOType>) {
+) -> (HashSet<String>, Vec<String>, Option<Task>) {
     let mut usages = HashSet::new();
     let mut code = Vec::new();
-    let mut skip = false;
-    let mut input = None;
-    let mut output = None;
+    let mut main = false;
+    let mut task = None;
 
-    let mut lines = read_lines(file);
+    let mut lines = read_lines(file).into_iter();
     if prefix == "algo_lib" {
-        lines.next().unwrap().unwrap();
-        let inp = lines.next().unwrap().unwrap()[2..].to_string();
-        input = Some(serde_json::from_str::<IOType>(inp.as_str()).unwrap());
-        let out = lines.next().unwrap().unwrap()[2..].to_string();
-        output = Some(serde_json::from_str::<IOType>(out.as_str()).unwrap());
+        let task_json = lines.next().unwrap().chars().skip(2).collect::<String>();
+        task = Some(serde_json::from_str::<Task>(task_json.as_str()).unwrap());
     }
     for line in lines {
-        let line = line.unwrap();
+        let line = line;
         if line.starts_with("use") {
             match build_use_tree(&line[4..(line.len() - 1)]) {
                 BuildResult::Usage(usage) => {
@@ -180,60 +156,59 @@ fn find_usages_and_code(
                         usages.extend(all_usages(&usage));
                     }
                 }
-                Children(_) => {
+                BuildResult::Children(_) => {
                     unreachable!()
                 }
             }
         } else {
-            if line.as_str() == "//START SKIP" {
-                skip = true;
+            if line.as_str() == "//START MAIN" {
+                main = true;
             }
-            if !skip {
+            if !main {
                 code.push(line.clone());
             }
-            if line.as_str() == "//END SKIP" {
-                skip = false;
+            if line.as_str() == "//END MAIN" {
+                main = false;
             }
         }
     }
 
-    (usages, code, input, output)
+    (usages, code, task)
 }
 
-fn main() {
-    let (usages, mut code, input, output) =
+pub fn build() {
+    let (usages, mut code, task) =
         find_usages_and_code("src/main.rs", "algo_lib", &mut HashSet::new());
     code.push("fn main() {".to_string());
-    let input = input.unwrap();
-    match input.r#type.as_str() {
-        "stdin" | "regex" => {
+    let task = task.unwrap();
+    match task.input.io_type {
+        IOEnum::StdIn | IOEnum::Regex => {
             code.push("    let mut sin = std::io::stdin();".to_string());
             code.push("    let input = Input::new(&mut sin);".to_string());
         }
-        "file" => {
+        IOEnum::File => {
             code.push(format!(
                 "    let mut in_file = std::fs::File::open(\"{}\").unwrap();",
-                input.fileName.unwrap()
+                task.input.file_name.unwrap()
             ));
-            code.push(format!("    let input = Input::new(&mut in_file);"))
+            code.push("    let input = Input::new(&mut in_file);".to_string())
         }
         _ => {
             unreachable!()
         }
     }
-    let output = output.unwrap();
-    match output.r#type.as_str() {
-        "stdout" => {
+    match task.output.io_type {
+        IOEnum::StdOut => {
             code.push("    unsafe {".to_string());
             code.push(format!(
                 "        OUTPUT = Some(Output::new(Box::new(std::io::stdout())));"
             ));
             code.push("    }".to_string());
         }
-        "file" => {
+        IOEnum::File => {
             code.push(format!(
                 "    let out_file = std::fs::File::create(\"{}\").unwrap();",
-                output.fileName.unwrap()
+                task.output.file_name.unwrap()
             ));
             code.push("    unsafe {".to_string());
             code.push(format!(
