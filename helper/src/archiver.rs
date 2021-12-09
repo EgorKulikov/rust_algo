@@ -107,7 +107,7 @@ fn ask_archive(task_name: String) {
             }
             test_lines.push("#[test]".to_string());
             test_lines.push(format!("fn {}() {{", task_name));
-            test_lines.push("    assert!(run_tests());".to_string());
+            test_lines.push("    assert!(tester::run_tests());".to_string());
             test_lines.push("}".to_string());
             util::write_lines(format!("../algo_lib/tests/{}.rs", task_name), test_lines);
             let from = format!("../{}/tests", task_name);
