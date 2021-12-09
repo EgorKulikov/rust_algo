@@ -2,7 +2,7 @@ This is work in progress
 
 Competitive programming helper for Rust
 
-- Add 4244 to custom ports in Competitive Companion
+- Add 4244 to custom ports in [Competitive Companion](https://github.com/jmerle/competitive-companion)
 - Run helper from ./helper
 - To parse from Competitive Companion select "Run listener"
 - To create task manually select "Create new task"
