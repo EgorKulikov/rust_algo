@@ -52,6 +52,7 @@ impl<E: EdgeTrait> StronglyConnectedComponents for Graph<E> {
                                 queue.push(color[vert]);
                             }
                         }
+                        return;
                     }
                     color[vert] = index;
                     visited.set(vert, true);
