@@ -1,5 +1,3 @@
-use crate::io::output::output;
-use crate::{out, out_line};
 use std::time::SystemTime;
 
 const NN: usize = 312;
@@ -50,7 +48,6 @@ impl Random {
         x ^= (x << 17) & 0x71D67FFFEDA60000;
         x ^= (x << 37) & 0xFFF7EEE000000000;
         x ^= x >> 43;
-        out_line!(x);
         x
     }
 }

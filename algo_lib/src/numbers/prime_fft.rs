@@ -14,13 +14,11 @@ impl<M: BaseModInt> PrimeFFT<M> {
     pub fn new() -> Self {
         let mut exp = M::T::zero();
         let mut root_power = M::T::one();
-        let mut pw = M::T::zero();
         while (M::module() - M::T::one()) % (root_power + root_power) == M::T::zero() {
             exp = root_power;
             root_power += root_power;
-            pw += M::T::one();
         }
-        let i = M::one() + M::one();
+        let mut i = M::one() + M::one();
         loop {
             if i.power(exp) != M::one() && i.power(root_power) == M::one() {
                 break Self {
@@ -31,6 +29,7 @@ impl<M: BaseModInt> PrimeFFT<M> {
                     bb: Vec::new(),
                 };
             }
+            i += M::one();
         }
     }
 
@@ -62,8 +61,13 @@ impl<M: BaseModInt> PrimeFFT<M> {
             let was_len = self.aa.len();
             self.aa.copy_from_slice(&a[..was_len]);
             self.aa.extend_from_slice(&a[was_len..]);
+            self.aa.reserve(size - self.aa.len());
+            for _ in self.aa.len()..size {
+                self.aa.push(M::zero());
+            }
         } else {
             self.aa.copy_from_slice(a);
+            self.aa[a.len()..size].fill(M::zero());
         }
         Self::fft(
             &mut self.aa[..size],
@@ -81,8 +85,13 @@ impl<M: BaseModInt> PrimeFFT<M> {
                 let was_len = self.bb.len();
                 self.bb.copy_from_slice(&b[..was_len]);
                 self.bb.extend_from_slice(&b[was_len..]);
+                self.bb.reserve(size - self.bb.len());
+                for _ in self.bb.len()..size {
+                    self.bb.push(M::zero());
+                }
             } else {
                 self.bb.copy_from_slice(b);
+                self.bb[b.len()..size].fill(M::zero());
             }
             Self::fft(
                 &mut self.bb[..size],
@@ -105,10 +114,10 @@ impl<M: BaseModInt> PrimeFFT<M> {
         if res.len() < res_len {
             let was_len = res.len();
             res.copy_from_slice(&self.aa[..was_len]);
-            res.extend_from_slice(&self.aa[was_len..]);
+            res.extend_from_slice(&self.aa[was_len..res_len]);
         } else {
-            res.copy_from_slice(&self.aa[..]);
-            res[self.aa.len()..].fill(M::zero());
+            res.copy_from_slice(&self.aa[..res_len]);
+            res[res_len..].fill(M::zero());
         }
     }
 

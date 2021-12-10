@@ -360,11 +360,11 @@ where
 {
 }
 
-value!(Val7, u32, 1_000_000_007);
-pub type ModInt7 = ModInt<u32, Val7>;
+value!(Val7, i32, 1_000_000_007);
+pub type ModInt7 = ModInt<i32, Val7>;
 
-value!(Val9, u32, 1_000_000_009);
-pub type ModInt9 = ModInt<u32, Val9>;
+value!(Val9, i32, 1_000_000_009);
+pub type ModInt9 = ModInt<i32, Val9>;
 
-value!(ValF, u32, 998_244_353);
-pub type ModIntF = ModInt<u32, ValF>;
+value!(ValF, i32, 998_244_353);
+pub type ModIntF = ModInt<i32, ValF>;

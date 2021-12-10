@@ -81,7 +81,7 @@ fn ask_archive(task_name: String) {
             now.day(),
             now.month(),
             now.year(),
-            task.group
+            contest_name(&task.group),
         );
         let path = path.replace(":", "_");
         fs::create_dir_all(path.clone()).unwrap();
