@@ -21,7 +21,7 @@ fn main() {
     let mut sin = std::io::stdin();
     let mut inp = Input::new(&mut sin);
 
-    let mut ans = Vec::new();
+    let mut ans = 0;
 
     loop {
         inp.skip_whitespace();
@@ -31,14 +31,13 @@ fn main() {
 
         let cur = inp.read::<Str>();
         let mut st = VecDeque::new();
-        let mut good = true;
         for c in cur {
             match c {
                 b']' => {
                     if st.back().unwrap() == &b'[' {
                         st.pop_back();
                     } else {
-                        good = false;
+                        ans += 57;
                         break;
                     }
                 }
@@ -46,7 +45,7 @@ fn main() {
                     if st.back().unwrap() == &b'(' {
                         st.pop_back();
                     } else {
-                        good = false;
+                        ans += 3;
                         break;
                     }
                 }
@@ -54,7 +53,7 @@ fn main() {
                     if st.back().unwrap() == &b'{' {
                         st.pop_back();
                     } else {
-                        good = false;
+                        ans += 1197;
                         break;
                     }
                 }
@@ -62,31 +61,14 @@ fn main() {
                     if st.back().unwrap() == &b'<' {
                         st.pop_back();
                     } else {
-                        good = false;
+                        ans += 25137;
                         break;
                     }
                 }
                 c => st.push_back(c),
             }
         }
-
-        if good {
-            let mut cur = 0u64;
-            while let Some(c) = st.pop_back() {
-                cur *= 5;
-                cur += match c {
-                    b'(' => 1,
-                    b'[' => 2,
-                    b'{' => 3,
-                    b'<' => 4,
-                    _ => unreachable!(),
-                }
-            }
-            ans.push(cur);
-        }
     }
 
-    ans.sort();
-
-    println!("{}", ans[ans.len() / 2]);
+    println!("{}", ans);
 }
