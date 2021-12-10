@@ -25,7 +25,8 @@ impl LCA {
     pub fn lca(&self, first: usize, second: usize) -> usize {
         let from = self.position[first].min(self.position[second]) as usize;
         let to = self.position[first].max(self.position[second]) as usize;
-        let lv = (usize::BITS - (to - from).leading_zeros() - 1) as usize;
+        // 1.53
+        let lv = (32 - ((to - from) as u32).leading_zeros() - 1) as usize;
         self.lca_arr[(lv, from)].min(self.lca_arr[(lv, to + 1 - (1 << lv))]) as usize
     }
 
@@ -81,7 +82,8 @@ impl<E: EdgeTrait> LCATrait for Graph<E> {
             }
         }
         let mut lca_arr = Arr2d::new(
-            (u32::BITS - (2 * vertex_count - 1).leading_zeros()) as usize,
+            // 1.53
+            (32 - (2 * vertex_count - 1).leading_zeros()) as usize,
             2 * vertex_count - 1,
             0,
         );

@@ -1,19 +1,19 @@
-use crate::misc::value::{ConstValue, Value};
-use crate::value;
+use crate::const_value_ref;
+use crate::misc::value_ref::ValueRef;
 use std::marker::PhantomData;
 
-pub struct Directions<V: Value<[(isize, isize); N]>, const N: usize> {
+pub struct Directions<V: ValueRef<[(isize, isize)]>> {
     phantom: PhantomData<V>,
 }
 
-impl<V: Value<[(isize, isize); N]>, const N: usize> Directions<V, N> {
+impl<V: ValueRef<[(isize, isize)]>> Directions<V> {
     pub fn iter(
         row: usize,
         col: usize,
         n: usize,
         m: usize,
     ) -> impl Iterator<Item = (usize, usize)> {
-        DirectionsIter::<V, N> {
+        DirectionsIter::<V> {
             row,
             col,
             n,
@@ -24,7 +24,7 @@ impl<V: Value<[(isize, isize); N]>, const N: usize> Directions<V, N> {
     }
 }
 
-struct DirectionsIter<V: Value<[(isize, isize); N]>, const N: usize> {
+struct DirectionsIter<V: ValueRef<[(isize, isize)]>> {
     row: usize,
     col: usize,
     n: usize,
@@ -33,11 +33,11 @@ struct DirectionsIter<V: Value<[(isize, isize); N]>, const N: usize> {
     phantom: PhantomData<V>,
 }
 
-impl<V: Value<[(isize, isize); N]>, const N: usize> Iterator for DirectionsIter<V, N> {
+impl<V: ValueRef<[(isize, isize)]>> Iterator for DirectionsIter<V> {
     type Item = (usize, usize);
 
     fn next(&mut self) -> Option<Self::Item> {
-        while self.at < N {
+        while self.at < V::val().len() {
             let nrow = (self.row as isize) + V::val()[self.at].0;
             let ncol = (self.col as isize) + V::val()[self.at].1;
             self.at += 1;
@@ -49,9 +49,11 @@ impl<V: Value<[(isize, isize); N]>, const N: usize> Iterator for DirectionsIter<
     }
 }
 
-value!(
+const_value_ref!(
     D4Dirs,
+    D4_DIRS_INNER,
     [(isize, isize); 4],
+    [(isize, isize)],
     [
         (1isize, 0isize),
         (0isize, 1isize),
@@ -60,4 +62,4 @@ value!(
     ]
 );
 
-pub type D4 = Directions<D4Dirs, 4>;
+pub type D4 = Directions<D4Dirs>;

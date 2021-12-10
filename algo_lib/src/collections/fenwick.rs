@@ -1,3 +1,4 @@
+use crate::collections::legacy_fill::LegacyFill;
 use crate::collections::min_max::MinimMaxim;
 use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::zero_one::ZeroOne;
@@ -43,10 +44,11 @@ impl<T: AddSub + ZeroOne> FenwickTree<T> {
         self.value
             .iter()
             .enumerate()
-            .map(|(i, _)| self.get(i, i + 1))
+            // edition 2021
+            .map(move |(i, _)| self.get(i, i + 1))
     }
 
     pub fn clear(&mut self) {
-        self.value.fill(T::zero());
+        self.value.legacy_fill(T::zero());
     }
 }

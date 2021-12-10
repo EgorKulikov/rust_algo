@@ -65,6 +65,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
     }
 
     pub fn point_query(&mut self, at: usize) -> &Node {
+        assert!(at < self.n);
         self.do_point_query(2 * self.n - 2, 0, self.n, at)
     }
 
@@ -85,6 +86,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
     }
 
     pub fn point_update(&mut self, at: usize, val: &Node) {
+        assert!(at < self.n);
         self.do_point_update(2 * self.n - 2, 0, self.n, at, val);
     }
 
@@ -107,37 +109,41 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
 
     pub fn point_operation<Args, Res>(
         &mut self,
-        op: &mut PointOperation<Node, Args, Res>,
-        at: usize,
+        op: &mut dyn PointOperation<Node, Args, Res>,
         args: Args,
     ) -> Res {
-        self.do_point_operation(op, 2 * self.n - 2, 0, self.n, at, args)
+        self.do_point_operation(op, 2 * self.n - 2, 0, self.n, args)
     }
 
     fn do_point_operation<Args, Res>(
         &mut self,
-        op: &mut PointOperation<Node, Args, Res>,
+        op: &mut dyn PointOperation<Node, Args, Res>,
         root: usize,
         left: usize,
         right: usize,
-        at: usize,
         args: Args,
     ) -> Res {
         if left + 1 == right {
-            (op.adjust_leaf)(&mut self.nodes[root], at, args)
+            op.adjust_leaf(&mut self.nodes[root], left, args)
         } else {
             let mid = (left + right) >> 1;
             self.push_down(root, mid, right);
             let left_child = root - 2 * (right - mid);
             let right_child = root - 1;
-            let res = if at < mid {
-                let res = self.do_point_operation(op, left_child, left, mid, at, args);
-                let (l, r) = self.nodes.split_at_mut(root);
-                (op.combine_val)(res, &mut l[right_child], &mut r[0], Direction::Left, at)
-            } else {
-                let res = self.do_point_operation(op, right_child, mid, right, at, args);
-                let (l, r) = self.nodes.split_at_mut(root);
-                (op.combine_val)(res, &mut l[left_child], &mut r[0], Direction::Right, at)
+            let (l, r) = self.nodes.split_at_mut(root);
+            let (l, m) = l.split_at_mut(right_child);
+            let direction = op.select_branch(
+                &mut r[0],
+                &mut l[left_child],
+                &mut m[0],
+                &args,
+                left,
+                mid,
+                right,
+            );
+            let res = match direction {
+                Direction::Left => self.do_point_operation(op, left_child, left, mid, args),
+                Direction::Right => self.do_point_operation(op, right_child, mid, right, args),
             };
             self.join(root, mid, right);
             res
@@ -176,7 +182,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         &mut self,
         from: usize,
         to: usize,
-        op: &mut Operation<Node, Args, Res>,
+        op: &mut dyn Operation<Node, Args, Res>,
         args: &Args,
     ) -> Res {
         self.do_operation(2 * self.n - 2, 0, self.n, from, to, op, args)
@@ -189,13 +195,13 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         right: usize,
         from: usize,
         to: usize,
-        op: &mut Operation<Node, Args, Res>,
+        op: &mut dyn Operation<Node, Args, Res>,
         args: &Args,
     ) -> Res {
         if left >= to || right <= from {
-            (op.empty_result)(left, right, args)
+            op.empty_result(left, right, args)
         } else if left >= from && right <= to {
-            (op.process_result)(&mut self.nodes[root], args)
+            op.process_result(&mut self.nodes[root], args)
         } else {
             let mid = (left + right) >> 1;
             self.push_down(root, mid, right);
@@ -204,7 +210,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
             let left_result = self.do_operation(left_child, left, mid, from, to, op, args);
             let right_result = self.do_operation(right_child, mid, right, from, to, op, args);
             self.join(root, mid, right);
-            (op.join_results)(left_result, right_result, args)
+            op.join_results(left_result, right_result, args)
         }
     }
 
@@ -233,8 +239,10 @@ impl<Node: SegmentTreeNode + Copy> SegmentTree<Node> {
     }
 
     fn do_query(&mut self, root: usize, left: usize, right: usize, from: usize, to: usize) -> Node {
-        if left >= to || right <= from {
-            Node::new(left, right)
+        if left >= to {
+            Node::new(to, to)
+        } else if right <= from {
+            Node::new(from, from)
         } else if left >= from && right <= to {
             self.nodes[root]
         } else {
@@ -251,23 +259,39 @@ impl<Node: SegmentTreeNode + Copy> SegmentTree<Node> {
     }
 }
 
-pub struct PointOperation<'s, Node: SegmentTreeNode, Args, Res = Node> {
+pub trait PointOperation<Node: SegmentTreeNode, Args, Res = Node> {
+    fn adjust_leaf(&mut self, leaf: &mut Node, at: usize, args: Args) -> Res;
+    fn select_branch(
+        &mut self,
+        root: &mut Node,
+        left_child: &mut Node,
+        right_child: &mut Node,
+        args: &Args,
+        left: usize,
+        mid: usize,
+        right: usize,
+    ) -> Direction;
+}
+
+pub struct PointOperationClosure<'s, Node: SegmentTreeNode, Args, Res = Node> {
     adjust_leaf: Box<dyn FnMut(&mut Node, usize, Args) -> Res + 's>,
-    combine_val: Box<dyn FnMut(Res, &mut Node, &mut Node, Direction, usize) -> Res + 's>,
+    select_branch: Box<
+        dyn FnMut(&mut Node, &mut Node, &mut Node, &Args, usize, usize, usize) -> Direction + 's,
+    >,
     phantom_node: PhantomData<Node>,
     phantom_args: PhantomData<Args>,
     phantom_res: PhantomData<Res>,
 }
 
-impl<'s, Node: SegmentTreeNode, Args, Res> PointOperation<'s, Node, Args, Res> {
-    pub fn new<F1, F2>(adjust_leaf: F1, combine_val: F2) -> Self
+impl<'s, Node: SegmentTreeNode, Args, Res> PointOperationClosure<'s, Node, Args, Res> {
+    pub fn new<F1, F2>(adjust_leaf: F1, select_branch: F2) -> Self
     where
         F1: FnMut(&mut Node, usize, Args) -> Res + 's,
-        F2: FnMut(Res, &mut Node, &mut Node, Direction, usize) -> Res + 's,
+        F2: FnMut(&mut Node, &mut Node, &mut Node, &Args, usize, usize, usize) -> Direction + 's,
     {
         Self {
             adjust_leaf: Box::new(adjust_leaf),
-            combine_val: Box::new(combine_val),
+            select_branch: Box::new(select_branch),
             phantom_node: Default::default(),
             phantom_args: Default::default(),
             phantom_res: Default::default(),
@@ -275,7 +299,34 @@ impl<'s, Node: SegmentTreeNode, Args, Res> PointOperation<'s, Node, Args, Res> {
     }
 }
 
-pub struct Operation<'s, Node: SegmentTreeNode, Args, Res = Node> {
+impl<'s, Node: SegmentTreeNode, Args, Res> PointOperation<Node, Args, Res>
+    for PointOperationClosure<'s, Node, Args, Res>
+{
+    fn adjust_leaf(&mut self, leaf: &mut Node, at: usize, args: Args) -> Res {
+        (self.adjust_leaf)(leaf, at, args)
+    }
+
+    fn select_branch(
+        &mut self,
+        root: &mut Node,
+        left_child: &mut Node,
+        right_child: &mut Node,
+        args: &Args,
+        left: usize,
+        mid: usize,
+        right: usize,
+    ) -> Direction {
+        (self.select_branch)(root, left_child, right_child, args, left, mid, right)
+    }
+}
+
+pub trait Operation<Node: SegmentTreeNode, Args, Res = Node> {
+    fn process_result(&mut self, node: &mut Node, args: &Args) -> Res;
+    fn join_results(&mut self, left_res: Res, right_res: Res, args: &Args) -> Res;
+    fn empty_result(&mut self, left: usize, right: usize, args: &Args) -> Res;
+}
+
+pub struct OperationClosure<'s, Node: SegmentTreeNode, Args, Res = Node> {
     process_result: Box<dyn FnMut(&mut Node, &Args) -> Res + 's>,
     join_results: Box<dyn FnMut(Res, Res, &Args) -> Res + 's>,
     empty_result: Box<dyn FnMut(usize, usize, &Args) -> Res + 's>,
@@ -284,7 +335,7 @@ pub struct Operation<'s, Node: SegmentTreeNode, Args, Res = Node> {
     phantom_res: PhantomData<Res>,
 }
 
-impl<'s, Node: SegmentTreeNode, Args, Res> Operation<'s, Node, Args, Res> {
+impl<'s, Node: SegmentTreeNode, Args, Res> OperationClosure<'s, Node, Args, Res> {
     pub fn new<F1, F2, F3>(process_result: F1, join_results: F2, empty_result: F3) -> Self
     where
         F1: FnMut(&mut Node, &Args) -> Res + 's,
@@ -299,5 +350,21 @@ impl<'s, Node: SegmentTreeNode, Args, Res> Operation<'s, Node, Args, Res> {
             phantom_args: Default::default(),
             phantom_res: Default::default(),
         }
+    }
+}
+
+impl<'s, Node: SegmentTreeNode, Args, Res> Operation<Node, Args, Res>
+    for OperationClosure<'s, Node, Args, Res>
+{
+    fn process_result(&mut self, node: &mut Node, args: &Args) -> Res {
+        (self.process_result)(node, args)
+    }
+
+    fn join_results(&mut self, left_res: Res, right_res: Res, args: &Args) -> Res {
+        (self.join_results)(left_res, right_res, args)
+    }
+
+    fn empty_result(&mut self, left: usize, right: usize, args: &Args) -> Res {
+        (self.empty_result)(left, right, args)
     }
 }

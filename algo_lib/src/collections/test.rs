@@ -1,6 +1,7 @@
 use crate::collections::iter_ext::IterPartialEqExt;
 use crate::collections::permutation::Permutation;
-use crate::collections::vec_ext::compress;
+use crate::collections::vec_ext::Bounds;
+use crate::compress;
 
 #[test]
 fn test_find() {
@@ -22,7 +23,7 @@ fn test_compress() {
     let a = vec![3, 5, 7];
     let b = vec![7, 4, 5];
     assert_eq!(
-        compress([&a, &b]),
-        (vec![3, 4, 5, 7], [vec![0, 2, 3], vec![3, 1, 2]])
+        compress!(&a, &b),
+        (vec![3, 4, 5, 7], (vec![0, 2, 3], vec![3, 1, 2]))
     );
 }

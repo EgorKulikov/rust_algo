@@ -10,7 +10,8 @@ pub trait EdgeAlgos {
 
 impl<E: EdgeTrait> EdgeAlgos for Graph<E> {
     fn edge_distances(&self, source: usize) -> Vec<u32> {
-        let mut dist = vec![u32::MAX; self.vertex_count()];
+        // 1.43
+        let mut dist = vec![std::u32::MAX; self.vertex_count()];
         dist[source] = 0;
         let mut q = VecDeque::new();
         q.push_back(source);
@@ -18,7 +19,8 @@ impl<E: EdgeTrait> EdgeAlgos for Graph<E> {
             let cur = q.pop_front().unwrap();
             for e in self[cur].iter() {
                 let next = e.to();
-                if dist[next] == u32::MAX {
+                // 1.43
+                if dist[next] == std::u32::MAX {
                     dist[next] = dist[cur] + 1;
                     q.push_back(next);
                 }

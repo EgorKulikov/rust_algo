@@ -1,3 +1,4 @@
+use crate::collections::legacy_fill::LegacyFill;
 use crate::numbers::mod_int::BaseModInt;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 use crate::numbers::number_ext::Power;
@@ -35,12 +36,12 @@ impl<M: BaseModInt> PrimeFFT<M> {
 
     pub fn multiply_res(&mut self, a: &[M], b: &[M], res: &mut Vec<M>) {
         if a.is_empty() || b.is_empty() {
-            res.fill(M::zero());
+            res.legacy_fill(M::zero());
             return;
         }
         let res_len = a.len() + b.len() - 1;
         if res_len <= Self::BORDER_LEN {
-            res.fill(M::zero());
+            res.legacy_fill(M::zero());
             for (i, f) in a.iter().enumerate() {
                 for (j, s) in b.iter().enumerate() {
                     res[i + j] += (*f) * (*s);
@@ -67,7 +68,7 @@ impl<M: BaseModInt> PrimeFFT<M> {
             }
         } else {
             self.aa.copy_from_slice(a);
-            self.aa[a.len()..size].fill(M::zero());
+            self.aa[a.len()..size].legacy_fill(M::zero());
         }
         Self::fft(
             &mut self.aa[..size],
@@ -91,7 +92,7 @@ impl<M: BaseModInt> PrimeFFT<M> {
                 }
             } else {
                 self.bb.copy_from_slice(b);
-                self.bb[b.len()..size].fill(M::zero());
+                self.bb[b.len()..size].legacy_fill(M::zero());
             }
             Self::fft(
                 &mut self.bb[..size],
@@ -117,7 +118,7 @@ impl<M: BaseModInt> PrimeFFT<M> {
             res.extend_from_slice(&self.aa[was_len..res_len]);
         } else {
             res.copy_from_slice(&self.aa[..res_len]);
-            res[res_len..].fill(M::zero());
+            res[res_len..].legacy_fill(M::zero());
         }
     }
 

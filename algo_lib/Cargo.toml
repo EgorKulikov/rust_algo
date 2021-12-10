@@ -1,7 +1,8 @@
 [package]
 name = "algo_lib"
 version = "0.1.0"
-edition = "2021"
+edition = "2018"
+rust-version = "1.41"
 
 [dependencies]
 rayon = "~1.5"

@@ -1,3 +1,4 @@
+use crate::collections::legacy_fill::LegacyFill;
 use std::mem;
 
 enum Opt<T> {
@@ -120,7 +121,7 @@ impl<T: PartialOrd> IndexedHeap<T> {
 
     pub fn clear(&mut self) {
         self.heap.clear();
-        self.pos.fill(Opt::None);
+        self.pos.legacy_fill(Opt::None);
     }
 
     pub fn remove(&mut self, el: usize) -> Option<T> {

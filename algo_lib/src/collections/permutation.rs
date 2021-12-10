@@ -57,7 +57,8 @@ impl Permutation {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = usize> + '_ {
-        self.p.iter().map(|i| *i + self.base)
+        // edition 2021
+        self.p.iter().map(move |i| *i + self.base)
     }
 
     fn check(p: &Vec<usize>) -> bool {

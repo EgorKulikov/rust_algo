@@ -1,3 +1,4 @@
+use crate::collections::legacy_fill::LegacyFill;
 use crate::numbers::num_traits::bit_ops::BitOps;
 use std::ops::Index;
 
@@ -36,7 +37,8 @@ impl BitSet {
     }
 
     pub fn fill(&mut self, value: bool) {
-        self.data.fill(if value { u64::MAX } else { 0 })
+        // 1.43
+        self.data.legacy_fill(if value { std::u64::MAX } else { 0 })
     }
 
     fn index(at: usize) -> usize {

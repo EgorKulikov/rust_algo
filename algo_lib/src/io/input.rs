@@ -238,16 +238,6 @@ impl<'s, T: Readable> Iterator for InputIterator<'s, T> {
     }
 }
 
-/*impl<T: Readable, const N: usize> Readable for [T; N] {
-    fn read(input: &mut Input) -> Self {
-        let mut arr: [T; N] = unsafe { std::mem::MaybeUninit::uninit().assume_init() };
-        for i in 0..N {
-            arr[i] = T::read(input);
-        }
-        arr
-    }
-}*/
-
 macro_rules! read_integer {
     ($t:ident) => {
         impl Readable for $t {

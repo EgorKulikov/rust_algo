@@ -9,11 +9,13 @@ macro_rules! min_max_integer_impl {
     ($t: ident) => {
         impl MinMax for $t {
             fn min_val() -> Self {
-                $t::MIN
+                // 1.43
+                std::$t::MIN
             }
 
             fn max_val() -> Self {
-                $t::MAX
+                // 1.43
+                std::$t::MAX
             }
 
             fn minimum(self, other: Self) -> Self {
@@ -44,11 +46,13 @@ macro_rules! min_max_float_impl {
     ($t: ident) => {
         impl MinMax for $t {
             fn min_val() -> Self {
-                -$t::INFINITY
+                // 1.43
+                -std::$t::INFINITY
             }
 
             fn max_val() -> Self {
-                $t::INFINITY
+                // 1.43
+                std::$t::INFINITY
             }
 
             fn minimum(self, other: Self) -> Self {

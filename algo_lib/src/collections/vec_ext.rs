@@ -1,6 +1,5 @@
 use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::zero_one::ZeroOne;
-use std::mem::MaybeUninit;
 
 pub trait Qty {
     fn qty_bound(&self, bound: usize) -> Vec<usize>;
@@ -70,32 +69,28 @@ impl<T: Ord> Bounds<T> for &[T] {
     }
 }
 
-pub fn compress<T: Eq + Ord + Clone, const N: usize>(vs: [&[T]; N]) -> (Vec<T>, [Vec<usize>; N]) {
-    let mut size = 0;
-    for v in vs {
-        size += v.len();
-    }
-    let mut all = Vec::with_capacity(size);
-    for v in vs {
-        for a in v {
+#[macro_export]
+macro_rules! compress {
+    ($($vs:expr),+) => { {
+        let mut size = 0;
+        $(size += $vs.len();)+
+        let mut all = Vec::with_capacity(size);
+        $(for a in $vs {
             all.push(a.clone());
-        }
-    }
-    all.sort();
-    all.dedup();
-    let mut res: MaybeUninit<[Vec<usize>; N]> = std::mem::MaybeUninit::uninit();
-    let mut ptr = res.as_mut_ptr() as *mut Vec<usize>;
-    for i in 0..N {
-        let mut cur = Vec::with_capacity(vs[i].len());
-        for j in 0..vs[i].len() {
-            cur.push((&all[..]).bin_search(&vs[i][j]).unwrap());
-        }
-        unsafe {
-            ptr.write(cur);
-            ptr = ptr.add(1);
-        }
-    }
-    (all, unsafe { res.assume_init() })
+        })+
+        all.sort();
+        all.dedup();
+        let arrs = ($(
+            {
+                let mut cur = Vec::with_capacity($vs.len());
+                for i in 0..$vs.len() {
+                    cur.push((&all[..]).bin_search(&$vs[i]).unwrap());
+                }
+                cur
+            },
+        )+);
+        (all, arrs)
+    } }
 }
 
 pub trait IncDec {

@@ -1,3 +1,4 @@
+use crate::collections::legacy_fill::LegacyFill;
 use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
 use crate::graph::graph::{FlowGraph, Graph};
 use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
@@ -21,7 +22,8 @@ impl<C: AddSub + PartialOrd + Copy + ZeroOne + MinMax, E: FlowEdgeTrait<C>> MaxF
         let mut total_flow = C::zero();
         let mut q = VecDeque::new();
         loop {
-            dist.fill(u32::MAX);
+            // 1.43
+            dist.legacy_fill(std::u32::MAX);
             dist[source] = 0;
             q.push_back(source);
             while !q.is_empty() {
@@ -29,17 +31,19 @@ impl<C: AddSub + PartialOrd + Copy + ZeroOne + MinMax, E: FlowEdgeTrait<C>> MaxF
                 for e in self[cur].iter() {
                     if e.capacity() != C::zero() {
                         let next = e.to();
-                        if dist[next] == u32::MAX {
+                        // 1.43
+                        if dist[next] == std::u32::MAX {
                             dist[next] = dist[cur] + 1;
                             q.push_back(next);
                         }
                     }
                 }
             }
-            if dist[destination] == u32::MAX {
+            // 1.43
+            if dist[destination] == std::u32::MAX {
                 break;
             }
-            next_edge.fill(0);
+            next_edge.legacy_fill(0);
             let mut dinic_impl = RecursiveFunction2::new(|f, source, mut flow| -> C {
                 if source == destination {
                     flow

@@ -1,4 +1,5 @@
 use crate::collections::iter_ext::IterExt;
+use crate::collections::legacy_fill::LegacyFill;
 use std::cell::Cell;
 
 pub struct DSU {
@@ -61,7 +62,7 @@ impl DSU {
 
     pub fn clear(&mut self) {
         self.count = self.id.len();
-        self.size.fill(1);
+        self.size.legacy_fill(1);
         self.id.iter().enumerate().for_each(|(i, id)| {
             id.replace(i as u32);
         });
