@@ -84,7 +84,7 @@ impl<T: PartialOrd> IndexedHeap<T> {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.len() != 0
+        self.len() == 0
     }
 
     pub fn iter(&self) -> impl Iterator<Item = usize> + '_ {

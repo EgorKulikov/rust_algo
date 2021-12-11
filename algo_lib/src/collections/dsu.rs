@@ -2,6 +2,7 @@ use crate::collections::iter_ext::IterExt;
 use crate::collections::legacy_fill::LegacyFill;
 use std::cell::Cell;
 
+#[derive(Clone)]
 pub struct DSU {
     id: Vec<Cell<u32>>,
     size: Vec<u32>,

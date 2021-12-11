@@ -5,6 +5,7 @@ use std::ops::Index;
 static TRUE: bool = true;
 static FALSE: bool = false;
 
+#[derive(Clone)]
 pub struct BitSet {
     data: Vec<u64>,
     len: usize,

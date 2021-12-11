@@ -1,8 +1,0 @@
-#include <iostream>
-
-class %ClassName% {
-public:
-	void solve(std::istream& in, std::ostream& out) {
-
-	}
-};
