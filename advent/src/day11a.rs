@@ -23,10 +23,10 @@ fn main() {
 
     let mut iter: InputIterator<char> = inp.into_iter();
     let mut map = Arr2d::generate(10, 10, |_, _| (iter.next().unwrap() as u8) - b'0');
+    let mut ans = 0;
 
     let mut flashed = Arr2d::new(10, 10, false);
-    let mut step = 1;
-    loop {
+    for _ in 0..100 {
         map.iter_mut().for_each(|i| *i += 1);
         flashed.fill(false);
         loop {
@@ -46,15 +46,13 @@ fn main() {
                 break;
             }
         }
-        if map.iter().filter(|i| **i >= 10).count() == 100 {
-            println!("{}", step);
-            return;
-        }
         map.iter_mut().for_each(|i| {
             if *i >= 10 {
+                ans += 1;
                 *i = 0;
             }
-        });
-        step += 1;
+        })
     }
+
+    println!("{}", ans);
 }
