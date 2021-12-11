@@ -1,6 +1,7 @@
 use crate::collections::arr2d::Arr2d;
 use crate::graph::edges::edge_trait::EdgeTrait;
 use crate::graph::graph::Graph;
+use crate::numbers::num_traits::bit_ops::Bits;
 
 pub struct LCA {
     position: Vec<u32>,
@@ -25,8 +26,7 @@ impl LCA {
     pub fn lca(&self, first: usize, second: usize) -> usize {
         let from = self.position[first].min(self.position[second]) as usize;
         let to = self.position[first].max(self.position[second]) as usize;
-        // 1.53
-        let lv = (32 - ((to - from) as u32).leading_zeros() - 1) as usize;
+        let lv = (u32::bits() - ((to - from) as u32).leading_zeros() - 1) as usize;
         self.lca_arr[(lv, from)].min(self.lca_arr[(lv, to + 1 - (1 << lv))]) as usize
     }
 
@@ -82,8 +82,7 @@ impl<E: EdgeTrait> LCATrait for Graph<E> {
             }
         }
         let mut lca_arr = Arr2d::new(
-            // 1.53
-            (32 - (2 * vertex_count - 1).leading_zeros()) as usize,
+            (u32::bits() - (2 * vertex_count - 1).leading_zeros()) as usize,
             2 * vertex_count - 1,
             0,
         );

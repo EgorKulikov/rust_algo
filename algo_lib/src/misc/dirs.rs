@@ -55,11 +55,30 @@ const_value_ref!(
     [(isize, isize); 4],
     [(isize, isize)],
     [
-        (1isize, 0isize),
         (0isize, 1isize),
+        (1isize, 0isize),
+        (0isize, -1isize),
         (-1isize, 0isize),
-        (0isize, -1isize)
     ]
 );
 
 pub type D4 = Directions<D4Dirs>;
+
+const_value_ref!(
+    D8Dirs,
+    D8_DIRS_INNER,
+    [(isize, isize); 8],
+    [(isize, isize)],
+    [
+        (0isize, 1isize),
+        (1isize, 1isize),
+        (1isize, 0isize),
+        (1isize, -1isize),
+        (0isize, -1isize),
+        (-1isize, -1isize),
+        (-1isize, 0isize),
+        (-1isize, 1isize),
+    ]
+);
+
+pub type D8 = Directions<D8Dirs>;

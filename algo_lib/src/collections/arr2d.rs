@@ -1,3 +1,4 @@
+use crate::collections::legacy_fill::LegacyFill;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::ops::{Index, IndexMut};
@@ -56,6 +57,12 @@ impl<T> Arr2d<T> {
     pub fn column_mut(&mut self, col: usize) -> impl Iterator<Item = &mut T> {
         assert!(col < self.d2);
         self.data.iter_mut().skip(col).step_by(self.d2)
+    }
+}
+
+impl<T: Clone> Arr2d<T> {
+    pub fn fill(&mut self, elem: T) {
+        self.data.legacy_fill(elem);
     }
 }
 

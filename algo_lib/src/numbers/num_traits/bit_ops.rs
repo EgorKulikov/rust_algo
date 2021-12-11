@@ -65,3 +65,30 @@ impl<
     > BitOps for T
 {
 }
+
+pub trait Bits: BitOps {
+    fn bits() -> u32;
+}
+
+macro_rules! bits_integer_impl {
+    ($t: ident, $bits: expr) => {
+        impl Bits for $t {
+            fn bits() -> u32 {
+                $bits
+            }
+        }
+    };
+}
+
+bits_integer_impl!(i128, 128);
+bits_integer_impl!(i64, 64);
+bits_integer_impl!(i32, 32);
+bits_integer_impl!(i16, 16);
+bits_integer_impl!(i8, 8);
+bits_integer_impl!(isize, 64);
+bits_integer_impl!(u128, 128);
+bits_integer_impl!(u64, 64);
+bits_integer_impl!(u32, 32);
+bits_integer_impl!(u16, 16);
+bits_integer_impl!(u8, 8);
+bits_integer_impl!(usize, 64);
