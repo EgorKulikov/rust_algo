@@ -75,7 +75,7 @@ macro_rules! compress {
         let mut size = 0;
         $(size += $vs.len();)+
         let mut all = Vec::with_capacity(size);
-        $(for a in $vs {
+        $(for a in $vs.iter() {
             all.push(a.clone());
         })+
         all.sort();

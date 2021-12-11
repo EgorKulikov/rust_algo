@@ -3,6 +3,7 @@ use crate::io::output::{Output, Writable};
 use crate::misc::value::{ConstValue, Value};
 use crate::numbers::gcd::extended_gcd;
 use crate::numbers::num_traits::add_sub::AddSub;
+use crate::numbers::num_traits::as_index::AsIndex;
 use crate::numbers::num_traits::from_u8::FromU8;
 use crate::numbers::num_traits::mul_div_rem::{MulDiv, MulDivRem};
 use crate::numbers::num_traits::wideable::Wideable;
@@ -14,7 +15,7 @@ use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-pub trait BaseModInt: AddSub + MulDiv + Neg + Copy + ZeroOne + PartialEq {
+pub trait BaseModInt: AddSub + MulDiv + Neg<Output = Self> + Copy + ZeroOne + PartialEq {
     type W: AddSub + MulDivRem + Copy + ZeroOne + From<Self::T>;
     type T: AddSub + MulDivRem + Copy + PartialEq + ZeroOne + Wideable<W = Self::W> + Ord;
 
@@ -358,6 +359,22 @@ impl<T: AddSub + MulDivRem + Copy + Eq + Wideable + Hash + ZeroOne + Ord, V: Val
 where
     T::W: AddSub + MulDivRem + Copy + ZeroOne,
 {
+}
+
+impl<
+        T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord + AsIndex,
+        V: Value<T>,
+    > AsIndex for ModInt<T, V>
+where
+    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+{
+    fn from_index(idx: usize) -> Self {
+        Self::new(T::from_index(idx))
+    }
+
+    fn to_index(&self) -> usize {
+        self.n.to_index()
+    }
 }
 
 value!(Val7, i32, 1_000_000_007);
