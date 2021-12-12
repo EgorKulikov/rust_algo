@@ -138,7 +138,7 @@ pub fn create(task: Task) {
         Err(err) => eprintln!("{}", err),
     }
     #[cfg(not(windows))]
-    match Command::new("../../clion")
+    match Command::new("~/.local/bin/clion")
         .args([
             "--line",
             row.to_string().as_str(),
