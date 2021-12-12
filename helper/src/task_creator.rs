@@ -123,7 +123,22 @@ pub fn create(task: Task) {
     toml = toml.replace("$TASK", name.as_str());
     util::write_to_file(format!("../{}/Cargo.toml", name).as_str(), toml);
     println!("Task {} parsed", name);
+    #[cfg(windows)]
     match Command::new("..\\..\\clion.cmd")
+        .args([
+            "--line",
+            row.to_string().as_str(),
+            "--column",
+            col.to_string().as_str(),
+            format!("../{}/src/main.rs", name).as_str(),
+        ])
+        .output()
+    {
+        Ok(_) => {}
+        Err(err) => eprintln!("{}", err),
+    }
+    #[cfg(not(windows))]
+    match Command::new("../../clion.sh")
         .args([
             "--line",
             row.to_string().as_str(),

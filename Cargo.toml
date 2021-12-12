@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "a_zhizni_tsvetov_vazhni",
     "advent",
     "algo_lib",
     "helper",
