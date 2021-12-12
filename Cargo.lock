@@ -3,14 +3,6 @@
 version = 3
 
 [[package]]
-name = "a_zhizni_tsvetov_vazhni"
-version = "0.1.0"
-dependencies = [
- "algo_lib",
- "util",
-]
-
-[[package]]
 name = "advent"
 version = "0.1.0"
 dependencies = [
