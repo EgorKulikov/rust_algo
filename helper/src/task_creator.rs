@@ -1,8 +1,8 @@
 use dialoguer::console::Term;
 use dialoguer::theme::ColorfulTheme;
 use dialoguer::{Input, Select};
-use std::fs;
 use std::process::Command;
+use std::{env, fs};
 use util::{IOEnum, IOType, Languages, Task, TaskClass, Test, TestType};
 
 pub fn task_name(task: &Task) -> String {
@@ -137,19 +137,26 @@ pub fn create(task: Task) {
         Ok(_) => {}
         Err(err) => eprintln!("{}", err),
     }
+
     #[cfg(not(windows))]
-    match Command::new("~/.local/bin/clion")
-        .args([
-            "--line",
-            row.to_string().as_str(),
-            "--column",
-            col.to_string().as_str(),
-            format!("../{}/src/main.rs", name).as_str(),
-        ])
-        .output()
     {
-        Ok(_) => {}
-        Err(err) => eprintln!("{}", err),
+        let clion_path = env::var("HOME").unwrap() + "/.local/bin/clion";
+        match Command::new(&clion_path)
+            .args([
+                "--line",
+                row.to_string().as_str(),
+                "--column",
+                col.to_string().as_str(),
+                format!("../{}/src/main.rs", name).as_str(),
+            ])
+            .output()
+        {
+            Ok(_) => {}
+            Err(err) => eprintln!(
+                "Can't open project in CLion: {} (clion_path : {})",
+                err, clion_path
+            ),
+        }
     }
 }
 
