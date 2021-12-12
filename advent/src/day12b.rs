@@ -33,8 +33,8 @@ fn main() {
         if inp.is_exhausted() {
             break;
         }
-        let string = inp.read::<String>();
-        let tokens = string.split("-").collect_vec();
+        let s = inp.read::<String>();
+        let tokens = s.split("-").collect_vec();
         assert!(tokens.len() == 2);
         let left = tokens[0];
         let right = tokens[1];
@@ -57,11 +57,15 @@ fn main() {
 
     let start = id.get("start".to_string());
     let end = id.get("end".to_string());
-    let mut ans = Arr2d::new(n, 1 << small.len(), -1i64);
+    let mut ans = Arr2d::new(n, 1 << (small.len() + 1), -1i64);
     let mut rec = RecursiveFunction2::new(|f, vert, mut mask: usize| {
         if small[vert] < n {
             if mask.is_set(small[vert]) {
-                return 0;
+                if vert == start || vert == end || mask.is_set(small.len()) {
+                    return 0;
+                } else {
+                    mask.set_bit(small.len());
+                }
             } else {
                 mask.set_bit(small[vert]);
             }

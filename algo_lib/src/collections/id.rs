@@ -35,12 +35,9 @@ impl<T: Hash + Eq> Id<T> {
     }
 }
 
-impl<T: Hash + Eq + Clone> Id<T> {
+impl<T: Hash + Eq + Clone + Default> Id<T> {
     pub fn by_id(&self) -> Vec<T> {
-        let mut res = Vec::with_capacity(self.next);
-        unsafe {
-            res.set_len(self.next);
-        }
+        let mut res = vec![Default::default(); self.len()];
         for (val, i) in self.map.iter() {
             res[*i] = val.clone();
         }
