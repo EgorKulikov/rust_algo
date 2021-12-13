@@ -112,6 +112,7 @@ impl<'s> Input<'s> {
         res
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn into_iter<T: Readable>(self) -> InputIterator<'s, T> {
         InputIterator {
             input: self,

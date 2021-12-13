@@ -11,7 +11,7 @@ use crate::numbers::num_traits::zero_one::ZeroOne;
 use crate::value;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 use std::marker::PhantomData;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
@@ -25,7 +25,7 @@ pub trait BaseModInt: AddSub + MulDiv + Neg<Output = Self> + Copy + ZeroOne + Pa
     fn module() -> Self::T;
 }
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Hash)]
 pub struct ModInt<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>>
 where
     T::W: AddSub + MulDivRem + Copy + ZeroOne,
@@ -207,6 +207,7 @@ impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Val
 where
     T::W: AddSub + MulDivRem + Copy + ZeroOne,
 {
+    #[allow(clippy::suspicious_op_assign_impl)]
     fn div_assign(&mut self, rhs: Self) {
         *self *= rhs.inv().unwrap();
     }
@@ -341,16 +342,6 @@ where
             }
             write!(f, "(?? {} ??)", self.n)
         }
-    }
-}
-
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord + Hash, V: Value<T>> Hash
-    for ModInt<T, V>
-where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
-{
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.n.hash(state)
     }
 }
 

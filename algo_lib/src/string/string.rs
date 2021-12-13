@@ -86,6 +86,7 @@ impl<'s> Str<'s> {
     }
 
     //noinspection RsSelfConvention
+    #[allow(clippy::wrong_self_convention)]
     fn to_vec(&mut self) {
         match self {
             Str::Vec(_, _) => {}

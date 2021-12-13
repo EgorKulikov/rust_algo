@@ -156,9 +156,9 @@ impl<Key: Ord, Data: Updateable> TreapNode<Key, Data> {
     }
 }
 
-impl<Key: Ord, Data: Updateable> Into<Option<Data>> for TreapNode<Key, Data> {
-    fn into(self) -> Option<Data> {
-        self.0.map(|node| node.data)
+impl<Key: Ord, Data: Updateable> From<TreapNode<Key, Data>> for Option<Data> {
+    fn from(data: TreapNode<Key, Data>) -> Self {
+        data.0.map(|node| node.data)
     }
 }
 

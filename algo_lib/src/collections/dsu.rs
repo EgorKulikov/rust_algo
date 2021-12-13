@@ -22,6 +22,7 @@ impl DSU {
         self.size[self.get(i)] as usize
     }
 
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.id.len()
     }
