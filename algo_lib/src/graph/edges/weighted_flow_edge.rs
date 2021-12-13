@@ -42,7 +42,7 @@ impl<
         Id: EdgeId,
     > EdgeTrait for WeightedFlowEdgeRaw<W, C, Id>
 {
-    const REVERSABLE: bool = false;
+    const REVERSABLE: bool = true;
     const BIDIRECTIONAL: bool = false;
 
     fn to(&self) -> usize {
