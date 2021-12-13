@@ -1,8 +1,8 @@
 use dialoguer::console::Term;
 use dialoguer::theme::ColorfulTheme;
 use dialoguer::{Input, Select};
+use std::fs;
 use std::process::Command;
-use std::{env, fs};
 use util::{IOEnum, IOType, Languages, Task, TaskClass, Test, TestType};
 
 pub fn task_name(task: &Task) -> String {
@@ -140,7 +140,7 @@ pub fn create(task: Task) {
 
     #[cfg(not(windows))]
     {
-        let clion_path = env::var("HOME").unwrap() + "/.local/bin/clion";
+        let clion_path = std::env::var("HOME").unwrap() + "/.local/bin/clion";
         match Command::new(&clion_path)
             .args([
                 "--line",
