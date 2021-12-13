@@ -96,8 +96,8 @@ impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Val
 where
     T::W: AddSub + MulDivRem + Copy + ZeroOne,
 {
-    type T = T;
     type W = T::W;
+    type T = T;
 
     fn new(n: T) -> Self {
         Self::safe_new(Self::safe(n % (V::val()) + V::val()))
@@ -325,19 +325,19 @@ where
         } else if self.n >= V::val() - max {
             write!(f, "-{}", V::val() - self.n)
         } else {
-            let mut denum = T::one();
-            while denum < max {
+            let mut denominator = T::one();
+            while denominator < max {
                 let mut num = T::one();
                 while num < max {
-                    if Self::new(num) / Self::new(denum) == *self {
-                        return write!(f, "{}/{}", num, denum);
+                    if Self::new(num) / Self::new(denominator) == *self {
+                        return write!(f, "{}/{}", num, denominator);
                     }
-                    if -Self::new(num) / Self::new(denum) == *self {
-                        return write!(f, "-{}/{}", num, denum);
+                    if -Self::new(num) / Self::new(denominator) == *self {
+                        return write!(f, "-{}/{}", num, denominator);
                     }
                     num += T::one();
                 }
-                denum += T::one();
+                denominator += T::one();
             }
             write!(f, "(?? {} ??)", self.n)
         }

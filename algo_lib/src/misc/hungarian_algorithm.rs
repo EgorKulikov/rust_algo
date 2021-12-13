@@ -11,13 +11,13 @@ pub fn hungarian_algorithm(a: &Arr2d<i64>) -> i64 {
     let mut v = vec![0; n + 1];
     let mut p = vec![n; n + 1];
     let mut way = vec![n; n + 1];
-    let mut minv = vec![inf; n + 1];
+    let mut min_v = vec![inf; n + 1];
     let mut used = BitSet::new(n + 1);
     for i in 0..n {
         p[n] = i;
         let mut j0 = n;
         used.fill(false);
-        minv.legacy_fill(inf);
+        min_v.legacy_fill(inf);
         while p[j0] != n {
             used.set(j0, true);
             let i0 = p[j0];
@@ -26,12 +26,12 @@ pub fn hungarian_algorithm(a: &Arr2d<i64>) -> i64 {
             for j in 0..n {
                 if !used[j] {
                     let cur = a[(i0, j)] - u[i0] - v[j];
-                    if cur < minv[j] {
-                        minv[j] = cur;
+                    if cur < min_v[j] {
+                        min_v[j] = cur;
                         way[j] = j0;
                     }
-                    if minv[j] < delta {
-                        delta = minv[j];
+                    if min_v[j] < delta {
+                        delta = min_v[j];
                         j1 = j;
                     }
                 }
@@ -41,7 +41,7 @@ pub fn hungarian_algorithm(a: &Arr2d<i64>) -> i64 {
                     u[p[j]] += delta;
                     v[j] -= delta;
                 } else {
-                    minv[j] -= delta;
+                    min_v[j] -= delta;
                 }
             }
             j0 = j1;

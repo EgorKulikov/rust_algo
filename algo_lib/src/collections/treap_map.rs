@@ -42,8 +42,8 @@ impl<T: Ord, V> TreapMap<T, V> {
     }
 
     pub fn remove(&mut self, key: &T) -> Option<V> {
-        let (left, mut right) = self.root.split(&key, false);
-        let (node, right) = right.split(&key, true);
+        let (left, mut right) = self.root.split(key, false);
+        let (node, right) = right.split(key, true);
         self.root = left;
         self.root.merge(right);
         <TreapNode<T, TreapValue<V>> as Into<Option<TreapValue<V>>>>::into(node)
@@ -51,8 +51,8 @@ impl<T: Ord, V> TreapMap<T, V> {
     }
 
     pub fn index(&mut self, key: &T) -> Option<usize> {
-        let (left, mut right) = self.root.split(&key, false);
-        let (node, right) = right.split(&key, true);
+        let (left, mut right) = self.root.split(key, false);
+        let (node, right) = right.split(key, true);
         let res = node
             .data()
             .map(|_| left.data().map(|data| data.size as usize).unwrap_or(0));
@@ -69,14 +69,17 @@ impl<T: Ord, V> TreapMap<T, V> {
             let mut res = None;
             self.root.binary_search(|key, value, left, _| {
                 let to_left = left.map(|data| data.size as usize).unwrap_or(0);
-                if to_left > at {
-                    Some(Direction::Left)
-                } else if to_left == at {
-                    res = Some((key, &value.value));
-                    None
-                } else {
-                    at -= to_left + 1;
-                    Some(Direction::Right)
+                match to_left {
+                    v if v > at => Some(Direction::Left),
+                    v if v == at => {
+                        res = Some((key, &value.value));
+                        None
+                    }
+                    v if v < at => {
+                        at -= to_left + 1;
+                        Some(Direction::Right)
+                    }
+                    _ => panic!("unreachable"),
                 }
             });
             res

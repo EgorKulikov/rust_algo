@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::hash::Hash;
+use std::mem::MaybeUninit;
 
+#[derive(Default)]
 pub struct Id<T: Hash + Eq> {
     map: HashMap<T, usize>,
     next: usize,
@@ -16,6 +18,10 @@ impl<T: Hash + Eq> Id<T> {
 
     pub fn len(&self) -> usize {
         self.next
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     pub fn get(&mut self, el: T) -> usize {
@@ -35,12 +41,16 @@ impl<T: Hash + Eq> Id<T> {
     }
 }
 
-impl<T: Hash + Eq + Clone + Default> Id<T> {
+impl<T: Hash + Eq + Clone> Id<T> {
     pub fn by_id(&self) -> Vec<T> {
-        let mut res = vec![Default::default(); self.len()];
-        for (val, i) in self.map.iter() {
-            res[*i] = val.clone();
+        unsafe {
+            let mut res = MaybeUninit::new(Vec::with_capacity(self.len()));
+            (*res.as_mut_ptr()).set_len(self.len());
+            for (val, i) in self.map.iter() {
+                let ptr: *mut T = (*res.as_mut_ptr()).as_mut_ptr();
+                ptr.add(*i).write(val.clone());
+            }
+            res.assume_init()
         }
-        res
     }
 }

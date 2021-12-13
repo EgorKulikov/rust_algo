@@ -51,7 +51,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         F: FnMut(usize) -> Node,
     {
         if left + 1 == right {
-            self.nodes.push(f(left).into());
+            self.nodes.push(f(left));
         } else {
             let mid = left + ((right - left) >> 1);
             let left_child = root - 2 * (right - mid);
@@ -151,7 +151,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
     }
 
     pub fn update(&mut self, from: usize, to: usize, val: &Node) {
-        self.do_update(2 * self.n - 2, 0, self.n, from, to, &val)
+        self.do_update(2 * self.n - 2, 0, self.n, from, to, val)
     }
 
     pub fn do_update(

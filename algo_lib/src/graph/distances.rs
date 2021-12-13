@@ -42,7 +42,7 @@ impl<W: Addable + PartialOrd + Copy + ZeroOne, E: WeightedEdgeTrait<W>> Distance
                 let was = heap.value(next);
                 let mut next_dist = (total, cur, i);
                 if let Some(was) = was {
-                    next_dist.minim(was.clone());
+                    next_dist.minim(*was);
                 }
                 heap.add_or_adjust(next, next_dist);
             }

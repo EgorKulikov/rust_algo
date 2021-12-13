@@ -46,11 +46,9 @@ impl<E: EdgeTrait> StronglyConnectedComponents for Graph<E> {
                 let key = i;
                 let mut second_dfs = RecursiveFunction::new(|f, vert| {
                     if visited[vert] {
-                        if color[vert] != index {
-                            if next[color[vert]] != key {
-                                next[color[vert]] = key;
-                                queue.push(color[vert]);
-                            }
+                        if color[vert] != index && next[color[vert]] != key {
+                            next[color[vert]] = key;
+                            queue.push(color[vert]);
                         }
                         return;
                     }

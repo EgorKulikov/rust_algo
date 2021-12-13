@@ -4,7 +4,7 @@ pub struct Output {
     output: Box<dyn Write>,
     buf: Vec<u8>,
     at: usize,
-    autoflush: bool,
+    auto_flush: bool,
 }
 
 impl Output {
@@ -15,25 +15,22 @@ impl Output {
             output,
             buf: vec![0; Self::DEFAULT_BUF_SIZE],
             at: 0,
-            autoflush: false,
+            auto_flush: false,
         }
     }
 
-    pub fn new_with_autoflush(output: Box<dyn Write>) -> Self {
+    pub fn new_with_auto_flush(output: Box<dyn Write>) -> Self {
         Self {
             output,
             buf: vec![0; Self::DEFAULT_BUF_SIZE],
             at: 0,
-            autoflush: true,
+            auto_flush: true,
         }
     }
 
     pub fn flush(&mut self) {
         if self.at != 0 {
-            let mut n = 0;
-            while n != self.at {
-                n += self.output.write(&self.buf[n..self.at]).unwrap();
-            }
+            self.output.write_all(&self.buf[..self.at]).unwrap();
             self.at = 0;
         }
     }
@@ -51,7 +48,7 @@ impl Output {
     }
 
     pub fn maybe_flush(&mut self) {
-        if self.autoflush {
+        if self.auto_flush {
             self.flush();
         }
     }
@@ -102,7 +99,7 @@ impl Write for Output {
             start += len;
             rem -= len;
         }
-        if self.autoflush {
+        if self.auto_flush {
             self.flush();
         }
         Ok(buf.len())
@@ -120,13 +117,13 @@ pub trait Writable {
 
 impl Writable for &str {
     fn write(&self, output: &mut Output) {
-        output.write(&self.as_bytes()).unwrap();
+        output.write_all(self.as_bytes()).unwrap();
     }
 }
 
 impl Writable for String {
     fn write(&self, output: &mut Output) {
-        output.write(&self.as_bytes()).unwrap();
+        output.write_all(self.as_bytes()).unwrap();
     }
 }
 

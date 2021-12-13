@@ -99,9 +99,7 @@ impl<Key: Ord, Data: Updateable> TreapNode<Key, Data> {
     pub fn merge(&mut self, mut right: Self) {
         if self.0.is_none() {
             *self = right;
-        } else if right.0.is_none() {
-            return;
-        } else {
+        } else if right.0.is_some() {
             if self.priority() > right.priority() {
                 let node = self.0.as_mut().unwrap();
                 node.right.merge(right);

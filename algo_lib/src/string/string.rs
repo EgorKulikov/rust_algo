@@ -15,6 +15,12 @@ pub enum Str<'s> {
     U8(&'s [u8]),
 }
 
+impl Default for Str<'static> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Str<'static> {
     pub fn new() -> Self {
         Str::Vec(Vec::new(), PhantomData::default())
@@ -53,6 +59,10 @@ impl<'s> Str<'s> {
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = u8> + '_ {
         match self {
             Str::String(s, _) => s.as_bytes().iter(),
@@ -72,7 +82,7 @@ impl<'s> Str<'s> {
 
     pub fn sort(&mut self) {
         self.to_vec();
-        self.as_vec().sort();
+        self.as_vec().sort_unstable();
     }
 
     //noinspection RsSelfConvention

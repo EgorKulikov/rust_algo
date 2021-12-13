@@ -5,10 +5,10 @@ use crate::numbers::num_traits::mul_div_rem::MulDivRem;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
-#[derive(Eq, PartialEq, Copy, Clone)]
+#[derive(Eq, PartialEq, Copy, Clone, Hash)]
 pub struct Rational<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> {
     num: T,
     den: T,
@@ -109,12 +109,6 @@ impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord + Writable> Writable for Ratio
         self.num.write(output);
         output.put(b'/');
         self.den.write(output);
-    }
-}
-
-impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord + Hash> Hash for Rational<T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        (self.num, self.den).hash(state)
     }
 }
 

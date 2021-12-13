@@ -36,30 +36,26 @@ pub trait IterOrdExt<T: Ord>: IterExt<T> {
         self.enumerate_sort_by(|a, b| a.cmp(b))
     }
 
-    fn max_position(mut self) -> Option<usize> {
+    fn max_position(self) -> Option<usize> {
         let mut res = None;
         let mut val: Option<T> = None;
-        let mut at = 0usize;
-        while let Some(cur) = self.next() {
+        for (i, cur) in self.enumerate() {
             if val.is_none() || *val.as_ref().unwrap() < cur {
                 val = Some(cur);
-                res = Some(at);
+                res = Some(i);
             }
-            at += 1;
         }
         res
     }
 
-    fn min_position(mut self) -> Option<usize> {
+    fn min_position(self) -> Option<usize> {
         let mut res = None;
         let mut val = None;
-        let mut at = 0usize;
-        while let Some(cur) = self.next() {
+        for (i, cur) in self.enumerate() {
             if val.is_none() || *val.as_ref().unwrap() > cur {
                 val = Some(cur);
-                res = Some(at);
+                res = Some(i);
             }
-            at += 1;
         }
         res
     }

@@ -38,11 +38,11 @@ impl<V: ValueRef<[(isize, isize)]>> Iterator for DirectionsIter<V> {
 
     fn next(&mut self) -> Option<Self::Item> {
         while self.at < V::val().len() {
-            let nrow = (self.row as isize) + V::val()[self.at].0;
-            let ncol = (self.col as isize) + V::val()[self.at].1;
+            let n_row = (self.row as isize) + V::val()[self.at].0;
+            let n_col = (self.col as isize) + V::val()[self.at].1;
             self.at += 1;
-            if nrow >= 0 && (nrow as usize) < self.n && ncol >= 0 && (ncol as usize) < self.m {
-                return Some((nrow as usize, ncol as usize));
+            if n_row >= 0 && (n_row as usize) < self.n && n_col >= 0 && (n_col as usize) < self.m {
+                return Some((n_row as usize, n_col as usize));
             }
         }
         None

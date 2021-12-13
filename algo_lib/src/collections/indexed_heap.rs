@@ -43,10 +43,7 @@ impl<T> Opt<T> {
         let val = mem::take(self);
         match val {
             Opt::None => panic!("unreachable"),
-            Opt::Some(ind, val) => {
-                let res = (ind as usize, val);
-                res
-            }
+            Opt::Some(ind, val) => (ind as usize, val),
         }
     }
 }

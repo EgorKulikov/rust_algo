@@ -19,14 +19,14 @@ impl<T: AddSub + MulDiv + ZeroOne + Ord + Copy, V: Value<T>> InfInt<T, V> {
         }
     }
 
-    pub fn is_infty(&self) -> bool {
+    pub fn is_infinity(&self) -> bool {
         self.n == V::val()
     }
 }
 
 impl<T: AddSub + MulDiv + ZeroOne + Ord + Copy, V: Value<T>> AddAssign for InfInt<T, V> {
     fn add_assign(&mut self, rhs: Self) {
-        if rhs.is_infty() || V::val() - rhs.n <= self.n {
+        if rhs.is_infinity() || V::val() - rhs.n <= self.n {
             self.n = V::val();
         } else {
             self.n += rhs.n;

@@ -25,13 +25,13 @@ impl<E: EdgeTrait> DFSOrder for Graph<E> {
         let mut index = 0usize;
         while size > 0 {
             let current = stack[size - 1] as usize;
-            let cedge = &mut edge[current];
-            if *cedge == self[current].len() as u32 {
+            let c_edge = &mut edge[current];
+            if *c_edge == self[current].len() as u32 {
                 end[current] = index + 1;
                 size -= 1;
             } else {
-                let next = self[current][*cedge as usize].to();
-                *cedge += 1;
+                let next = self[current][*c_edge as usize].to();
+                *c_edge += 1;
                 if next == (last[current] as usize) {
                     continue;
                 }

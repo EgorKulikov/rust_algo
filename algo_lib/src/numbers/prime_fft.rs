@@ -11,6 +11,12 @@ pub struct PrimeFFT<M: BaseModInt> {
     bb: Vec<M>,
 }
 
+impl<M: BaseModInt> Default for PrimeFFT<M> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<M: BaseModInt> PrimeFFT<M> {
     pub fn new() -> Self {
         let mut exp = M::T::zero();
@@ -151,10 +157,10 @@ impl<M: BaseModInt> PrimeFFT<M> {
         let mut len = 2;
         let mut len_t = M::T::one() + M::T::one();
         while len <= a.len() {
-            let mut wlen = root;
+            let mut w_len = root;
             let mut i = len_t;
             while i < root_power {
-                wlen *= wlen;
+                w_len *= w_len;
                 i += i;
             }
             let half = len >> 1;
@@ -165,7 +171,7 @@ impl<M: BaseModInt> PrimeFFT<M> {
                     let v = a[i + j + half] * w;
                     a[i + j] = u + v;
                     a[i + j + half] = u - v;
-                    w *= wlen;
+                    w *= w_len;
                 }
             }
             len <<= 1;

@@ -1,6 +1,7 @@
 use crate::collections::iter_ext::IterExt;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
+use std::mem::MaybeUninit;
 use std::ops::Mul;
 
 #[derive(Clone, Debug)]
@@ -35,13 +36,15 @@ impl Permutation {
 
     pub fn inv(&self) -> Self {
         let size = self.p.len();
-        let mut res = Vec::with_capacity(size);
-        unsafe {
-            res.set_len(size);
-        }
-        for i in 0..size {
-            res[self.p[i]] = i;
-        }
+        let res = unsafe {
+            let mut res = MaybeUninit::new(Vec::with_capacity(size));
+            (*res.as_mut_ptr()).set_len(size);
+            for i in 0..size {
+                let ptr: *mut usize = (*res.as_mut_ptr()).as_mut_ptr();
+                ptr.add(self.p[i]).write(i);
+            }
+            res.assume_init()
+        };
         Self {
             p: res,
             base: self.base,
@@ -56,12 +59,16 @@ impl Permutation {
         self.p.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = usize> + '_ {
         // edition 2021
         self.p.iter().map(move |i| *i + self.base)
     }
 
-    fn check(p: &Vec<usize>) -> bool {
+    fn check(p: &[usize]) -> bool {
         let mut was = vec![false; p.len()];
         for i in p {
             if was[*i] {
@@ -113,11 +120,8 @@ impl Mul for &Permutation {
     fn mul(self, rhs: Self) -> Self::Output {
         let size = self.p.len();
         let mut res = Vec::with_capacity(size);
-        unsafe {
-            res.set_len(size);
-        }
         for i in 0..size {
-            res[i] = self.p[rhs.p[i]];
+            res.push(self.p[rhs.p[i]]);
         }
         Permutation {
             p: res,
