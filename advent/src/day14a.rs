@@ -47,7 +47,7 @@ fn main() {
         last = c - b'A';
     }
     let mut next = Arr2d::new(26, 26, 0u64);
-    for _ in 0..40 {
+    for _ in 0..10 {
         next.fill(0);
         for i in 0usize..26 {
             for j in 0usize..26 {
