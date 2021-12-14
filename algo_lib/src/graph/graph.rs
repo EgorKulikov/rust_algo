@@ -3,7 +3,7 @@ use crate::graph::edges::edge_trait::EdgeTrait;
 use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
 use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::zero_one::ZeroOne;
-use std::ops::Index;
+use std::ops::{Index, IndexMut};
 
 pub struct Graph<E: EdgeTrait> {
     edges: Vec<Vec<E>>,
@@ -90,5 +90,11 @@ impl<E: EdgeTrait> Index<usize> for Graph<E> {
 
     fn index(&self, index: usize) -> &Self::Output {
         &self.edges[index]
+    }
+}
+
+impl<E: EdgeTrait> IndexMut<usize> for Graph<E> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.edges[index]
     }
 }

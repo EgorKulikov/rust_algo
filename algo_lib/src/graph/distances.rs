@@ -32,8 +32,7 @@ impl<W: Addable + PartialOrd + Copy + ZeroOne, E: WeightedEdgeTrait<W>> Distance
         let mut res = vec![None; n];
         let mut heap = IndexedHeap::new(n);
         heap.add_or_adjust(source, (W::zero(), source, self[source].len()));
-        while !heap.is_empty() {
-            let (cur, dist) = heap.pop();
+        while let Some((cur, dist)) = heap.pop() {
             res[cur] = Some(dist);
             let dist = dist.0;
             for (i, e) in self[cur].iter().enumerate() {

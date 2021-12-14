@@ -111,9 +111,13 @@ impl<T: PartialOrd> IndexedHeap<T> {
         }
     }
 
-    pub fn pop(&mut self) -> (usize, T) {
-        let el = self.heap[0] as usize;
-        (el, self.remove(el).unwrap())
+    pub fn pop(&mut self) -> Option<(usize, T)> {
+        if self.is_empty() {
+            None
+        } else {
+            let el = self.heap[0] as usize;
+            Some((el, self.remove(el).unwrap()))
+        }
     }
 
     pub fn clear(&mut self) {

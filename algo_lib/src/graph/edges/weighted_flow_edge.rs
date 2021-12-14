@@ -5,10 +5,11 @@ use crate::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
 use crate::graph::graph::Graph;
 use crate::numbers::num_traits::add_sub::{AddSub, Addable};
 use crate::numbers::num_traits::zero_one::ZeroOne;
+use std::ops::Neg;
 
 #[derive(Clone)]
 pub struct WeightedFlowEdgeRaw<
-    W: Addable + PartialOrd + Copy + ZeroOne,
+    W: Addable + Neg<Output = W> + PartialOrd + Copy + ZeroOne,
     C: AddSub + PartialOrd + Copy + ZeroOne,
     Id: EdgeId,
 > {
@@ -20,7 +21,7 @@ pub struct WeightedFlowEdgeRaw<
 }
 
 impl<
-        W: Addable + PartialOrd + Copy + ZeroOne,
+        W: Addable + Neg<Output = W> + PartialOrd + Copy + ZeroOne,
         C: AddSub + PartialOrd + Copy + ZeroOne,
         Id: EdgeId,
     > WeightedFlowEdgeRaw<W, C, Id>
@@ -37,7 +38,7 @@ impl<
 }
 
 impl<
-        W: Addable + PartialOrd + Copy + ZeroOne,
+        W: Addable + Neg<Output = W> + PartialOrd + Copy + ZeroOne,
         C: AddSub + PartialOrd + Copy + ZeroOne,
         Id: EdgeId,
     > EdgeTrait for WeightedFlowEdgeRaw<W, C, Id>
@@ -66,12 +67,12 @@ impl<
     }
 
     fn reverse_edge(&self, from: usize) -> Self {
-        Self::new(from, self.weight, C::zero())
+        Self::new(from, -self.weight, C::zero())
     }
 }
 
 impl<
-        W: Addable + PartialOrd + Copy + ZeroOne,
+        W: Addable + Neg<Output = W> + PartialOrd + Copy + ZeroOne,
         C: AddSub + PartialOrd + Copy + ZeroOne,
         Id: EdgeId,
     > WeightedEdgeTrait<W> for WeightedFlowEdgeRaw<W, C, Id>
@@ -86,7 +87,7 @@ impl<
 }
 
 impl<
-        W: Addable + PartialOrd + Copy + ZeroOne,
+        W: Addable + Neg<Output = W> + PartialOrd + Copy + ZeroOne,
         C: AddSub + PartialOrd + Copy + ZeroOne,
         Id: EdgeId,
     > FlowEdgeTrait<C> for WeightedFlowEdgeRaw<W, C, Id>
