@@ -9,7 +9,7 @@ use algo_lib::io::input::Input;
 use algo_lib::io::output::output;
 use algo_lib::misc::recursive_function::{Callable, RecursiveFunction};
 use algo_lib::{out, out_line};
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 use std::thread;
 
 fn solve(input: &mut Input, _test_case: usize) {
