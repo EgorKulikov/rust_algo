@@ -1,6 +1,6 @@
 use crate::collections::direction::Direction;
 use crate::collections::treap::{TreapNode, Updateable};
-use std::ops::Index;
+use std::ops::{Deref, DerefMut, Index};
 
 struct TreapValue<V> {
     size: u32,
@@ -58,6 +58,14 @@ impl<T: Ord, V> TreapMap<T, V> {
             .map(|_| left.data().map(|data| data.size as usize).unwrap_or(0));
         self.root = left;
         self.root.merge(node);
+        self.root.merge(right);
+        res
+    }
+
+    pub fn lower_bound(&mut self, key: &T) -> usize {
+        let (left, right) = self.root.split(key, false);
+        let res = left.data().map(|data| data.size).unwrap_or(0) as usize;
+        self.root = left;
         self.root.merge(right);
         res
     }
@@ -131,10 +139,41 @@ impl<T: Ord, V> Index<&T> for TreapMap<T, V> {
     }
 }
 
-pub type TreapSet<T> = TreapMap<T, ()>;
+#[derive(Default)]
+pub struct TreapSet<T: Ord>(TreapMap<T, ()>);
 
 impl<T: Ord> TreapSet<T> {
-    pub fn add(&mut self, key: T) -> bool {
-        self.insert(key, ()).is_some()
+    pub fn new() -> Self {
+        Self(TreapMap::new())
+    }
+
+    pub fn insert(&mut self, key: T) -> bool {
+        self.0.insert(key, ()).is_some()
+    }
+
+    pub fn remove(&mut self, key: &T) -> bool {
+        self.0.remove(key).is_some()
+    }
+
+    pub fn get_at(&mut self, idx: usize) -> Option<&T> {
+        self.0.get_at(idx).map(|(key, _)| key)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &T> + '_ {
+        self.0.keys()
+    }
+}
+
+impl<T: Ord> Deref for TreapSet<T> {
+    type Target = TreapMap<T, ()>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T: Ord> DerefMut for TreapSet<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
