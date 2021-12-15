@@ -2,7 +2,5 @@
 members = [
     "advent",
     "algo_lib",
-    "helper",
     "main",
-    "util",
 ]

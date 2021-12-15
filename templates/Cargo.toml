@@ -7,4 +7,4 @@ edition = "2021"
 algo_lib = {path = "../algo_lib"}
 
 [build-dependencies]
-util = {path = "../util"}
+rust_competitive_helper_util = {git = "https://github.com/rust-competitive-helper/rust-competitive-helper"}
