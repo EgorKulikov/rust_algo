@@ -144,10 +144,16 @@ pub(crate) fn run_tests() -> bool {
                             }
                             Err(err) => {
                                 test_failed += 1;
-                                println!(
-                                    "{}Verdict: {}RuntimeError ({:#?}){}",
-                                    blue, red, err, def
-                                );
+                                match err.downcast::<&str>() {
+                                    Ok(as_string) => println!(
+                                        "{}Verdict: {}RuntimeError ({:?}){}",
+                                        blue, red, as_string, def
+                                    ),
+                                    Err(err) => println!(
+                                        "{}Verdict: {}RuntimeError ({:?}){}",
+                                        blue, red, err, def
+                                    ),
+                                }
                             }
                         }
                     }
