@@ -24,14 +24,30 @@ impl LCA {
     }
 
     pub fn lca(&self, first: usize, second: usize) -> usize {
-        let from = self.position[first].min(self.position[second]) as usize;
-        let to = self.position[first].max(self.position[second]) as usize;
-        let lv = (u32::bits() - ((to - from) as u32).leading_zeros() - 1) as usize;
-        self.lca_arr[(lv, from)].min(self.lca_arr[(lv, to + 1 - (1 << lv))]) as usize
+        if first == second {
+            first
+        } else {
+            let from = self.position[first].min(self.position[second]) as usize;
+            let to = self.position[first].max(self.position[second]) as usize;
+            let lv = (u32::bits() - ((to - from) as u32).leading_zeros() - 1) as usize;
+            get_min(
+                &self.level,
+                self.lca_arr[(lv, from)],
+                self.lca_arr[(lv, to + 1 - (1 << lv))],
+            ) as usize
+        }
     }
 
     pub fn path_length(&self, first: usize, second: usize) -> usize {
         (self.level[first] + self.level[second] - 2 * self.level[self.lca(first, second)]) as usize
+    }
+}
+
+fn get_min(level: &Vec<u32>, a: u32, b: u32) -> u32 {
+    if level[a as usize] < level[b as usize] {
+        a
+    } else {
+        b
     }
 }
 
@@ -82,7 +98,7 @@ impl<E: EdgeTrait> LCATrait for Graph<E> {
             }
         }
         let mut lca_arr = Arr2d::new(
-            (u32::bits() - (2 * vertex_count - 1).leading_zeros()) as usize,
+            (u32::bits() - ((2 * vertex_count - 1) as u32).leading_zeros()) as usize,
             2 * vertex_count - 1,
             0,
         );
@@ -94,7 +110,7 @@ impl<E: EdgeTrait> LCATrait for Graph<E> {
             for j in 0..lca_arr.d2() {
                 let other = j + (1 << (i - 1));
                 if other < lca_arr.d2() {
-                    lca_arr[(i, j)] = lca_arr[(i - 1, j)].min(lca_arr[(i - 1, other)])
+                    lca_arr[(i, j)] = get_min(&level, lca_arr[(i - 1, j)], lca_arr[(i - 1, other)]);
                 } else {
                     lca_arr[(i, j)] = lca_arr[(i - 1, j)];
                 }

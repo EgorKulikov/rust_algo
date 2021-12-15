@@ -7,6 +7,7 @@ pub mod num_utils;
 pub mod number_ext;
 pub mod number_iterator;
 pub mod prime_fft;
+pub mod primes;
 pub mod rational;
 #[cfg(test)]
 mod test;

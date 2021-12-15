@@ -43,6 +43,47 @@ impl BitSet {
         self.data.legacy_fill(if value { std::u64::MAX } else { 0 })
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = usize> + '_ {
+        struct Iter<'s> {
+            at: usize,
+            inside: usize,
+            set: &'s BitSet,
+        }
+
+        impl<'s> Iterator for Iter<'s> {
+            type Item = usize;
+
+            fn next(&mut self) -> Option<Self::Item> {
+                while self.at < self.set.data.len()
+                    && (self.inside == 64 || (self.set.data[self.at] >> self.inside) == 0)
+                {
+                    self.at += 1;
+                    self.inside = 0;
+                }
+                if self.at == self.set.data.len() {
+                    None
+                } else {
+                    while !self.set.data[self.at].is_set(self.inside) {
+                        self.inside += 1;
+                    }
+                    let res = self.at * 64 + self.inside;
+                    if res < self.set.len {
+                        self.inside += 1;
+                        Some(res)
+                    } else {
+                        None
+                    }
+                }
+            }
+        }
+
+        Iter {
+            at: 0,
+            inside: 0,
+            set: self,
+        }
+    }
+
     fn index(at: usize) -> usize {
         at >> 6
     }

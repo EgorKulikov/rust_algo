@@ -127,3 +127,23 @@ impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne> IncDec for Vec<(T, U)> {
         self
     }
 }
+
+impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne, V: AddSub + ZeroOne> IncDec for Vec<(T, U, V)> {
+    fn inc_by_one(mut self) -> Self {
+        self.iter_mut().for_each(|(i, j, k)| {
+            *i += T::one();
+            *j += U::one();
+            *k += V::one();
+        });
+        self
+    }
+
+    fn dec_by_one(mut self) -> Self {
+        self.iter_mut().for_each(|(i, j, k)| {
+            *i -= T::one();
+            *j -= U::one();
+            *k -= V::one();
+        });
+        self
+    }
+}

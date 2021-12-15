@@ -284,3 +284,24 @@ tuple_readable! {T U V X Y Z A B C}
 tuple_readable! {T U V X Y Z A B C D}
 tuple_readable! {T U V X Y Z A B C D E}
 tuple_readable! {T U V X Y Z A B C D E F}
+
+#[macro_export]
+macro_rules! transparent_wrapper {
+    ($name: ident, $t: ty) => {
+        pub struct $name($t);
+
+        impl Deref for $name {
+            type Target = $t;
+
+            fn deref(&self) -> &Self::Target {
+                &self.0
+            }
+        }
+
+        impl DerefMut for $name {
+            fn deref_mut(&mut self) -> &mut Self::Target {
+                &mut self.0
+            }
+        }
+    };
+}
