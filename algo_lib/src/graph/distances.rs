@@ -1,5 +1,4 @@
 use crate::collections::indexed_heap::IndexedHeap;
-use crate::collections::min_max::MinimMaxim;
 use crate::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
 use crate::graph::graph::Graph;
 use crate::numbers::num_traits::add_sub::Addable;
@@ -37,12 +36,17 @@ impl<W: Addable + PartialOrd + Copy + ZeroOne, E: WeightedEdgeTrait<W>> Distance
             let dist = dist.0;
             for (i, e) in self[cur].iter().enumerate() {
                 let next = e.to();
+                if res[next].is_some() {
+                    continue;
+                }
                 let total = dist + e.weight();
                 let was = heap.value(next);
-                let mut next_dist = (total, cur, i);
-                if let Some(was) = was {
-                    next_dist.minim(*was);
+                if let Some((was_dist, ..)) = was {
+                    if *was_dist <= total {
+                        continue;
+                    }
                 }
+                let next_dist = (total, cur, i);
                 heap.add_or_adjust(next, next_dist);
             }
         }

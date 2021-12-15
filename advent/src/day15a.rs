@@ -35,19 +35,17 @@ fn main() {
 
     let n = map.len();
     let m = map[0].len();
-    let mut graph = Graph::new(n * m * 25);
-    for i in 0..(n * 5) {
-        for j in 0..(m * 5) {
-            for (r, c) in D4::iter(i, j, n * 5, m * 5) {
-                let mut w = (map[r % n][c % m] - b'0') as u32;
-                w += (r / n + c / m) as u32;
-                while w > 9 {
-                    w -= 9;
-                }
-                graph.add_edge(i * 5 * m + j, WeightedEdge::new(r * 5 * m + c, w));
+    let mut graph = Graph::new(n * m);
+    for i in 0..n {
+        for j in 0..m {
+            for (r, c) in D4::iter(i, j, n, m) {
+                graph.add_edge(
+                    i * m + j,
+                    WeightedEdge::new(r * m + c, (map[r][c] - b'0') as u32),
+                );
             }
         }
     }
 
-    println!("{}", graph.distance(0, 25 * n * m - 1).unwrap().0);
+    println!("{}", graph.distance(0, n * m - 1).unwrap().0);
 }
