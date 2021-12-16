@@ -12,3 +12,11 @@ pub fn factorials<T: ZeroOne + Multable + AsIndex>(len: usize) -> Vec<T> {
     }
     res
 }
+
+pub fn factorial<T: ZeroOne + Multable + AsIndex>(n: usize) -> T {
+    let mut res = T::one();
+    for i in 1..=n {
+        res *= T::from_index(i);
+    }
+    res
+}

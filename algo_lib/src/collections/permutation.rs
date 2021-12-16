@@ -2,7 +2,7 @@ use crate::collections::iter_ext::IterExt;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::mem::MaybeUninit;
-use std::ops::Mul;
+use std::ops::{Index, Mul};
 
 #[derive(Clone, Debug)]
 pub struct Permutation {
@@ -68,6 +68,22 @@ impl Permutation {
         self.p.iter().map(move |i| *i + self.base)
     }
 
+    pub fn next(mut self) -> Option<Self> {
+        for i in (0..(self.p.len() - 1)).rev() {
+            if self.p[i] < self.p[i + 1] {
+                for j in (0..self.p.len()).rev() {
+                    if self.p[j] > self.p[i] {
+                        self.p.swap(i, j);
+                        self.p[i + 1..].reverse();
+                        return Some(self);
+                    }
+                }
+                panic!("unreachable");
+            }
+        }
+        None
+    }
+
     fn check(p: &[usize]) -> bool {
         let mut was = vec![false; p.len()];
         for i in p {
@@ -127,5 +143,13 @@ impl Mul for &Permutation {
             p: res,
             base: self.base,
         }
+    }
+}
+
+impl Index<usize> for Permutation {
+    type Output = usize;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.p[index]
     }
 }

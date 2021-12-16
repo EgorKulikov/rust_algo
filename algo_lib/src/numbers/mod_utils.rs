@@ -11,7 +11,7 @@ where
         res.push(M::zero());
     }
     if len > 1 {
-        res.push(M::zero());
+        res.push(M::one());
     }
     while res.len() < len {
         res.push(
@@ -28,7 +28,7 @@ where
 {
     let mut res = inverses(len);
     if len > 0 {
-        res[1] = M::one();
+        res[0] = M::one();
     }
     for i in 1..len {
         let last = res[i - 1];
