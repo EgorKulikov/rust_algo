@@ -2,6 +2,7 @@ use crate::collections::legacy_fill::LegacyFill;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::ops::{Index, IndexMut};
+use std::vec::IntoIter;
 
 pub struct Arr2d<T> {
     d1: usize,
@@ -113,6 +114,15 @@ impl<T: Writable> Writable for Arr2d<T> {
                 at += 1;
             }
         }
+    }
+}
+
+impl<T> IntoIterator for Arr2d<T> {
+    type Item = T;
+    type IntoIter = IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.data.into_iter()
     }
 }
 
