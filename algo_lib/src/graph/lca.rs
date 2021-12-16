@@ -43,7 +43,7 @@ impl LCA {
     }
 }
 
-fn get_min(level: &Vec<u32>, a: u32, b: u32) -> u32 {
+fn get_min(level: &[u32], a: u32, b: u32) -> u32 {
     if level[a as usize] < level[b as usize] {
         a
     } else {
