@@ -36,21 +36,23 @@ fn main() {
 
     let mut ans = 0;
     for x in 1..=x_to {
-        for y in y_from..=(-y_from) {
+        for y in 1..=(-y_from) {
             let mut cx = 0;
             let mut cy = 0;
             let mut dx = x;
             let mut dy = y;
+            let mut max_y = 0;
             loop {
                 cx += dx;
                 cy += dy;
                 dx = 0.max(dx - 1);
                 dy -= 1;
+                max_y.maxim(cy);
                 if cx > x_to || cy < y_from || cx < x_from && dx == 0 {
                     break;
                 }
                 if (x_from..=x_to).contains(&cx) && (y_from..=y_to).contains(&cy) {
-                    ans += 1;
+                    ans.maxim(max_y);
                     break;
                 }
             }
