@@ -1,5 +1,4 @@
 use algo_lib::collections::iter_ext::IterExt;
-use algo_lib::collections::min_max::MinimMaxim;
 use algo_lib::io::input::{Input, Readable};
 
 pub trait CommaList {
@@ -164,27 +163,21 @@ fn main() {
             match self {
                 Number::Plain(val) => Number::Plain(*val),
                 Number::Complex(left, right) => {
-                    Number::Complex((*left).clone().into(), (*right).clone().into())
+                    Number::Complex(left.clone().into(), right.clone().into())
                 }
             }
         }
     }
 
-    let mut nums = Vec::new();
+    let mut res = Number::read(&mut inp);
+    res.reduce();
     loop {
         inp.skip_whitespace();
         if inp.is_exhausted() {
             break;
         }
-        nums.push(Number::read(&mut inp));
+        res = Number::add(res, Number::read(&mut inp));
     }
-    let mut res = 0u32;
-    for i in 0..nums.len() {
-        for j in 0..nums.len() {
-            if i != j {
-                res.maxim(Number::add(nums[i].clone(), nums[j].clone()).magnitude());
-            }
-        }
-    }
-    println!("{}", res);
+    println!("{}", res.to_string());
+    println!("{}", res.magnitude());
 }
