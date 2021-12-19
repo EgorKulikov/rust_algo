@@ -65,6 +65,14 @@ impl<T: Clone> Arr2d<T> {
     pub fn fill(&mut self, elem: T) {
         self.data.legacy_fill(elem);
     }
+
+    pub fn clone(&self) -> Self {
+        Self {
+            d1: self.d1,
+            d2: self.d2,
+            data: self.data.clone(),
+        }
+    }
 }
 
 impl<T> Index<(usize, usize)> for Arr2d<T> {

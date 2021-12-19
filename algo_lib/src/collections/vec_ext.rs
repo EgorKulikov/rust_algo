@@ -1,3 +1,4 @@
+use crate::misc::random::random;
 use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 
@@ -65,6 +66,20 @@ impl<T: PartialOrd> Bounds<T> for &[T] {
             None
         } else {
             Some(at)
+        }
+    }
+}
+
+pub trait Shuffle {
+    fn shuffle(&mut self);
+}
+
+impl<T> Shuffle for &mut [T] {
+    fn shuffle(&mut self) {
+        let len = self.len();
+        for i in 0..len {
+            let at = (random().gen() % ((i + 1) as u64)) as usize;
+            self.swap(i, at);
         }
     }
 }
