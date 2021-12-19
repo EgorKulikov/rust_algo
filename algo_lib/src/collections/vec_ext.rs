@@ -24,13 +24,13 @@ impl Qty for &[usize] {
     }
 }
 
-pub trait Bounds<T: Ord> {
+pub trait Bounds<T: PartialOrd> {
     fn lower_bound(&self, el: &T) -> usize;
     fn upper_bound(&self, el: &T) -> usize;
     fn bin_search(&self, el: &T) -> Option<usize>;
 }
 
-impl<T: Ord> Bounds<T> for &[T] {
+impl<T: PartialOrd> Bounds<T> for &[T] {
     fn lower_bound(&self, el: &T) -> usize {
         let mut left = 0;
         let mut right = self.len();

@@ -33,7 +33,7 @@ pub trait DynamicValue<T>: Value<T> {
 
 #[macro_export]
 macro_rules! dynamic_value {
-    ($name: ident, $val_name: ident, $t: ty, $base: expr) => {
+    ($name: ident, $val_name: ident, $t: ty, $base: expr, $val: expr) => {
         static mut $val_name: $t = $base;
 
         #[derive(Copy, Clone, Eq, PartialEq, Hash)]
@@ -52,5 +52,7 @@ macro_rules! dynamic_value {
                 unsafe { $val_name }
             }
         }
+
+        $name.set_val($val);
     };
 }
