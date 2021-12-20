@@ -32,7 +32,7 @@ fn main() {
     }
 
     let mut empty = 0usize;
-    for _ in 0..2 {
+    for _ in 0..50 {
         let mut next_grid = Vec::new();
         let n = grid.len();
         let m = grid[0].len();

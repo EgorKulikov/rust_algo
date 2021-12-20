@@ -226,6 +226,13 @@ impl<'r, 's, S: Into<Str<'r>>> AddAssign<S> for Str<'s> {
     }
 }
 
+impl<'s> AddAssign<u8> for Str<'s> {
+    fn add_assign(&mut self, rhs: u8) {
+        self.to_vec();
+        self.as_vec().push(rhs);
+    }
+}
+
 impl<'r, 's, S: Into<Str<'r>>> Add<S> for Str<'s> {
     type Output = Str<'s>;
 
