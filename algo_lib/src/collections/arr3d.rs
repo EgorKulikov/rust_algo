@@ -1,7 +1,9 @@
+use crate::collections::legacy_fill::LegacyFill;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::ops::{Index, IndexMut};
 
+#[derive(Clone)]
 pub struct Arr3d<T> {
     d1: usize,
     d2: usize,
@@ -45,7 +47,7 @@ impl<T> Arr3d<T> {
     }
 
     pub fn d3(&self) -> usize {
-        self.d2
+        self.d3
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {
@@ -116,5 +118,11 @@ impl<T: Readable> Readable for Arr3d<T> {
         let d2 = input.read();
         let d3 = input.read();
         input.read_3d_table(d1, d2, d3)
+    }
+}
+
+impl<T: Clone> Arr3d<T> {
+    pub fn fill(&mut self, elem: T) {
+        self.data.legacy_fill(elem);
     }
 }

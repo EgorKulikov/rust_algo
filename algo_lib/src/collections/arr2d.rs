@@ -4,6 +4,7 @@ use crate::io::output::{Output, Writable};
 use std::ops::{Index, IndexMut};
 use std::vec::IntoIter;
 
+#[derive(Clone)]
 pub struct Arr2d<T> {
     d1: usize,
     d2: usize,
@@ -64,14 +65,6 @@ impl<T> Arr2d<T> {
 impl<T: Clone> Arr2d<T> {
     pub fn fill(&mut self, elem: T) {
         self.data.legacy_fill(elem);
-    }
-
-    pub fn clone(&self) -> Self {
-        Self {
-            d1: self.d1,
-            d2: self.d2,
-            data: self.data.clone(),
-        }
     }
 }
 
