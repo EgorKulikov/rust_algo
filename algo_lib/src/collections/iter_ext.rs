@@ -62,3 +62,34 @@ pub trait IterOrdExt<T: Ord>: IterExt<T> {
 }
 
 impl<T: Ord, I: Iterator<Item = T> + Sized> IterOrdExt<T> for I {}
+
+#[macro_export]
+macro_rules! zip {
+    ( @closure $p:pat => $tup:expr ) => {
+        |$p| $tup
+    };
+
+    ( @closure $p:pat => ( $($tup:tt)* ) , $_iter:expr $( , $tail:expr )* ) => {
+        zip!(@closure ($p, b) => ( $($tup)*, b ) $( , $tail )*)
+    };
+
+    ($first:expr $(,)*) => {
+        std::iter::IntoIterator::into_iter($first)
+    };
+
+    // binary
+    ($first:expr, $second:expr $(,)*) => {
+        zip!($first).zip($second)
+    };
+
+    // n-ary where n > 2
+    ( $first:expr $( , $rest:expr )* $(,)* ) => {
+        zip!($first)
+            $(
+                .zip($rest)
+            )*
+            .map(
+                zip!(@closure a => (a) $( , $rest )*)
+            )
+    };
+}

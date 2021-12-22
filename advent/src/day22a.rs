@@ -61,9 +61,9 @@ fn main() {
     let x_to = x_to.inc_by_one();
     let y_to = y_to.inc_by_one();
     let z_to = z_to.inc_by_one();
-    let (x, (x_from, x_to)) = compress!(x_from, x_to);
-    let (y, (y_from, y_to)) = compress!(y_from, y_to);
-    let (z, (z_from, z_to)) = compress!(z_from, z_to);
+    let (x, (x_from, x_to, x_bounds)) = compress!(x_from, x_to, vec![-50, 51]);
+    let (y, (y_from, y_to, y_bounds)) = compress!(y_from, y_to, vec![-50, 51]);
+    let (z, (z_from, z_to, z_bounds)) = compress!(z_from, z_to, vec![-50, 51]);
 
     let mut state = Arr3d::new(x.len(), y.len(), z.len(), false);
     for (t, x_from, x_to, y_from, y_to, z_from, z_to) in zip!(
@@ -85,9 +85,9 @@ fn main() {
     }
 
     let mut ans = 0i64;
-    for i in 0..x.len() {
-        for j in 0..y.len() {
-            for k in 0..z.len() {
+    for i in x_bounds[0]..x_bounds[1] {
+        for j in y_bounds[0]..y_bounds[1] {
+            for k in z_bounds[0]..z_bounds[1] {
                 if state[(i, j, k)] {
                     ans += (x[i + 1] - x[i]) * (y[j + 1] - y[j]) * (z[k + 1] - z[k]);
                 }
