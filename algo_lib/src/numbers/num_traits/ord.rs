@@ -1,7 +1,9 @@
 pub trait MinMax: PartialOrd {
     fn min_val() -> Self;
     fn max_val() -> Self;
+    #[must_use]
     fn minimum(self, other: Self) -> Self;
+    #[must_use]
     fn maximum(self, other: Self) -> Self;
 }
 

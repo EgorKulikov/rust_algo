@@ -8,7 +8,7 @@ use algo_lib::io::input::Input;
 use algo_lib::io::output::{output, Output, OUTPUT};
 use algo_lib::misc::recursive_function::{Callable4, RecursiveFunction4};
 use algo_lib::numbers::num_traits::bit_ops::BitOps;
-use algo_lib::{out, out_line};
+use algo_lib::out_line;
 
 fn solve(input: &mut Input, _test_case: usize) {
     let t = input.read();

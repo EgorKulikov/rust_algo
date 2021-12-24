@@ -8,7 +8,7 @@ use algo_lib::misc::recursive_function::{Callable2, RecursiveFunction2};
 use algo_lib::numbers::mod_int::ModIntF;
 use algo_lib::numbers::num_traits::from_u8::FromU8;
 use algo_lib::numbers::num_traits::zero_one::ZeroOne;
-use algo_lib::{out, out_line};
+use algo_lib::out_line;
 
 fn solve_impl(n: usize, a: Vec<usize>) -> ModIntF {
     type Mod = ModIntF;

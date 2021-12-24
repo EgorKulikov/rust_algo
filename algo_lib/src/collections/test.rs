@@ -1,6 +1,5 @@
 use crate::collections::iter_ext::IterPartialEqExt;
 use crate::collections::permutation::Permutation;
-use crate::collections::vec_ext::Bounds;
 use crate::compress;
 
 #[test]

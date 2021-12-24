@@ -6,7 +6,7 @@ use algo_lib::collections::arr2d::{Arr2d, Arr2dRead};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::{output, Output, OUTPUT};
 use algo_lib::misc::dirs::D4;
-use algo_lib::{out, out_line};
+use algo_lib::out_line;
 use std::collections::VecDeque;
 
 fn solve(input: &mut Input, _test_case: usize) {

@@ -8,7 +8,7 @@ use algo_lib::graph::graph::Graph;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::output;
 use algo_lib::misc::recursive_function::{Callable, RecursiveFunction};
-use algo_lib::{out, out_line};
+use algo_lib::out_line;
 use std::collections::BTreeSet;
 use std::thread;
 

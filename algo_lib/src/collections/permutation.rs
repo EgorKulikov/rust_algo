@@ -34,6 +34,7 @@ impl Permutation {
         }
     }
 
+    #[must_use]
     pub fn inv(&self) -> Self {
         let size = self.p.len();
         let res = unsafe {

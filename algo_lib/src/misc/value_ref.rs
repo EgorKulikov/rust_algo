@@ -11,7 +11,7 @@ macro_rules! const_value_ref {
         #[derive(Copy, Clone, Eq, PartialEq, Hash)]
         pub struct $name {}
 
-        impl ValueRef<$ext_t> for $name {
+        impl $crate::misc::value_ref::ValueRef<$ext_t> for $name {
             fn set_val(_: Box<$ext_t>) {
                 panic!("this is const");
             }
@@ -31,7 +31,7 @@ macro_rules! value_ref {
         #[derive(Copy, Clone, Eq, PartialEq, Hash)]
         pub struct $name {}
 
-        impl ValueRef<$t> for $name {
+        impl $crate::misc::value_ref::ValueRef<$t> for $name {
             fn set_val(t: $t) {
                 unsafe {
                     $val_name = t;

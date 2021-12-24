@@ -4,6 +4,7 @@ use crate::numbers::num_traits::mul_div_rem::{MulDiv, MulDivRem, Multable};
 use crate::numbers::num_traits::zero_one::ZeroOne;
 
 pub trait Power {
+    #[must_use]
     fn power<T: ZeroOne + PartialEq + MulDivRem + AddSub + Copy>(&self, exp: T) -> Self;
 }
 

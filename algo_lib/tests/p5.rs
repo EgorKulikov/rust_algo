@@ -3,7 +3,7 @@
 use algo_lib::io::input::Input;
 use algo_lib::io::output::output;
 use algo_lib::numbers::primes::primes;
-use algo_lib::{out, out_line};
+use algo_lib::out_line;
 
 fn solve(input: &mut Input, _test_case: usize) {
     let n: usize = input.read();

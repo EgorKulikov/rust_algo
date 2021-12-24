@@ -9,7 +9,7 @@ use algo_lib::graph::graph::Graph;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::{output, Output, OUTPUT};
 use algo_lib::misc::recursive_function::{Callable, RecursiveFunction};
-use algo_lib::{out, out_line};
+use algo_lib::out_line;
 
 fn solve(input: &mut Input, _test_case: usize) {
     let r = input.read();

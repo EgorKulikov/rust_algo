@@ -204,20 +204,20 @@ pub fn output() -> &'static mut Output {
 #[macro_export]
 macro_rules! out {
     ($first: expr $(,$args:expr )*) => {
-        output().print(&$first);
-        $(output().put(b' ');
-        output().print(&$args);
+        $crate::io::output::output().print(&$first);
+        $($crate::io::output::output().put(b' ');
+        $crate::io::output::output().print(&$args);
         )*
-        output().maybe_flush();
+        $crate::io::output::output().maybe_flush();
     }
 }
 
 #[macro_export]
 macro_rules! out_line {
     ($first: expr $(, $args:expr )* ) => {
-        out!($first $(,$args)*);
-        output().put(b'\n');
-        output().maybe_flush();
+        $crate::out!($first $(,$args)*);
+        $crate::io::output::output().put(b'\n');
+        $crate::io::output::output().maybe_flush();
     };
     () => {
         output().put(b'\n');

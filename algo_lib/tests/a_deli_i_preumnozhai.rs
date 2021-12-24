@@ -5,7 +5,7 @@
 use algo_lib::collections::min_max::MinimMaxim;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::{output, Output, OUTPUT};
-use algo_lib::{out, out_line};
+use algo_lib::out_line;
 
 fn solve(input: &mut Input, _test_case: usize) {
     let n = input.read();

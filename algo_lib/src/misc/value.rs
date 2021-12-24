@@ -20,7 +20,7 @@ macro_rules! value {
         #[derive(Copy, Clone, Eq, PartialEq, Hash)]
         pub struct $name {}
 
-        impl ConstValue<$t> for $name {
+        impl $crate::misc::value::ConstValue<$t> for $name {
             const VAL: $t = $val;
         }
     };
@@ -39,7 +39,7 @@ macro_rules! dynamic_value {
         #[derive(Copy, Clone, Eq, PartialEq, Hash)]
         pub struct $name {}
 
-        impl DynamicValue<$t> for $name {
+        impl $crate::misc::value::DynamicValue<$t> for $name {
             fn set_val(t: $t) {
                 unsafe {
                     $val_name = t;
@@ -47,7 +47,7 @@ macro_rules! dynamic_value {
             }
         }
 
-        impl Value<$t> for $name {
+        impl $crate::misc::value::Value<$t> for $name {
             fn val() -> $t {
                 unsafe { $val_name }
             }

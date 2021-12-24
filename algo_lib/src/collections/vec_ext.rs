@@ -87,6 +87,7 @@ impl<T> Shuffle for &mut [T] {
 #[macro_export]
 macro_rules! compress {
     ($($vs:expr),+) => { {
+        use $crate::collections::vec_ext::Bounds;
         let mut size = 0;
         $(size += $vs.len();)+
         let mut all = Vec::with_capacity(size);
@@ -109,7 +110,9 @@ macro_rules! compress {
 }
 
 pub trait IncDec {
+    #[must_use]
     fn inc_by_one(self) -> Self;
+    #[must_use]
     fn dec_by_one(self) -> Self;
 }
 
