@@ -25,7 +25,7 @@ fn main() {
     let mut id = 0;
     let mut cf = Arr2d::new(4, 15, 0i128);
     let mut vv = vec![0; 4];
-    let is = [9, 9, 4, 2, 9, 7, 9, 5, 9, 9, 3, 9, 2, 9];
+    let is = [1, 8, 1, 1, 3, 1, 8, 1, 5, 7, 1, 6, 1, 1];
 
     let mut instr_id = 0;
     loop {
