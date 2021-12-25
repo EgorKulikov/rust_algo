@@ -3,7 +3,8 @@ use crate::io::output::{Output, Writable};
 use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
-use std::ops::{Add, AddAssign, Deref, Index, IndexMut, Range};
+use std::ops::{Add, AddAssign, Deref, Index, IndexMut};
+use std::slice::SliceIndex;
 use std::vec::IntoIter;
 
 pub enum Str<'s> {
@@ -162,10 +163,10 @@ impl<'s> From<&'s Vec<u8>> for Str<'s> {
     }
 }
 
-impl Index<usize> for Str<'_> {
-    type Output = u8;
+impl<R: SliceIndex<[u8]>> Index<R> for Str<'_> {
+    type Output = R::Output;
 
-    fn index(&self, index: usize) -> &Self::Output {
+    fn index(&self, index: R) -> &Self::Output {
         match self {
             Str::String(s, _) => &s.as_bytes()[index],
             Str::Str(s) => &s.as_bytes()[index],
@@ -177,14 +178,14 @@ impl Index<usize> for Str<'_> {
     }
 }
 
-impl IndexMut<usize> for Str<'_> {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+impl<R: SliceIndex<[u8]>> IndexMut<R> for Str<'_> {
+    fn index_mut(&mut self, index: R) -> &mut Self::Output {
         self.to_vec();
         self.as_vec().index_mut(index)
     }
 }
 
-impl Index<Range<usize>> for Str<'_> {
+/*impl Index<Range<usize>> for Str<'_> {
     type Output = [u8];
 
     fn index(&self, index: Range<usize>) -> &Self::Output {
@@ -204,7 +205,7 @@ impl IndexMut<Range<usize>> for Str<'_> {
         self.to_vec();
         self.as_vec().index_mut(index)
     }
-}
+}*/
 
 impl Clone for Str<'_> {
     fn clone(&self) -> Self {

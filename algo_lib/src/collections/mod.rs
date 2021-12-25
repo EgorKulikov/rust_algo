@@ -11,6 +11,7 @@ pub mod iter_ext;
 pub mod legacy_fill;
 pub mod min_max;
 pub mod permutation;
+pub mod persistent_fenwick;
 pub mod segment_tree;
 #[cfg(test)]
 mod test;
