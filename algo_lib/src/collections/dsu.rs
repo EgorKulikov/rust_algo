@@ -1,5 +1,6 @@
 use crate::collections::iter_ext::IterExt;
 use crate::collections::legacy_fill::LegacyFill;
+use crate::collections::vec_ext::Bounds;
 use std::cell::Cell;
 
 #[derive(Clone)]
@@ -68,5 +69,14 @@ impl DSU {
         self.id.iter().enumerate().for_each(|(i, id)| {
             id.replace(i as u32);
         });
+    }
+
+    pub fn parts(&self) -> Vec<Vec<usize>> {
+        let roots = self.iter().collect_vec();
+        let mut res = vec![Vec::new(); roots.len()];
+        for i in 0..self.id.len() {
+            res[roots.as_slice().bin_search(&self.get(i)).unwrap()].push(i);
+        }
+        res
     }
 }

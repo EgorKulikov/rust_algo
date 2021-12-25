@@ -1,7 +1,9 @@
+use crate::collections::iter_ext::IterExt;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
+use std::iter::FromIterator;
 use std::marker::PhantomData;
 use std::ops::{Add, AddAssign, Deref, Index, IndexMut};
 use std::slice::SliceIndex;
@@ -281,5 +283,17 @@ impl<'r> PartialOrd<Str<'r>> for Str<'_> {
 impl Ord for Str<'_> {
     fn cmp(&self, other: &Self) -> Ordering {
         self.as_slice().cmp(other.as_slice())
+    }
+}
+
+impl FromIterator<u8> for Str<'static> {
+    fn from_iter<T: IntoIterator<Item = u8>>(iter: T) -> Self {
+        Self::Vec(iter.into_iter().collect_vec(), Default::default())
+    }
+}
+
+impl<'r> FromIterator<&'r u8> for Str<'static> {
+    fn from_iter<T: IntoIterator<Item = &'r u8>>(iter: T) -> Self {
+        Self::Vec(iter.into_iter().cloned().collect_vec(), Default::default())
     }
 }
