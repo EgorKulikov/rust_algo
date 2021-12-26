@@ -2,6 +2,7 @@ pub mod arr2d;
 pub mod arr3d;
 pub mod arr4d;
 pub mod bit_set;
+pub mod default_map;
 pub mod direction;
 pub mod dsu;
 pub mod fenwick;

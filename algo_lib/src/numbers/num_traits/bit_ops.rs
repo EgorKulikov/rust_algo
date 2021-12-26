@@ -34,6 +34,18 @@ pub trait BitOps:
         *self &= !Self::bit(at)
     }
 
+    #[must_use]
+    fn with_bit(mut self, at: usize) -> Self {
+        self.set_bit(at);
+        self
+    }
+
+    #[must_use]
+    fn without_bit(mut self, at: usize) -> Self {
+        self.unset_bit(at);
+        self
+    }
+
     fn flip_bit(&mut self, at: usize) {
         *self ^= Self::bit(at)
     }

@@ -31,6 +31,7 @@ impl Output {
     pub fn flush(&mut self) {
         if self.at != 0 {
             self.output.write_all(&self.buf[..self.at]).unwrap();
+            self.output.flush().unwrap();
             self.at = 0;
         }
     }

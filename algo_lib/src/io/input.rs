@@ -7,6 +7,18 @@ use std::fmt::Display;
 use std::io::Read;
 use std::marker::PhantomData;
 
+macro_rules! read_impl {
+    ($t: ty, $read_name: ident, $read_vec_name: ident) => {
+        pub fn $read_name(&mut self) -> $t {
+            self.read()
+        }
+
+        pub fn $read_vec_name(&mut self, len: usize) -> Vec<$t> {
+            self.read_vec(len)
+        }
+    };
+}
+
 pub struct Input<'s> {
     input: &'s mut dyn Read,
     buf: Vec<u8>,
@@ -167,7 +179,7 @@ impl<'s> Input<'s> {
         res
     }
 
-    fn read_string(&mut self) -> String {
+    pub fn read_string(&mut self) -> String {
         match self.next_token() {
             None => {
                 panic!("Input exhausted");
@@ -176,13 +188,27 @@ impl<'s> Input<'s> {
         }
     }
 
-    fn read_char(&mut self) -> char {
+    pub fn read_char(&mut self) -> char {
         self.skip_whitespace();
         self.get().unwrap().into()
     }
 
-    fn read_float(&mut self) -> f64 {
-        self.read_string().parse().unwrap()
+    read_impl!(u8, read_u8, read_u8_vec);
+    read_impl!(u16, read_u16, read_u16_vec);
+    read_impl!(u32, read_unsigned, read_unsigned_vec);
+    read_impl!(u64, read_u64, read_u64_vec);
+    read_impl!(u128, read_u128, read_u128_vec);
+    read_impl!(usize, read_usize, read_usize_vec);
+    read_impl!(i8, read_i8, read_i8_vec);
+    read_impl!(i16, read_i16, read_i16_vec);
+    read_impl!(i32, read_int, read_int_vec);
+    read_impl!(i64, read_long, read_long_vec);
+    read_impl!(i128, read_i128, read_i128_vec);
+    read_impl!(isize, read_isize, read_isize_vec);
+    read_impl!(f64, read_float, read_float_vec);
+
+    fn read_float_impl(&mut self) -> f64 {
+        self.read::<String>().parse().unwrap()
     }
 
     fn refill_buffer(&mut self) -> bool {
@@ -214,7 +240,7 @@ impl Readable for char {
 
 impl Readable for f64 {
     fn read(input: &mut Input) -> Self {
-        input.read_float()
+        input.read_float_impl()
     }
 }
 

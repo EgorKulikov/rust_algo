@@ -187,28 +187,6 @@ impl<R: SliceIndex<[u8]>> IndexMut<R> for Str<'_> {
     }
 }
 
-/*impl Index<Range<usize>> for Str<'_> {
-    type Output = [u8];
-
-    fn index(&self, index: Range<usize>) -> &Self::Output {
-        match self {
-            Str::String(s, _) => &s.as_bytes()[index],
-            Str::Str(s) => &s.as_bytes()[index],
-            Str::Vec(s, _) => &s[index],
-            Str::U8(s) => &s[index],
-            Str::StringRef(s) => &s.as_bytes()[index],
-            Str::VecRef(s) => &s[index],
-        }
-    }
-}
-
-impl IndexMut<Range<usize>> for Str<'_> {
-    fn index_mut(&mut self, index: Range<usize>) -> &mut Self::Output {
-        self.to_vec();
-        self.as_vec().index_mut(index)
-    }
-}*/
-
 impl Clone for Str<'_> {
     fn clone(&self) -> Self {
         match self {
