@@ -19,7 +19,7 @@ impl<K, V> DerefMut for DefaultMap<K, V> {
     }
 }
 
-impl<K: Hash + Eq, V: Default + Copy> DefaultMap<K, V> {
+impl<K: Hash + Eq, V: Default> DefaultMap<K, V> {
     pub fn new() -> Self {
         Self(HashMap::new(), V::default())
     }
@@ -29,12 +29,11 @@ impl<K: Hash + Eq, V: Default + Copy> DefaultMap<K, V> {
     }
 
     pub fn get_mut(&mut self, key: K) -> &mut V {
-        let v = self.1;
-        self.0.entry(key).or_insert(v)
+        self.0.entry(key).or_insert_with(|| V::default())
     }
 }
 
-impl<K: Hash + Eq, V: Default + Copy> Index<K> for DefaultMap<K, V> {
+impl<K: Hash + Eq, V: Default> Index<K> for DefaultMap<K, V> {
     type Output = V;
 
     fn index(&self, index: K) -> &Self::Output {
@@ -42,7 +41,7 @@ impl<K: Hash + Eq, V: Default + Copy> Index<K> for DefaultMap<K, V> {
     }
 }
 
-impl<K: Hash + Eq, V: Default + Copy> IndexMut<K> for DefaultMap<K, V> {
+impl<K: Hash + Eq, V: Default> IndexMut<K> for DefaultMap<K, V> {
     fn index_mut(&mut self, index: K) -> &mut Self::Output {
         self.get_mut(index)
     }
