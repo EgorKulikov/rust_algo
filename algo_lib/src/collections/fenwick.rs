@@ -3,7 +3,8 @@ use crate::collections::min_max::MinimMaxim;
 use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 
-pub struct FenwickTree<T: AddSub + ZeroOne> {
+#[derive(Clone)]
+pub struct FenwickTree<T> {
     value: Vec<T>,
 }
 

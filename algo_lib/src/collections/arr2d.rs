@@ -4,7 +4,7 @@ use crate::io::output::{Output, Writable};
 use std::ops::{Index, IndexMut};
 use std::vec::IntoIter;
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct Arr2d<T> {
     d1: usize,
     d2: usize,
@@ -161,11 +161,3 @@ impl<T: Readable> Readable for Arr2d<T> {
         input.read_table(d1, d2)
     }
 }
-
-impl<T: PartialEq> PartialEq for Arr2d<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.d1 == other.d1 && self.d2 == other.d2 && self.data == other.data
-    }
-}
-
-impl<T: Eq> Eq for Arr2d<T> {}

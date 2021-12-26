@@ -2,8 +2,8 @@ use crate::collections::legacy_fill::LegacyFill;
 use crate::numbers::num_traits::bit_ops::BitOps;
 use std::ops::Index;
 
-static TRUE: bool = true;
-static FALSE: bool = false;
+const TRUE: bool = true;
+const FALSE: bool = false;
 
 #[derive(Clone)]
 pub struct BitSet {

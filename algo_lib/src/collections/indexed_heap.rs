@@ -63,7 +63,7 @@ impl<T> Clone for Opt<T> {
     }
 }
 
-pub struct IndexedHeap<T: PartialOrd> {
+pub struct IndexedHeap<T> {
     heap: Vec<u32>,
     pos: Vec<Opt<T>>,
 }

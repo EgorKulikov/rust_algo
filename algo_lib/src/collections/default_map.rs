@@ -2,10 +2,10 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 
-#[derive(Default, Clone)]
-pub struct DefaultMap<K, V>(HashMap<K, V>, V);
+#[derive(Default, Clone, Eq, PartialEq)]
+pub struct DefaultMap<K: Hash + Eq, V>(HashMap<K, V>, V);
 
-impl<K, V> Deref for DefaultMap<K, V> {
+impl<K: Hash + Eq, V> Deref for DefaultMap<K, V> {
     type Target = HashMap<K, V>;
 
     fn deref(&self) -> &Self::Target {
@@ -13,7 +13,7 @@ impl<K, V> Deref for DefaultMap<K, V> {
     }
 }
 
-impl<K, V> DerefMut for DefaultMap<K, V> {
+impl<K: Hash + Eq, V> DerefMut for DefaultMap<K, V> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
@@ -47,7 +47,7 @@ impl<K: Hash + Eq, V: Default> IndexMut<K> for DefaultMap<K, V> {
     }
 }
 
-impl<K, V> IntoIterator for DefaultMap<K, V> {
+impl<K: Hash + Eq, V> IntoIterator for DefaultMap<K, V> {
     type Item = (K, V);
     type IntoIter = std::collections::hash_map::IntoIter<K, V>;
 

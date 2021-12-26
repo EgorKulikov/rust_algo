@@ -3,7 +3,7 @@ use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::ops::{Index, IndexMut};
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct Arr4d<T> {
     d1: usize,
     d2: usize,

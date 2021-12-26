@@ -1,3 +1,4 @@
+pub mod direction;
 pub mod dirs;
 pub mod hungarian_algorithm;
 pub mod random;

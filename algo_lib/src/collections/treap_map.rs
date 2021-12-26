@@ -1,5 +1,5 @@
-use crate::collections::direction::Direction;
 use crate::collections::treap::{TreapNode, Updateable};
+use crate::misc::direction::Direction;
 use std::ops::{Deref, DerefMut, Index};
 
 struct TreapValue<V> {

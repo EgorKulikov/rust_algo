@@ -4,6 +4,7 @@ use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 use std::cmp::Ordering;
 
+#[derive(Clone)]
 pub struct PersistentFenwickTree<T, E> {
     base: E,
     value: Vec<Vec<Value<T, E>>>,
@@ -15,7 +16,7 @@ struct Value<T, E> {
     value: T,
 }
 
-impl<T, E: PartialOrd> PartialEq<Self> for Value<T, E> {
+impl<T, E: PartialEq> PartialEq<Self> for Value<T, E> {
     fn eq(&self, other: &Self) -> bool {
         self.epoch.eq(&other.epoch)
     }

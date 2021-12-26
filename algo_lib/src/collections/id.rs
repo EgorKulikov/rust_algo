@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::mem::MaybeUninit;
 
-#[derive(Default)]
-pub struct Id<T: Hash + Eq> {
+#[derive(Default, Clone)]
+pub struct Id<T> {
     map: HashMap<T, usize>,
     next: usize,
 }

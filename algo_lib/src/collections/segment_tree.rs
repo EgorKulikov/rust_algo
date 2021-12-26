@@ -1,4 +1,4 @@
-use crate::collections::direction::Direction;
+use crate::misc::direction::Direction;
 use std::marker::PhantomData;
 
 pub trait SegmentTreeNode {
@@ -8,7 +8,8 @@ pub trait SegmentTreeNode {
     fn reset_delta(&mut self);
 }
 
-pub struct SegmentTree<Node: SegmentTreeNode> {
+#[derive(Clone)]
+pub struct SegmentTree<Node> {
     n: usize,
     nodes: Vec<Node>,
 }

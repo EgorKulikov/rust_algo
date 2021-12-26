@@ -1,5 +1,5 @@
 // 1.50
-pub trait LegacyFill<T: Clone> {
+pub trait LegacyFill<T> {
     fn legacy_fill(&mut self, val: T);
 }
 
