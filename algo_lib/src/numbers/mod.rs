@@ -11,3 +11,4 @@ pub mod primes;
 pub mod rational;
 #[cfg(test)]
 mod test;
+pub mod unsigned_big_int;
