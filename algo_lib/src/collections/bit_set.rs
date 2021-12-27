@@ -33,6 +33,10 @@ impl BitSet {
         }
     }
 
+    pub fn flip(&mut self, at: usize) {
+        self.set(at, !self[at]);
+    }
+
     #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.len

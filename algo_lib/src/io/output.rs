@@ -189,6 +189,15 @@ impl<T: Writable, U: Writable, V: Writable> Writable for (T, U, V) {
     }
 }
 
+impl<T: Writable> Writable for Option<T> {
+    fn write(&self, output: &mut Output) {
+        match self {
+            None => (-1).write(output),
+            Some(t) => t.write(output),
+        }
+    }
+}
+
 pub static mut OUTPUT: Option<Output> = None;
 
 pub fn output() -> &'static mut Output {
