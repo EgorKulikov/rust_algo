@@ -114,6 +114,10 @@ impl<'s> Str<'s> {
             Str::U8(v) => String::from_utf8_lossy(v).into_owned(),
         }
     }
+
+    pub fn reverse(&mut self) {
+        self.as_vec().reverse();
+    }
 }
 
 impl IntoIterator for Str<'_> {
