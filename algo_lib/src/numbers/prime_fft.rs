@@ -178,7 +178,7 @@ impl<M: BaseModInt> PrimeFFT<M> {
             len_t += len_t;
         }
         if invert {
-            let inv_size = M::new(size_t).inv().unwrap();
+            let inv_size = M::from(size_t).inv().unwrap();
             for i in a {
                 *i *= inv_size;
             }

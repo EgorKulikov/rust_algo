@@ -1,6 +1,7 @@
 pub mod all_distances;
 pub mod dfs_order;
 pub mod distances;
+pub mod edge;
 pub mod edge_distances;
 pub mod edges;
 #[allow(clippy::module_inception)]

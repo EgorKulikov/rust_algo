@@ -134,7 +134,7 @@ impl Writable for char {
     }
 }
 
-impl<T: Writable> Writable for [T] {
+impl<T: Writable> Writable for &[T] {
     fn write(&self, output: &mut Output) {
         output.print_iter_ref(self.iter());
     }
@@ -142,7 +142,7 @@ impl<T: Writable> Writable for [T] {
 
 impl<T: Writable> Writable for Vec<T> {
     fn write(&self, output: &mut Output) {
-        self[..].write(output);
+        (&self[..]).write(output);
     }
 }
 

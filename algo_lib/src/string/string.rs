@@ -66,7 +66,7 @@ impl<'s> Str<'s> {
         self.len() == 0
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = u8> + '_ {
+    pub fn iter(&self) -> impl ExactSizeIterator<Item = u8> + DoubleEndedIterator<Item = u8> + '_ {
         match self {
             Str::String(s, _) => s.as_bytes().iter(),
             Str::StringRef(s) => s.as_bytes().iter(),
@@ -78,7 +78,9 @@ impl<'s> Str<'s> {
         .cloned()
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut u8> {
+    pub fn iter_mut(
+        &mut self,
+    ) -> impl ExactSizeIterator<Item = &mut u8> + DoubleEndedIterator<Item = &mut u8> {
         self.to_vec();
         self.as_vec().iter_mut()
     }

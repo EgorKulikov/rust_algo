@@ -16,7 +16,7 @@ where
     while res.len() < len {
         res.push(
             res[M::module().to_index() % res.len()]
-                * (M::new(M::module() / (M::T::from_index(res.len()))).neg()),
+                * (M::from(M::module() / (M::T::from_index(res.len()))).neg()),
         );
     }
     res

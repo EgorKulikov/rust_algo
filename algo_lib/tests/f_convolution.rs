@@ -25,10 +25,10 @@ fn big() {
     use algo_lib::numbers::mod_int::BaseModInt;
     type Mod = ModIntF;
     let a = (0..100000)
-        .map(|_| Mod::new_from_long((random().gen() % (Mod::module() as u64)) as i64))
+        .map(|_| Mod::new_from_wide((random().gen() % (Mod::module() as u64)) as i64))
         .collect_vec();
     let b = (0..100000)
-        .map(|_| Mod::new_from_long((random().gen() % (Mod::module() as u64)) as i64))
+        .map(|_| Mod::new_from_wide((random().gen() % (Mod::module() as u64)) as i64))
         .collect_vec();
     let mut fft: PrimeFFT<Mod> = PrimeFFT::new();
     fft.multiply(a.as_slice(), b.as_slice());
