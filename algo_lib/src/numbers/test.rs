@@ -1,5 +1,5 @@
 mod mod_int {
-    use crate::numbers::mod_int::{BaseModInt, ModInt};
+    use crate::numbers::mod_int::ModInt;
     use crate::numbers::num_traits::zero_one::ZeroOne;
     use crate::value;
 
