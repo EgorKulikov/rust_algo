@@ -1,12 +1,12 @@
 use crate::const_value_ref;
-use crate::misc::value_ref::ValueRef;
+use crate::misc::value_ref::ConstValueRef;
 use std::marker::PhantomData;
 
-pub struct Directions<V: ValueRef<[(isize, isize)]>> {
+pub struct Directions<V: ConstValueRef<[(isize, isize)]>> {
     phantom: PhantomData<V>,
 }
 
-impl<V: ValueRef<[(isize, isize)]>> Directions<V> {
+impl<V: ConstValueRef<[(isize, isize)]>> Directions<V> {
     pub fn iter(
         row: usize,
         col: usize,
@@ -24,7 +24,7 @@ impl<V: ValueRef<[(isize, isize)]>> Directions<V> {
     }
 }
 
-struct DirectionsIter<V: ValueRef<[(isize, isize)]>> {
+struct DirectionsIter<V: ConstValueRef<[(isize, isize)]>> {
     row: usize,
     col: usize,
     n: usize,
@@ -33,7 +33,7 @@ struct DirectionsIter<V: ValueRef<[(isize, isize)]>> {
     phantom: PhantomData<V>,
 }
 
-impl<V: ValueRef<[(isize, isize)]>> Iterator for DirectionsIter<V> {
+impl<V: ConstValueRef<[(isize, isize)]>> Iterator for DirectionsIter<V> {
     type Item = (usize, usize);
 
     fn next(&mut self) -> Option<Self::Item> {

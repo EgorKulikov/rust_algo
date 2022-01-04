@@ -1,6 +1,13 @@
 use crate::collections::bit_set::BitSet;
 use crate::collections::iter_ext::IterExt;
+use crate::dynamic_value;
+use crate::misc::random::random;
+use crate::misc::value::DynamicValue;
+use crate::numbers::mod_int::ModInt;
 use crate::numbers::num_traits::as_index::AsIndex;
+use crate::numbers::num_traits::primitive::Primitive;
+use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::numbers::number_ext::Power;
 
 pub fn primality_table(n: usize) -> BitSet {
     let mut res = BitSet::new(n);
@@ -40,4 +47,57 @@ pub fn divisor_table<T: AsIndex + PartialEq>(n: usize) -> Vec<T> {
         i += 1;
     }
     res
+}
+
+dynamic_value!(IsPrimeModule, MOD, i64);
+
+pub fn is_prime(n: impl Primitive) -> bool {
+    let n = n.into_i64();
+    if n <= 1 {
+        return false;
+    }
+    let mut s = 0;
+    let mut d = n - 1;
+    while d % 2 == 0 {
+        s += 1;
+        d >>= 1;
+    }
+    if s == 0 {
+        return n == 2;
+    }
+    IsPrimeModule::set_val(n);
+    type Mod = ModInt<i64, IsPrimeModule>;
+    for _ in 0..20 {
+        let a = Mod::new(random().next(n.into_u64()).into_i64());
+        if a == Mod::zero() {
+            continue;
+        }
+        if a.power(d) == Mod::one() {
+            continue;
+        }
+        let mut dd = d;
+        let mut good = true;
+        for _ in 0..s {
+            if a.power(dd) + Mod::one() == Mod::zero() {
+                good = false;
+                break;
+            }
+            dd *= 2;
+        }
+        if good {
+            return false;
+        }
+    }
+    true
+}
+
+pub fn next_prime(mut n: i64) -> i64 {
+    if n <= 2 {
+        return 2;
+    }
+    n += 1 - (n & 1);
+    while !is_prime(n) {
+        n += 2;
+    }
+    n
 }

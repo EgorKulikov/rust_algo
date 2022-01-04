@@ -1,6 +1,7 @@
 use crate::numbers::num_traits::as_index::AsIndex;
 use crate::numbers::num_traits::mul_div_rem::Multable;
 use crate::numbers::num_traits::zero_one::ZeroOne;
+use std::ops::Add;
 
 pub fn factorials<T: ZeroOne + Multable + AsIndex>(len: usize) -> Vec<T> {
     let mut res = Vec::new();
@@ -19,4 +20,19 @@ pub fn factorial<T: ZeroOne + Multable + AsIndex>(n: usize) -> T {
         res *= T::from_index(i);
     }
     res
+}
+
+pub trait PartialSums<T> {
+    fn partial_sums(&self) -> Vec<T>;
+}
+
+impl<T: ZeroOne + Add<Output = T> + Copy> PartialSums<T> for &[T] {
+    fn partial_sums(&self) -> Vec<T> {
+        let mut res = Vec::with_capacity(self.len() + 1);
+        res.push(T::zero());
+        for i in self.iter() {
+            res.push(*res.last().unwrap() + *i);
+        }
+        res
+    }
 }

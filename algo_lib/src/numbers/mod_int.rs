@@ -32,10 +32,16 @@ pub trait BaseModInt:
     fn module() -> Self::T;
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Default)]
 pub struct ModInt<T, V: Value<T>> {
     n: T,
     phantom: PhantomData<V>,
+}
+
+impl<T: Copy, V: Value<T>> ModInt<T, V> {
+    pub fn val(&self) -> T {
+        self.n
+    }
 }
 
 impl<T: AddSub + Copy + ZeroOne + Ord, V: Value<T>> ModInt<T, V> {

@@ -1,6 +1,11 @@
-pub trait ValueRef<T: ?Sized + 'static> {
-    fn set_val(t: Box<T>);
+pub trait ConstValueRef<T: ?Sized + 'static> {
     fn val() -> &'static T;
+}
+
+pub trait ValueRef<T: 'static> {
+    fn val() -> &'static T;
+    fn set_val(t: T);
+    fn val_mut() -> &'static mut T;
 }
 
 #[macro_export]
@@ -11,11 +16,7 @@ macro_rules! const_value_ref {
         #[derive(Copy, Clone, Eq, PartialEq, Hash)]
         pub struct $name {}
 
-        impl $crate::misc::value_ref::ValueRef<$ext_t> for $name {
-            fn set_val(_: Box<$ext_t>) {
-                panic!("this is const");
-            }
-
+        impl $crate::misc::value_ref::ConstValueRef<$ext_t> for $name {
             fn val() -> &'static $ext_t {
                 &$val_name
             }
@@ -25,21 +26,25 @@ macro_rules! const_value_ref {
 
 #[macro_export]
 macro_rules! value_ref {
-    ($name: ident, $val_name: ident, $t: ty, $base: expr) => {
-        static mut $val_name: $t = $base;
+    ($name: ident, $val_name: ident, $t: ty) => {
+        static mut $val_name: Option<$t> = None;
 
         #[derive(Copy, Clone, Eq, PartialEq, Hash)]
-        pub struct $name {}
+        struct $name {}
 
         impl $crate::misc::value_ref::ValueRef<$t> for $name {
+            fn val() -> &'static $t {
+                unsafe { $val_name.as_ref().unwrap() }
+            }
+
             fn set_val(t: $t) {
                 unsafe {
-                    $val_name = t;
+                    $val_name = Some(t);
                 }
             }
 
-            fn val() -> &'static $t {
-                unsafe { &$val_name }
+            fn val_mut() -> &'static mut $t {
+                unsafe { $val_name.as_mut().unwrap() }
             }
         }
     };

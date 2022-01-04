@@ -33,26 +33,24 @@ pub trait DynamicValue<T>: Value<T> {
 
 #[macro_export]
 macro_rules! dynamic_value {
-    ($name: ident, $val_name: ident, $t: ty, $base: expr, $val: expr) => {
-        static mut $val_name: $t = $base;
+    ($name: ident, $val_name: ident, $t: ty) => {
+        static mut $val_name: Option<$t> = None;
 
         #[derive(Copy, Clone, Eq, PartialEq, Hash)]
-        pub struct $name {}
+        struct $name {}
 
         impl $crate::misc::value::DynamicValue<$t> for $name {
             fn set_val(t: $t) {
                 unsafe {
-                    $val_name = t;
+                    $val_name = Some(t);
                 }
             }
         }
 
         impl $crate::misc::value::Value<$t> for $name {
             fn val() -> $t {
-                unsafe { $val_name }
+                unsafe { $val_name.unwrap() }
             }
         }
-
-        $name.set_val($val);
     };
 }
