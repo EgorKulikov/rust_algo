@@ -2,7 +2,7 @@ use crate::io::output::{Output, Writable};
 use crate::numbers::num_traits::primitive::Primitive;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 use std::cmp::Ordering;
-use std::ops::{Add, AddAssign, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, DivAssign, MulAssign, Sub, SubAssign};
 
 const BASE: u32 = 1000000000;
 // const FFT_MIN_SIZE: usize = 50000;
@@ -151,6 +151,24 @@ impl MulAssign<u32> for UBigInt {
         while carry > 0 {
             self.z.push((carry % BASE.into_u64()).into_u32());
             carry /= BASE.into_u64();
+        }
+    }
+}
+
+impl DivAssign<u32> for UBigInt {
+    fn div_assign(&mut self, rhs: u32) {
+        let mut carry = 0;
+        for i in self.z.iter_mut().rev() {
+            let val = carry + i.into_u64();
+            *i = (val / rhs.into_u64()).into_u32();
+            carry = (val % rhs.into_u64()) * BASE.into_u64();
+        }
+        while let Some(d) = self.z.last() {
+            if *d == 0 {
+                self.z.pop();
+            } else {
+                break;
+            }
         }
     }
 }

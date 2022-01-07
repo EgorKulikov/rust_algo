@@ -40,12 +40,6 @@ impl<W: Addable + PartialOrd + Copy + ZeroOne, E: WeightedEdgeTrait<W>> Distance
                     continue;
                 }
                 let total = dist + e.weight();
-                let was = heap.value(next);
-                if let Some((was_dist, ..)) = was {
-                    if *was_dist <= total {
-                        continue;
-                    }
-                }
                 let next_dist = (total, cur, i);
                 heap.add_or_adjust(next, next_dist);
             }
