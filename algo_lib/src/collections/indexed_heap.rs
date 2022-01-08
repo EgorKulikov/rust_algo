@@ -102,6 +102,19 @@ impl<T: PartialOrd> IndexedHeap<T> {
         self.sift_down(self.pos[el].index());
     }
 
+    pub fn add_or_relax(&mut self, el: usize, val: T) {
+        match &self.pos[el] {
+            Opt::None => {
+                self.add_or_adjust(el, val);
+            }
+            Opt::Some(_, value) => {
+                if &val < value {
+                    self.add_or_adjust(el, val);
+                }
+            }
+        }
+    }
+
     pub fn peek(&self) -> Option<(usize, &T)> {
         if self.is_empty() {
             None

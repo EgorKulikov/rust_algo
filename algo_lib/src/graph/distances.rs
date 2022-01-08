@@ -41,7 +41,7 @@ impl<W: Addable + PartialOrd + Copy + ZeroOne, E: WeightedEdgeTrait<W>> Distance
                 }
                 let total = dist + e.weight();
                 let next_dist = (total, cur, i);
-                heap.add_or_adjust(next, next_dist);
+                heap.add_or_relax(next, next_dist);
             }
         }
         res

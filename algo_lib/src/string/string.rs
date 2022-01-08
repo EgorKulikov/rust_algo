@@ -51,6 +51,11 @@ impl<'s> Str<'s> {
         }
     }
 
+    pub fn as_slice_mut(&mut self) -> &mut [u8] {
+        self.to_vec();
+        self.as_vec().as_mut_slice()
+    }
+
     pub fn len(&self) -> usize {
         match self {
             Str::String(s, _) => s.len(),
