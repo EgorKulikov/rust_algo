@@ -174,3 +174,13 @@ impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne, V: AddSub + ZeroOne> IncDec for V
         self
     }
 }
+
+pub trait ConsecutiveIter<T> {
+    fn consecutive_iter(&self) -> Box<dyn Iterator<Item = (&T, &T)> + '_>;
+}
+
+impl<T> ConsecutiveIter<T> for [T] {
+    fn consecutive_iter(&self) -> Box<dyn Iterator<Item = (&T, &T)> + '_> {
+        Box::new(self.iter().zip(self.iter().skip(1)))
+    }
+}
