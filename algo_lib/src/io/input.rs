@@ -187,12 +187,12 @@ impl<'s> Input<'s> {
         };
         let mut res = T::zero();
         loop {
-            if !char::from(c).is_digit(10) {
+            if !c.is_ascii_digit() {
                 panic!(
                     "expected integer, found {}{}{}",
-                    if sgn { "" } else { "-" },
+                    if sgn { "-" } else { "" },
                     res,
-                    char::from(c)
+                    c as char
                 );
             }
             res *= T::from_u8(10);

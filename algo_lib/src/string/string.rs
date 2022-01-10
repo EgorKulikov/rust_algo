@@ -2,6 +2,7 @@ use crate::collections::iter_ext::IterExt;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::cmp::Ordering;
+use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
 use std::marker::PhantomData;
@@ -246,6 +247,12 @@ impl Writable for Str<'_> {
             output.put(*c);
         }
         output.maybe_flush();
+    }
+}
+
+impl Display for Str<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        <String as Display>::fmt(&String::from_utf8(self.as_slice().to_vec()).unwrap(), f)
     }
 }
 
