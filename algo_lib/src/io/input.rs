@@ -124,51 +124,15 @@ impl<'s> Input<'s> {
         res
     }
 
-    #[allow(clippy::should_implement_trait)]
-    pub fn into_iter<T: Readable + 's>(self) -> impl Iterator<Item = T> + 's {
-        struct InputIterator<'s, T: Readable> {
-            input: Input<'s>,
-            phantom: PhantomData<T>,
-        }
-
-        impl<'s, T: Readable + 's> Iterator for InputIterator<'s, T> {
-            type Item = T;
-
-            fn next(&mut self) -> Option<Self::Item> {
-                self.input.skip_whitespace();
-                self.input.peek().map(|_| self.input.read())
-            }
-        }
-
+    pub fn iter<'t, T: Readable + 't + 's>(&'t mut self) -> InputIterator<'t, 's, T>
+    where
+        's: 't,
+    {
         InputIterator {
             input: self,
             phantom: Default::default(),
         }
     }
-
-    /*pub fn iter<'t, T: Readable + 's>(&'t mut self) -> impl Iterator<Item = T> + 't
-    where
-        's: 't,
-    {
-        struct InputIterator<'t, 's: 't, T: Readable + 's> {
-            input: &'t mut Input<'s>,
-            phantom: PhantomData<T>,
-        }
-
-        impl<'t, 's: 't, T: Readable + 's> Iterator for InputIterator<'s, 't, T> {
-            type Item = T;
-
-            fn next(&mut self) -> Option<Self::Item> {
-                self.input.skip_whitespace();
-                self.input.peek().map(|_| self.input.read())
-            }
-        }
-
-        InputIterator::<'t, 's> {
-            input: self,
-            phantom: Default::default(),
-        }
-    }*/
 
     fn read_integer<T: IsSigned + ZeroOne + FromU8 + AddSub + Multable + Display>(&mut self) -> T {
         self.skip_whitespace();
@@ -257,6 +221,20 @@ impl<'s> Input<'s> {
         } else {
             true
         }
+    }
+}
+
+pub struct InputIterator<'t, 's: 't, T: Readable + 't + 's> {
+    input: &'t mut Input<'s>,
+    phantom: PhantomData<T>,
+}
+
+impl<'t, 's: 't, T: Readable + 't + 's> Iterator for InputIterator<'t, 's, T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.input.skip_whitespace();
+        self.input.peek().map(|_| self.input.read())
     }
 }
 
