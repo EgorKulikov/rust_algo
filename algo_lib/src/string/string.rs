@@ -4,10 +4,10 @@ use crate::io::output::{Output, Writable};
 use std::cmp::Ordering;
 use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
-use std::iter::FromIterator;
+use std::iter::{Cloned, FromIterator};
 use std::marker::PhantomData;
 use std::ops::{Add, AddAssign, Deref, Index, IndexMut};
-use std::slice::SliceIndex;
+use std::slice::{Iter, SliceIndex};
 use std::vec::IntoIter;
 
 pub enum Str<'s> {
@@ -72,7 +72,7 @@ impl<'s> Str<'s> {
         self.len() == 0
     }
 
-    pub fn iter(&self) -> impl ExactSizeIterator<Item = u8> + DoubleEndedIterator<Item = u8> + '_ {
+    pub fn iter(&self) -> Cloned<Iter<u8>> {
         match self {
             Str::String(s, _) => s.as_bytes().iter(),
             Str::StringRef(s) => s.as_bytes().iter(),
