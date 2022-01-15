@@ -2,12 +2,15 @@ use crate::collections::arr2d::Arr2d;
 use crate::graph::edges::edge_trait::EdgeTrait;
 use crate::graph::graph::Graph;
 use crate::numbers::num_traits::bit_ops::Bits;
+use crate::numbers::num_traits::primitive::Primitive;
+use std::cell::UnsafeCell;
 
 pub struct LCA {
     position: Vec<u32>,
     lca_arr: Arr2d<u32>,
     level: Vec<u32>,
     parent: Vec<u32>,
+    predecessors: UnsafeCell<Option<Arr2d<i32>>>,
 }
 
 impl LCA {
@@ -40,6 +43,59 @@ impl LCA {
 
     pub fn path_length(&self, first: usize, second: usize) -> usize {
         (self.level[first] + self.level[second] - 2 * self.level[self.lca(first, second)]) as usize
+    }
+
+    pub fn num_levels(&self) -> usize {
+        self.build_steps();
+        unsafe {
+            self.predecessors
+                .get()
+                .as_ref()
+                .unwrap()
+                .as_ref()
+                .unwrap()
+                .d1()
+        }
+    }
+
+    pub fn predecessor(&self, level: usize, vert: usize) -> Option<usize> {
+        self.build_steps();
+        unsafe {
+            match self.predecessors.get().as_ref().unwrap().as_ref().unwrap()[(level, vert)] {
+                -1 => None,
+                v => Some(v.into_usize()),
+            }
+        }
+    }
+
+    fn build_steps(&self) {
+        unsafe {
+            if self.predecessors.get().as_ref().unwrap().is_some() {
+                return;
+            }
+        }
+        let vertex_count = self.position.len();
+        let len = (u32::bits() - vertex_count.into_u32().leading_zeros()) as usize;
+        let mut predecessors = Arr2d::new(len, vertex_count, -1);
+        for i in 0..vertex_count {
+            predecessors[(0, i)] = match self.parent(i) {
+                None => -1,
+                Some(v) => v.into_i32(),
+            };
+        }
+        for i in 1..len {
+            for j in 0..vertex_count {
+                let p = predecessors[(i - 1, j)];
+                if p == -1 {
+                    predecessors[(i, j)] = -1;
+                } else {
+                    predecessors[(i, j)] = predecessors[(i - 1, p.into_usize())];
+                }
+            }
+        }
+        unsafe {
+            *self.predecessors.get() = Some(predecessors);
+        }
     }
 }
 
@@ -122,6 +178,7 @@ impl<E: EdgeTrait> LCATrait for Graph<E> {
             lca_arr,
             level,
             parent,
+            predecessors: UnsafeCell::new(None),
         }
     }
 }

@@ -17,18 +17,12 @@ use std::marker::PhantomData;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 pub trait BaseModInt:
-    AddSub
-    + MulDiv
-    + Neg<Output = Self>
-    + Copy
-    + ZeroOne
-    + PartialEq
-    + From<Self::T>
-    + Invertable<Output = Self>
+    AddSub + MulDiv + Neg<Output = Self> + Copy + ZeroOne + PartialEq + Invertable<Output = Self>
 {
     type W: AddSub + MulDivRem + Copy + ZeroOne + From<Self::T>;
     type T: AddSub + MulDivRem + Copy + PartialEq + ZeroOne + Wideable<W = Self::W> + Ord;
 
+    fn from(v: Self::T) -> Self;
     fn module() -> Self::T;
 }
 
@@ -137,6 +131,10 @@ where
 {
     type W = T::W;
     type T = T;
+
+    fn from(v: Self::T) -> Self {
+        Self::new(v)
+    }
 
     fn module() -> T {
         V::val()
