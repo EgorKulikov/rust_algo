@@ -2,7 +2,7 @@ use crate::collections::iter_ext::IterExt;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::mem::MaybeUninit;
-use std::ops::{Index, Mul};
+use std::ops::{Deref, Index, Mul};
 
 #[derive(Clone, Debug)]
 pub struct Permutation {
@@ -152,5 +152,13 @@ impl Index<usize> for Permutation {
 
     fn index(&self, index: usize) -> &Self::Output {
         &self.p[index]
+    }
+}
+
+impl Deref for Permutation {
+    type Target = Vec<usize>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.p
     }
 }

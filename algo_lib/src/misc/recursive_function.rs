@@ -10,7 +10,7 @@ macro_rules! recursive_function {
         where
             F: FnMut(&mut dyn $trait<$($type, )*Output>, $($type, )*) -> Output,
         {
-            f: F,
+            f: std::cell::UnsafeCell<F>,
             $($arg: PhantomData<$type>,
             )*
             phantom_output: PhantomData<Output>,
@@ -22,7 +22,7 @@ macro_rules! recursive_function {
         {
             pub fn new(f: F) -> Self {
                 Self {
-                    f,
+                    f: std::cell::UnsafeCell::new(f),
                     $($arg: Default::default(),
                     )*
                     phantom_output: Default::default(),
@@ -35,9 +35,7 @@ macro_rules! recursive_function {
             F: FnMut(&mut dyn $trait<$($type, )*Output>, $($type, )*) -> Output,
         {
             fn call(&mut self, $($arg: $type,)*) -> Output {
-                let const_ptr = &self.f as *const F;
-                let mut_ptr = const_ptr as *mut F;
-                unsafe { (&mut *mut_ptr)(self, $($arg, )*) }
+                unsafe { (&mut *self.f.get())(self, $($arg, )*) }
             }
         }
     }
