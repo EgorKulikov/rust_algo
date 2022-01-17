@@ -1,5 +1,7 @@
 use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::zero_one::ZeroOne;
+use std::iter::{Skip, Zip};
+use std::slice::Iter;
 
 pub trait Qty {
     fn qty_bound(&self, bound: usize) -> Vec<usize>;
@@ -176,11 +178,11 @@ impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne, V: AddSub + ZeroOne> IncDec for V
 }
 
 pub trait ConsecutiveIter<T> {
-    fn consecutive_iter(&self) -> Box<dyn Iterator<Item = (&T, &T)> + '_>;
+    fn consecutive_iter(&self) -> Zip<Iter<T>, Skip<Iter<T>>>;
 }
 
 impl<T> ConsecutiveIter<T> for [T] {
-    fn consecutive_iter(&self) -> Box<dyn Iterator<Item = (&T, &T)> + '_> {
-        Box::new(self.iter().zip(self.iter().skip(1)))
+    fn consecutive_iter(&self) -> Zip<Iter<T>, Skip<Iter<T>>> {
+        self.iter().zip(self.iter().skip(1))
     }
 }
