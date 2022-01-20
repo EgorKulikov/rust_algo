@@ -1,6 +1,6 @@
 use crate::collections::treap::{TreapNode, Updateable};
 use crate::misc::direction::Direction;
-use std::ops::{Deref, DerefMut, Index};
+use std::ops::{Deref, DerefMut, Index, RangeBounds};
 
 struct TreapValue<V> {
     size: u32,
@@ -25,6 +25,15 @@ impl<T: Ord, V> TreapMap<T, V> {
         }
     }
 
+    pub unsafe fn from_sorted(iter: impl Iterator<Item = (T, V)>) -> Self {
+        let mut res = Self::new();
+        for (t, v) in iter {
+            res.root
+                .merge_unsafe(TreapNode::new(t, TreapValue { size: 1, value: v }));
+        }
+        res
+    }
+
     pub fn len(&self) -> usize {
         self.root.data().map(|data| data.size).unwrap_or(0) as usize
     }
@@ -36,8 +45,10 @@ impl<T: Ord, V> TreapMap<T, V> {
             .replace_data(key, TreapValue { size: 1, value })
             .map(|data| data.value);
         self.root = left;
-        self.root.merge(node);
-        self.root.merge(right);
+        unsafe {
+            self.root.merge_unsafe(node);
+            self.root.merge_unsafe(right);
+        }
         res
     }
 
@@ -45,29 +56,36 @@ impl<T: Ord, V> TreapMap<T, V> {
         let (left, mut right) = self.root.split(key, false);
         let (node, right) = right.split(key, true);
         self.root = left;
-        self.root.merge(right);
+        unsafe {
+            self.root.merge_unsafe(right);
+        }
         <TreapNode<T, TreapValue<V>> as Into<Option<TreapValue<V>>>>::into(node)
             .map(|data| data.value)
     }
 
-    pub fn index(&mut self, key: &T) -> Option<usize> {
-        let (left, mut right) = self.root.split(key, false);
-        let (node, right) = right.split(key, true);
-        let res = node
-            .data()
-            .map(|_| left.data().map(|data| data.size as usize).unwrap_or(0));
-        self.root = left;
-        self.root.merge(node);
-        self.root.merge(right);
-        res
+    pub fn index(&self, key: &T) -> Option<usize> {
+        let (found, idx) = self
+            .root
+            .range(..=key)
+            .fold((false, 0), |(found, idx), node| {
+                if node.key().unwrap() == key {
+                    (true, idx)
+                } else {
+                    (found, idx + node.data().unwrap().size)
+                }
+            });
+        if found {
+            Some(idx as usize)
+        } else {
+            None
+        }
     }
 
-    pub fn lower_bound(&mut self, key: &T) -> usize {
-        let (left, right) = self.root.split(key, false);
-        let res = left.data().map(|data| data.size).unwrap_or(0) as usize;
-        self.root = left;
-        self.root.merge(right);
-        res
+    pub fn lower_bound(&self, key: &T) -> usize {
+        match self.ceil(key) {
+            None => self.len(),
+            Some((key, _)) => self.index(key).unwrap(),
+        }
     }
 
     pub fn get_at(&mut self, mut at: usize) -> Option<(&T, &V)> {
@@ -94,18 +112,47 @@ impl<T: Ord, V> TreapMap<T, V> {
         }
     }
 
-    pub fn keys(&self) -> impl Iterator<Item = &T> + '_ {
-        self.root.iter().map(|node| node.key().unwrap())
+    pub fn keys(&self) -> impl DoubleEndedIterator<Item = &T> {
+        self.iter().map(|(key, _)| key)
     }
 
-    pub fn values(&self) -> impl Iterator<Item = &V> + '_ {
-        self.root.iter().map(|node| &node.data().unwrap().value)
+    pub fn values(&self) -> impl DoubleEndedIterator<Item = &V> {
+        self.iter().map(|(_, val)| val)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (&T, &V)> + '_ {
-        self.root
-            .iter()
-            .map(|node| (node.key().unwrap(), &node.data().unwrap().value))
+    pub fn iter(&self) -> impl DoubleEndedIterator<Item = (&T, &V)> {
+        self.range(..)
+    }
+
+    pub fn range<'a, 's: 'a>(
+        &'s self,
+        r: impl RangeBounds<&'a T>,
+    ) -> impl DoubleEndedIterator<Item = (&'s T, &'s V)> {
+        self.root.range(r).map(Self::node_to_pair)
+    }
+
+    pub fn first(&self) -> Option<(&T, &V)> {
+        self.root.leftmost().map(Self::node_to_pair)
+    }
+
+    pub fn last(&self) -> Option<(&T, &V)> {
+        self.root.rightmost().map(Self::node_to_pair)
+    }
+
+    pub fn lower(&self, key: &T) -> Option<(&T, &V)> {
+        self.root.lower(key).map(Self::node_to_pair)
+    }
+
+    pub fn higher(&self, key: &T) -> Option<(&T, &V)> {
+        self.root.higher(key).map(Self::node_to_pair)
+    }
+
+    pub fn floor(&self, key: &T) -> Option<(&T, &V)> {
+        self.root.floor(key).map(Self::node_to_pair)
+    }
+
+    pub fn ceil(&self, key: &T) -> Option<(&T, &V)> {
+        self.root.ceil(key).map(Self::node_to_pair)
     }
 
     pub fn is_empty(&self) -> bool {
@@ -122,6 +169,10 @@ impl<T: Ord, V> TreapMap<T, V> {
 
     pub fn contains(&self, key: &T) -> bool {
         self.root.find(key).is_some()
+    }
+
+    fn node_to_pair(node: &TreapNode<T, TreapValue<V>>) -> (&T, &V) {
+        (node.key().unwrap(), &node.data().unwrap().value)
     }
 }
 
@@ -147,6 +198,10 @@ impl<T: Ord> TreapSet<T> {
         Self(TreapMap::new())
     }
 
+    pub unsafe fn from_sorted(iter: impl Iterator<Item = T>) -> Self {
+        Self(TreapMap::from_sorted(iter.map(|t| (t, ()))))
+    }
+
     pub fn insert(&mut self, key: T) -> bool {
         self.0.insert(key, ()).is_some()
     }
@@ -156,11 +211,46 @@ impl<T: Ord> TreapSet<T> {
     }
 
     pub fn get_at(&mut self, idx: usize) -> Option<&T> {
-        self.0.get_at(idx).map(|(key, _)| key)
+        self.0.get_at(idx).map(Self::map_to_key)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &T> + '_ {
+    pub fn iter(&self) -> impl DoubleEndedIterator<Item = &T> + '_ {
         self.0.keys()
+    }
+
+    pub fn range<'a, 's: 'a>(
+        &'s self,
+        r: impl RangeBounds<&'a T>,
+    ) -> impl DoubleEndedIterator<Item = &'s T> {
+        self.0.range(r).map(Self::map_to_key)
+    }
+
+    pub fn first(&self) -> Option<&T> {
+        self.0.first().map(Self::map_to_key)
+    }
+
+    pub fn last(&self) -> Option<&T> {
+        self.0.last().map(Self::map_to_key)
+    }
+
+    pub fn lower(&self, key: &T) -> Option<&T> {
+        self.0.lower(key).map(Self::map_to_key)
+    }
+
+    pub fn higher(&self, key: &T) -> Option<&T> {
+        self.0.higher(key).map(Self::map_to_key)
+    }
+
+    pub fn floor(&self, key: &T) -> Option<&T> {
+        self.0.floor(key).map(Self::map_to_key)
+    }
+
+    pub fn ceil(&self, key: &T) -> Option<&T> {
+        self.0.ceil(key).map(Self::map_to_key)
+    }
+
+    fn map_to_key<'a>((key, _): (&'a T, &'a ())) -> &'a T {
+        key
     }
 }
 

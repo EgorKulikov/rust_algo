@@ -93,3 +93,28 @@ macro_rules! zip {
             )
     };
 }
+
+pub fn interleave<T>(
+    mut iter1: impl Iterator<Item = T>,
+    mut iter2: impl Iterator<Item = T>,
+) -> impl Iterator<Item = T> {
+    std::iter::from_fn(move || -> Option<T> {
+        enum NextFrom {
+            First,
+            Second,
+        }
+        static mut NEXT_FROM: NextFrom = NextFrom::First;
+        unsafe {
+            match NEXT_FROM {
+                NextFrom::First => {
+                    NEXT_FROM = NextFrom::Second;
+                    iter1.next()
+                }
+                NextFrom::Second => {
+                    NEXT_FROM = NextFrom::First;
+                    iter2.next()
+                }
+            }
+        }
+    })
+}

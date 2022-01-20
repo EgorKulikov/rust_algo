@@ -1,16 +1,16 @@
 use crate::collections::arr2d::Arr2d;
 use crate::graph::edges::edge_trait::EdgeTrait;
 use crate::graph::graph::Graph;
+use crate::misc::owned_cell::OwnedCell;
 use crate::numbers::num_traits::bit_ops::Bits;
 use crate::numbers::num_traits::primitive::Primitive;
-use std::cell::UnsafeCell;
 
 pub struct LCA {
     position: Vec<u32>,
     lca_arr: Arr2d<u32>,
     level: Vec<u32>,
     parent: Vec<u32>,
-    predecessors: UnsafeCell<Option<Arr2d<i32>>>,
+    predecessors: OwnedCell<Option<Arr2d<i32>>>,
 }
 
 impl LCA {
@@ -47,21 +47,13 @@ impl LCA {
 
     pub fn num_levels(&self) -> usize {
         self.build_steps();
-        unsafe {
-            self.predecessors
-                .get()
-                .as_ref()
-                .unwrap()
-                .as_ref()
-                .unwrap()
-                .d1()
-        }
+        unsafe { self.predecessors.as_ref().as_ref().unwrap().d1() }
     }
 
     pub fn predecessor(&self, level: usize, vert: usize) -> Option<usize> {
         self.build_steps();
         unsafe {
-            match self.predecessors.get().as_ref().unwrap().as_ref().unwrap()[(level, vert)] {
+            match self.predecessors.as_ref().as_ref().unwrap()[(level, vert)] {
                 -1 => None,
                 v => Some(v.into_usize()),
             }
@@ -70,7 +62,7 @@ impl LCA {
 
     fn build_steps(&self) {
         unsafe {
-            if self.predecessors.get().as_ref().unwrap().is_some() {
+            if self.predecessors.as_ref().is_some() {
                 return;
             }
         }
@@ -94,7 +86,7 @@ impl LCA {
             }
         }
         unsafe {
-            *self.predecessors.get() = Some(predecessors);
+            self.predecessors.replace(Some(predecessors));
         }
     }
 }
@@ -178,7 +170,7 @@ impl<E: EdgeTrait> LCATrait for Graph<E> {
             lca_arr,
             level,
             parent,
-            predecessors: UnsafeCell::new(None),
+            predecessors: OwnedCell::new(None),
         }
     }
 }

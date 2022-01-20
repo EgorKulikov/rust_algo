@@ -140,6 +140,12 @@ impl<T: Writable> Writable for &[T] {
     }
 }
 
+impl<T: Writable> Writable for &T {
+    fn write(&self, output: &mut Output) {
+        T::write(self, output)
+    }
+}
+
 impl<T: Writable> Writable for Vec<T> {
     fn write(&self, output: &mut Output) {
         (&self[..]).write(output);

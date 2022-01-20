@@ -1,8 +1,10 @@
 use crate::misc::direction::Direction;
 use crate::misc::random::random;
+use std::borrow::Borrow;
 use std::cmp::Ordering;
+use std::collections::Bound;
 use std::mem::swap;
-use std::ops::{Deref, DerefMut};
+use std::ops::{Deref, DerefMut, RangeBounds};
 
 pub struct TreapNode<Key, Data>(Option<Box<TreapNodeInner<Key, Data>>>);
 
@@ -95,33 +97,86 @@ impl<Key: Ord, Data: Updateable> TreapNode<Key, Data> {
         }
     }
 
-    pub fn iter(&self) -> Box<dyn Iterator<Item = &Self> + '_> {
-        match self.deref() {
-            None => Box::new(std::iter::empty()),
-            Some(node) => Box::new(
-                node.left
-                    .iter()
-                    .chain(std::iter::once(self))
-                    .chain(node.right.iter()),
-            ),
-        }
+    pub fn range<'a, 's: 'a>(&'s self, r: impl RangeBounds<&'a Key>) -> Iter<'s, Key, Data> {
+        Iter::new(self.borrow(), r)
+    }
+
+    pub fn leftmost(&self) -> Option<&Self> {
+        self.as_ref()
+            .map(|node| node.left.leftmost().unwrap_or(self))
+    }
+
+    pub fn rightmost(&self) -> Option<&Self> {
+        self.as_ref()
+            .map(|node| node.right.rightmost().unwrap_or(self))
+    }
+
+    pub fn lower(&self, key: &Key) -> Option<&Self> {
+        self.as_ref().and_then(|node| {
+            if &node.key < key {
+                node.right.lower(key).or(Some(self))
+            } else {
+                node.left.lower(key)
+            }
+        })
+    }
+
+    pub fn floor(&self, key: &Key) -> Option<&Self> {
+        self.as_ref().and_then(|node| {
+            if &node.key <= key {
+                node.right.floor(key).or(Some(self))
+            } else {
+                node.left.floor(key)
+            }
+        })
+    }
+
+    pub fn higher(&self, key: &Key) -> Option<&Self> {
+        self.as_ref().and_then(|node| {
+            if &node.key > key {
+                node.left.higher(key).or(Some(self))
+            } else {
+                node.right.higher(key)
+            }
+        })
+    }
+
+    pub fn ceil(&self, key: &Key) -> Option<&Self> {
+        self.as_ref().and_then(|node| {
+            if &node.key >= key {
+                node.left.ceil(key).or(Some(self))
+            } else {
+                node.right.ceil(key)
+            }
+        })
     }
 
     pub fn priority(&self) -> u64 {
         self.as_ref().map(|node| node.priority).unwrap_or(0)
     }
 
-    pub fn merge(&mut self, mut right: Self) {
+    pub fn merge(&mut self, right: Self) {
+        if self.is_some() && right.is_some() {
+            assert!(
+                self.rightmost().unwrap().key().unwrap() < right.leftmost().unwrap().key().unwrap()
+            );
+        }
+        unsafe {
+            self.merge_unsafe(right);
+        }
+    }
+
+    pub unsafe fn merge_unsafe(&mut self, mut right: Self) {
         if self.is_none() {
             *self = right;
         } else if right.is_some() {
             if self.priority() > right.priority() {
                 let node = self.as_mut().unwrap();
-                node.right.merge(right);
+                node.right.merge_unsafe(right);
                 node.update();
             } else {
                 let mut node = right.take().unwrap();
-                self.merge(Self(node.left.take()));
+                self.merge_unsafe(Self(node.left.take()));
                 node.left = Self(self.take());
                 node.update();
                 *self = Self(Some(node));
@@ -182,5 +237,59 @@ pub trait Updateable {
 impl Updateable for u32 {
     fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
         *self = 1 + *left.unwrap_or(&0) + *right.unwrap_or(&0)
+    }
+}
+
+// TODO: get rid of log
+pub struct Iter<'a, Key, Data> {
+    root: &'a TreapNode<Key, Data>,
+    from: Option<&'a TreapNode<Key, Data>>,
+    to: Option<&'a TreapNode<Key, Data>>,
+}
+
+impl<'a, Key: Ord, Data: Updateable> Iter<'a, Key, Data> {
+    pub fn new<'b>(root: &'a TreapNode<Key, Data>, r: impl RangeBounds<&'b Key>) -> Self
+    where
+        'a: 'b,
+    {
+        Self {
+            root,
+            from: match r.start_bound() {
+                Bound::Included(key) => root.ceil(*key),
+                Bound::Excluded(key) => root.higher(*key),
+                Bound::Unbounded => root.leftmost(),
+            },
+            to: match r.end_bound() {
+                Bound::Included(key) => root.floor(*key),
+                Bound::Excluded(key) => root.lower(*key),
+                Bound::Unbounded => root.rightmost(),
+            },
+        }
+    }
+}
+
+impl<'a, Key: Ord, Data: Updateable> Iterator for Iter<'a, Key, Data> {
+    type Item = &'a TreapNode<Key, Data>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.from?.key().unwrap() <= self.to?.key().unwrap() {
+            let res = self.from;
+            self.from = self.root.higher(self.from.unwrap().key().unwrap());
+            res
+        } else {
+            None
+        }
+    }
+}
+
+impl<'a, Key: Ord, Data: Updateable> DoubleEndedIterator for Iter<'a, Key, Data> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        if self.from?.key().unwrap() <= self.to?.key().unwrap() {
+            let res = self.to;
+            self.to = self.root.lower(self.to.unwrap().key().unwrap());
+            res
+        } else {
+            None
+        }
     }
 }
