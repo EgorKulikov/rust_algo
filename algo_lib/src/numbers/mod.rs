@@ -1,5 +1,6 @@
 pub mod gcd;
 pub mod inf_int;
+pub mod interpolation;
 pub mod mod_int;
 pub mod mod_utils;
 pub mod num_traits;

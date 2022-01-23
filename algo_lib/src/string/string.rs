@@ -96,6 +96,17 @@ impl<'s> Str<'s> {
         self.as_vec().sort_unstable();
     }
 
+    pub fn into_owned(mut self) -> Str<'static> {
+        self.to_vec();
+        Str::Vec(
+            match self {
+                Str::Vec(v, _) => v,
+                _ => unreachable!(),
+            },
+            Default::default(),
+        )
+    }
+
     //noinspection RsSelfConvention
     #[allow(clippy::wrong_self_convention)]
     fn to_vec(&mut self) {
