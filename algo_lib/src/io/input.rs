@@ -17,6 +17,14 @@ macro_rules! read_impl {
             self.read_vec(len)
         }
     };
+
+    ($t: ty, $read_name: ident, $read_vec_name: ident, $read_pair_vec_name: ident) => {
+        read_impl!($t, $read_name, $read_vec_name);
+
+        pub fn $read_pair_vec_name(&mut self, len: usize) -> Vec<($t, $t)> {
+            self.read_vec(len)
+        }
+    };
 }
 
 pub struct Input<'s> {
@@ -200,7 +208,7 @@ impl<'s> Input<'s> {
     read_impl!(u32, read_unsigned, read_unsigned_vec);
     read_impl!(u64, read_u64, read_u64_vec);
     read_impl!(u128, read_u128, read_u128_vec);
-    read_impl!(usize, read_usize, read_usize_vec);
+    read_impl!(usize, read_usize, read_usize_vec, read_usize_pair_vec);
     read_impl!(i8, read_i8, read_i8_vec);
     read_impl!(i16, read_i16, read_i16_vec);
     read_impl!(i32, read_int, read_int_vec);

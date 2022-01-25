@@ -5,6 +5,7 @@ pub mod arr5d;
 pub mod bit_set;
 pub mod default_map;
 pub mod dsu;
+pub mod dsu2d;
 pub mod fenwick;
 pub mod id;
 pub mod indexed_heap;
