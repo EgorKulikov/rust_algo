@@ -1,3 +1,4 @@
+use std::collections::hash_map::IntoValues;
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
@@ -30,6 +31,10 @@ impl<K: Hash + Eq, V: Default> DefaultMap<K, V> {
 
     pub fn get_mut(&mut self, key: K) -> &mut V {
         self.0.entry(key).or_insert_with(|| V::default())
+    }
+
+    pub fn into_values(self) -> IntoValues<K, V> {
+        self.0.into_values()
     }
 }
 

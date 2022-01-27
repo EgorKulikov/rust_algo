@@ -8,7 +8,7 @@ pub trait Qty {
     fn qty(&self) -> Vec<usize>;
 }
 
-impl Qty for &[usize] {
+impl Qty for [usize] {
     fn qty_bound(&self, bound: usize) -> Vec<usize> {
         let mut res = vec![0; bound];
         for i in self.iter() {
@@ -32,7 +32,7 @@ pub trait Bounds<T: PartialOrd> {
     fn bin_search(&self, el: &T) -> Option<usize>;
 }
 
-impl<T: PartialOrd> Bounds<T> for &[T] {
+impl<T: PartialOrd> Bounds<T> for [T] {
     fn lower_bound(&self, el: &T) -> usize {
         let mut left = 0;
         let mut right = self.len();

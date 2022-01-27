@@ -85,6 +85,10 @@ impl Permutation {
         None
     }
 
+    pub fn swap(&mut self, a: usize, b: usize) {
+        self.p.swap(a, b)
+    }
+
     fn check(p: &[usize]) -> bool {
         let mut was = vec![false; p.len()];
         for i in p {
