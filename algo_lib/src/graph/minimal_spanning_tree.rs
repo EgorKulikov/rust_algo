@@ -1,16 +1,12 @@
 use crate::collections::dsu::DSU;
 use crate::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
 use crate::graph::graph::Graph;
-use crate::numbers::num_traits::add_sub::Addable;
-use crate::numbers::num_traits::zero_one::ZeroOne;
 
-pub trait MinimalSpanningTree<W: Addable + Ord + Copy + ZeroOne, E: WeightedEdgeTrait<W>> {
+pub trait MinimalSpanningTree<W: Ord + Copy, E: WeightedEdgeTrait<W>> {
     fn minimal_spanning_tree(&self) -> Graph<E>;
 }
 
-impl<W: Addable + Ord + Copy + ZeroOne, E: WeightedEdgeTrait<W>> MinimalSpanningTree<W, E>
-    for Graph<E>
-{
+impl<W: Ord + Copy, E: WeightedEdgeTrait<W>> MinimalSpanningTree<W, E> for Graph<E> {
     fn minimal_spanning_tree(&self) -> Graph<E> {
         assert!(E::BIDIRECTIONAL);
         let mut edges = Vec::with_capacity(self.edge_count());

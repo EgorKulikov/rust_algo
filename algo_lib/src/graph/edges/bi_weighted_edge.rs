@@ -8,13 +8,13 @@ use crate::numbers::num_traits::add_sub::Addable;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 
 #[derive(Clone)]
-pub struct BiWeightedEdgeRaw<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId> {
+pub struct BiWeightedEdgeRaw<W: PartialOrd + Copy, Id: EdgeId> {
     to: u32,
     weight: W,
     id: Id,
 }
 
-impl<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId> BiWeightedEdgeRaw<W, Id> {
+impl<W: PartialOrd + Copy, Id: EdgeId> BiWeightedEdgeRaw<W, Id> {
     pub fn new(to: usize, w: W) -> Self {
         Self {
             to: to as u32,
@@ -24,7 +24,7 @@ impl<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId> BiWeightedEdgeRaw<W, 
     }
 }
 
-impl<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId> EdgeTrait for BiWeightedEdgeRaw<W, Id> {
+impl<W: PartialOrd + Copy, Id: EdgeId> EdgeTrait for BiWeightedEdgeRaw<W, Id> {
     const REVERSABLE: bool = true;
     const BIDIRECTIONAL: bool = true;
 
@@ -51,14 +51,9 @@ impl<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId> EdgeTrait for BiWeigh
     }
 }
 
-impl<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId> BiEdgeTrait
-    for BiWeightedEdgeRaw<W, Id>
-{
-}
+impl<W: PartialOrd + Copy, Id: EdgeId> BiEdgeTrait for BiWeightedEdgeRaw<W, Id> {}
 
-impl<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId> WeightedEdgeTrait<W>
-    for BiWeightedEdgeRaw<W, Id>
-{
+impl<W: PartialOrd + Copy, Id: EdgeId> WeightedEdgeTrait<W> for BiWeightedEdgeRaw<W, Id> {
     fn weight(&self) -> W {
         self.weight
     }
