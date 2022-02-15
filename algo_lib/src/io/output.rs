@@ -204,6 +204,16 @@ impl<T: Writable> Writable for Option<T> {
     }
 }
 
+impl Writable for bool {
+    fn write(&self, output: &mut Output) {
+        if *self {
+            output.print(&"YES");
+        } else {
+            output.print(&"NO");
+        }
+    }
+}
+
 pub static mut OUTPUT: Option<Output> = None;
 
 pub fn output() -> &'static mut Output {
