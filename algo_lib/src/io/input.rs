@@ -211,7 +211,7 @@ impl<'s> Input<'s> {
     read_impl!(usize, read_usize, read_usize_vec, read_usize_pair_vec);
     read_impl!(i8, read_i8, read_i8_vec);
     read_impl!(i16, read_i16, read_i16_vec);
-    read_impl!(i32, read_int, read_int_vec);
+    read_impl!(i32, read_int, read_int_vec, read_int_pair_vec);
     read_impl!(i64, read_long, read_long_vec, read_long_pair_vec);
     read_impl!(i128, read_i128, read_i128_vec);
     read_impl!(isize, read_isize, read_isize_vec);
