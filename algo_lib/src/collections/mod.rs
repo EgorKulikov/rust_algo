@@ -6,6 +6,7 @@ pub mod bit_set;
 pub mod default_map;
 pub mod dsu;
 pub mod dsu2d;
+pub mod fast_clear_fenwick;
 pub mod fenwick;
 pub mod id;
 pub mod indexed_heap;
