@@ -30,6 +30,14 @@ impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> Rational<T> {
             den: den / g,
         }
     }
+
+    pub fn num(&self) -> T {
+        self.num
+    }
+
+    pub fn den(&self) -> T {
+        self.den
+    }
 }
 
 impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> Add for Rational<T> {
@@ -121,5 +129,15 @@ impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> PartialOrd for Rational<T> {
 impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> Ord for Rational<T> {
     fn cmp(&self, other: &Self) -> Ordering {
         (self.num * other.den).cmp(&(other.num * self.den))
+    }
+}
+
+impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> ZeroOne for Rational<T> {
+    fn zero() -> Self {
+        Self::new(T::zero(), T::one())
+    }
+
+    fn one() -> Self {
+        Self::new(T::one(), T::one())
     }
 }
