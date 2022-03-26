@@ -1,3 +1,5 @@
+use crate::numbers::primes::divisors;
+
 mod mod_int {
     use crate::numbers::mod_int::ModInt;
     use crate::numbers::num_traits::zero_one::ZeroOne;
@@ -71,5 +73,12 @@ mod mod_int {
     fn consts() {
         let one = Mod::one() - Mod::zero();
         assert_eq!(format!("{:?}", one), "1");
+    }
+}
+
+#[test]
+fn test_divisors() {
+    for i in 1..100000 {
+        divisors(i);
     }
 }

@@ -207,9 +207,9 @@ impl<T: Writable> Writable for Option<T> {
 impl Writable for bool {
     fn write(&self, output: &mut Output) {
         if *self {
-            output.print(&"YES");
+            output.print(&"Yes");
         } else {
-            output.print(&"NO");
+            output.print(&"No");
         }
     }
 }

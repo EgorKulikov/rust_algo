@@ -1,3 +1,4 @@
+use crate::io::output::{Output, Writable};
 use crate::misc::value::Value;
 use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::mul_div_rem::MulDiv;
@@ -59,5 +60,11 @@ impl<T: AddSub + MulDiv + ZeroOne + Ord + Copy, V: Value<T>> Mul for InfInt<T, V
     fn mul(mut self, rhs: Self) -> Self::Output {
         self *= rhs;
         self
+    }
+}
+
+impl<T: AddSub + MulDiv + ZeroOne + Ord + Copy + Writable, V: Value<T>> Writable for InfInt<T, V> {
+    fn write(&self, output: &mut Output) {
+        self.n.write(output)
     }
 }

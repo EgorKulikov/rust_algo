@@ -17,7 +17,7 @@ impl<T, V: ConstValue<T>> Value<T> for V {
 #[macro_export]
 macro_rules! value {
     ($name: ident, $t: ty, $val: expr) => {
-        #[derive(Copy, Clone, Eq, PartialEq, Hash)]
+        #[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
         pub struct $name {}
 
         impl $crate::misc::value::ConstValue<$t> for $name {
