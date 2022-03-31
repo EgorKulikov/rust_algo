@@ -10,10 +10,10 @@ use crate::{dynamic_value, value_ref};
 use std::collections::Bound;
 use std::ops::RangeBounds;
 
-dynamic_value!(HM, MOD, i64);
+dynamic_value!(HM MOD: i64);
 type HashMod = ModInt<i64, HM>;
 
-value_ref!(HashBaseContainer, HBCS, HashBase);
+value_ref!(HashBaseContainer HBCS: HashBase);
 
 pub struct HashBase {
     multiplier: HashMod,

@@ -276,30 +276,19 @@ impl<T: Readable> Readable for Vec<T> {
 }
 
 macro_rules! read_integer {
-    ($t:ident) => {
+    ($($t:ident)+) => {$(
         impl Readable for $t {
             fn read(input: &mut Input) -> Self {
                 input.read_integer()
             }
         }
-    };
+    )+};
 }
 
-read_integer!(i8);
-read_integer!(i16);
-read_integer!(i32);
-read_integer!(i64);
-read_integer!(i128);
-read_integer!(isize);
-read_integer!(u8);
-read_integer!(u16);
-read_integer!(u32);
-read_integer!(u64);
-read_integer!(u128);
-read_integer!(usize);
+read_integer!(i8 i16 i32 i64 i128 isize u8 u16 u32 u64 u128 usize);
 
 macro_rules! tuple_readable {
-    ( $( $name:ident )+ ) => {
+    ($($name:ident)+) => {
         impl<$($name: Readable), +> Readable for ($($name,)+) {
             fn read(input: &mut Input) -> Self {
                 ($($name::read(input),)+)

@@ -153,29 +153,16 @@ impl<T: Writable> Writable for Vec<T> {
 }
 
 macro_rules! write_to_string {
-    ($t:ident) => {
+    ($($t:ident)+) => {$(
         impl Writable for $t {
             fn write(&self, output: &mut Output) {
                 self.to_string().write(output);
             }
         }
-    };
+    )+};
 }
 
-write_to_string!(u8);
-write_to_string!(u16);
-write_to_string!(u32);
-write_to_string!(u64);
-write_to_string!(u128);
-write_to_string!(usize);
-write_to_string!(i8);
-write_to_string!(i16);
-write_to_string!(i32);
-write_to_string!(i64);
-write_to_string!(i128);
-write_to_string!(isize);
-write_to_string!(f32);
-write_to_string!(f64);
+write_to_string!(u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64);
 
 impl<T: Writable, U: Writable> Writable for (T, U) {
     fn write(&self, output: &mut Output) {

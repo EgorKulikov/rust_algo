@@ -10,7 +10,7 @@ pub trait ValueRef<T: 'static> {
 
 #[macro_export]
 macro_rules! const_value_ref {
-    ($name: ident, $val_name: ident, $int_t: ty, $ext_t: ty, $base: expr) => {
+    ($name: ident $val_name: ident: $int_t: ty as $ext_t: ty = $base: expr) => {
         const $val_name: $int_t = $base;
 
         #[derive(Copy, Clone, Eq, PartialEq, Hash)]
@@ -26,7 +26,7 @@ macro_rules! const_value_ref {
 
 #[macro_export]
 macro_rules! value_ref {
-    ($name: ident, $val_name: ident, $t: ty) => {
+    ($name: ident $val_name: ident: $t: ty) => {
         static mut $val_name: Option<$t> = None;
 
         #[derive(Copy, Clone, Eq, PartialEq, Hash)]

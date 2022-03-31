@@ -25,6 +25,10 @@ impl<K: Hash + Eq, V: Default> DefaultMap<K, V> {
         Self(HashMap::new(), V::default())
     }
 
+    pub fn with_capacity(cap: usize) -> Self {
+        Self(HashMap::with_capacity(cap), V::default())
+    }
+
     pub fn get(&self, key: &K) -> &V {
         self.0.get(key).unwrap_or(&self.1)
     }

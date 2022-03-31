@@ -16,7 +16,7 @@ impl<T, V: ConstValue<T>> Value<T> for V {
 
 #[macro_export]
 macro_rules! value {
-    ($name: ident, $t: ty, $val: expr) => {
+    ($name: ident: $t: ty = $val: expr) => {
         #[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
         pub struct $name {}
 
@@ -33,7 +33,7 @@ pub trait DynamicValue<T>: Value<T> {
 
 #[macro_export]
 macro_rules! dynamic_value {
-    ($name: ident, $val_name: ident, $t: ty) => {
+    ($name: ident $val_name: ident: $t: ty) => {
         static mut $val_name: Option<$t> = None;
 
         #[derive(Copy, Clone, Eq, PartialEq, Hash)]
@@ -52,5 +52,10 @@ macro_rules! dynamic_value {
                 unsafe { $val_name.unwrap() }
             }
         }
+    };
+    ($name: ident $val_name: ident: $t: ty = $val: expr) => {
+        dynamic_value!($name $val_name: $t);
+
+        $name::set_val($val);
     };
 }

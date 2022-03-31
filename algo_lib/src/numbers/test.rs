@@ -1,13 +1,11 @@
 use crate::numbers::primes::divisors;
 
 mod mod_int {
-    use crate::numbers::mod_int::ModInt;
+    use crate::numbers::mod_int::{ModInt, ModInt7};
     use crate::numbers::num_traits::zero_one::ZeroOne;
     use crate::value;
 
-    value!(Val7, i32, 1_000_000_007);
-
-    type Mod = ModInt<i32, Val7>;
+    type Mod = ModInt7;
 
     #[test]
     fn add() {

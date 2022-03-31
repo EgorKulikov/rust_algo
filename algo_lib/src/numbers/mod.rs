@@ -2,6 +2,7 @@ pub mod fwht;
 pub mod gcd;
 pub mod inf_int;
 pub mod interpolation;
+pub mod matrix;
 pub mod mod_int;
 pub mod mod_utils;
 pub mod num_traits;

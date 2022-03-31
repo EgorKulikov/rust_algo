@@ -9,6 +9,7 @@ use crate::numbers::num_traits::as_index::AsIndex;
 use crate::numbers::num_traits::primitive::Primitive;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 use crate::numbers::number_ext::Power;
+use std::cmp::Ordering;
 
 pub fn primality_table(n: usize) -> BitSet {
     let mut res = BitSet::new(n);
@@ -50,8 +51,6 @@ pub fn divisor_table<T: AsIndex + PartialEq>(n: usize) -> Vec<T> {
     res
 }
 
-dynamic_value!(IsPrimeModule, MOD, i64);
-
 pub fn is_prime(n: impl Primitive) -> bool {
     let n = n.into_i64();
     if n <= 1 {
@@ -66,7 +65,7 @@ pub fn is_prime(n: impl Primitive) -> bool {
     if s == 0 {
         return n == 2;
     }
-    IsPrimeModule::set_val(n);
+    dynamic_value!(IsPrimeModule MOD: i64 = n);
     type Mod = ModInt<i64, IsPrimeModule>;
     for _ in 0..20 {
         let a = Mod::new(random().next(n.into_u64()).into_i64());
@@ -104,8 +103,7 @@ pub fn next_prime(mut n: i64) -> i64 {
 }
 
 fn brent(n: i64, x0: i64, c: i64) -> i64 {
-    dynamic_value!(ModVal, MOD_CONST, i64);
-    ModVal::set_val(n);
+    dynamic_value!(ModVal MOD_CONST: i64 = n);
     type Mod = ModInt<i64, ModVal>;
     let mut x = Mod::new(x0);
     let c = Mod::new(c);
@@ -179,16 +177,20 @@ pub fn divisors(n: i64) -> Vec<(i64, usize)> {
     let mut i = 0;
     let mut j = 0;
     while i < left.len() && j < right.len() {
-        if left[i].0 < right[j].0 {
-            res.push(left[i]);
-            i += 1;
-        } else if left[i].0 > right[j].0 {
-            res.push(right[j]);
-            j += 1;
-        } else {
-            res.push((left[i].0, left[i].1 + right[j].1));
-            i += 1;
-            j += 1;
+        match left[i].0.cmp(&right[j].0) {
+            Ordering::Less => {
+                res.push(left[i]);
+                i += 1;
+            }
+            Ordering::Equal => {
+                res.push((left[i].0, left[i].1 + right[j].1));
+                i += 1;
+                j += 1;
+            }
+            Ordering::Greater => {
+                res.push(right[j]);
+                j += 1;
+            }
         }
     }
     res.extend_from_slice(&left[i..]);
