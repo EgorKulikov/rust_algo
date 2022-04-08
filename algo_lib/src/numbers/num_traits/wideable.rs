@@ -7,7 +7,7 @@ pub trait Wideable: Sized {
 }
 
 macro_rules! wideable_impl {
-    ($t: ident, $w: ident) => {
+    ($($t: ident $w: ident),+) => {$(
         impl Wideable for $t {
             type W = $w;
 
@@ -15,20 +15,7 @@ macro_rules! wideable_impl {
                 w as $t
             }
         }
-    };
+    )+};
 }
 
-wideable_impl!(i128, i128);
-wideable_impl!(i64, i128);
-wideable_impl!(i32, i64);
-wideable_impl!(i16, i32);
-wideable_impl!(i8, i16);
-wideable_impl!(isize, isize);
-wideable_impl!(u128, u128);
-wideable_impl!(u64, u128);
-wideable_impl!(u32, u64);
-wideable_impl!(u16, u32);
-wideable_impl!(u8, u16);
-wideable_impl!(usize, usize);
-wideable_impl!(f64, f64);
-wideable_impl!(f32, f64);
+wideable_impl!(i128 i128, i64 i128, i32 i64, i16 i32, i8 i16, isize isize, u128 u128, u64 u128, u32 u64, u16 u32, u8 u16, usize usize, f64 f64, f32 f64);

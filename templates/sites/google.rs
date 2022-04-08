@@ -1,3 +1,5 @@
+use algo_lib::out_line;
+
 fn solve(input: &mut Input, test_case: usize) {
     $CARET
     out_line!(format!("Case #{}: ", test_case));
@@ -9,6 +11,7 @@ pub(crate) fn run(mut input: Input) -> bool {
         solve(&mut input, i + 1);
     }
     output().flush();
-    input.skip_whitespace();
-    !input.peek().is_some()
+    true
+    // input.skip_whitespace();
+    // !input.peek().is_some()
 }

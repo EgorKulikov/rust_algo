@@ -8,7 +8,7 @@ pub trait MinMax: PartialOrd {
 }
 
 macro_rules! min_max_integer_impl {
-    ($t: ident) => {
+    ($($t: ident)+) => {$(
         impl MinMax for $t {
             fn min_val() -> Self {
                 // 1.43
@@ -28,24 +28,13 @@ macro_rules! min_max_integer_impl {
                 Self::max(self, other)
             }
         }
-    };
+    )+};
 }
 
-min_max_integer_impl!(i128);
-min_max_integer_impl!(i64);
-min_max_integer_impl!(i32);
-min_max_integer_impl!(i16);
-min_max_integer_impl!(i8);
-min_max_integer_impl!(isize);
-min_max_integer_impl!(u128);
-min_max_integer_impl!(u64);
-min_max_integer_impl!(u32);
-min_max_integer_impl!(u16);
-min_max_integer_impl!(u8);
-min_max_integer_impl!(usize);
+min_max_integer_impl!(i128 i64 i32 i16 i8 isize u128 u64 u32 u16 u8 usize);
 
 macro_rules! min_max_float_impl {
-    ($t: ident) => {
+    ($($t: ident)+) => {$(
         impl MinMax for $t {
             fn min_val() -> Self {
                 // 1.43
@@ -65,8 +54,7 @@ macro_rules! min_max_float_impl {
                 $t::max(self, other)
             }
         }
-    };
+    )+};
 }
 
-min_max_float_impl!(f32);
-min_max_float_impl!(f64);
+min_max_float_impl!(f32 f64);

@@ -4,7 +4,7 @@ pub trait AsIndex {
 }
 
 macro_rules! from_index_impl {
-    ($t: ident) => {
+    ($($t: ident)+) => {$(
         impl AsIndex for $t {
             fn from_index(idx: usize) -> Self {
                 idx as $t
@@ -14,18 +14,7 @@ macro_rules! from_index_impl {
                 *self as usize
             }
         }
-    };
+    )+};
 }
 
-from_index_impl!(i128);
-from_index_impl!(i64);
-from_index_impl!(i32);
-from_index_impl!(i16);
-from_index_impl!(i8);
-from_index_impl!(isize);
-from_index_impl!(u128);
-from_index_impl!(u64);
-from_index_impl!(u32);
-from_index_impl!(u16);
-from_index_impl!(u8);
-from_index_impl!(usize);
+from_index_impl!(i128 i64 i32 i16 i8 isize u128 u64 u32 u16 u8 usize);

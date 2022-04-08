@@ -65,7 +65,7 @@ pub fn is_prime(n: impl Primitive) -> bool {
     if s == 0 {
         return n == 2;
     }
-    dynamic_value!(IsPrimeModule MOD: i64 = n);
+    dynamic_value!(IsPrimeModule: i64 = n);
     type Mod = ModInt<i64, IsPrimeModule>;
     for _ in 0..20 {
         let a = Mod::new(random().next(n.into_u64()).into_i64());
@@ -103,7 +103,7 @@ pub fn next_prime(mut n: i64) -> i64 {
 }
 
 fn brent(n: i64, x0: i64, c: i64) -> i64 {
-    dynamic_value!(ModVal MOD_CONST: i64 = n);
+    dynamic_value!(ModVal: i64 = n);
     type Mod = ModInt<i64, ModVal>;
     let mut x = Mod::new(x0);
     let c = Mod::new(c);

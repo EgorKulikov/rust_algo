@@ -14,7 +14,7 @@ pub trait Primitive {
 }
 
 macro_rules! primitive {
-    ($t: ident) => {
+    ($($t: ident)+) => {$(
         impl Primitive for $t {
             fn into_u8(self) -> u8 {
                 self as u8
@@ -64,18 +64,7 @@ macro_rules! primitive {
                 self as isize
             }
         }
-    };
+    )+};
 }
 
-primitive!(u8);
-primitive!(u16);
-primitive!(u32);
-primitive!(u64);
-primitive!(u128);
-primitive!(usize);
-primitive!(i8);
-primitive!(i16);
-primitive!(i32);
-primitive!(i64);
-primitive!(i128);
-primitive!(isize);
+primitive!(u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize);

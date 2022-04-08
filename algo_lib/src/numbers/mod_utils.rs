@@ -60,6 +60,10 @@ where
         self.fact[n] * self.inv_fact[k] * self.inv_fact[n - k]
     }
 
+    pub fn c_inv(&self, n: usize, k: usize) -> M {
+        self.inv_fact[n] * self.fact[k] * self.fact[n - k]
+    }
+
     pub fn fact(&self, n: usize) -> M {
         self.fact[n]
     }

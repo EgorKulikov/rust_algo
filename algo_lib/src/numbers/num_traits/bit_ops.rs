@@ -83,24 +83,13 @@ pub trait Bits: BitOps {
 }
 
 macro_rules! bits_integer_impl {
-    ($t: ident, $bits: expr) => {
+    ($($t: ident $bits: expr),+) => {$(
         impl Bits for $t {
             fn bits() -> u32 {
                 $bits
             }
         }
-    };
+    )+};
 }
 
-bits_integer_impl!(i128, 128);
-bits_integer_impl!(i64, 64);
-bits_integer_impl!(i32, 32);
-bits_integer_impl!(i16, 16);
-bits_integer_impl!(i8, 8);
-bits_integer_impl!(isize, 64);
-bits_integer_impl!(u128, 128);
-bits_integer_impl!(u64, 64);
-bits_integer_impl!(u32, 32);
-bits_integer_impl!(u16, 16);
-bits_integer_impl!(u8, 8);
-bits_integer_impl!(usize, 64);
+bits_integer_impl!(i128 128, i64 64, i32 32, i16 16, i8 8, isize 64, u128 128, u64 64, u32 32, u16 16, u8 8, usize 64);

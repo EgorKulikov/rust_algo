@@ -4,7 +4,7 @@ pub trait ZeroOne {
 }
 
 macro_rules! zero_one_integer_impl {
-    ($t: ident) => {
+    ($($t: ident)+) => {$(
         impl ZeroOne for $t {
             fn zero() -> Self {
                 0
@@ -14,24 +14,13 @@ macro_rules! zero_one_integer_impl {
                 1
             }
         }
-    };
+    )+};
 }
 
-zero_one_integer_impl!(i128);
-zero_one_integer_impl!(i64);
-zero_one_integer_impl!(i32);
-zero_one_integer_impl!(i16);
-zero_one_integer_impl!(i8);
-zero_one_integer_impl!(isize);
-zero_one_integer_impl!(u128);
-zero_one_integer_impl!(u64);
-zero_one_integer_impl!(u32);
-zero_one_integer_impl!(u16);
-zero_one_integer_impl!(u8);
-zero_one_integer_impl!(usize);
+zero_one_integer_impl!(i128 i64 i32 i16 i8 isize u128 u64 u32 u16 u8 usize);
 
 macro_rules! zero_one_float_impl {
-    ($t: ident) => {
+    ($($t: ident)+) => {$(
         impl ZeroOne for $t {
             fn zero() -> Self {
                 0.
@@ -41,8 +30,7 @@ macro_rules! zero_one_float_impl {
                 1.
             }
         }
-    };
+    )+};
 }
 
-zero_one_float_impl!(f32);
-zero_one_float_impl!(f64);
+zero_one_float_impl!(f32 f64);
