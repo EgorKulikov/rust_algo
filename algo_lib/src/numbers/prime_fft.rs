@@ -66,14 +66,15 @@ impl<M: BaseModInt> PrimeFFT<M> {
         }
         if self.aa.len() < size {
             let was_len = self.aa.len();
-            self.aa.copy_from_slice(&a[..was_len]);
-            self.aa.extend_from_slice(&a[was_len..]);
+            self.aa[..was_len.min(a.len())].copy_from_slice(&a[..was_len.min(a.len())]);
+            self.aa[was_len.min(a.len())..].legacy_fill(M::zero());
+            self.aa.extend_from_slice(&a[was_len.min(a.len())..]);
             self.aa.reserve(size - self.aa.len());
             for _ in self.aa.len()..size {
                 self.aa.push(M::zero());
             }
         } else {
-            self.aa.copy_from_slice(a);
+            self.aa[..a.len()].copy_from_slice(a);
             self.aa[a.len()..size].legacy_fill(M::zero());
         }
         Self::fft(
@@ -90,14 +91,15 @@ impl<M: BaseModInt> PrimeFFT<M> {
         } else {
             if self.bb.len() < size {
                 let was_len = self.bb.len();
-                self.bb.copy_from_slice(&b[..was_len]);
-                self.bb.extend_from_slice(&b[was_len..]);
+                self.bb[..was_len.min(b.len())].copy_from_slice(&b[..was_len.min(b.len())]);
+                self.bb[was_len.min(b.len())..].legacy_fill(M::zero());
+                self.bb.extend_from_slice(&b[was_len.min(b.len())..]);
                 self.bb.reserve(size - self.bb.len());
                 for _ in self.bb.len()..size {
                     self.bb.push(M::zero());
                 }
             } else {
-                self.bb.copy_from_slice(b);
+                self.bb[..b.len()].copy_from_slice(b);
                 self.bb[b.len()..size].legacy_fill(M::zero());
             }
             Self::fft(
