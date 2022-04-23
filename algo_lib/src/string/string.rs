@@ -188,6 +188,12 @@ impl<'s> From<&'s Vec<u8>> for Str<'s> {
     }
 }
 
+impl From<u8> for Str<'static> {
+    fn from(c: u8) -> Self {
+        Str::Vec(vec![c], PhantomData::default())
+    }
+}
+
 impl<R: SliceIndex<[u8]>> Index<R> for Str<'_> {
     type Output = R::Output;
 
@@ -227,13 +233,6 @@ impl<'r, 's, S: Into<Str<'r>>> AddAssign<S> for Str<'s> {
     fn add_assign(&mut self, rhs: S) {
         self.to_vec();
         self.as_vec().extend_from_slice(rhs.into().as_slice());
-    }
-}
-
-impl<'s> AddAssign<u8> for Str<'s> {
-    fn add_assign(&mut self, rhs: u8) {
-        self.to_vec();
-        self.as_vec().push(rhs);
     }
 }
 

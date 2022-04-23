@@ -1,10 +1,43 @@
 use std::io::Write;
 
+#[derive(Copy, Clone)]
+pub enum BoolOutput {
+    YesNo,
+    YesNoCaps,
+    PossibleImpossible,
+    Custom(&'static str, &'static str),
+}
+
+impl BoolOutput {
+    pub fn output(&self, output: &mut Output, val: bool) {
+        (if val { self.yes() } else { self.no() }).write(output);
+    }
+
+    fn yes(&self) -> &str {
+        match self {
+            BoolOutput::YesNo => "Yes",
+            BoolOutput::YesNoCaps => "YES",
+            BoolOutput::PossibleImpossible => "Possible",
+            BoolOutput::Custom(yes, _) => yes,
+        }
+    }
+
+    fn no(&self) -> &str {
+        match self {
+            BoolOutput::YesNo => "No",
+            BoolOutput::YesNoCaps => "NO",
+            BoolOutput::PossibleImpossible => "Impossible",
+            BoolOutput::Custom(_, no) => no,
+        }
+    }
+}
+
 pub struct Output {
     output: Box<dyn Write>,
     buf: Vec<u8>,
     at: usize,
     auto_flush: bool,
+    pub bool_output: BoolOutput,
 }
 
 impl Output {
@@ -16,6 +49,7 @@ impl Output {
             buf: vec![0; Self::DEFAULT_BUF_SIZE],
             at: 0,
             auto_flush: false,
+            bool_output: BoolOutput::YesNoCaps,
         }
     }
 
@@ -25,6 +59,7 @@ impl Output {
             buf: vec![0; Self::DEFAULT_BUF_SIZE],
             at: 0,
             auto_flush: true,
+            bool_output: BoolOutput::YesNoCaps,
         }
     }
 
@@ -193,11 +228,8 @@ impl<T: Writable> Writable for Option<T> {
 
 impl Writable for bool {
     fn write(&self, output: &mut Output) {
-        if *self {
-            output.print(&"Yes");
-        } else {
-            output.print(&"No");
-        }
+        let bool_output = output.bool_output;
+        bool_output.output(output, *self)
     }
 }
 

@@ -51,6 +51,16 @@ impl<T> Arr2d<T> {
         self.data.iter_mut()
     }
 
+    pub fn row(&self, row: usize) -> impl Iterator<Item = &T> {
+        assert!(row < self.d1);
+        self.data.iter().skip(row * self.d2).take(self.d2)
+    }
+
+    pub fn row_mut(&mut self, row: usize) -> impl Iterator<Item = &mut T> {
+        assert!(row < self.d1);
+        self.data.iter_mut().skip(row * self.d2).take(self.d2)
+    }
+
     pub fn column(&self, col: usize) -> impl Iterator<Item = &T> {
         assert!(col < self.d2);
         self.data.iter().skip(col).step_by(self.d2)
