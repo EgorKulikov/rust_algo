@@ -2,7 +2,7 @@ use algo_lib::out_line;
 
 fn solve(input: &mut Input, test_case: usize) {
     $CARET
-    out_line!(format!("Case #{}: ", test_case));
+    out_line!(format!("Case #{}:", test_case));
 }
 
 pub(crate) fn run(mut input: Input) -> bool {
