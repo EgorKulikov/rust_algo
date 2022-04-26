@@ -136,6 +136,20 @@ impl<A, B, C> Detuple for Vec<(A, B, C)> {
     }
 }
 
+impl<A, B> Detuple for Vec<(A, B)> {
+    type Res = (Vec<A>, Vec<B>);
+
+    fn detuple(self) -> Self::Res {
+        let mut a = Vec::with_capacity(self.len());
+        let mut b = Vec::with_capacity(self.len());
+        for (aa, bb) in self {
+            a.push(aa);
+            b.push(bb);
+        }
+        (a, b)
+    }
+}
+
 pub trait IncDec {
     #[must_use]
     fn inc_by_one(self) -> Self;
