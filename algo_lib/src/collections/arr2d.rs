@@ -70,6 +70,14 @@ impl<T> Arr2d<T> {
         assert!(col < self.d2);
         self.data.iter_mut().skip(col).step_by(self.d2)
     }
+
+    pub fn swap(&mut self, r1: usize, c1: usize, r2: usize, c2: usize) {
+        assert!(r1 < self.d1);
+        assert!(r2 < self.d1);
+        assert!(c1 < self.d2);
+        assert!(c2 < self.d2);
+        self.data.swap(r1 * self.d2 + c1, r2 * self.d2 + c2);
+    }
 }
 
 impl<T: Clone> Arr2d<T> {
