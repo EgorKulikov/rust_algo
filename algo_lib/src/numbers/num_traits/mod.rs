@@ -6,6 +6,7 @@ pub mod invertable;
 pub mod mul_div_rem;
 pub mod ord;
 pub mod primitive;
+pub mod ring;
 pub mod sign;
 pub mod wideable;
 pub mod zero_one;

@@ -3,6 +3,7 @@
 #![allow(clippy::missing_safety_doc)]
 
 pub mod collections;
+pub mod geometry;
 pub mod graph;
 pub mod io;
 pub mod misc;

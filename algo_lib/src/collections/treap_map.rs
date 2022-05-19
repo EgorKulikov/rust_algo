@@ -1,5 +1,7 @@
 use crate::collections::treap::{TreapNode, Updateable};
 use crate::misc::direction::Direction;
+use crate::numbers::num_traits::primitive::Primitive;
+use std::cmp::Ordering;
 use std::ops::{Deref, DerefMut, Index, RangeBounds};
 
 struct TreapValue<V> {
@@ -64,18 +66,29 @@ impl<T: Ord, V> TreapMap<T, V> {
     }
 
     pub fn index(&self, key: &T) -> Option<usize> {
-        let (found, idx) = self
-            .root
-            .range(..=key)
-            .fold((false, 0), |(found, idx), node| {
-                if node.key().unwrap() == key {
-                    (true, idx)
-                } else {
-                    (found, idx + node.data().unwrap().size)
+        let mut res = 0;
+        let mut found = false;
+        self.root
+            .binary_search(|k, _, left_data, _| match key.cmp(k) {
+                Ordering::Less => Some(Direction::Left),
+                Ordering::Equal => {
+                    if let Some(data) = left_data {
+                        res += data.size;
+                    }
+                    found = true;
+                    None
+                }
+                Ordering::Greater => {
+                    if let Some(data) = left_data {
+                        res += data.size + 1;
+                    } else {
+                        res += 1;
+                    }
+                    Some(Direction::Right)
                 }
             });
         if found {
-            Some(idx as usize)
+            Some(res.into_usize())
         } else {
             None
         }
