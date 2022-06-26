@@ -57,7 +57,11 @@ where
     }
 
     pub fn c(&self, n: usize, k: usize) -> M {
-        self.fact[n] * self.inv_fact[k] * self.inv_fact[n - k]
+        if n < k {
+            M::zero()
+        } else {
+            self.fact[n] * self.inv_fact[k] * self.inv_fact[n - k]
+        }
     }
 
     pub fn c_inv(&self, n: usize, k: usize) -> M {
