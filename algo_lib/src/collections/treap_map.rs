@@ -254,6 +254,34 @@ impl<T: Ord> TreapSet<T> {
         self.0.higher(key).map(Self::map_to_key)
     }
 
+    pub fn more(&self, key: &T) -> usize {
+        match self.0.higher(key) {
+            Some((k, _)) => self.len() - self.0.index(k).unwrap(),
+            None => 0,
+        }
+    }
+
+    pub fn more_or_eq(&self, key: &T) -> usize {
+        match self.0.ceil(key) {
+            Some((k, _)) => self.len() - self.0.index(k).unwrap(),
+            None => 0,
+        }
+    }
+
+    pub fn less(&self, key: &T) -> usize {
+        match self.0.lower(key) {
+            Some((k, _)) => self.0.index(k).unwrap() + 1,
+            None => 0,
+        }
+    }
+
+    pub fn less_or_eq(&self, key: &T) -> usize {
+        match self.0.floor(key) {
+            Some((k, _)) => self.0.index(k).unwrap() + 1,
+            None => 0,
+        }
+    }
+
     pub fn floor(&self, key: &T) -> Option<&T> {
         self.0.floor(key).map(Self::map_to_key)
     }

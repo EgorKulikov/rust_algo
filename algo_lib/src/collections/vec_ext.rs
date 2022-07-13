@@ -30,6 +30,10 @@ pub trait Bounds<T: PartialOrd> {
     fn lower_bound(&self, el: &T) -> usize;
     fn upper_bound(&self, el: &T) -> usize;
     fn bin_search(&self, el: &T) -> Option<usize>;
+    fn more(&self, el: &T) -> usize;
+    fn more_or_eq(&self, el: &T) -> usize;
+    fn less(&self, el: &T) -> usize;
+    fn less_or_eq(&self, el: &T) -> usize;
 }
 
 impl<T: PartialOrd> Bounds<T> for [T] {
@@ -68,6 +72,22 @@ impl<T: PartialOrd> Bounds<T> for [T] {
         } else {
             Some(at)
         }
+    }
+
+    fn more(&self, el: &T) -> usize {
+        self.len() - self.upper_bound(el)
+    }
+
+    fn more_or_eq(&self, el: &T) -> usize {
+        self.len() - self.lower_bound(el)
+    }
+
+    fn less(&self, el: &T) -> usize {
+        self.lower_bound(el)
+    }
+
+    fn less_or_eq(&self, el: &T) -> usize {
+        self.upper_bound(el)
     }
 }
 
@@ -214,5 +234,19 @@ pub trait ConsecutiveIter<T> {
 impl<T> ConsecutiveIter<T> for [T] {
     fn consecutive_iter(&self) -> Zip<Iter<T>, Skip<Iter<T>>> {
         self.iter().zip(self.iter().skip(1))
+    }
+}
+
+pub trait DefaultVec<T> {
+    fn default_vec(len: usize) -> Vec<T>;
+}
+
+impl<T: Default> DefaultVec<T> for Vec<T> {
+    fn default_vec(len: usize) -> Vec<T> {
+        let mut v = Vec::with_capacity(len);
+        for _ in 0..len {
+            v.push(T::default());
+        }
+        v
     }
 }
