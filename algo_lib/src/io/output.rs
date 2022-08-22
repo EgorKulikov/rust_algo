@@ -37,7 +37,7 @@ pub struct Output {
     buf: Vec<u8>,
     at: usize,
     auto_flush: bool,
-    pub bool_output: BoolOutput,
+    bool_output: BoolOutput,
 }
 
 impl Output {
@@ -119,6 +119,10 @@ impl Output {
             e.write(self);
         }
     }
+}
+
+fn set_bool_output(bool_output: BoolOutput) {
+    output().bool_output = bool_output;
 }
 
 impl Write for Output {
@@ -214,6 +218,32 @@ impl<T: Writable, U: Writable, V: Writable> Writable for (T, U, V) {
         self.1.write(output);
         output.put(b' ');
         self.2.write(output);
+    }
+}
+
+impl<T: Writable, U: Writable, V: Writable, W: Writable> Writable for (T, U, V, W) {
+    fn write(&self, output: &mut Output) {
+        self.0.write(output);
+        output.put(b' ');
+        self.1.write(output);
+        output.put(b' ');
+        self.2.write(output);
+        output.put(b' ');
+        self.3.write(output);
+    }
+}
+
+impl<T: Writable, U: Writable, V: Writable, W: Writable, X: Writable> Writable for (T, U, V, W, X) {
+    fn write(&self, output: &mut Output) {
+        self.0.write(output);
+        output.put(b' ');
+        self.1.write(output);
+        output.put(b' ');
+        self.2.write(output);
+        output.put(b' ');
+        self.3.write(output);
+        output.put(b' ');
+        self.4.write(output);
     }
 }
 

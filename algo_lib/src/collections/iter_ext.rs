@@ -4,6 +4,9 @@ pub trait IterPartialEqExt<T: PartialEq>: Iterator<Item = T> + Sized {
     fn find(mut self, item: T) -> Option<usize> {
         self.position(|r| r == item)
     }
+    fn count_eq(self, item: &T) -> usize {
+        Iterator::count(self.filter(|r| r == item))
+    }
 }
 
 impl<T: PartialEq, I: Iterator<Item = T>> IterPartialEqExt<T> for I {}

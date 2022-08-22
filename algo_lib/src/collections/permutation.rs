@@ -99,6 +99,10 @@ impl Permutation {
         }
         true
     }
+
+    pub fn to_vec(self) -> Vec<usize> {
+        self.p
+    }
 }
 
 impl PartialEq<Self> for Permutation {
