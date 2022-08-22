@@ -121,8 +121,8 @@ impl Output {
     }
 }
 
-fn set_bool_output(bool_output: BoolOutput) {
-    output().bool_output = bool_output;
+pub fn set_bool_output(bool_output: BoolOutput) {
+    output().bool_output = bool_output
 }
 
 impl Write for Output {
