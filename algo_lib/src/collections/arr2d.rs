@@ -4,7 +4,7 @@ use crate::io::output::{Output, Writable};
 use std::ops::{Index, IndexMut};
 use std::vec::IntoIter;
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq, Default)]
 pub struct Arr2d<T> {
     d1: usize,
     d2: usize,
