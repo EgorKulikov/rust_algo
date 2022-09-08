@@ -4,11 +4,21 @@ pub trait IsSigned {
 
 pub trait Signed: IsSigned {}
 
-pub trait Unsigned: IsSigned {}
+pub trait Unsigned: IsSigned {
+    fn distance(self, other: Self) -> Self;
+}
 
 macro_rules! unsigned_impl {
     ($($t: ident)+) => {$(
-        impl Unsigned for $t {}
+        impl Unsigned for $t {
+            fn distance(self, other: Self) -> Self {
+                if self > other {
+                    self - other
+                } else {
+                    other - self
+                }
+            }
+        }
 
         impl IsSigned for $t {
             const SIGNED: bool = false;

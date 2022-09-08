@@ -122,6 +122,18 @@ impl<T> IndexMut<usize> for Arr2d<T> {
     }
 }
 
+impl<T> AsRef<Vec<T>> for Arr2d<T> {
+    fn as_ref(&self) -> &Vec<T> {
+        &self.data
+    }
+}
+
+impl<T> AsMut<Vec<T>> for Arr2d<T> {
+    fn as_mut(&mut self) -> &mut Vec<T> {
+        &mut self.data
+    }
+}
+
 impl<T: Writable> Writable for Arr2d<T> {
     fn write(&self, output: &mut Output) {
         let mut at = 0usize;
