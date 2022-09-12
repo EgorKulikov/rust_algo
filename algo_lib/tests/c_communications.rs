@@ -28,7 +28,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     for _ in 0..len {
         rev.push(b'0');
     }
-    let z = rev.z_algorithm();
+    let z = rev.as_slice().z_algorithm();
     let mut nines = vec![0; 2 * len + 1];
     for i in (0..len).rev() {
         if rev[len + i] == b'9' {

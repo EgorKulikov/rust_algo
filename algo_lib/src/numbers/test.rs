@@ -1,9 +1,8 @@
 use crate::numbers::primes::divisors;
 
 mod mod_int {
-    use crate::numbers::mod_int::{ModInt, ModInt7};
+    use crate::numbers::mod_int::ModInt7;
     use crate::numbers::num_traits::zero_one::ZeroOne;
-    use crate::value;
 
     type Mod = ModInt7;
 
