@@ -1,5 +1,3 @@
-use crate::string::string::Str;
-
 pub trait StringAlgorithms {
     fn z_algorithm(&self) -> Vec<usize>;
     fn prefix_function(&self) -> Vec<usize>;
@@ -7,7 +5,7 @@ pub trait StringAlgorithms {
     fn even_palindromes(&self) -> Vec<usize>;
 }
 
-impl<'a> StringAlgorithms for Str<'a> {
+impl<T: PartialEq> StringAlgorithms for &[T] {
     fn z_algorithm(&self) -> Vec<usize> {
         let mut res = Vec::with_capacity(self.len());
         res.push(0);

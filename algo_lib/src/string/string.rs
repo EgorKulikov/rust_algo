@@ -6,7 +6,7 @@ use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::iter::{Cloned, FromIterator};
 use std::marker::PhantomData;
-use std::ops::{Add, AddAssign, Deref, Index, IndexMut};
+use std::ops::{Add, AddAssign, Deref, DerefMut, Index, IndexMut};
 use std::slice::{Iter, SliceIndex};
 use std::vec::IntoIter;
 
@@ -301,5 +301,19 @@ impl FromIterator<u8> for Str<'static> {
 impl<'r> FromIterator<&'r u8> for Str<'static> {
     fn from_iter<T: IntoIterator<Item = &'r u8>>(iter: T) -> Self {
         Self::Vec(iter.into_iter().cloned().collect_vec(), Default::default())
+    }
+}
+
+impl Deref for Str<'_> {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        self.as_slice()
+    }
+}
+
+impl DerefMut for Str<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.as_slice_mut()
     }
 }

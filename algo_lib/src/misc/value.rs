@@ -17,7 +17,7 @@ impl<T, V: ConstValue<T>> Value<T> for V {
 #[macro_export]
 macro_rules! value {
     ($name: ident: $t: ty = $val: expr) => {
-        #[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+        #[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Default)]
         pub struct $name {}
 
         impl $crate::misc::value::ConstValue<$t> for $name {
@@ -36,7 +36,7 @@ macro_rules! dynamic_value {
     ($name: ident: $t: ty) => {
         static mut VAL: Option<$t> = None;
 
-        #[derive(Copy, Clone, Eq, PartialEq, Hash)]
+        #[derive(Copy, Clone, Eq, PartialEq, Hash, Default)]
         struct $name {}
 
         impl $crate::misc::value::DynamicValue<$t> for $name {

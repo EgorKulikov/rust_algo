@@ -13,7 +13,7 @@ fn solve(input: &mut Input) {
         fn solve(&mut self) {}
 
         fn write_output(&mut self, test_case: usize) {
-            out_line!(format!("Case #{}: ", test_case));
+            out_line!(format!("Case #{}:", test_case));
         }
     }
 
