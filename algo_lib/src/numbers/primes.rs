@@ -10,6 +10,7 @@ use crate::numbers::num_traits::primitive::Primitive;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 use crate::numbers::number_ext::Power;
 use std::cmp::Ordering;
+use std::ops::Mul;
 
 pub fn primality_table(n: usize) -> BitSet {
     let mut res = BitSet::new(n);
@@ -195,5 +196,41 @@ pub fn divisors(n: i64) -> Vec<(i64, usize)> {
     }
     res.extend_from_slice(&left[i..]);
     res.extend_from_slice(&right[j..]);
+    res
+}
+
+pub fn all_divisors<T: AsIndex + PartialEq + Copy + Mul<Output = T> + Ord>(
+    n: usize,
+    sorted: bool,
+) -> Vec<Vec<T>> {
+    let d: Vec<T> = divisor_table(n);
+    let mut res = Vec::with_capacity(n);
+    if n > 0 {
+        res.push(Vec::new());
+    }
+    if n > 1 {
+        res.push(vec![T::from_index(1)]);
+    }
+    for i in 2..n {
+        let p = d[i];
+        let mut q = 0;
+        let mut c = i;
+        while c % p.to_index() == 0 {
+            c /= p.to_index();
+            q += 1;
+        }
+        let mut cur = Vec::with_capacity(res[c].len() * (q + 1));
+        let mut by = T::from_index(1);
+        for j in 0..=q {
+            cur.extend(res[c].iter().map(|&x| x * by));
+            if j != q {
+                by = by * p;
+            }
+        }
+        if sorted {
+            cur.sort();
+        }
+        res.push(cur);
+    }
     res
 }

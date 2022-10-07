@@ -1,6 +1,6 @@
 //{"name":"S3 - Kaguya Wants to Analyze the Academy Anthem","group":"DMOJ - Mock CCC '22 2","url":"https://dmoj.ca/problem/nccc10s3","interactive":false,"timeLimit":5000,"tests":[{"input":"abacabadabacaba\n4\na 7\ne 3\nbac 2\nabada 1\n","output":"13\n-1\n10\n5\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"S3KaguyaWantsToAnalyzeTheAcademyAnthem"}}}
 
-use algo_lib::collections::default_map::DefaultMap;
+use algo_lib::collections::default_map::DefaultHashMap;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::output;
 use algo_lib::string::hash::{hash, HashBase, SimpleHash, StringHash};
@@ -19,7 +19,7 @@ fn solve_impl(s: Str, queries: Vec<(Str, usize)>) -> Vec<Option<usize>> {
     let mut res = Vec::new();
     HashBase::init();
     let h = SimpleHash::new(s.as_slice());
-    let mut ans: Vec<DefaultMap<i64, Vec<usize>>> = vec![DefaultMap::new(); s.len() + 1];
+    let mut ans: Vec<DefaultHashMap<i64, Vec<usize>>> = vec![DefaultHashMap::new(); s.len() + 1];
     for (sample, index) in queries {
         let index = index - 1;
 
