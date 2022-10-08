@@ -211,8 +211,7 @@ pub fn all_divisors<T: AsIndex + PartialEq + Copy + Mul<Output = T> + Ord>(
     if n > 1 {
         res.push(vec![T::from_index(1)]);
     }
-    for i in 2..n {
-        let p = d[i];
+    for (i, p) in d.into_iter().enumerate().skip(2) {
         let mut q = 0;
         let mut c = i;
         while c % p.to_index() == 0 {

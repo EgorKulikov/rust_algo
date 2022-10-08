@@ -6,98 +6,164 @@ use std::collections::Bound;
 use std::mem::swap;
 use std::ops::{Deref, DerefMut, RangeBounds};
 
-pub struct TreapNode<Key, Data>(Option<Box<TreapNodeInner<Key, Data>>>);
+pub struct TreapNode<P> {
+    inner: Option<TreapNodeInner<P>>,
+}
 
-impl<Key, Data> Deref for TreapNode<Key, Data> {
-    type Target = Option<Box<TreapNodeInner<Key, Data>>>;
+impl<P> Deref for TreapNode<P> {
+    type Target = Option<TreapNodeInner<P>>;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.inner
     }
 }
 
-impl<Key, Data> DerefMut for TreapNode<Key, Data> {
+impl<P> DerefMut for TreapNode<P> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+        &mut self.inner
     }
 }
 
-pub struct TreapNodeInner<Key, Data> {
+pub struct TreapNodeInner<P> {
     priority: u64,
-    key: Key,
-    data: Data,
-    left: TreapNode<Key, Data>,
-    right: TreapNode<Key, Data>,
+    payload: P,
+    left: Box<TreapNode<P>>,
+    right: Box<TreapNode<P>>,
 }
 
-impl<Key: Ord, Data: Updateable> TreapNodeInner<Key, Data> {
-    fn new(key: Key, data: Data) -> Self {
+impl<P: Payload> TreapNodeInner<P> {
+    fn new(payload: P) -> Self {
         Self {
             priority: random().gen(),
-            key,
-            data,
-            left: TreapNode::NONE,
-            right: TreapNode::NONE,
+            payload,
+            left: Box::new(TreapNode::NONE),
+            right: Box::new(TreapNode::NONE),
         }
     }
 
     fn update(&mut self) {
-        let left_data = self.left.as_ref().map(|node| &node.data);
-        let right_data = self.right.as_ref().map(|node| &node.data);
-        self.data.update(left_data, right_data);
+        let left_data = self.left.as_ref().as_ref().map(|node| &node.payload);
+        let right_data = self.right.as_ref().as_ref().map(|node| &node.payload);
+        self.payload.update(left_data, right_data);
+    }
+
+    fn push_down(&mut self) {
+        self.left.push(&self.payload, Direction::Left);
+        self.right.push(&self.payload, Direction::Right);
+        self.payload.reset_delta();
+    }
+
+    fn push(&mut self, parent_payload: &P, _: Direction) {
+        self.payload.push(parent_payload);
+    }
+
+    fn push_delta<Delta>(&mut self, delta: Delta)
+    where
+        P: Pushable<Delta>,
+    {
+        self.payload.push(delta);
+    }
+
+    fn key(&self) -> &P::Key {
+        self.payload.key()
+    }
+
+    fn into_payload(self) -> P {
+        self.payload
     }
 }
 
-impl<Key: Ord, Data: Updateable> TreapNode<Key, Data> {
-    pub const NONE: Self = Self(None);
+impl<P: Payload> TreapNode<P> {
+    pub const NONE: Self = Self { inner: None };
 
-    pub fn new(key: Key, data: Data) -> Self {
-        Self(Some(Box::new(TreapNodeInner::new(key, data))))
-    }
-
-    pub fn key(&self) -> Option<&Key> {
-        self.as_ref().map(|node| &node.key)
-    }
-
-    pub fn data(&self) -> Option<&Data> {
-        self.as_ref().map(|node| &node.data)
-    }
-
-    pub fn replace_data(&mut self, key: Key, mut data: Data) -> Option<Data> {
-        match self.as_mut() {
-            None => {
-                *self = TreapNode::new(key, data);
-                None
-            }
-            Some(node) => {
-                assert!(node.left.is_none() && node.right.is_none());
-                swap(&mut node.data, &mut data);
-                Some(data)
-            }
+    pub fn new(payload: P) -> Self {
+        Self {
+            inner: Some(TreapNodeInner::new(payload)),
         }
     }
 
-    pub fn split(&mut self, split_key: &Key, to_left: bool) -> (Self, Self) {
-        match self.take() {
+    pub fn payload(&self) -> Option<&P> {
+        self.as_ref().map(|node| &node.payload)
+    }
+
+    pub fn into_payload(self) -> Option<P> {
+        self.inner.map(|node| node.into_payload())
+    }
+
+    pub fn replace<Data>(&mut self, data: Data) -> Data
+    where
+        P: Replaceable<Data>,
+    {
+        self.as_mut().unwrap().payload.replace(data)
+    }
+
+    pub fn key(&self) -> Option<&P::Key> {
+        self.as_ref().map(|node| node.key())
+    }
+
+    pub fn push(&mut self, parent_payload: &P, direction: Direction) {
+        if let Some(node) = self.as_mut() {
+            node.push(parent_payload, direction);
+        }
+    }
+
+    pub fn push_delta<Delta>(&mut self, delta: Delta)
+    where
+        P: Pushable<Delta>,
+    {
+        if let Some(node) = self.as_mut() {
+            node.push_delta(delta);
+        }
+    }
+
+    pub fn split(self, split_key: &P::Key, to_left: bool) -> (Self, Self) {
+        match self.inner {
             Some(mut node) => {
-                let ordering = node.key.cmp(split_key);
+                node.push_down();
+                let ordering = node.key().cmp(split_key);
                 if ordering == Ordering::Less || to_left && ordering == Ordering::Equal {
                     let (left, right) = node.right.split(split_key, to_left);
-                    node.right = left;
+                    node.right = Box::new(left);
                     node.update();
-                    (Self(Some(node)), right)
+                    (Self { inner: Some(node) }, right)
                 } else {
                     let (left, right) = node.left.split(split_key, to_left);
-                    node.left = right;
+                    node.left = Box::new(right);
                     node.update();
-                    (left, Self(Some(node)))
+                    (left, Self { inner: Some(node) })
                 }
             }
             None => (Self::NONE, Self::NONE),
         }
     }
 
-    pub fn range<'a, 's: 'a>(&'s self, r: impl RangeBounds<&'a Key>) -> Iter<'s, Key, Data> {
+    pub fn split_range(self, range: impl RangeBounds<P::Key>) -> (Self, Self, Self) {
+        let (left, right) = match range.start_bound() {
+            Bound::Included(left_bound) => {
+                let (left, right) = self.split(left_bound, false);
+                (left, right)
+            }
+            Bound::Excluded(left_bound) => {
+                let (left, right) = self.split(left_bound, true);
+                (left, right)
+            }
+            Bound::Unbounded => (Self::NONE, self),
+        };
+        let (middle, right) = match range.end_bound() {
+            Bound::Included(right_bound) => {
+                let (middle, right) = right.split(right_bound, true);
+                (middle, right)
+            }
+            Bound::Excluded(right_bound) => {
+                let (middle, right) = right.split(right_bound, false);
+                (middle, right)
+            }
+            Bound::Unbounded => (right, Self::NONE),
+        };
+        (left, middle, right)
+    }
+
+    pub fn range<'a, 's: 'a>(&'s self, r: impl RangeBounds<&'a P::Key>) -> Iter<'s, P> {
         Iter::new(self.borrow(), r)
     }
 
@@ -111,9 +177,9 @@ impl<Key: Ord, Data: Updateable> TreapNode<Key, Data> {
             .map(|node| node.right.rightmost().unwrap_or(self))
     }
 
-    pub fn lower(&self, key: &Key) -> Option<&Self> {
+    pub fn lower(&self, key: &P::Key) -> Option<&Self> {
         self.as_ref().and_then(|node| {
-            if &node.key < key {
+            if node.key() < key {
                 node.right.lower(key).or(Some(self))
             } else {
                 node.left.lower(key)
@@ -121,9 +187,9 @@ impl<Key: Ord, Data: Updateable> TreapNode<Key, Data> {
         })
     }
 
-    pub fn floor(&self, key: &Key) -> Option<&Self> {
+    pub fn floor(&self, key: &P::Key) -> Option<&Self> {
         self.as_ref().and_then(|node| {
-            if &node.key <= key {
+            if node.key() <= key {
                 node.right.floor(key).or(Some(self))
             } else {
                 node.left.floor(key)
@@ -131,9 +197,9 @@ impl<Key: Ord, Data: Updateable> TreapNode<Key, Data> {
         })
     }
 
-    pub fn higher(&self, key: &Key) -> Option<&Self> {
+    pub fn higher(&self, key: &P::Key) -> Option<&Self> {
         self.as_ref().and_then(|node| {
-            if &node.key > key {
+            if node.key() > key {
                 node.left.higher(key).or(Some(self))
             } else {
                 node.right.higher(key)
@@ -141,9 +207,9 @@ impl<Key: Ord, Data: Updateable> TreapNode<Key, Data> {
         })
     }
 
-    pub fn ceil(&self, key: &Key) -> Option<&Self> {
+    pub fn ceil(&self, key: &P::Key) -> Option<&Self> {
         self.as_ref().and_then(|node| {
-            if &node.key >= key {
+            if node.key() >= key {
                 node.left.ceil(key).or(Some(self))
             } else {
                 node.right.ceil(key)
@@ -155,41 +221,56 @@ impl<Key: Ord, Data: Updateable> TreapNode<Key, Data> {
         self.as_ref().map(|node| node.priority).unwrap_or(0)
     }
 
-    pub fn merge(&mut self, right: Self) {
-        if self.is_some() && right.is_some() {
+    pub fn merge(left: Self, right: Self) -> Self {
+        if left.is_some() && right.is_some() {
             assert!(
-                self.rightmost().unwrap().key().unwrap() < right.leftmost().unwrap().key().unwrap()
+                left.rightmost().unwrap().key().unwrap() < right.leftmost().unwrap().key().unwrap()
             );
         }
-        unsafe {
-            self.merge_unsafe(right);
-        }
+        unsafe { Self::merge_unsafe(left, right) }
     }
 
-    pub unsafe fn merge_unsafe(&mut self, mut right: Self) {
-        if self.is_none() {
-            *self = right;
-        } else if right.is_some() {
-            if self.priority() > right.priority() {
-                let node = self.as_mut().unwrap();
-                node.right.merge_unsafe(right);
-                node.update();
-            } else {
-                let mut node = right.take().unwrap();
-                self.merge_unsafe(Self(node.left.take()));
-                node.left = Self(self.take());
-                node.update();
-                *self = Self(Some(node));
-            }
+    pub unsafe fn merge_unsafe(left: Self, right: Self) -> Self {
+        match left.inner {
+            None => right,
+            Some(mut left) => TreapNode {
+                inner: Some(match right.inner {
+                    None => left,
+                    Some(mut right) => {
+                        if left.priority > right.priority {
+                            left.push_down();
+                            left.right = Box::new(Self::merge_unsafe(
+                                *left.right,
+                                Self { inner: Some(right) },
+                            ));
+                            left.update();
+                            left
+                        } else {
+                            right.push_down();
+                            right.left = Box::new(Self::merge_unsafe(
+                                Self { inner: Some(left) },
+                                *right.left,
+                            ));
+                            right.update();
+                            right
+                        }
+                    }
+                }),
+            },
         }
     }
 
     pub fn binary_search<'s, F>(&'s self, mut f: F)
     where
-        F: FnMut(&'s Key, &'s Data, Option<&'s Data>, Option<&'s Data>) -> Option<Direction>,
+        F: FnMut(&'s P::Key, &'s P, Option<&'s P>, Option<&'s P>) -> Option<Direction>,
     {
         if let Some(node) = self.deref() {
-            let direction = f(&node.key, &node.data, node.left.data(), node.right.data());
+            let direction = f(
+                node.key(),
+                &node.payload,
+                node.left.payload(),
+                node.right.payload(),
+            );
             if let Some(direction) = direction {
                 match direction {
                     Direction::Left => {
@@ -203,11 +284,11 @@ impl<Key: Ord, Data: Updateable> TreapNode<Key, Data> {
         }
     }
 
-    pub fn find(&self, key: &Key) -> &Self {
+    pub fn find(&self, key: &P::Key) -> &Self {
         match self.deref() {
             None => self,
             Some(node) => {
-                let ordering = node.key.cmp(key);
+                let ordering = node.key().cmp(key);
                 match ordering {
                     Ordering::Less => node.right.find(key),
                     Ordering::Equal => self,
@@ -218,37 +299,212 @@ impl<Key: Ord, Data: Updateable> TreapNode<Key, Data> {
     }
 }
 
-impl<Key: Ord, Data: Updateable> From<TreapNode<Key, Data>> for Option<Data> {
-    fn from(data: TreapNode<Key, Data>) -> Self {
-        data.0.map(|node| node.data)
+impl<P: Payload> From<TreapNode<P>> for Option<P> {
+    fn from(data: TreapNode<P>) -> Self {
+        data.inner.map(|node| node.payload)
     }
 }
 
-impl<Key: Ord, Data: Updateable> Default for TreapNode<Key, Data> {
+impl<P: Payload> Default for TreapNode<P> {
     fn default() -> Self {
         Self::NONE
     }
 }
 
-pub trait Updateable {
+pub trait Payload {
+    type Key: Ord;
+
+    fn key(&self) -> &Self::Key;
+    fn reset_delta(&mut self);
     fn update(&mut self, left: Option<&Self>, right: Option<&Self>);
+    fn push_delta(&mut self, delta: &Self, direction: Direction);
 }
 
-impl Updateable for u32 {
+pub trait Pushable<Delta>: Payload {
+    fn push(&mut self, delta: Delta);
+}
+
+impl<P: Payload> Pushable<&P> for P {
+    fn push(&mut self, delta: &P) {
+        self.push_delta(delta, Direction::Left);
+    }
+}
+
+pub trait Replaceable<Delta>: Payload {
+    fn replace(&mut self, delta: Delta) -> Delta;
+}
+
+pub struct SizePayload<InnerPayload: Payload> {
+    pub inner: InnerPayload,
+    pub size: u32,
+}
+
+impl<Data> From<Data> for SizePayload<PureDataPayload<Data>> {
+    fn from(data: Data) -> Self {
+        Self {
+            inner: data.into(),
+            size: 1,
+        }
+    }
+}
+
+impl<InnerPayload: Payload> Payload for SizePayload<InnerPayload> {
+    type Key = InnerPayload::Key;
+
+    fn key(&self) -> &Self::Key {
+        self.inner.key()
+    }
+
+    fn reset_delta(&mut self) {
+        self.inner.reset_delta();
+    }
+
     fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
-        *self = 1 + *left.unwrap_or(&0) + *right.unwrap_or(&0)
+        self.inner
+            .update(left.map(|node| &node.inner), right.map(|node| &node.inner));
+        self.size =
+            1 + left.map(|node| node.size).unwrap_or(0) + right.map(|node| node.size).unwrap_or(0);
+    }
+
+    fn push_delta(&mut self, delta: &Self, direction: Direction) {
+        self.inner.push_delta(&delta.inner, direction);
+    }
+}
+
+impl<Data, InnerPayload: Payload + Replaceable<Data>> Replaceable<Data>
+    for SizePayload<InnerPayload>
+{
+    fn replace(&mut self, delta: Data) -> Data {
+        self.inner.replace(delta)
+    }
+}
+
+pub struct KeyPayload<Key: Ord, InnerPayload: Payload> {
+    pub inner: InnerPayload,
+    pub key: Key,
+}
+
+impl<Key: Ord, InnerPayload: Payload, Data: Into<InnerPayload>> From<(Key, Data)>
+    for KeyPayload<Key, InnerPayload>
+{
+    fn from((key, data): (Key, Data)) -> Self {
+        Self {
+            inner: data.into(),
+            key,
+        }
+    }
+}
+
+impl<Key: Ord, InnerPayload: Payload> Payload for KeyPayload<Key, InnerPayload> {
+    type Key = Key;
+
+    fn key(&self) -> &Self::Key {
+        &self.key
+    }
+
+    fn reset_delta(&mut self) {
+        self.inner.reset_delta();
+    }
+
+    fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
+        self.inner
+            .update(left.map(|node| &node.inner), right.map(|node| &node.inner));
+    }
+
+    fn push_delta(&mut self, delta: &Self, direction: Direction) {
+        self.inner.push_delta(&delta.inner, direction);
+    }
+}
+
+impl<Data, Key: Ord, InnerPayload: Payload + Replaceable<Data>> Replaceable<Data>
+    for KeyPayload<Key, InnerPayload>
+{
+    fn replace(&mut self, delta: Data) -> Data {
+        self.inner.replace(delta)
+    }
+}
+
+pub struct PureDataPayload<Data> {
+    pub data: Data,
+}
+
+impl<Data> From<Data> for PureDataPayload<Data> {
+    fn from(data: Data) -> Self {
+        Self { data }
+    }
+}
+
+impl<Data> Payload for PureDataPayload<Data> {
+    type Key = usize;
+
+    fn key(&self) -> &Self::Key {
+        unreachable!()
+    }
+
+    fn reset_delta(&mut self) {}
+
+    fn update(&mut self, _: Option<&Self>, _: Option<&Self>) {}
+
+    fn push_delta(&mut self, _: &Self, _: Direction) {}
+}
+
+impl<Data> Replaceable<Data> for PureDataPayload<Data> {
+    fn replace(&mut self, mut data: Data) -> Data {
+        swap(&mut self.data, &mut data);
+        data
+    }
+}
+
+pub struct ImpliedKeyPayload<InnerPayload: Payload> {
+    pub inner: SizePayload<InnerPayload>,
+}
+
+impl<InnerPayload: Payload> From<InnerPayload> for ImpliedKeyPayload<InnerPayload> {
+    fn from(inner: InnerPayload) -> Self {
+        Self {
+            inner: SizePayload { inner, size: 1 },
+        }
+    }
+}
+
+impl<Data, InnerPayload: Payload + Replaceable<Data>> Replaceable<Data>
+    for ImpliedKeyPayload<InnerPayload>
+{
+    fn replace(&mut self, data: Data) -> Data {
+        self.inner.inner.replace(data)
+    }
+}
+
+impl<InnerPayload: Payload> Payload for ImpliedKeyPayload<InnerPayload> {
+    type Key = u32;
+
+    fn key(&self) -> &Self::Key {
+        &self.inner.size
+    }
+
+    fn reset_delta(&mut self) {
+        self.inner.reset_delta();
+    }
+
+    fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
+        self.inner
+            .update(left.map(|node| &node.inner), right.map(|node| &node.inner));
+    }
+
+    fn push_delta(&mut self, delta: &Self, direction: Direction) {
+        self.inner.push_delta(&delta.inner, direction);
     }
 }
 
 // TODO: get rid of log
-pub struct Iter<'a, Key, Data> {
-    root: &'a TreapNode<Key, Data>,
-    from: Option<&'a TreapNode<Key, Data>>,
-    to: Option<&'a TreapNode<Key, Data>>,
+pub struct Iter<'a, P> {
+    root: &'a TreapNode<P>,
+    from: Option<&'a TreapNode<P>>,
+    to: Option<&'a TreapNode<P>>,
 }
 
-impl<'a, Key: Ord, Data: Updateable> Iter<'a, Key, Data> {
-    pub fn new<'b>(root: &'a TreapNode<Key, Data>, r: impl RangeBounds<&'b Key>) -> Self
+impl<'a, P: Payload> Iter<'a, P> {
+    pub fn new<'b>(root: &'a TreapNode<P>, r: impl RangeBounds<&'b P::Key>) -> Self
     where
         'a: 'b,
     {
@@ -268,8 +524,8 @@ impl<'a, Key: Ord, Data: Updateable> Iter<'a, Key, Data> {
     }
 }
 
-impl<'a, Key: Ord, Data: Updateable> Iterator for Iter<'a, Key, Data> {
-    type Item = &'a TreapNode<Key, Data>;
+impl<'a, P: Payload> Iterator for Iter<'a, P> {
+    type Item = &'a TreapNode<P>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.from?.key().unwrap() <= self.to?.key().unwrap() {
@@ -282,7 +538,7 @@ impl<'a, Key: Ord, Data: Updateable> Iterator for Iter<'a, Key, Data> {
     }
 }
 
-impl<'a, Key: Ord, Data: Updateable> DoubleEndedIterator for Iter<'a, Key, Data> {
+impl<'a, P: Payload> DoubleEndedIterator for Iter<'a, P> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.from?.key().unwrap() <= self.to?.key().unwrap() {
             let res = self.to;

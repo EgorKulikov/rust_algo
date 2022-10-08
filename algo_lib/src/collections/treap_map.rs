@@ -1,23 +1,14 @@
-use crate::collections::treap::{TreapNode, Updateable};
+use crate::collections::treap::{KeyPayload, Payload, PureDataPayload, SizePayload, TreapNode};
 use crate::misc::direction::Direction;
 use crate::numbers::num_traits::primitive::Primitive;
 use std::cmp::Ordering;
+use std::mem::swap;
 use std::ops::{Deref, DerefMut, Index, RangeBounds};
 
-struct TreapValue<V> {
-    size: u32,
-    value: V,
-}
-
-impl<V> Updateable for TreapValue<V> {
-    fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
-        self.size =
-            1 + left.map(|node| node.size).unwrap_or(0) + right.map(|node| node.size).unwrap_or(0)
-    }
-}
+type TreapValue<T, V> = KeyPayload<T, SizePayload<PureDataPayload<V>>>;
 
 pub struct TreapMap<T: Ord, V> {
-    root: TreapNode<T, TreapValue<V>>,
+    root: TreapNode<TreapValue<T, V>>,
 }
 
 impl<T: Ord, V> TreapMap<T, V> {
@@ -30,39 +21,39 @@ impl<T: Ord, V> TreapMap<T, V> {
     pub unsafe fn from_sorted(iter: impl Iterator<Item = (T, V)>) -> Self {
         let mut res = Self::new();
         for (t, v) in iter {
-            res.root
-                .merge_unsafe(TreapNode::new(t, TreapValue { size: 1, value: v }));
+            res.root = TreapNode::merge_unsafe(res.root, TreapNode::new((t, v).into()));
         }
         res
     }
 
     pub fn len(&self) -> usize {
-        self.root.data().map(|data| data.size).unwrap_or(0) as usize
+        self.root.payload().map(|data| data.inner.size).unwrap_or(0) as usize
     }
 
     pub fn insert(&mut self, key: T, value: V) -> Option<V> {
-        let (left, mut right) = self.root.split(&key, false);
-        let (mut node, right) = right.split(&key, true);
-        let res = node
-            .replace_data(key, TreapValue { size: 1, value })
-            .map(|data| data.value);
-        self.root = left;
+        let mut root = TreapNode::NONE;
+        swap(&mut self.root, &mut root);
+        let (left, mut node, right) = root.split_range(&key..=&key);
+        let res = if node.is_some() {
+            Some(node.replace(value))
+        } else {
+            node = TreapNode::new((key, value).into());
+            None
+        };
         unsafe {
-            self.root.merge_unsafe(node);
-            self.root.merge_unsafe(right);
+            self.root = TreapNode::merge_unsafe(left, TreapNode::merge_unsafe(node, right));
         }
         res
     }
 
     pub fn remove(&mut self, key: &T) -> Option<V> {
-        let (left, mut right) = self.root.split(key, false);
-        let (node, right) = right.split(key, true);
-        self.root = left;
+        let mut root = TreapNode::NONE;
+        swap(&mut self.root, &mut root);
+        let (left, node, right) = root.split_range(key..=key);
         unsafe {
-            self.root.merge_unsafe(right);
+            self.root = TreapNode::merge_unsafe(left, right);
         }
-        <TreapNode<T, TreapValue<V>> as Into<Option<TreapValue<V>>>>::into(node)
-            .map(|data| data.value)
+        node.into_payload().map(|data| data.inner.inner.data)
     }
 
     pub fn index(&self, key: &T) -> Option<usize> {
@@ -73,14 +64,14 @@ impl<T: Ord, V> TreapMap<T, V> {
                 Ordering::Less => Some(Direction::Left),
                 Ordering::Equal => {
                     if let Some(data) = left_data {
-                        res += data.size;
+                        res += data.inner.size;
                     }
                     found = true;
                     None
                 }
                 Ordering::Greater => {
                     if let Some(data) = left_data {
-                        res += data.size + 1;
+                        res += data.inner.size + 1;
                     } else {
                         res += 1;
                     }
@@ -107,11 +98,11 @@ impl<T: Ord, V> TreapMap<T, V> {
         } else {
             let mut res = None;
             self.root.binary_search(|key, value, left, _| {
-                let to_left = left.map(|data| data.size as usize).unwrap_or(0);
+                let to_left = left.map(|data| data.inner.size as usize).unwrap_or(0);
                 match to_left {
                     v if v > at => Some(Direction::Left),
                     v if v == at => {
-                        res = Some((key, &value.value));
+                        res = Some((key, &value.inner.inner.data));
                         None
                     }
                     v if v < at => {
@@ -177,15 +168,21 @@ impl<T: Ord, V> TreapMap<T, V> {
     }
 
     pub fn get(&self, key: &T) -> Option<&V> {
-        self.root.find(key).data().map(|data| &data.value)
+        self.root
+            .find(key)
+            .payload()
+            .map(|data| &data.inner.inner.data)
     }
 
     pub fn contains(&self, key: &T) -> bool {
         self.root.find(key).is_some()
     }
 
-    fn node_to_pair(node: &TreapNode<T, TreapValue<V>>) -> (&T, &V) {
-        (node.key().unwrap(), &node.data().unwrap().value)
+    fn node_to_pair(node: &TreapNode<TreapValue<T, V>>) -> (&T, &V) {
+        (
+            node.payload().as_ref().unwrap().key(),
+            &node.payload().as_ref().unwrap().inner.inner.data,
+        )
     }
 }
 
