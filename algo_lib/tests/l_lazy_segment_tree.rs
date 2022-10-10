@@ -38,14 +38,14 @@ fn solve(input: &mut Input) {
             }
         }
 
-        fn join(&mut self, left: &Self, right: &Self) {
+        fn join(&mut self, left: &Self, right: &Self, _: usize, _: usize, _: usize) {
             self.zeroes = left.zeroes + right.zeroes;
             self.ones = left.ones + right.ones;
             self.ans_dir = left.ans_dir + right.ans_dir + left.ones * right.zeroes;
             self.ans_inv = left.ans_inv + right.ans_inv + left.zeroes * right.ones;
         }
 
-        fn accumulate(&mut self, value: &Self) {
+        fn accumulate(&mut self, value: &Self, _: usize, _: usize) {
             if value.inverted {
                 swap(&mut self.zeroes, &mut self.ones);
                 swap(&mut self.ans_dir, &mut self.ans_inv);
@@ -53,12 +53,12 @@ fn solve(input: &mut Input) {
             }
         }
 
-        fn reset_delta(&mut self) {
+        fn reset_delta(&mut self, _: usize, _: usize) {
             self.inverted = false;
         }
     }
 
-    let mut st = SegmentTree::new(n);
+    let mut st: SegmentTree<Node> = SegmentTree::new(n);
 
     for i in 0..n {
         if a[i] == 1 {
@@ -73,7 +73,7 @@ fn solve(input: &mut Input) {
         if t == 1 {
             st.update(l, r, &Node::INVERTED);
         } else {
-            out_line!(st.query(l, r).ans_dir);
+            out_line!(st.query::<Node>(l, r).ans_dir);
         }
     }
 }

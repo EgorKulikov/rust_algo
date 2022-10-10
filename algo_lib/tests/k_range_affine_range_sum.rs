@@ -30,17 +30,17 @@ fn solve(input: &mut Input) {
             }
         }
 
-        fn join(&mut self, left: &Self, right: &Self) {
+        fn join(&mut self, left: &Self, right: &Self, _: usize, _: usize, _: usize) {
             self.sum = left.sum + right.sum;
         }
 
-        fn accumulate(&mut self, value: &Self) {
+        fn accumulate(&mut self, value: &Self, _: usize, _: usize) {
             self.sum = self.sum * value.b + Mod::new(self.right - self.left) * value.c;
             self.b *= value.b;
             self.c = self.c * value.b + value.c;
         }
 
-        fn reset_delta(&mut self) {
+        fn reset_delta(&mut self, _: usize, _: usize) {
             self.b = Mod::one();
             self.c = Mod::zero();
         }
@@ -75,7 +75,7 @@ fn solve(input: &mut Input) {
             };
             st.update(l, r, &node);
         } else {
-            out_line!(st.query(l, r).sum);
+            out_line!(st.query::<Node>(l, r).sum);
         }
     }
 }

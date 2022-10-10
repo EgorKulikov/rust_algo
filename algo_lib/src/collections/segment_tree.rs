@@ -3,9 +3,53 @@ use std::marker::PhantomData;
 
 pub trait SegmentTreeNode {
     fn new(left: usize, right: usize) -> Self;
-    fn join(&mut self, left: &Self, right: &Self);
-    fn accumulate(&mut self, value: &Self);
-    fn reset_delta(&mut self);
+    fn join(&mut self, left_val: &Self, right_val: &Self, left: usize, mid: usize, right: usize);
+    fn accumulate(&mut self, value: &Self, left: usize, right: usize);
+    fn reset_delta(&mut self, left: usize, right: usize);
+}
+
+pub trait Pushable<T>: SegmentTreeNode {
+    fn push(&mut self, delta: &T, left: usize, right: usize);
+}
+
+impl<T: SegmentTreeNode> Pushable<T> for T {
+    fn push(&mut self, delta: &T, left: usize, right: usize) {
+        self.accumulate(delta, left, right);
+    }
+}
+
+pub trait QueryResult<Result>: SegmentTreeNode {
+    fn empty_result() -> Result;
+    fn result(&self) -> Result;
+    fn join_results(
+        left_res: Result,
+        right_res: Result,
+        left: usize,
+        mid: usize,
+        right: usize,
+    ) -> Result;
+}
+
+impl<T: SegmentTreeNode + Clone> QueryResult<T> for T {
+    fn empty_result() -> T {
+        Self::new(0, 0)
+    }
+
+    fn result(&self) -> T {
+        self.clone()
+    }
+
+    fn join_results(left_res: T, right_res: T, left: usize, mid: usize, right: usize) -> T {
+        if left == mid {
+            right_res
+        } else if mid == right {
+            left_res
+        } else {
+            let mut res = T::new(left, right);
+            res.join(&left_res, &right_res, left, mid, right);
+            res
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -60,7 +104,13 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
             self.init_impl(left_child, left, mid, f);
             self.init_impl(right_child, mid, right, f);
             let mut node = Node::new(left, right);
-            node.join(&self.nodes[left_child], &self.nodes[right_child]);
+            node.join(
+                &self.nodes[left_child],
+                &self.nodes[right_child],
+                left,
+                mid,
+                right,
+            );
             self.nodes.push(node);
         }
     }
@@ -75,7 +125,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
             &self.nodes[root]
         } else {
             let mid = (left + right) >> 1;
-            self.push_down(root, mid, right);
+            self.push_down(root, left, mid, right);
             let left_child = root - 2 * (right - mid);
             let right_child = root - 1;
             if at < mid {
@@ -86,17 +136,23 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         }
     }
 
-    pub fn point_update(&mut self, at: usize, val: &Node) {
+    pub fn point_update<T>(&mut self, at: usize, val: &T)
+    where
+        Node: Pushable<T>,
+    {
         assert!(at < self.n);
         self.do_point_update(2 * self.n - 2, 0, self.n, at, val);
     }
 
-    fn do_point_update(&mut self, root: usize, left: usize, right: usize, at: usize, val: &Node) {
+    fn do_point_update<T>(&mut self, root: usize, left: usize, right: usize, at: usize, val: &T)
+    where
+        Node: Pushable<T>,
+    {
         if left + 1 == right {
-            self.nodes[root].accumulate(val);
+            self.nodes[root].push(val, left, right);
         } else {
             let mid = (left + right) >> 1;
-            self.push_down(root, mid, right);
+            self.push_down(root, left, mid, right);
             let left_child = root - 2 * (right - mid);
             let right_child = root - 1;
             if at < mid {
@@ -104,7 +160,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
             } else {
                 self.do_point_update(right_child, mid, right, at, val);
             }
-            self.join(root, mid, right);
+            self.join(root, left, mid, right);
         }
     }
 
@@ -128,7 +184,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
             op.adjust_leaf(&mut self.nodes[root], left, args)
         } else {
             let mid = (left + right) >> 1;
-            self.push_down(root, mid, right);
+            self.push_down(root, left, mid, right);
             let left_child = root - 2 * (right - mid);
             let right_child = root - 1;
             let (l, r) = self.nodes.split_at_mut(root);
@@ -146,36 +202,41 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
                 Direction::Left => self.do_point_operation(op, left_child, left, mid, args),
                 Direction::Right => self.do_point_operation(op, right_child, mid, right, args),
             };
-            self.join(root, mid, right);
+            self.join(root, left, mid, right);
             res
         }
     }
 
-    pub fn update(&mut self, from: usize, to: usize, val: &Node) {
+    pub fn update<T>(&mut self, from: usize, to: usize, val: &T)
+    where
+        Node: Pushable<T>,
+    {
         self.do_update(2 * self.n - 2, 0, self.n, from, to, val)
     }
 
-    pub fn do_update(
+    pub fn do_update<T>(
         &mut self,
         root: usize,
         left: usize,
         right: usize,
         from: usize,
         to: usize,
-        val: &Node,
-    ) {
+        val: &T,
+    ) where
+        Node: Pushable<T>,
+    {
         if left >= to || right <= from {
             // Do nothing
         } else if left >= from && right <= to {
-            self.nodes[root].accumulate(val);
+            self.nodes[root].push(val, left, right);
         } else {
             let mid = (left + right) >> 1;
-            self.push_down(root, mid, right);
+            self.push_down(root, left, mid, right);
             let left_child = root - 2 * (right - mid);
             let right_child = root - 1;
             self.do_update(left_child, left, mid, from, to, val);
             self.do_update(right_child, mid, right, from, to, val);
-            self.join(root, mid, right);
+            self.join(root, left, mid, right);
         }
     }
 
@@ -205,57 +266,73 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
             op.process_result(&mut self.nodes[root], args)
         } else {
             let mid = (left + right) >> 1;
-            self.push_down(root, mid, right);
+            self.push_down(root, left, mid, right);
             let left_child = root - 2 * (right - mid);
             let right_child = root - 1;
             let left_result = self.do_operation(left_child, left, mid, from, to, op, args);
             let right_result = self.do_operation(right_child, mid, right, from, to, op, args);
-            self.join(root, mid, right);
+            self.join(root, left, mid, right);
             op.join_results(left_result, right_result, args)
         }
     }
 
-    fn join(&mut self, root: usize, mid: usize, right: usize) {
+    fn join(&mut self, root: usize, left: usize, mid: usize, right: usize) {
         let left_child = root - 2 * (right - mid);
         let right_child = root - 1;
-        let (left, right) = self.nodes.split_at_mut(root);
-        right[0].join(&left[left_child], &left[right_child]);
+        let (left_node, right_node) = self.nodes.split_at_mut(root);
+        right_node[0].join(
+            &left_node[left_child],
+            &left_node[right_child],
+            left,
+            mid,
+            right,
+        );
     }
 
-    fn do_push_down(&mut self, parent: usize, to: usize) {
-        let (left, right) = self.nodes.split_at_mut(parent);
-        left[to].accumulate(&right[0]);
+    fn do_push_down(&mut self, parent: usize, to: usize, left: usize, right: usize) {
+        let (left_nodes, right_nodes) = self.nodes.split_at_mut(parent);
+        left_nodes[to].accumulate(&right_nodes[0], left, right);
     }
 
-    fn push_down(&mut self, root: usize, mid: usize, right: usize) {
-        self.do_push_down(root, root - 2 * (right - mid));
-        self.do_push_down(root, root - 1);
-        self.nodes[root].reset_delta();
+    fn push_down(&mut self, root: usize, left: usize, mid: usize, right: usize) {
+        self.do_push_down(root, root - 2 * (right - mid), left, mid);
+        self.do_push_down(root, root - 1, mid, right);
+        self.nodes[root].reset_delta(left, right);
     }
 }
 
-impl<Node: SegmentTreeNode + Copy> SegmentTree<Node> {
-    pub fn query(&mut self, from: usize, to: usize) -> Node {
-        self.do_query(2 * self.n - 2, 0, self.n, from, to)
+impl<Node: SegmentTreeNode + Clone> SegmentTree<Node> {
+    pub fn query<T>(&mut self, from: usize, to: usize) -> T
+    where
+        Node: QueryResult<T>,
+    {
+        if from >= self.n {
+            Node::empty_result()
+        } else {
+            self.do_query(2 * self.n - 2, 0, self.n, from, to)
+        }
     }
 
-    fn do_query(&mut self, root: usize, left: usize, right: usize, from: usize, to: usize) -> Node {
-        if left >= to {
-            Node::new(to, to)
-        } else if right <= from {
-            Node::new(from, from)
-        } else if left >= from && right <= to {
-            self.nodes[root]
+    fn do_query<T>(&mut self, root: usize, left: usize, right: usize, from: usize, to: usize) -> T
+    where
+        Node: QueryResult<T>,
+    {
+        if left >= from && right <= to {
+            self.nodes[root].result()
         } else {
             let mid = (left + right) >> 1;
-            self.push_down(root, mid, right);
+            self.push_down(root, left, mid, right);
             let left_child = root - 2 * (right - mid);
             let right_child = root - 1;
-            let left_res = self.do_query(left_child, left, mid, from, to);
-            let right_res = self.do_query(right_child, mid, right, from, to);
-            let mut res = Node::new(left, right);
-            res.join(&left_res, &right_res);
-            res
+            if to <= mid {
+                self.do_query(left_child, left, mid, from, to)
+            } else if from >= mid {
+                self.do_query(right_child, mid, right, from, to)
+            } else {
+                let left_result = self.do_query(left_child, left, mid, from, to);
+                let right_result = self.do_query(right_child, mid, right, from, to);
+                Node::join_results(left_result, right_result, left, mid, right)
+            }
         }
     }
 }

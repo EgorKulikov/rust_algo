@@ -30,16 +30,16 @@ fn solve(input: &mut Input, _test_case: usize) {
             }
         }
 
-        fn join(&mut self, left: &Self, right: &Self) {
+        fn join(&mut self, left: &Self, right: &Self, _: usize, _: usize, _: usize) {
             self.val = left.val.min(right.val);
         }
 
-        fn accumulate(&mut self, value: &Self) {
+        fn accumulate(&mut self, value: &Self, _: usize, _: usize) {
             self.val.minim(value.delta);
             self.delta.minim(value.delta);
         }
 
-        fn reset_delta(&mut self) {
+        fn reset_delta(&mut self, _: usize, _: usize) {
             self.delta = usize::MAX;
         }
     }
