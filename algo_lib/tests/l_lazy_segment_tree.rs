@@ -71,9 +71,9 @@ fn solve(input: &mut Input) {
         let l = input.read::<usize>() - 1;
         let r = input.read();
         if t == 1 {
-            st.update(l, r, &Node::INVERTED);
+            st.update(l..r, &Node::INVERTED);
         } else {
-            out_line!(st.query::<Node>(l, r).ans_dir);
+            out_line!(st.query::<Node>(l..r).ans_dir);
         }
     }
 }

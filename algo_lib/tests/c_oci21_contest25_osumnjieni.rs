@@ -50,12 +50,12 @@ fn solve(input: &mut Input, _test_case: usize) {
     });
     let mut next = vec![0; n];
     for i in (0..n).rev() {
-        next[i] = tree.query(l[i], r[i] + 1).val;
+        next[i] = tree.query(l[i]..=r[i]).val;
         if i != n - 1 {
             let val = next[i + 1];
             next[i].minim(val);
         }
-        tree.update(l[i], r[i] + 1, &Node { val: n, delta: i });
+        tree.update(l[i]..=r[i], &Node { val: n, delta: i });
     }
     let mut levels = vec![next];
     while levels.last().unwrap()[0] != n {

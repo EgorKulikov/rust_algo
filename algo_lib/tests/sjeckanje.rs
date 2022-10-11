@@ -97,8 +97,7 @@ fn solve(input: &mut Input) {
         //     *i += x;
         // }
         st.update(
-            l,
-            r,
+            l..r,
             &Node {
                 delta: x,
                 ..Default::default()
@@ -120,7 +119,7 @@ fn solve(input: &mut Input) {
             ans = n_ans;
         }
         out_line!(ans);*/
-        out_line!(st.query(0, n).val[0][0]);
+        out_line!(st.query(..).val[0][0]);
     }
 }
 

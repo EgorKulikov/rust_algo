@@ -60,7 +60,7 @@ fn solve(input: &mut Input) {
 
     for _ in 0usize..q {
         let t: u8 = input.read();
-        let l = input.read();
+        let l = input.read_usize();
         let r = input.read();
 
         if t == 0 {
@@ -73,9 +73,9 @@ fn solve(input: &mut Input) {
                 b,
                 c,
             };
-            st.update(l, r, &node);
+            st.update(l..r, &node);
         } else {
-            out_line!(st.query::<Node>(l, r).sum);
+            out_line!(st.query::<Node>(l..r).sum);
         }
     }
 }

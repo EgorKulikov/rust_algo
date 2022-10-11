@@ -47,7 +47,7 @@ impl<T: ZeroOne + Addable + Multable + Copy> Matrix<T> {
         res
     }
 
-    fn do_mult(&mut self, a: &Matrix<T>, b: &Matrix<T>) {
+    pub fn do_mult(&mut self, a: &Matrix<T>, b: &Matrix<T>) {
         assert_eq!(self.d1(), a.d1());
         assert_eq!(a.d2(), b.d1());
         assert_eq!(b.d2(), self.d2());

@@ -53,3 +53,13 @@ impl<T: AddSub + ZeroOne> FenwickTree<T> {
         self.value.legacy_fill(T::zero());
     }
 }
+
+impl<T: AddSub + ZeroOne> From<&[T]> for FenwickTree<T> {
+    fn from(slice: &[T]) -> Self {
+        let mut result = Self::new(slice.len());
+        for (i, &v) in slice.iter().enumerate() {
+            result.add(i, v);
+        }
+        result
+    }
+}

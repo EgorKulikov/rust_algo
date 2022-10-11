@@ -1,5 +1,7 @@
 use crate::misc::direction::Direction;
+use std::collections::Bound;
 use std::marker::PhantomData;
+use std::ops::RangeBounds;
 
 pub trait SegmentTreeNode {
     fn new(left: usize, right: usize) -> Self;
@@ -207,11 +209,27 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         }
     }
 
-    pub fn update<T>(&mut self, from: usize, to: usize, val: &T)
+    pub fn update<T>(&mut self, range: impl RangeBounds<usize>, val: &T)
     where
         Node: Pushable<T>,
     {
-        self.do_update(2 * self.n - 2, 0, self.n, from, to, val)
+        self.do_update(
+            2 * self.n - 2,
+            0,
+            self.n,
+            match range.start_bound() {
+                Bound::Included(&x) => x,
+                Bound::Excluded(&x) => x + 1,
+                Bound::Unbounded => 0,
+            },
+            match range.end_bound() {
+                Bound::Included(&x) => x + 1,
+                Bound::Excluded(&x) => x,
+                Bound::Unbounded => self.n,
+            }
+            .min(self.n),
+            val,
+        )
     }
 
     pub fn do_update<T>(
@@ -242,12 +260,28 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
 
     pub fn operation<Args, Res>(
         &mut self,
-        from: usize,
-        to: usize,
+        range: impl RangeBounds<usize>,
         op: &mut dyn Operation<Node, Args, Res>,
         args: &Args,
     ) -> Res {
-        self.do_operation(2 * self.n - 2, 0, self.n, from, to, op, args)
+        self.do_operation(
+            2 * self.n - 2,
+            0,
+            self.n,
+            match range.start_bound() {
+                Bound::Included(&x) => x,
+                Bound::Excluded(&x) => x + 1,
+                Bound::Unbounded => 0,
+            },
+            match range.end_bound() {
+                Bound::Included(&x) => x + 1,
+                Bound::Excluded(&x) => x,
+                Bound::Unbounded => self.n,
+            }
+            .min(self.n),
+            op,
+            args,
+        )
     }
 
     pub fn do_operation<Args, Res>(
@@ -302,11 +336,22 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
 }
 
 impl<Node: SegmentTreeNode + Clone> SegmentTree<Node> {
-    pub fn query<T>(&mut self, from: usize, to: usize) -> T
+    pub fn query<T>(&mut self, range: impl RangeBounds<usize>) -> T
     where
         Node: QueryResult<T>,
     {
-        if from >= self.n {
+        let from = match range.start_bound() {
+            Bound::Included(&x) => x,
+            Bound::Excluded(&x) => x + 1,
+            Bound::Unbounded => 0,
+        };
+        let to = match range.end_bound() {
+            Bound::Included(&x) => x + 1,
+            Bound::Excluded(&x) => x,
+            Bound::Unbounded => self.n,
+        }
+        .min(self.n);
+        if from >= to {
             Node::empty_result()
         } else {
             self.do_query(2 * self.n - 2, 0, self.n, from, to)
