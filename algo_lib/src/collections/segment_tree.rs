@@ -11,10 +11,10 @@ pub trait SegmentTreeNode {
 }
 
 pub trait Pushable<T>: SegmentTreeNode {
-    fn push(&mut self, delta: &T, left: usize, right: usize);
+    fn push(&mut self, delta: T, left: usize, right: usize);
 }
 
-impl<T: SegmentTreeNode> Pushable<T> for T {
+impl<T: SegmentTreeNode> Pushable<&T> for T {
     fn push(&mut self, delta: &T, left: usize, right: usize) {
         self.accumulate(delta, left, right);
     }
@@ -138,7 +138,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         }
     }
 
-    pub fn point_update<T>(&mut self, at: usize, val: &T)
+    pub fn point_update<T>(&mut self, at: usize, val: T)
     where
         Node: Pushable<T>,
     {
@@ -146,7 +146,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         self.do_point_update(2 * self.n - 2, 0, self.n, at, val);
     }
 
-    fn do_point_update<T>(&mut self, root: usize, left: usize, right: usize, at: usize, val: &T)
+    fn do_point_update<T>(&mut self, root: usize, left: usize, right: usize, at: usize, val: T)
     where
         Node: Pushable<T>,
     {
@@ -163,6 +163,38 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
                 self.do_point_update(right_child, mid, right, at, val);
             }
             self.join(root, left, mid, right);
+        }
+    }
+
+    pub fn point_through_update<'a, T>(&mut self, at: usize, val: &'a T)
+    where
+        Node: Pushable<&'a T>,
+    {
+        assert!(at < self.n);
+        self.do_point_through_update(2 * self.n - 2, 0, self.n, at, val);
+    }
+
+    fn do_point_through_update<'a, T>(
+        &mut self,
+        root: usize,
+        left: usize,
+        right: usize,
+        at: usize,
+        val: &'a T,
+    ) where
+        Node: Pushable<&'a T>,
+    {
+        self.nodes[root].push(val, left, right);
+        if left + 1 != right {
+            let mid = (left + right) >> 1;
+            self.push_down(root, left, mid, right);
+            let left_child = root - 2 * (right - mid);
+            let right_child = root - 1;
+            if at < mid {
+                self.do_point_update(left_child, left, mid, at, val);
+            } else {
+                self.do_point_update(right_child, mid, right, at, val);
+            }
         }
     }
 
@@ -209,9 +241,9 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         }
     }
 
-    pub fn update<T>(&mut self, range: impl RangeBounds<usize>, val: &T)
+    pub fn update<'a, T>(&mut self, range: impl RangeBounds<usize>, val: &'a T)
     where
-        Node: Pushable<T>,
+        Node: Pushable<&'a T>,
     {
         self.do_update(
             2 * self.n - 2,
@@ -232,16 +264,16 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         )
     }
 
-    pub fn do_update<T>(
+    pub fn do_update<'a, T>(
         &mut self,
         root: usize,
         left: usize,
         right: usize,
         from: usize,
         to: usize,
-        val: &T,
+        val: &'a T,
     ) where
-        Node: Pushable<T>,
+        Node: Pushable<&'a T>,
     {
         if left >= to || right <= from {
             // Do nothing
