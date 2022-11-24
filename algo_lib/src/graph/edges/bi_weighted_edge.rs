@@ -1,6 +1,6 @@
 use crate::graph::edges::bi_edge_trait::BiEdgeTrait;
 use crate::graph::edges::edge_id::{EdgeId, NoId, WithId};
-use crate::graph::edges::edge_trait::EdgeTrait;
+use crate::graph::edges::edge_trait::{BidirectionalEdgeTrait, EdgeTrait};
 use crate::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
 use crate::graph::graph::Graph;
 use crate::io::input::{Input, Readable};
@@ -8,13 +8,13 @@ use crate::numbers::num_traits::add_sub::Addable;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 
 #[derive(Clone)]
-pub struct BiWeightedEdgeRaw<W: PartialOrd + Copy, Id: EdgeId> {
+pub struct BiWeightedEdgeRaw<W: Copy, Id: EdgeId> {
     to: u32,
     weight: W,
     id: Id,
 }
 
-impl<W: PartialOrd + Copy, Id: EdgeId> BiWeightedEdgeRaw<W, Id> {
+impl<W: Copy, Id: EdgeId> BiWeightedEdgeRaw<W, Id> {
     pub fn new(to: usize, w: W) -> Self {
         Self {
             to: to as u32,
@@ -24,9 +24,10 @@ impl<W: PartialOrd + Copy, Id: EdgeId> BiWeightedEdgeRaw<W, Id> {
     }
 }
 
-impl<W: PartialOrd + Copy, Id: EdgeId> EdgeTrait for BiWeightedEdgeRaw<W, Id> {
+impl<W: Copy, Id: EdgeId> BidirectionalEdgeTrait for BiWeightedEdgeRaw<W, Id> {}
+
+impl<W: Copy, Id: EdgeId> EdgeTrait for BiWeightedEdgeRaw<W, Id> {
     const REVERSABLE: bool = true;
-    const BIDIRECTIONAL: bool = true;
 
     fn to(&self) -> usize {
         self.to as usize
@@ -51,9 +52,9 @@ impl<W: PartialOrd + Copy, Id: EdgeId> EdgeTrait for BiWeightedEdgeRaw<W, Id> {
     }
 }
 
-impl<W: PartialOrd + Copy, Id: EdgeId> BiEdgeTrait for BiWeightedEdgeRaw<W, Id> {}
+impl<W: Copy, Id: EdgeId> BiEdgeTrait for BiWeightedEdgeRaw<W, Id> {}
 
-impl<W: PartialOrd + Copy, Id: EdgeId> WeightedEdgeTrait<W> for BiWeightedEdgeRaw<W, Id> {
+impl<W: Copy, Id: EdgeId> WeightedEdgeTrait<W> for BiWeightedEdgeRaw<W, Id> {
     fn weight(&self) -> W {
         self.weight
     }
@@ -67,13 +68,13 @@ pub type BiWeightedEdge<W> = BiWeightedEdgeRaw<W, NoId>;
 pub type BiWeightedEdgeWithId<W> = BiWeightedEdgeRaw<W, WithId>;
 
 pub trait ReadBiWeightedEdgeGraph {
-    fn read_graph<W: Addable + PartialOrd + Copy + ZeroOne + Readable, Id: EdgeId>(
+    fn read_graph<W: Addable + Copy + ZeroOne + Readable, Id: EdgeId>(
         &mut self,
         n: usize,
         m: usize,
     ) -> Graph<BiWeightedEdgeRaw<W, Id>>;
 
-    fn read_tree<W: Addable + PartialOrd + Copy + ZeroOne + Readable, Id: EdgeId>(
+    fn read_tree<W: Addable + Copy + ZeroOne + Readable, Id: EdgeId>(
         &mut self,
         n: usize,
     ) -> Graph<BiWeightedEdgeRaw<W, Id>> {
@@ -82,7 +83,7 @@ pub trait ReadBiWeightedEdgeGraph {
 }
 
 impl ReadBiWeightedEdgeGraph for Input<'_> {
-    fn read_graph<W: Addable + PartialOrd + Copy + ZeroOne + Readable, Id: EdgeId>(
+    fn read_graph<W: Addable + Copy + ZeroOne + Readable, Id: EdgeId>(
         &mut self,
         n: usize,
         m: usize,
@@ -98,7 +99,7 @@ impl ReadBiWeightedEdgeGraph for Input<'_> {
     }
 }
 
-impl<W: Addable + PartialOrd + Copy + ZeroOne + Readable, Id: EdgeId> Readable
+impl<W: Addable + Copy + ZeroOne + Readable, Id: EdgeId> Readable
     for Graph<BiWeightedEdgeRaw<W, Id>>
 {
     fn read(input: &mut Input) -> Self {

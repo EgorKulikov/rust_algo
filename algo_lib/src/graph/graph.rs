@@ -1,12 +1,9 @@
 use crate::collections::dsu::DSU;
-use crate::graph::edges::edge_trait::EdgeTrait;
-use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
-use crate::numbers::num_traits::add_sub::AddSub;
-use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::graph::edges::edge_trait::{BidirectionalEdgeTrait, EdgeTrait};
 use std::ops::{Index, IndexMut};
 
 pub struct Graph<E: EdgeTrait> {
-    edges: Vec<Vec<E>>,
+    pub(super) edges: Vec<Vec<E>>,
     edge_count: usize,
 }
 
@@ -54,34 +51,37 @@ impl<E: EdgeTrait> Graph<E> {
     pub fn edge_count(&self) -> usize {
         self.edge_count
     }
+}
 
+impl<E: BidirectionalEdgeTrait> Graph<E> {
     pub fn is_tree(&self) -> bool {
-        if !E::BIDIRECTIONAL || self.edge_count + 1 != self.vertex_count() {
+        if self.edge_count + 1 != self.vertex_count() {
             false
         } else {
-            let mut dsu = DSU::new(self.vertex_count());
-            for i in 0..self.vertex_count() {
-                for e in self[i].iter() {
-                    dsu.join(i, e.to());
-                }
-            }
-            dsu.count() == 1
+            self.is_connected()
         }
     }
-}
 
-pub trait FlowGraph<C: AddSub + PartialOrd + Copy + ZeroOne, E: FlowEdgeTrait<C>> {
-    fn push_flow(&mut self, push_data: (usize, usize, C));
-}
+    pub fn is_forest(&self) -> bool {
+        let mut dsu = DSU::new(self.vertex_count());
+        for i in 0..self.vertex_count() {
+            for e in self[i].iter() {
+                if i <= e.to() && !dsu.join(i, e.to()) {
+                    return false;
+                }
+            }
+        }
+        true
+    }
 
-impl<C: AddSub + PartialOrd + Copy + ZeroOne, E: FlowEdgeTrait<C>> FlowGraph<C, E> for Graph<E> {
-    fn push_flow(&mut self, (to, reverse_id, flow): (usize, usize, C)) {
-        *self.edges[to][reverse_id].capacity_mut() += flow;
-        let from = self.edges[to][reverse_id].to();
-        let direct_id = self.edges[to][reverse_id].reverse_id();
-        let direct = &mut self.edges[from][direct_id];
-        assert!(flow >= C::zero() && flow <= direct.capacity());
-        *direct.capacity_mut() -= flow;
+    pub fn is_connected(&self) -> bool {
+        let mut dsu = DSU::new(self.vertex_count());
+        for i in 0..self.vertex_count() {
+            for e in self[i].iter() {
+                dsu.join(i, e.to());
+            }
+        }
+        dsu.count() == 1
     }
 }
 

@@ -1,6 +1,5 @@
 pub trait EdgeTrait: Clone {
     const REVERSABLE: bool;
-    const BIDIRECTIONAL: bool;
 
     fn to(&self) -> usize;
     fn id(&self) -> usize;
@@ -10,3 +9,5 @@ pub trait EdgeTrait: Clone {
     #[must_use]
     fn reverse_edge(&self, from: usize) -> Self;
 }
+
+pub trait BidirectionalEdgeTrait: EdgeTrait {}

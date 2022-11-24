@@ -27,7 +27,6 @@ impl<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId> FlowEdgeRaw<C, Id> {
 
 impl<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId> EdgeTrait for FlowEdgeRaw<C, Id> {
     const REVERSABLE: bool = true;
-    const BIDIRECTIONAL: bool = false;
 
     fn to(&self) -> usize {
         self.to as usize

@@ -1,4 +1,4 @@
-use crate::graph::edges::edge_trait::EdgeTrait;
+use crate::graph::edges::edge_trait::BidirectionalEdgeTrait;
 use crate::graph::graph::Graph;
 
 pub trait DFSOrder {
@@ -9,7 +9,7 @@ pub trait DFSOrder {
     }
 }
 
-impl<E: EdgeTrait> DFSOrder for Graph<E> {
+impl<E: BidirectionalEdgeTrait> DFSOrder for Graph<E> {
     fn dfs_order_with_root(&self, root: usize) -> (Vec<usize>, Vec<usize>) {
         debug_assert!(self.is_tree());
         let count = self.vertex_count();

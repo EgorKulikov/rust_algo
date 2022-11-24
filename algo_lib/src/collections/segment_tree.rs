@@ -342,6 +342,37 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         }
     }
 
+    pub fn binary_search<Res>(
+        &mut self,
+        wh: impl FnMut(&Node, &Node) -> Direction,
+        calc: impl FnMut(&Node, usize) -> Res,
+    ) -> Res {
+        self.do_binary_search(2 * self.n - 2, 0, self.n, wh, calc)
+    }
+
+    fn do_binary_search<Res>(
+        &mut self,
+        root: usize,
+        left: usize,
+        right: usize,
+        mut wh: impl FnMut(&Node, &Node) -> Direction,
+        mut calc: impl FnMut(&Node, usize) -> Res,
+    ) -> Res {
+        if left + 1 == right {
+            calc(&self.nodes[root], left)
+        } else {
+            let mid = (left + right) >> 1;
+            self.push_down(root, left, mid, right);
+            let left_child = root - 2 * (right - mid);
+            let right_child = root - 1;
+            let direction = wh(&self.nodes[left_child], &self.nodes[right_child]);
+            match direction {
+                Direction::Left => self.do_binary_search(left_child, left, mid, wh, calc),
+                Direction::Right => self.do_binary_search(right_child, mid, right, wh, calc),
+            }
+        }
+    }
+
     fn join(&mut self, root: usize, left: usize, mid: usize, right: usize) {
         let left_child = root - 2 * (right - mid);
         let right_child = root - 1;

@@ -25,7 +25,6 @@ impl<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId> WeightedEdgeRaw<W, Id
 
 impl<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId> EdgeTrait for WeightedEdgeRaw<W, Id> {
     const REVERSABLE: bool = false;
-    const BIDIRECTIONAL: bool = false;
 
     fn to(&self) -> usize {
         self.to as usize

@@ -1,6 +1,6 @@
-use std::collections::hash_map::IntoValues;
 use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
+use std::iter::FromIterator;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 
 #[derive(Default, Clone, Eq, PartialEq)]
@@ -37,7 +37,7 @@ impl<K: Hash + Eq, V: Default> DefaultHashMap<K, V> {
         self.0.entry(key).or_insert_with(|| V::default())
     }
 
-    pub fn into_values(self) -> IntoValues<K, V> {
+    pub fn into_values(self) -> std::collections::hash_map::IntoValues<K, V> {
         self.0.into_values()
     }
 }
@@ -62,6 +62,12 @@ impl<K: Hash + Eq, V> IntoIterator for DefaultHashMap<K, V> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
+    }
+}
+
+impl<K: Hash + Eq, V: Default> FromIterator<(K, V)> for DefaultHashMap<K, V> {
+    fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
+        Self(iter.into_iter().collect(), V::default())
     }
 }
 
@@ -120,5 +126,11 @@ impl<K: Ord + Eq, V> IntoIterator for DefaultTreeMap<K, V> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
+    }
+}
+
+impl<K: Ord + Eq, V: Default> FromIterator<(K, V)> for DefaultTreeMap<K, V> {
+    fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
+        Self(iter.into_iter().collect(), V::default())
     }
 }

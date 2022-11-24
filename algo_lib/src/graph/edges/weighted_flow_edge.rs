@@ -9,7 +9,7 @@ use std::ops::Neg;
 
 #[derive(Clone)]
 pub struct WeightedFlowEdgeRaw<
-    W: Addable + Neg<Output = W> + PartialOrd + Copy + ZeroOne,
+    W: Addable + Neg<Output = W> + Copy + ZeroOne,
     C: AddSub + PartialOrd + Copy + ZeroOne,
     Id: EdgeId,
 > {
@@ -21,7 +21,7 @@ pub struct WeightedFlowEdgeRaw<
 }
 
 impl<
-        W: Addable + Neg<Output = W> + PartialOrd + Copy + ZeroOne,
+        W: Addable + Neg<Output = W> + Copy + ZeroOne,
         C: AddSub + PartialOrd + Copy + ZeroOne,
         Id: EdgeId,
     > WeightedFlowEdgeRaw<W, C, Id>
@@ -38,13 +38,12 @@ impl<
 }
 
 impl<
-        W: Addable + Neg<Output = W> + PartialOrd + Copy + ZeroOne,
+        W: Addable + Neg<Output = W> + Copy + ZeroOne,
         C: AddSub + PartialOrd + Copy + ZeroOne,
         Id: EdgeId,
     > EdgeTrait for WeightedFlowEdgeRaw<W, C, Id>
 {
     const REVERSABLE: bool = true;
-    const BIDIRECTIONAL: bool = false;
 
     fn to(&self) -> usize {
         self.to as usize
@@ -72,7 +71,7 @@ impl<
 }
 
 impl<
-        W: Addable + Neg<Output = W> + PartialOrd + Copy + ZeroOne,
+        W: Addable + Neg<Output = W> + Copy + ZeroOne,
         C: AddSub + PartialOrd + Copy + ZeroOne,
         Id: EdgeId,
     > WeightedEdgeTrait<W> for WeightedFlowEdgeRaw<W, C, Id>
@@ -87,7 +86,7 @@ impl<
 }
 
 impl<
-        W: Addable + Neg<Output = W> + PartialOrd + Copy + ZeroOne,
+        W: Addable + Neg<Output = W> + Copy + ZeroOne,
         C: AddSub + PartialOrd + Copy + ZeroOne,
         Id: EdgeId,
     > FlowEdgeTrait<C> for WeightedFlowEdgeRaw<W, C, Id>

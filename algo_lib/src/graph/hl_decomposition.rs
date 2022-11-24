@@ -1,4 +1,4 @@
-use crate::graph::edges::edge_trait::EdgeTrait;
+use crate::graph::edges::edge_trait::BidirectionalEdgeTrait;
 use crate::graph::graph::Graph;
 use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
 
@@ -9,7 +9,7 @@ pub trait HLDecomposition {
         self.hl_decomposition_with_root(0)
     }
 }
-impl<E: EdgeTrait> HLDecomposition for Graph<E> {
+impl<E: BidirectionalEdgeTrait> HLDecomposition for Graph<E> {
     fn hl_decomposition_with_root(&self, root: usize) -> (Vec<Vec<usize>>, Vec<usize>, Vec<usize>) {
         debug_assert!(self.is_tree());
         let n = self.vertex_count();

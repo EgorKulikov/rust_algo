@@ -1,5 +1,5 @@
 use crate::collections::arr2d::Arr2d;
-use crate::graph::edges::edge_trait::EdgeTrait;
+use crate::graph::edges::edge_trait::BidirectionalEdgeTrait;
 use crate::graph::graph::Graph;
 use crate::misc::owned_cell::OwnedCell;
 use crate::numbers::num_traits::bit_ops::Bits;
@@ -41,6 +41,11 @@ impl LCA {
         }
     }
 
+    pub fn on_path(&self, a: usize, b: usize, c: usize) -> bool {
+        let lca = self.lca(a, b);
+        self.lca(a, c) == lca && self.lca(b, c) == c || self.lca(a, c) == c && self.lca(b, c) == lca
+    }
+
     pub fn path_length(&self, first: usize, second: usize) -> usize {
         (self.level[first] + self.level[second] - 2 * self.level[self.lca(first, second)]) as usize
     }
@@ -53,9 +58,15 @@ impl LCA {
     pub fn predecessor(&self, level: usize, vert: usize) -> Option<usize> {
         self.build_steps();
         unsafe {
-            match self.predecessors.as_ref().as_ref().unwrap()[(level, vert)] {
-                -1 => None,
-                v => Some(v.into_usize()),
+            if level >= self.predecessors.as_ref().as_ref().unwrap().d1() {
+                None
+            } else {
+                let pred = self.predecessors.as_ref().as_ref().unwrap()[(level, vert)];
+                if pred == -1 {
+                    None
+                } else {
+                    Some(pred as usize)
+                }
             }
         }
     }
@@ -107,7 +118,7 @@ pub trait LCATrait {
     }
 }
 
-impl<E: EdgeTrait> LCATrait for Graph<E> {
+impl<E: BidirectionalEdgeTrait> LCATrait for Graph<E> {
     fn lca_with_root(&self, root: usize) -> LCA {
         debug_assert!(self.is_tree());
         let vertex_count = self.vertex_count();

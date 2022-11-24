@@ -1,4 +1,4 @@
-use crate::numbers::primes::divisors;
+use crate::numbers::primes::Factorize;
 
 mod mod_int {
     use crate::numbers::mod_int::ModInt7;
@@ -76,6 +76,6 @@ mod mod_int {
 #[test]
 fn test_divisors() {
     for i in 1..100000 {
-        divisors(i);
+        i.prime_divisors();
     }
 }

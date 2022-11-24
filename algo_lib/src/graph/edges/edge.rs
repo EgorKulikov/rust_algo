@@ -20,7 +20,6 @@ impl<Id: EdgeId> EdgeRaw<Id> {
 
 impl<Id: EdgeId> EdgeTrait for EdgeRaw<Id> {
     const REVERSABLE: bool = false;
-    const BIDIRECTIONAL: bool = false;
 
     fn to(&self) -> usize {
         self.to as usize

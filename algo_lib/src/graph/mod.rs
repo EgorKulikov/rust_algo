@@ -4,6 +4,7 @@ pub mod distances;
 pub mod edge;
 pub mod edge_distances;
 pub mod edges;
+pub mod flow_graph;
 #[allow(clippy::module_inception)]
 pub mod graph;
 pub mod hl_decomposition;

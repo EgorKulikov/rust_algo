@@ -2,6 +2,7 @@ use crate::collections::bit_set::BitSet;
 use crate::collections::iter_ext::IterExt;
 use crate::dynamic_value;
 use crate::misc::random::random;
+use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
 use crate::misc::value::DynamicValue;
 use crate::numbers::gcd::gcd;
 use crate::numbers::mod_int::ModInt;
@@ -164,39 +165,95 @@ pub fn find_divisor(n: i64) -> i64 {
     }
 }
 
-pub fn divisors(n: i64) -> Vec<(i64, usize)> {
-    if n == 1 {
-        return Vec::new();
-    }
-    let d = find_divisor(n);
-    if d == n {
-        return vec![(d, 1)];
-    }
-    let left = divisors(d);
-    let right = divisors(n / d);
-    let mut res = Vec::new();
-    let mut i = 0;
-    let mut j = 0;
-    while i < left.len() && j < right.len() {
-        match left[i].0.cmp(&right[j].0) {
-            Ordering::Less => {
-                res.push(left[i]);
+pub trait Factorize {
+    fn prime_divisors(self) -> Vec<(i64, usize)>;
+    fn divisors(self) -> Vec<i64>;
+    fn max_power(self, p: Self) -> usize;
+}
+
+impl<T: Primitive> Factorize for T {
+    fn prime_divisors(self) -> Vec<(i64, usize)> {
+        let n = self.into_i64();
+        assert!(n >= 1);
+        if n == 1 {
+            return Vec::new();
+        }
+        let d = if n > 100 {
+            find_divisor(n)
+        } else {
+            let mut res = n;
+            let mut i = 2;
+            while i * i <= n {
+                if n % i == 0 {
+                    res = i;
+                    break;
+                }
                 i += 1;
             }
-            Ordering::Equal => {
-                res.push((left[i].0, left[i].1 + right[j].1));
-                i += 1;
-                j += 1;
-            }
-            Ordering::Greater => {
-                res.push(right[j]);
-                j += 1;
+            res
+        };
+        if d == n {
+            return vec![(d, 1)];
+        }
+        let left = d.prime_divisors();
+        let right = (n / d).prime_divisors();
+        let mut res = Vec::new();
+        let mut i = 0;
+        let mut j = 0;
+        while i < left.len() && j < right.len() {
+            match left[i].0.cmp(&right[j].0) {
+                Ordering::Less => {
+                    res.push(left[i]);
+                    i += 1;
+                }
+                Ordering::Equal => {
+                    res.push((left[i].0, left[i].1 + right[j].1));
+                    i += 1;
+                    j += 1;
+                }
+                Ordering::Greater => {
+                    res.push(right[j]);
+                    j += 1;
+                }
             }
         }
+        res.extend_from_slice(&left[i..]);
+        res.extend_from_slice(&right[j..]);
+        res
     }
-    res.extend_from_slice(&left[i..]);
-    res.extend_from_slice(&right[j..]);
-    res
+
+    fn divisors(self) -> Vec<i64> {
+        let pd = self.prime_divisors();
+        let mut res = Vec::new();
+        let mut rec = RecursiveFunction2::new(|f, mut d: i64, step: usize| {
+            if step == pd.len() {
+                res.push(d);
+            } else {
+                let (p, e) = pd[step];
+                for i in 0..=e {
+                    f.call(d, step + 1);
+                    if i < e {
+                        d *= p;
+                    }
+                }
+            }
+        });
+        rec.call(1, 0);
+        res
+    }
+
+    fn max_power(self, p: Self) -> usize {
+        let mut res = 0;
+        let mut cur = self.into_i64();
+        assert!(cur >= 1);
+        let p = p.into_i64();
+        assert!(p >= 2);
+        while cur % p == 0 {
+            cur /= p;
+            res += 1;
+        }
+        res
+    }
 }
 
 pub fn all_divisors<T: AsIndex + PartialEq + Copy + Mul<Output = T> + Ord>(

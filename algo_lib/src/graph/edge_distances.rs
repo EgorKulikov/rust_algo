@@ -1,10 +1,13 @@
 use crate::collections::iter_ext::IterOrdExt;
-use crate::graph::edges::edge_trait::EdgeTrait;
+use crate::graph::edges::edge_trait::{BidirectionalEdgeTrait, EdgeTrait};
 use crate::graph::graph::Graph;
 use std::collections::VecDeque;
 
 pub trait EdgeAlgos {
     fn edge_distances(&self, source: usize) -> Vec<u32>;
+}
+
+pub trait BiEdgeAlgos: EdgeAlgos {
     fn centers(&self) -> Vec<usize>;
 }
 
@@ -28,7 +31,9 @@ impl<E: EdgeTrait> EdgeAlgos for Graph<E> {
         }
         dist
     }
+}
 
+impl<E: BidirectionalEdgeTrait> BiEdgeAlgos for Graph<E> {
     fn centers(&self) -> Vec<usize> {
         debug_assert!(self.is_tree());
         if self.vertex_count() == 0 {

@@ -1,6 +1,6 @@
 use crate::graph::edges::bi_edge_trait::BiEdgeTrait;
 use crate::graph::edges::edge_id::{EdgeId, NoId, WithId};
-use crate::graph::edges::edge_trait::EdgeTrait;
+use crate::graph::edges::edge_trait::{BidirectionalEdgeTrait, EdgeTrait};
 use crate::graph::graph::Graph;
 use crate::io::input::{Input, Readable};
 
@@ -19,9 +19,10 @@ impl<Id: EdgeId> BiEdgeRaw<Id> {
     }
 }
 
+impl<Id: EdgeId> BidirectionalEdgeTrait for BiEdgeRaw<Id> {}
+
 impl<Id: EdgeId> EdgeTrait for BiEdgeRaw<Id> {
     const REVERSABLE: bool = true;
-    const BIDIRECTIONAL: bool = true;
 
     fn to(&self) -> usize {
         self.to as usize

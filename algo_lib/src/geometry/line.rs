@@ -20,6 +20,12 @@ impl<T: Ring + Copy> Line<T> {
     }
 }
 
+impl<T: Ring + Copy + Eq> Line<T> {
+    pub fn contains(&self, p: Point<T>) -> bool {
+        self.value(p) == T::zero()
+    }
+}
+
 impl Line<f64> {
     pub fn dist(&self, p: Point<f64>) -> f64 {
         self.value(p)
