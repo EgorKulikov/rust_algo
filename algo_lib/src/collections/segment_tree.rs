@@ -1,4 +1,5 @@
 use crate::misc::direction::Direction;
+use crate::when;
 use std::collections::Bound;
 use std::marker::PhantomData;
 use std::ops::RangeBounds;
@@ -42,14 +43,14 @@ impl<T: SegmentTreeNode + Clone> QueryResult<T> for T {
     }
 
     fn join_results(left_res: T, right_res: T, left: usize, mid: usize, right: usize) -> T {
-        if left == mid {
-            right_res
-        } else if mid == right {
-            left_res
-        } else {
-            let mut res = T::new(left, right);
-            res.join(&left_res, &right_res, left, mid, right);
-            res
+        when! {
+            left == mid => right_res,
+            right == mid => left_res,
+            else => {
+                let mut res = Self::new(left, right);
+                res.join(&left_res, &right_res, left, mid, right);
+                res
+            },
         }
     }
 }
@@ -275,18 +276,18 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
     ) where
         Node: Pushable<&'a T>,
     {
-        if left >= to || right <= from {
-            // Do nothing
-        } else if left >= from && right <= to {
-            self.nodes[root].push(val, left, right);
-        } else {
-            let mid = (left + right) >> 1;
-            self.push_down(root, left, mid, right);
-            let left_child = root - 2 * (right - mid);
-            let right_child = root - 1;
-            self.do_update(left_child, left, mid, from, to, val);
-            self.do_update(right_child, mid, right, from, to, val);
-            self.join(root, left, mid, right);
+        when! {
+            left >= to || right <= from => {},
+            left >= from && right <= to => self.nodes[root].push(val, left, right),
+            else => {
+                let mid = (left + right) >> 1;
+                self.push_down(root, left, mid, right);
+                let left_child = root - 2 * (right - mid);
+                let right_child = root - 1;
+                self.do_update(left_child, left, mid, from, to, val);
+                self.do_update(right_child, mid, right, from, to, val);
+                self.join(root, left, mid, right);
+            },
         }
     }
 
@@ -326,19 +327,19 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         op: &mut dyn Operation<Node, Args, Res>,
         args: &Args,
     ) -> Res {
-        if left >= to || right <= from {
-            op.empty_result(left, right, args)
-        } else if left >= from && right <= to {
-            op.process_result(&mut self.nodes[root], args)
-        } else {
-            let mid = (left + right) >> 1;
-            self.push_down(root, left, mid, right);
-            let left_child = root - 2 * (right - mid);
-            let right_child = root - 1;
-            let left_result = self.do_operation(left_child, left, mid, from, to, op, args);
-            let right_result = self.do_operation(right_child, mid, right, from, to, op, args);
-            self.join(root, left, mid, right);
-            op.join_results(left_result, right_result, args)
+        when! {
+            left >= to || right <= from => op.empty_result(left, right, args),
+            left >= from && right <= to => op.process_result(&mut self.nodes[root], args),
+            else => {
+                let mid = (left + right) >> 1;
+                self.push_down(root, left, mid, right);
+                let left_child = root - 2 * (right - mid);
+                let right_child = root - 1;
+                let left_result = self.do_operation(left_child, left, mid, from, to, op, args);
+                let right_result = self.do_operation(right_child, mid, right, from, to, op, args);
+                self.join(root, left, mid, right);
+                op.join_results(left_result, right_result, args)
+            },
         }
     }
 
@@ -432,14 +433,14 @@ impl<Node: SegmentTreeNode + Clone> SegmentTree<Node> {
             self.push_down(root, left, mid, right);
             let left_child = root - 2 * (right - mid);
             let right_child = root - 1;
-            if to <= mid {
-                self.do_query(left_child, left, mid, from, to)
-            } else if from >= mid {
-                self.do_query(right_child, mid, right, from, to)
-            } else {
-                let left_result = self.do_query(left_child, left, mid, from, to);
-                let right_result = self.do_query(right_child, mid, right, from, to);
-                Node::join_results(left_result, right_result, left, mid, right)
+            when! {
+                to <= mid => self.do_query(left_child, left, mid, from, to),
+                from >= mid => self.do_query(right_child, mid, right, from, to),
+                else => {
+                    let left_result = self.do_query(left_child, left, mid, from, to);
+                    let right_result = self.do_query(right_child, mid, right, from, to);
+                    Node::join_results(left_result, right_result, left, mid, right)
+                },
             }
         }
     }

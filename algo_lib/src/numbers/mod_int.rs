@@ -9,7 +9,7 @@ use crate::numbers::num_traits::invertable::Invertable;
 use crate::numbers::num_traits::mul_div_rem::{MulDiv, MulDivRem};
 use crate::numbers::num_traits::wideable::Wideable;
 use crate::numbers::num_traits::zero_one::ZeroOne;
-use crate::value;
+use crate::{value, when};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
@@ -285,26 +285,26 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let max = T::from_u8(100);
-        if self.n <= max {
-            write!(f, "{}", self.n)
-        } else if self.n >= V::val() - max {
-            write!(f, "-{}", V::val() - self.n)
-        } else {
-            let mut denominator = T::one();
-            while denominator < max {
-                let mut num = T::one();
-                while num < max {
-                    if Self::new(num) / Self::new(denominator) == *self {
-                        return write!(f, "{}/{}", num, denominator);
+        when! {
+            self.n <= max => write!(f, "{}", self.n),
+            self.n >= V::val() - max => write!(f, "{}", self.n - V::val()),
+            else => {
+                let mut denominator = T::one();
+                while denominator < max {
+                    let mut num = T::one();
+                    while num < max {
+                        if Self::new(num) / Self::new(denominator) == *self {
+                            return write!(f, "{}/{}", num, denominator);
+                        }
+                        if -Self::new(num) / Self::new(denominator) == *self {
+                            return write!(f, "-{}/{}", num, denominator);
+                        }
+                        num += T::one();
                     }
-                    if -Self::new(num) / Self::new(denominator) == *self {
-                        return write!(f, "-{}/{}", num, denominator);
-                    }
-                    num += T::one();
+                    denominator += T::one();
                 }
-                denominator += T::one();
-            }
-            write!(f, "(?? {} ??)", self.n)
+                write!(f, "(?? {} ??)", self.n)
+            },
         }
     }
 }

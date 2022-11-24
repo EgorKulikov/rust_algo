@@ -6,7 +6,7 @@ use crate::numbers::num_traits::invertable::Invertable;
 use crate::numbers::num_traits::primitive::Primitive;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 use crate::numbers::primes::next_prime;
-use crate::{dynamic_value, value_ref};
+use crate::{dynamic_value, value_ref, when};
 use std::collections::Bound;
 use std::ops::RangeBounds;
 
@@ -160,17 +160,16 @@ impl<'s, Hash1: StringHash + ?Sized, Hash2: StringHash + ?Sized> StringHash
 
     fn hash<R: RangeBounds<usize>>(&self, r: R) -> i64 {
         let (from, to) = convert_bounds(r, self.len());
-        if to <= self.base1.len() {
-            self.base1.hash(from..to)
-        } else if from >= self.base1.len() {
-            self.base2
-                .hash(from - self.base1.len()..to - self.base1.len())
-        } else {
-            let h1 = self.base1.hash(from..);
-            let h2 = self.base2.hash(..to - self.base1.len());
-            (HashMod::new(h2) * HashBaseContainer::val().power[self.base1.len() - from]
-                + HashMod::new(h1))
-            .val()
+        when! {
+            to <= self.base1.len() => self.base1.hash(from..to),
+            from >= self.base1.len() => self.base2.hash(from - self.base1.len()..to - self.base1.len()),
+            else => {
+                let h1 = self.base1.hash(from..);
+                let h2 = self.base2.hash(..to - self.base1.len());
+                (HashMod::new(h2) * HashBaseContainer::val().power[self.base1.len() - from]
+                    + HashMod::new(h1))
+                .val()
+            },
         }
     }
 }

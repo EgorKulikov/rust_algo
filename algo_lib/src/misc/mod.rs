@@ -8,3 +8,4 @@ pub mod run_parallel;
 pub mod transparent_wrapper;
 pub mod value;
 pub mod value_ref;
+pub mod when;

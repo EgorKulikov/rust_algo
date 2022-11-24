@@ -1,6 +1,5 @@
 use crate::collections::bit_set::BitSet;
 use crate::collections::iter_ext::IterExt;
-use crate::dynamic_value;
 use crate::misc::random::random;
 use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
 use crate::misc::value::DynamicValue;
@@ -10,6 +9,7 @@ use crate::numbers::num_traits::as_index::AsIndex;
 use crate::numbers::num_traits::primitive::Primitive;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 use crate::numbers::number_ext::Power;
+use crate::{dynamic_value, when};
 use std::cmp::Ordering;
 use std::ops::Mul;
 
@@ -145,23 +145,22 @@ fn brent(n: i64, x0: i64, c: i64) -> i64 {
 }
 
 pub fn find_divisor(n: i64) -> i64 {
-    if n == 1 {
-        1
-    } else if n % 2 == 0 {
-        2
-    } else if is_prime(n) {
-        n
-    } else {
-        loop {
-            let res = brent(
-                n,
-                random().next_bounds(2, n.into_u64() - 1).into_i64(),
-                random().next_bounds(1, n.into_u64() - 1).into_i64(),
-            );
-            if res != n {
-                return res;
+    when! {
+        n == 1 => 1,
+        n % 2 == 0 => 2,
+        is_prime(n) => n,
+        else => {
+            loop {
+                let res = brent(
+                    n,
+                    random().next_bounds(2, n.into_u64() - 1).into_i64(),
+                    random().next_bounds(1, n.into_u64() - 1).into_i64(),
+                );
+                if res != n {
+                    return res;
+                }
             }
-        }
+        },
     }
 }
 

@@ -6,6 +6,7 @@ use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
 use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::ord::MinMax;
 use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::when;
 use std::collections::VecDeque;
 
 pub trait MaxFlow<C: AddSub + PartialOrd + Copy + ZeroOne + MinMax> {
@@ -46,29 +47,29 @@ impl<C: AddSub + PartialOrd + Copy + ZeroOne + MinMax, E: FlowEdgeTrait<C>> MaxF
             }
             next_edge.legacy_fill(0);
             let mut dinic_impl = RecursiveFunction2::new(|f, source, mut flow| -> C {
-                if source == destination {
-                    flow
-                } else if flow == C::zero() || dist[source] == dist[destination] {
-                    C::zero()
-                } else {
-                    let mut total_pushed = C::zero();
-                    while (next_edge[source] as usize) < self[source].len() {
-                        let edge = &self[source][next_edge[source] as usize];
-                        if edge.capacity() != C::zero() && dist[edge.to()] == dist[source] + 1 {
-                            let pushed = f.call(edge.to(), flow.minimum(edge.capacity()));
-                            if pushed != C::zero() {
-                                let push_data = edge.push_flow(pushed);
-                                self.push_flow(push_data);
-                                flow -= pushed;
-                                total_pushed += pushed;
-                                if flow == C::zero() {
-                                    return total_pushed;
+                when! {
+                    source == destination => flow,
+                    flow == C::zero() || dist[source] == dist[destination] => C::zero(),
+                    else => {
+                        let mut total_pushed = C::zero();
+                        while (next_edge[source] as usize) < self[source].len() {
+                            let edge = &self[source][next_edge[source] as usize];
+                            if edge.capacity() != C::zero() && dist[edge.to()] == dist[source] + 1 {
+                                let pushed = f.call(edge.to(), flow.minimum(edge.capacity()));
+                                if pushed != C::zero() {
+                                    let push_data = edge.push_flow(pushed);
+                                    self.push_flow(push_data);
+                                    flow -= pushed;
+                                    total_pushed += pushed;
+                                    if flow == C::zero() {
+                                        return total_pushed;
+                                    }
                                 }
                             }
+                            next_edge[source] += 1;
                         }
-                        next_edge[source] += 1;
-                    }
-                    total_pushed
+                        total_pushed
+                    },
                 }
             });
             total_flow += dinic_impl.call(source, inf);

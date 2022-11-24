@@ -3,6 +3,7 @@ use crate::numbers::num_traits::from_u8::FromU8;
 use crate::numbers::num_traits::mul_div_rem::Multable;
 use crate::numbers::num_traits::sign::IsSigned;
 use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::when;
 use std::fmt::Display;
 use std::io::Read;
 use std::marker::PhantomData;
@@ -145,17 +146,19 @@ impl<'s> Input<'s> {
     fn read_integer<T: IsSigned + ZeroOne + FromU8 + AddSub + Multable + Display>(&mut self) -> T {
         self.skip_whitespace();
         let mut c = self.get().unwrap();
-        let sgn = if c == b'-' {
-            if !T::SIGNED {
-                panic!("negative integer")
-            }
-            c = self.get().unwrap();
-            true
-        } else if c == b'+' {
-            c = self.get().unwrap();
-            false
-        } else {
-            false
+        let sgn = when! {
+            c == b'-' => {
+                if !T::SIGNED {
+                    panic!("negative integer")
+                }
+                c = self.get().unwrap();
+                true
+            },
+            c == b'+' => {
+                c = self.get().unwrap();
+                false
+            },
+            else => false,
         };
         let mut res = T::zero();
         loop {
@@ -170,9 +173,7 @@ impl<'s> Input<'s> {
             res *= T::from_u8(10);
             res += T::from_u8(c - b'0');
             match self.get() {
-                None => {
-                    break;
-                }
+                None => break,
                 Some(ch) => {
                     if char::from(ch).is_whitespace() {
                         break;

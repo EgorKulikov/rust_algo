@@ -2,6 +2,7 @@ use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::from_u8::FromU8;
 use crate::numbers::num_traits::mul_div_rem::{MulDiv, MulDivRem, Multable};
 use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::when;
 
 pub trait Power {
     #[must_use]
@@ -10,13 +11,13 @@ pub trait Power {
 
 impl<S: ZeroOne + Copy + Multable> Power for S {
     fn power<T: ZeroOne + PartialEq + MulDivRem + AddSub + Copy>(&self, exp: T) -> Self {
-        if exp == T::zero() {
-            S::one()
-        } else if exp % (T::one() + T::one()) == T::zero() {
-            let res = self.power(exp / (T::one() + T::one()));
-            res * res
-        } else {
-            self.power(exp - T::one()) * (*self)
+        when! {
+            exp == T::zero() => S::one(),
+            exp % (T::one() + T::one()) == T::zero() => {
+                let res = self.power(exp / (T::one() + T::one()));
+                res * res
+            },
+            else => self.power(exp - T::one()) * (*self),
         }
     }
 }
