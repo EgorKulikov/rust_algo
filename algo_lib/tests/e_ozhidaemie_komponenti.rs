@@ -13,8 +13,8 @@ use algo_lib::out_line;
 use std::collections::HashMap;
 
 fn solve(input: &mut Input, _test_case: usize) {
-    let n = input.read_usize();
-    let a = input.read_usize_vec(n);
+    let n = input.read_size();
+    let a = input.read_size_vec(n);
 
     let mut q: DefaultHashMap<_, usize> = DefaultHashMap::new();
     for i in a {

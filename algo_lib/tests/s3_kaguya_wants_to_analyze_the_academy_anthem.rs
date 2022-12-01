@@ -8,7 +8,7 @@ use algo_lib::string::string::Str;
 
 fn solve(input: &mut Input) {
     let s: Str = input.read();
-    let q = input.read_usize();
+    let q = input.read_size();
     let queries: Vec<(Str, usize)> = input.read_vec(q);
 
     let res = solve_impl(s, queries);

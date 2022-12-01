@@ -7,8 +7,8 @@ use algo_lib::io::output::output;
 use algo_lib::out_line;
 
 fn solve(input: &mut Input) {
-    let n = input.read_usize();
-    let q = input.read_usize();
+    let n = input.read_size();
+    let q = input.read_size();
     let a = input.read_long_vec(n);
 
     const INFTY: i64 = i64::MIN / 3;
@@ -90,8 +90,8 @@ fn solve(input: &mut Input) {
         res
     });
     for _ in 0..q {
-        let l = input.read_usize() - 1;
-        let r = input.read_usize();
+        let l = input.read_size() - 1;
+        let r = input.read_size();
         let x = input.read_long();
         // for i in &mut a[l..r] {
         //     *i += x;

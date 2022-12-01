@@ -11,8 +11,8 @@ use algo_lib::out_line;
 fn solve(input: &mut Input, _test_case: usize) {
     type Mod = ModIntF;
 
-    let n = input.read_usize();
-    let q = input.read_usize();
+    let n = input.read_size();
+    let q = input.read_size();
     let f = input.read_vec::<(Mod, Mod)>(n);
 
     #[derive(Clone)]
@@ -50,14 +50,14 @@ fn solve(input: &mut Input, _test_case: usize) {
         Node(Matrix::new(&[&[a, Mod::zero()], &[b, Mod::one()]]))
     });
     for _ in 0..q {
-        let t = input.read_usize();
+        let t = input.read_size();
         if t == 0 {
-            let p = input.read_usize();
+            let p = input.read_size();
             let (c, d) = input.read::<(Mod, Mod)>();
             tree.point_update(p, Matrix::new(&[&[c, Mod::zero()], &[d, Mod::one()]]));
         } else {
-            let l = input.read_usize();
-            let r = input.read_usize();
+            let l = input.read_size();
+            let r = input.read_size();
             let x = input.read();
             let m = tree.query(l..r).0;
             let v = Matrix::new(&[&[x, Mod::one()]]);

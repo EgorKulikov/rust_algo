@@ -81,7 +81,7 @@ impl<E: BidirectionalEdgeTrait> Graph<E> {
                 dsu.join(i, e.to());
             }
         }
-        dsu.count() == 1
+        dsu.set_count() == 1
     }
 }
 

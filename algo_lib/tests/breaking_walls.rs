@@ -9,8 +9,8 @@ use algo_lib::misc::dirs::Directions;
 use algo_lib::{const_value_ref, out_line};
 
 fn solve(input: &mut Input, _test_case: usize) {
-    let n = input.read_usize();
-    let m = input.read_usize();
+    let n = input.read_size();
+    let m = input.read_size();
     let grid = input.read_table::<char>(n, m);
 
     let mut dsu = DSU2d::new(n, m);

@@ -6,11 +6,11 @@ use algo_lib::io::output::output;
 use algo_lib::out_line;
 
 fn solve(input: &mut Input, _test_case: usize) {
-    let q = input.read_usize();
+    let q = input.read_size();
 
     let mut map = DefaultHashMap::new();
     for _ in 0..q {
-        let t = input.read_usize();
+        let t = input.read_size();
         if t == 0 {
             let k = input.read_long();
             let v = input.read_long();

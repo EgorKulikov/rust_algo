@@ -1,11 +1,11 @@
 use crate::collections::legacy_fill::LegacyFill;
 use crate::numbers::num_traits::bit_ops::BitOps;
-use std::ops::Index;
+use std::ops::{BitOrAssign, Index};
 
 const TRUE: bool = true;
 const FALSE: bool = false;
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct BitSet {
     data: Vec<u64>,
     len: usize,
@@ -47,49 +47,81 @@ impl BitSet {
         self.data.legacy_fill(if value { std::u64::MAX } else { 0 })
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = usize> + '_ {
-        struct Iter<'s> {
-            at: usize,
-            inside: usize,
-            set: &'s BitSet,
-        }
-
-        impl<'s> Iterator for Iter<'s> {
-            type Item = usize;
-
-            fn next(&mut self) -> Option<Self::Item> {
-                while self.at < self.set.data.len()
-                    && (self.inside == 64 || (self.set.data[self.at] >> self.inside) == 0)
-                {
-                    self.at += 1;
-                    self.inside = 0;
-                }
-                if self.at == self.set.data.len() {
-                    None
-                } else {
-                    while !self.set.data[self.at].is_set(self.inside) {
-                        self.inside += 1;
-                    }
-                    let res = self.at * 64 + self.inside;
-                    if res < self.set.len {
-                        self.inside += 1;
-                        Some(res)
-                    } else {
-                        None
-                    }
-                }
+    pub fn is_superset(&self, other: &Self) -> bool {
+        assert_eq!(self.len, other.len);
+        for i in 0..self.data.len() {
+            if self.data[i] & other.data[i] != other.data[i] {
+                return false;
             }
         }
+        true
+    }
 
-        Iter {
+    pub fn is_subset(&self, other: &Self) -> bool {
+        other.is_superset(self)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = usize> + '_ {
+        self.into_iter()
+    }
+
+    fn index(at: usize) -> usize {
+        at >> 6
+    }
+}
+
+pub struct BitSetIter<'s> {
+    at: usize,
+    inside: usize,
+    set: &'s BitSet,
+}
+
+impl<'s> Iterator for BitSetIter<'s> {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.at < self.set.data.len()
+            && (self.inside == 64 || (self.set.data[self.at] >> self.inside) == 0)
+        {
+            self.at += 1;
+            self.inside = 0;
+        }
+        if self.at == self.set.data.len() {
+            None
+        } else {
+            while !self.set.data[self.at].is_set(self.inside) {
+                self.inside += 1;
+            }
+            let res = self.at * 64 + self.inside;
+            if res < self.set.len {
+                self.inside += 1;
+                Some(res)
+            } else {
+                None
+            }
+        }
+    }
+}
+
+impl<'a> IntoIterator for &'a BitSet {
+    type Item = usize;
+    type IntoIter = BitSetIter<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        BitSetIter {
             at: 0,
             inside: 0,
             set: self,
         }
     }
+}
 
-    fn index(at: usize) -> usize {
-        at >> 6
+impl BitOrAssign<&BitSet> for BitSet {
+    fn bitor_assign(&mut self, rhs: &BitSet) {
+        assert_eq!(self.len, rhs.len);
+        for i in 0..self.data.len() {
+            self.data[i] |= rhs.data[i];
+        }
     }
 }
 
@@ -103,5 +135,15 @@ impl Index<usize> for BitSet {
         } else {
             &FALSE
         }
+    }
+}
+
+impl From<Vec<bool>> for BitSet {
+    fn from(data: Vec<bool>) -> Self {
+        let mut res = Self::new(data.len());
+        for (i, &value) in data.iter().enumerate() {
+            res.set(i, value);
+        }
+        res
     }
 }

@@ -60,7 +60,7 @@ fn solve(input: &mut Input) {
 
     for _ in 0usize..q {
         let t: u8 = input.read();
-        let l = input.read_usize();
+        let l = input.read_size();
         let r = input.read();
 
         if t == 0 {

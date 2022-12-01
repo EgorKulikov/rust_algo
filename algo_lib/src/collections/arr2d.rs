@@ -163,11 +163,31 @@ impl<T> IntoIterator for Arr2d<T> {
 
 pub trait Arr2dRead {
     fn read_table<T: Readable>(&mut self, d1: usize, d2: usize) -> Arr2d<T>;
+    fn read_int_table(&mut self, d1: usize, d2: usize) -> Arr2d<i32>;
+    fn read_long_table(&mut self, d1: usize, d2: usize) -> Arr2d<i64>;
+    fn read_size_table(&mut self, d1: usize, d2: usize) -> Arr2d<usize>;
+    fn read_char_table(&mut self, d1: usize, d2: usize) -> Arr2d<char>;
 }
 
 impl Arr2dRead for Input<'_> {
     fn read_table<T: Readable>(&mut self, d1: usize, d2: usize) -> Arr2d<T> {
         Arr2d::generate(d1, d2, |_, _| self.read())
+    }
+
+    fn read_int_table(&mut self, d1: usize, d2: usize) -> Arr2d<i32> {
+        self.read_table(d1, d2)
+    }
+
+    fn read_long_table(&mut self, d1: usize, d2: usize) -> Arr2d<i64> {
+        self.read_table(d1, d2)
+    }
+
+    fn read_size_table(&mut self, d1: usize, d2: usize) -> Arr2d<usize> {
+        self.read_table(d1, d2)
+    }
+
+    fn read_char_table(&mut self, d1: usize, d2: usize) -> Arr2d<char> {
+        self.read_table(d1, d2)
     }
 }
 
