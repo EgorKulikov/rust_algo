@@ -4,6 +4,7 @@ use crate::numbers::num_traits::mul_div_rem::Multable;
 use crate::numbers::num_traits::sign::IsSigned;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 use crate::when;
+use std::collections::VecDeque;
 use std::fmt::Display;
 use std::io::Read;
 use std::marker::PhantomData;
@@ -231,6 +232,77 @@ impl<'s> Input<'s> {
             true
         }
     }
+
+    pub fn parse(&mut self, pattern: &str, special: char) -> VecDeque<Vec<u8>> {
+        let mut res = VecDeque::new();
+        let mut last_special = false;
+
+        fn parse_special(input: &mut Input, c: char) -> Vec<u8> {
+            let mut cur = Vec::new();
+            loop {
+                let next = input.get();
+                if c == '\n' {
+                    if !next.is_none() {
+                        let next = next.unwrap();
+                        if next == b'\r' {
+                            if input.peek() == Some(b'\n') {
+                                input.get();
+                            }
+                            break;
+                        } else {
+                            if next == b'\n' {
+                                break;
+                            } else {
+                                cur.push(next);
+                            }
+                        }
+                    } else {
+                        break;
+                    }
+                } else {
+                    let next = next.unwrap();
+                    if next == c as u8 {
+                        break;
+                    } else {
+                        cur.push(next);
+                    }
+                }
+            }
+            cur
+        }
+
+        for c in pattern.chars() {
+            if c == special {
+                assert!(!last_special);
+                last_special = true;
+            } else {
+                if last_special {
+                    res.push_back(parse_special(self, c));
+                } else {
+                    let next = self.get();
+                    if c == '\n' {
+                        if !next.is_none() {
+                            let next = next.unwrap();
+                            if next == b'\r' {
+                                if self.peek() == Some(b'\n') {
+                                    self.get();
+                                }
+                            } else {
+                                assert_eq!(next, b'\n');
+                            }
+                        }
+                    } else {
+                        assert_eq!(c as u8, next.unwrap());
+                    }
+                }
+                last_special = false;
+            }
+        }
+        if last_special {
+            res.push_back(parse_special(self, '\n'));
+        }
+        res
+    }
 }
 
 pub struct InputIterator<'t, 's: 't, T: Readable + 't + 's> {
@@ -276,6 +348,14 @@ impl<T: Readable> Readable for Vec<T> {
     }
 }
 
+pub struct EOLString(pub String);
+
+impl Readable for EOLString {
+    fn read(input: &mut Input) -> Self {
+        EOLString(input.read_line())
+    }
+}
+
 macro_rules! read_integer {
     ($($t:ident)+) => {$(
         impl Readable for $t {
@@ -310,3 +390,27 @@ tuple_readable! {T U V X Y Z A B C}
 tuple_readable! {T U V X Y Z A B C D}
 tuple_readable! {T U V X Y Z A B C D E}
 tuple_readable! {T U V X Y Z A B C D E F}
+
+#[macro_export]
+macro_rules! scan {
+    ($input: expr, $s: expr) => {
+        $crate::scan!($input, s,);
+    };
+    ($input: expr, $s: expr, $($v:ident: $t: ty,)*, $last_v: ident: $last_t: ty) => {
+        $crate::scan!($input, $s, $($v: $t),*, $last_v: $last_t,);
+    };
+    ($input: expr, $s: expr, $($v:ident: $t: ty,)*) => {
+        $crate::scan!($input, $s, '@', $($v: $t,)*);
+    };
+    ($input: expr, $s: expr, $sp: expr, $($v:ident: $t: ty,)*, $last_v: ident: $last_t: ty) => {
+        $crate::scan!($input, $s, $sp, $($v: $t),*, $last_v: $last_t,);
+    };
+    ($input: expr, $s: expr, $sp: expr, $($v:ident: $t: ty,)*) => {
+        let mut res = $input.parse($s, $sp);
+        $(
+            let cur = res.pop_front().unwrap();
+            let len = cur.len();
+            let $v: $t = Input::new_with_size(&mut cur.as_slice(), len).read();
+        )*
+    };
+}
