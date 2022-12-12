@@ -242,19 +242,16 @@ impl<'s> Input<'s> {
             loop {
                 let next = input.get();
                 if c == '\n' {
-                    if !next.is_none() {
-                        let next = next.unwrap();
-                        if next == b'\r' {
-                            if input.peek() == Some(b'\n') {
-                                input.get();
-                            }
-                            break;
-                        } else {
-                            if next == b'\n' {
+                    if let Some(next) = next {
+                        match next {
+                            b'\r' => {
+                                if input.peek() == Some(b'\n') {
+                                    input.get();
+                                }
                                 break;
-                            } else {
-                                cur.push(next);
                             }
+                            b'\n' => break,
+                            _ => cur.push(next),
                         }
                     } else {
                         break;
@@ -281,8 +278,7 @@ impl<'s> Input<'s> {
                 } else {
                     let next = self.get();
                     if c == '\n' {
-                        if !next.is_none() {
-                            let next = next.unwrap();
+                        if let Some(next) = next {
                             if next == b'\r' {
                                 if self.peek() == Some(b'\n') {
                                     self.get();
@@ -410,7 +406,9 @@ macro_rules! scan {
         $(
             let cur = res.pop_front().unwrap();
             let len = cur.len();
-            let $v: $t = Input::new_with_size(&mut cur.as_slice(), len).read();
+            let mut input = $crate::Input::new_with_size(&mut cur.as_slice(), len)
+            let $v: $t = input.read();
+            assert!(input.is_exhausted());
         )*
     };
 }
