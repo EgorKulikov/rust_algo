@@ -8,6 +8,7 @@ use std::collections::VecDeque;
 use std::fmt::Display;
 use std::io::Read;
 use std::marker::PhantomData;
+use std::ops::Deref;
 
 macro_rules! read_impl {
     ($t: ty, $read_name: ident, $read_vec_name: ident) => {
@@ -344,11 +345,19 @@ impl<T: Readable> Readable for Vec<T> {
     }
 }
 
-pub struct EOLString(pub String);
+pub struct EolString(pub String);
 
-impl Readable for EOLString {
+impl Readable for EolString {
     fn read(input: &mut Input) -> Self {
-        EOLString(input.read_line())
+        EolString(input.read_line())
+    }
+}
+
+impl Deref for EolString {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
@@ -392,21 +401,16 @@ macro_rules! scan {
     ($input: expr, $s: expr) => {
         $crate::scan!($input, s,);
     };
-    ($input: expr, $s: expr, $($v:ident: $t: ty,)*, $last_v: ident: $last_t: ty) => {
-        $crate::scan!($input, $s, $($v: $t),*, $last_v: $last_t,);
-    };
-    ($input: expr, $s: expr, $($v:ident: $t: ty,)*) => {
+    ($input: expr, $s: expr $(, $v:ident: $t: ty)* $(,)?) => {
         $crate::scan!($input, $s, '@', $($v: $t,)*);
     };
-    ($input: expr, $s: expr, $sp: expr, $($v:ident: $t: ty,)*, $last_v: ident: $last_t: ty) => {
-        $crate::scan!($input, $s, $sp, $($v: $t),*, $last_v: $last_t,);
-    };
-    ($input: expr, $s: expr, $sp: expr, $($v:ident: $t: ty,)*) => {
+    ($input: expr, $s: expr, $sp: expr $(, $v:ident: $t: ty)* $(,)?) => {
         let mut res = $input.parse($s, $sp);
         $(
             let cur = res.pop_front().unwrap();
             let len = cur.len();
-            let mut input = $crate::Input::new_with_size(&mut cur.as_slice(), len)
+            let mut slice = cur.as_slice();
+            let mut input = Input::new_with_size(&mut slice, len);
             let $v: $t = input.read();
             assert!(input.is_exhausted());
         )*
