@@ -22,6 +22,25 @@ impl<V: ConstValueRef<[(isize, isize)]>> Directions<V> {
             phantom: Default::default(),
         }
     }
+
+    pub fn go(row: usize, col: usize, dir: usize, n: usize, m: usize) -> (usize, usize) {
+        let (dr, dc) = V::val()[dir];
+        let mut row = row as isize + dr;
+        let mut col = col as isize + dc;
+        if row < 0 {
+            row = 0;
+        }
+        if row >= n as isize {
+            row = n as isize - 1;
+        }
+        if col < 0 {
+            col = 0;
+        }
+        if col >= m as isize {
+            col = m as isize - 1;
+        }
+        (row as usize, col as usize)
+    }
 }
 
 struct DirectionsIter<V: ConstValueRef<[(isize, isize)]>> {

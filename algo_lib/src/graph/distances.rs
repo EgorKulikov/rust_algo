@@ -9,19 +9,16 @@ pub trait Distances<W: Addable + PartialOrd + Copy + ZeroOne> {
 
     fn distance(&self, source: usize, mut destination: usize) -> Option<(W, Vec<(usize, usize)>)> {
         let dist = self.distances_from(source);
-        match dist[destination] {
-            None => None,
-            Some((w, ..)) => {
-                let mut path = Vec::new();
-                while destination != source {
-                    let (_, from, edge) = dist[destination].unwrap();
-                    path.push((from, edge));
-                    destination = from;
-                }
-                path.reverse();
-                Some((w, path))
+        dist[destination].map(|(w, ..)| {
+            let mut path = Vec::new();
+            while destination != source {
+                let (_, from, edge) = dist[destination].unwrap();
+                path.push((from, edge));
+                destination = from;
             }
-        }
+            path.reverse();
+            (w, path)
+        })
     }
 }
 

@@ -57,6 +57,10 @@ impl<T> Arr3d<T> {
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.data.iter_mut()
     }
+
+    pub fn into_iter(self) -> impl Iterator<Item = T> {
+        self.data.into_iter()
+    }
 }
 
 impl<T> Index<(usize, usize, usize)> for Arr3d<T> {
