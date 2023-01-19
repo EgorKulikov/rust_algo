@@ -23,8 +23,8 @@ fn solve(input: &mut Input) {
             let x = input.read();
             ft.add(p, x);
         } else {
-            let l = input.read();
-            let r = input.read();
+            let l = input.read_size();
+            let r = input.read_size();
             out_line!(ft.get(l..r));
         }
     }
