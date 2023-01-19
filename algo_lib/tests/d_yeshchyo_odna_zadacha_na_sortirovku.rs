@@ -13,11 +13,11 @@ fn solve(input: &mut Input, _test_case: usize) {
     let mut ft = FenwickTree::new(n);
     let mut inv = 0;
     for i in a {
-        if ft.get(i, i + 1) != 0 {
+        if ft.get(i..=i) != 0 {
             out_line!("YES");
             return;
         }
-        inv += ft.get(i, n);
+        inv += ft.get(i..);
         ft.add(i, 1i64);
     }
     out_line!(if inv % 2 == 0 { "YES" } else { "NO" });

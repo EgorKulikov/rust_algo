@@ -2,10 +2,18 @@ pub mod cards;
 pub mod direction;
 pub mod dirs;
 pub mod hungarian_algorithm;
+pub mod memoization;
+pub mod memoization_2d;
+pub mod memoization_3d;
+pub mod memoization_4d;
+pub mod memoization_5d;
+pub mod memoization_vec;
 pub mod owned_cell;
 pub mod random;
 pub mod recursive_function;
 pub mod run_parallel;
+#[cfg(test)]
+mod test;
 pub mod transparent_wrapper;
 pub mod value;
 pub mod value_ref;

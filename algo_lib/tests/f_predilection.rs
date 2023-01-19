@@ -26,9 +26,9 @@ fn solve(input: &mut Input, _test_case: usize) {
         }
         sum += v;
         let from = last_pos.insert(sum, i + 1).unwrap_or(0);
-        ft.add(i + 1, ft.get(from, i + 1));
+        ft.add(i + 1, ft.get(from..=i));
     }
-    out_line!(ft.get(0, n));
+    out_line!(ft.get(..));
 }
 
 //START SKIP

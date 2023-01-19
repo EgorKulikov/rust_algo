@@ -2,6 +2,7 @@ use crate::collections::legacy_fill::LegacyFill;
 use crate::collections::min_max::MinimMaxim;
 use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::zero_one::ZeroOne;
+use std::ops::RangeBounds;
 
 #[derive(Clone)]
 pub struct FenwickTree<T> {
@@ -26,7 +27,17 @@ impl<T: AddSub + ZeroOne> FenwickTree<T> {
         result
     }
 
-    pub fn get(&self, from: usize, to: usize) -> T {
+    pub fn get(&self, bounds: impl RangeBounds<usize>) -> T {
+        let from = match bounds.start_bound() {
+            std::ops::Bound::Included(&x) => x,
+            std::ops::Bound::Excluded(&x) => x + 1,
+            std::ops::Bound::Unbounded => 0,
+        };
+        let to = match bounds.end_bound() {
+            std::ops::Bound::Included(&x) => x + 1,
+            std::ops::Bound::Excluded(&x) => x,
+            std::ops::Bound::Unbounded => self.value.len(),
+        };
         if from >= to {
             T::zero()
         } else {
@@ -46,7 +57,7 @@ impl<T: AddSub + ZeroOne> FenwickTree<T> {
             .iter()
             .enumerate()
             // edition 2021
-            .map(move |(i, _)| self.get(i, i + 1))
+            .map(move |(i, _)| self.get(i..=i))
     }
 
     pub fn clear(&mut self) {

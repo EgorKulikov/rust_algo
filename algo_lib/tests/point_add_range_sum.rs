@@ -20,7 +20,7 @@ fn solve(input: &mut Input, _test_case: usize) {
         } else {
             let l = input.read_size();
             let r = input.read_size();
-            out_line!(ft.get(l, r));
+            out_line!(ft.get(l..r));
         }
     }
 }

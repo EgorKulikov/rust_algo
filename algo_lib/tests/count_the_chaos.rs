@@ -13,7 +13,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let mut ft: FenwickTree<u64> = FenwickTree::new(n);
     let mut ans = 0u64;
     for i in a {
-        ans += ft.get(i, n);
+        ans += ft.get(i..);
         ft.add(i, 1);
     }
     out_line!(ans);

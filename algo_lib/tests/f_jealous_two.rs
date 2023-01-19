@@ -25,7 +25,7 @@ fn solve(input: &mut Input) {
                 j += 1;
             }
         }
-        ans += ft.get(*b, n);
+        ans += ft.get(*b..);
     }
     out_line!(ans);
 }

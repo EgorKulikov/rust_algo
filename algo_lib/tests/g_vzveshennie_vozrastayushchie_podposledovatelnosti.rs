@@ -28,7 +28,7 @@ fn solve(input: &mut Input, _test_case: usize) {
             }
             Some(r) => {
                 if r > i {
-                    let res = ft.get(i, n) + Mod::one();
+                    let res = ft.get(i..) + Mod::one();
                     ft.add(i, res);
                     added.push(i);
                     res
@@ -38,7 +38,7 @@ fn solve(input: &mut Input, _test_case: usize) {
                     lft.add(a[0], Mod::one());
                     ft.add(r, Mod::one());
                     for j in a.into_iter().skip(1) {
-                        let cur = lft.get(j, c.len());
+                        let cur = lft.get(j..);
                         ft.add(c[j], cur);
                         lft.add(j, cur);
                     }
@@ -54,7 +54,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     order.reverse();
     ft.clear();
     for (_, i) in order {
-        let cur = ft.get(0, i) + Mod::one();
+        let cur = ft.get(..i) + Mod::one();
         ft.add(i, cur);
         ans[i] *= cur;
     }

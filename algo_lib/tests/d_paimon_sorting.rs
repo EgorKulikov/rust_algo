@@ -32,9 +32,9 @@ fn do_solve(n: usize, a: Vec<usize>) -> Vec<u64> {
             }
             // ans.push(ans.last().unwrap() + 2);
         } else {
-            ans.push(ans.last().unwrap() + (ft.get(a + 1, n) as u64));
+            ans.push(ans.last().unwrap() + (ft.get(a + 1..) as u64));
         }
-        if ft.get(a, a + 1) == 0 {
+        if ft.get(a..=a) == 0 {
             ft.add(a, 1usize);
         }
         if a == c_max {

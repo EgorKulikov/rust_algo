@@ -25,7 +25,7 @@ fn solve(input: &mut Input) {
         } else {
             let l = input.read();
             let r = input.read();
-            out_line!(ft.get(l, r));
+            out_line!(ft.get(l..r));
         }
     }
 }
