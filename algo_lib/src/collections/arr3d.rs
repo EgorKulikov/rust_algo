@@ -2,6 +2,7 @@ use crate::collections::legacy_fill::LegacyFill;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::ops::{Index, IndexMut};
+use std::vec::IntoIter;
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct Arr3d<T> {
@@ -57,8 +58,13 @@ impl<T> Arr3d<T> {
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.data.iter_mut()
     }
+}
 
-    pub fn into_iter(self) -> impl Iterator<Item = T> {
+impl<T> IntoIterator for Arr3d<T> {
+    type Item = T;
+    type IntoIter = IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
         self.data.into_iter()
     }
 }

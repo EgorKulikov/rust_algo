@@ -511,13 +511,13 @@ impl<'a, P: Payload> Iter<'a, P> {
         Self {
             root,
             from: match r.start_bound() {
-                Bound::Included(key) => root.ceil(*key),
-                Bound::Excluded(key) => root.higher(*key),
+                Bound::Included(key) => root.ceil(key),
+                Bound::Excluded(key) => root.higher(key),
                 Bound::Unbounded => root.leftmost(),
             },
             to: match r.end_bound() {
-                Bound::Included(key) => root.floor(*key),
-                Bound::Excluded(key) => root.lower(*key),
+                Bound::Included(key) => root.floor(key),
+                Bound::Excluded(key) => root.lower(key),
                 Bound::Unbounded => root.rightmost(),
             },
         }

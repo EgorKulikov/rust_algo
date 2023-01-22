@@ -35,7 +35,7 @@ macro_rules! recursive_function {
             F: FnMut(&mut dyn $trait<$($type, )*Output>, $($type, )*) -> Output,
         {
             fn call(&mut self, $($arg: $type,)*) -> Output {
-                unsafe { (&mut *self.f.get())(self, $($arg, )*) }
+                unsafe { (*self.f.get())(self, $($arg, )*) }
             }
         }
     }

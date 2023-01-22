@@ -28,7 +28,7 @@ where
     fn call(&mut self, a1: usize, a2: usize, a3: usize) -> Output {
         match self.res[(a1, a2, a3)].as_ref() {
             None => {
-                let res = unsafe { (&mut *self.f.get())(self, a1, a2, a3) };
+                let res = unsafe { (*self.f.get())(self, a1, a2, a3) };
                 self.res[(a1, a2, a3)] = Some(res.clone());
                 res
             }

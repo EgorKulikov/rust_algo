@@ -39,7 +39,7 @@ macro_rules! memoization {
             fn call(&mut self, $($arg: $type, )*) -> Output {
                 match self.res.get(&($($arg, )*)).cloned() {
                     None => {
-                        let res = unsafe { (&mut *self.f.get())(self, $($arg, )*) };
+                        let res = unsafe { (*self.f.get())(self, $($arg, )*) };
                         self.res.insert(($($arg, )*), res.clone());
                         res
                     }
