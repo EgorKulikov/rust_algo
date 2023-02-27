@@ -168,18 +168,6 @@ where
                 if graph[sink][back].capacity() == C::one() {
                     *graph[sink][back].capacity_mut() += C::one();
                 }
-                /*                    for (from, _, graph_edge_id) in corresponding.iter() {
-                    let e = &graph[*from][*graph_edge_id];
-                    let to = e.to();
-                    println!(
-                        "{} {} {} {}",
-                        from,
-                        to,
-                        graph[to][e.reverse_id()].capacity(),
-                        e.weight()
-                    );
-                }
-                println!("==========================");*/
             }
         }
     }
