@@ -1,5 +1,4 @@
 use std::cell::UnsafeCell;
-use std::ptr::NonNull;
 
 pub struct OwnedCell<T>(UnsafeCell<T>);
 
@@ -9,11 +8,11 @@ impl<T> OwnedCell<T> {
     }
 
     pub unsafe fn as_ref<'a>(&self) -> &'a T {
-        NonNull::new_unchecked(self.0.get()).as_ref()
+        &*self.0.get()
     }
 
     pub unsafe fn as_mut<'a>(&self) -> &'a mut T {
-        NonNull::new_unchecked(self.0.get()).as_mut()
+        &mut *self.0.get()
     }
 
     pub unsafe fn replace(&self, new_val: T) -> T {
