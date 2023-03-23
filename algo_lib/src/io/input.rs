@@ -62,6 +62,12 @@ impl<'s> Input<'s> {
         if self.refill_buffer() {
             let res = self.buf[self.at];
             self.at += 1;
+            if res == b'\r' {
+                if self.refill_buffer() && self.buf[self.at] == b'\n' {
+                    self.at += 1;
+                }
+                return Some(b'\n');
+            }
             Some(res)
         } else {
             None
@@ -70,7 +76,8 @@ impl<'s> Input<'s> {
 
     pub fn peek(&mut self) -> Option<u8> {
         if self.refill_buffer() {
-            Some(self.buf[self.at])
+            let res = self.buf[self.at];
+            Some(if res == b'\r' { b'\n' } else { res })
         } else {
             None
         }
@@ -122,12 +129,6 @@ impl<'s> Input<'s> {
         let mut res = String::new();
         while let Some(c) = self.get() {
             if c == b'\n' {
-                break;
-            }
-            if c == b'\r' {
-                if self.peek() == Some(b'\n') {
-                    self.get();
-                }
                 break;
             }
             res.push(c.into());

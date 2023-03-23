@@ -117,3 +117,9 @@ impl<T> DerefMut for Matrix<T> {
         &mut self.0
     }
 }
+
+impl<T> From<Arr2d<T>> for Matrix<T> {
+    fn from(a: Arr2d<T>) -> Self {
+        Self(a)
+    }
+}
