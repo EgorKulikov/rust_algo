@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "test",
     "algo_lib",
     "main",
     "stress_test",

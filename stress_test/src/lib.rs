@@ -2,10 +2,8 @@ use algo_lib::io::input::Input;
 use algo_lib::io::output::{output, Output, OUTPUT};
 use algo_lib::misc::random::random;
 use algo_lib::out_line;
-use std::fs::File;
 use std::io::{stdout, Write};
 use std::mem::swap;
-use subprocess::{Exec, Redirection};
 
 fn generate_test() {
     let n = random().next(100) + 1;
@@ -21,7 +19,7 @@ fn check(mut expected: Input, mut actual: Input) -> Result<(), String> {
     check_int(&mut expected, &mut actual)
 }
 
-fn main() {
+pub fn stress_test(f: impl Fn(Input) -> bool) {
     fn take_output() -> Vec<u8> {
         let mut res = Vec::new();
         unsafe {
@@ -55,31 +53,20 @@ fn main() {
         check(expected, actual)
     }
 
-    fn actual(input: &[u8]) -> Vec<u8> {
-        let mut file = File::create("test.in").unwrap();
-        file.write_all(input).unwrap();
-        file.flush().unwrap();
-        let p = Exec::cmd("cargo")
-            .args(&["run", "--bin", "main"])
-            .stdin(String::from_utf8(Vec::from(input)).unwrap().as_str())
-            .stdout(Redirection::Pipe)
-            .stderr(Redirection::Pipe)
-            .capture()
-            .unwrap();
-        if !p.exit_status.success() {
-            panic!(
-                "Failed to run main:\n{}\nOn test\n{}",
-                String::from_utf8_lossy(&p.stderr),
-                String::from_utf8(Vec::from(input)).unwrap()
-            );
+    fn actual(mut input: &[u8], f: &impl Fn(Input) -> bool) -> Vec<u8> {
+        let input = Input::new(&mut input);
+        unsafe {
+            OUTPUT = Some(Output::new(Box::new(WriteDelegate {})));
         }
-        p.stdout
+        f(input);
+        output().flush();
+        take_output()
     }
 
     loop {
         let input = generate_test_int();
         let expected = stupid_int(&input);
-        let actual = actual(&input);
+        let actual = actual(&input, &f);
         let res = check_int(&mut expected.as_slice(), &mut actual.as_slice());
         match res {
             Ok(_) => {
@@ -102,7 +89,7 @@ static mut OUT: Vec<u8> = Vec::new();
 
 struct WriteDelegate {}
 
-impl std::io::Write for WriteDelegate {
+impl Write for WriteDelegate {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         unsafe {
             OUT.append(&mut Vec::from(buf));

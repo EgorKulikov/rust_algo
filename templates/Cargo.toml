@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 algo_lib = {path = "../algo_lib"}
+stress_test = {path = "../stress_test"}
 
 [build-dependencies]
 rust_competitive_helper_util = {path = "../../rust-competitive-helper/rust-competitive-helper-util"}

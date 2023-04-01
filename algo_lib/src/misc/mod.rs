@@ -14,6 +14,7 @@ pub mod recursive_function;
 pub mod run_parallel;
 #[cfg(test)]
 mod test;
+pub mod time_tracker;
 pub mod transparent_wrapper;
 pub mod value;
 pub mod value_ref;
