@@ -1,7 +1,7 @@
 use algo_lib::io::input::Input;
 use algo_lib::io::output::{Output, OUTPUT};
 
-fn check(expected: &mut &[u8], actual: &mut &[u8]) -> Result<(), String> {
+pub fn check(expected: &mut &[u8], actual: &mut &[u8]) -> Result<(), String> {
     let mut expected = Input::new(expected);
     let mut actual = Input::new(actual);
     let mut token_num = 0usize;

@@ -15,11 +15,10 @@ fn stupid(input: &mut Input) {
     out_line!(n * n);
 }
 
-fn check(mut expected: Input, mut actual: Input) -> Result<(), String> {
-    check_int(&mut expected, &mut actual)
-}
-
-pub fn stress_test(f: impl Fn(Input) -> bool) {
+pub fn stress_test(
+    solution: impl Fn(Input) -> bool,
+    checker: impl Fn(&mut &[u8], &mut &[u8]) -> Result<(), String>,
+) {
     fn take_output() -> Vec<u8> {
         let mut res = Vec::new();
         unsafe {
@@ -47,27 +46,23 @@ pub fn stress_test(f: impl Fn(Input) -> bool) {
         take_output()
     }
 
-    fn check_int(expected: &mut &[u8], actual: &mut &[u8]) -> Result<(), String> {
-        let expected = Input::new(expected);
-        let actual = Input::new(actual);
-        check(expected, actual)
-    }
-
-    fn actual(mut input: &[u8], f: &impl Fn(Input) -> bool) -> Vec<u8> {
+    fn actual(mut input: &[u8], solution: &impl Fn(Input) -> bool) -> Vec<u8> {
         let input = Input::new(&mut input);
         unsafe {
             OUTPUT = Some(Output::new(Box::new(WriteDelegate {})));
         }
-        f(input);
+        solution(input);
         output().flush();
         take_output()
     }
 
+    println!("");
+    println!("\x1B[34mStress testing\x1B[0m");
     loop {
         let input = generate_test_int();
         let expected = stupid_int(&input);
-        let actual = actual(&input, &f);
-        let res = check_int(&mut expected.as_slice(), &mut actual.as_slice());
+        let actual = actual(&input, &solution);
+        let res = checker(&mut expected.as_slice(), &mut actual.as_slice());
         match res {
             Ok(_) => {
                 print!(".");
@@ -100,31 +95,4 @@ impl Write for WriteDelegate {
     fn flush(&mut self) -> std::io::Result<()> {
         Ok(())
     }
-}
-
-fn check_int(expected: &mut Input, actual: &mut Input) -> Result<(), String> {
-    let mut token_num = 0usize;
-    loop {
-        let expected_token = expected.next_token();
-        let actual_token = actual.next_token();
-        if expected_token != actual_token {
-            if expected_token.is_none() {
-                return Err(format!("Expected has only {} tokens", token_num));
-            } else if actual_token.is_none() {
-                return Err(format!("Actual has only {} tokens", token_num));
-            } else {
-                return Err(format!(
-                    "Token #{} differs, expected {}, actual {}",
-                    token_num,
-                    String::from_utf8(expected_token.unwrap()).unwrap(),
-                    String::from_utf8(actual_token.unwrap()).unwrap()
-                ));
-            }
-        }
-        token_num += 1;
-        if actual_token.is_none() {
-            break;
-        }
-    }
-    Ok(())
 }
