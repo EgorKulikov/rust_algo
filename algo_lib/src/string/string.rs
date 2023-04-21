@@ -317,3 +317,13 @@ impl DerefMut for Str<'_> {
         self.as_slice_mut()
     }
 }
+
+pub trait StrReader {
+    fn read_str(&mut self) -> Str<'static>;
+}
+
+impl StrReader for Input<'_> {
+    fn read_str(&mut self) -> Str<'static> {
+        self.read()
+    }
+}

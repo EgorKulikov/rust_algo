@@ -250,3 +250,39 @@ impl<T: Default> DefaultVec<T> for Vec<T> {
         v
     }
 }
+
+pub trait TransposePairVec<U, V> {
+    fn transpose_pair_vec(self) -> Vec<(V, U)>;
+}
+
+impl<U, V> TransposePairVec<U, V> for Vec<(U, V)> {
+    fn transpose_pair_vec(self) -> Vec<(V, U)> {
+        self.into_iter().map(|(u, v)| (v, u)).collect()
+    }
+}
+
+pub trait NextPermutation {
+    fn next_permutation(&mut self) -> bool;
+}
+
+impl<T: Ord> NextPermutation for [T] {
+    fn next_permutation(&mut self) -> bool {
+        if self.len() <= 1 {
+            return false;
+        }
+        let mut i = self.len() - 1;
+        while i > 0 && self[i - 1] >= self[i] {
+            i -= 1;
+        }
+        if i == 0 {
+            return false;
+        }
+        let mut j = self.len() - 1;
+        while self[j] <= self[i - 1] {
+            j -= 1;
+        }
+        self.swap(i - 1, j);
+        self[i..].reverse();
+        true
+    }
+}

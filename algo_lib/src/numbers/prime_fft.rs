@@ -1,5 +1,7 @@
 use crate::collections::legacy_fill::LegacyFill;
 use crate::numbers::mod_int::BaseModInt;
+use crate::numbers::num_traits::add_sub::AddSub;
+use crate::numbers::num_traits::mul_div_rem::MulDivRem;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 use crate::numbers::number_ext::Power;
 
@@ -46,6 +48,12 @@ impl<M: BaseModInt> PrimeFFT<M> {
             return;
         }
         let res_len = a.len() + b.len() - 1;
+        if res.len() < res_len {
+            res.reserve(res_len - res.len());
+            for _ in res.len()..res_len {
+                res.push(M::zero());
+            }
+        }
         if res_len <= Self::BORDER_LEN {
             res.legacy_fill(M::zero());
             for (i, f) in a.iter().enumerate() {
@@ -137,6 +145,38 @@ impl<M: BaseModInt> PrimeFFT<M> {
             let mut res = vec![M::zero(); a.len() + b.len() - 1];
             self.multiply_res(a, b, &mut res);
             res
+        }
+    }
+
+    pub fn power<T: ZeroOne + PartialEq + MulDivRem + AddSub + Copy>(
+        &mut self,
+        a: &[M],
+        exp: T,
+    ) -> Vec<M> {
+        let mut res = Vec::new();
+        let mut temp = Vec::new();
+        self.power_impl(a, exp, &mut res, &mut temp);
+        res
+    }
+
+    fn power_impl<T: ZeroOne + PartialEq + MulDivRem + AddSub + Copy>(
+        &mut self,
+        a: &[M],
+        exp: T,
+        res: &mut Vec<M>,
+        temp: &mut Vec<M>,
+    ) {
+        if exp == T::zero() {
+            res.push(M::one());
+            return;
+        }
+        let two = T::one() + T::one();
+        if exp % two == T::zero() {
+            self.power_impl(a, exp / two, temp, res);
+            self.multiply_res(temp, temp, res);
+        } else {
+            self.power_impl(a, exp - T::one(), temp, res);
+            self.multiply_res(temp, a, res);
         }
     }
 
