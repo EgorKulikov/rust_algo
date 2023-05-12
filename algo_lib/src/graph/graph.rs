@@ -1,4 +1,6 @@
 use crate::collections::dsu::DSU;
+use crate::graph::edges::bi_edge::BiEdge;
+use crate::graph::edges::edge::Edge;
 use crate::graph::edges::edge_trait::{BidirectionalEdgeTrait, EdgeTrait};
 use std::ops::{Index, IndexMut};
 
@@ -96,5 +98,25 @@ impl<E: EdgeTrait> Index<usize> for Graph<E> {
 impl<E: EdgeTrait> IndexMut<usize> for Graph<E> {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.edges[index]
+    }
+}
+
+impl Graph<Edge> {
+    pub fn from_edges(n: usize, edges: &[(usize, usize)]) -> Self {
+        let mut graph = Self::new(n);
+        for &(from, to) in edges {
+            graph.add_edge(from, Edge::new(to));
+        }
+        graph
+    }
+}
+
+impl Graph<BiEdge> {
+    pub fn from_biedges(n: usize, edges: &[(usize, usize)]) -> Self {
+        let mut graph = Self::new(n);
+        for &(from, to) in edges {
+            graph.add_edge(from, BiEdge::new(to));
+        }
+        graph
     }
 }

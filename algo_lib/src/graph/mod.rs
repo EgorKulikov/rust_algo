@@ -1,4 +1,5 @@
 pub mod all_distances;
+pub mod bridges;
 pub mod dfs_order;
 pub mod distances;
 pub mod edge;

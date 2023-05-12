@@ -37,7 +37,7 @@ pub trait PartialSums<T> {
     fn partial_sums(&self) -> Vec<T>;
 }
 
-impl<T: ZeroOne + Add<Output = T> + Copy> PartialSums<T> for &[T] {
+impl<T: ZeroOne + Add<Output = T> + Copy> PartialSums<T> for [T] {
     fn partial_sums(&self) -> Vec<T> {
         let mut res = Vec::with_capacity(self.len() + 1);
         res.push(T::zero());

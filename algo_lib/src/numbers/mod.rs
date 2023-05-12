@@ -1,4 +1,5 @@
 pub mod fwht;
+pub mod gauss;
 pub mod gcd;
 pub mod inf_int;
 pub mod interpolation;
