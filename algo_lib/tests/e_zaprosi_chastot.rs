@@ -19,7 +19,7 @@ fn solve(input: &mut Input, _test_case: usize) {
         let n = input.read();
         let q = input.read();
         let a: Vec<i32> = input.read_vec(n);
-        let p = input.read_vec::<usize>(n - 1).dec_by_one();
+        let p = input.read_vec::<usize>(n - 1).dec();
         let queries: Vec<(usize, usize, usize)> = input.read_vec(q);
         tests.push((n, q, a, p, queries));
     }

@@ -8,7 +8,7 @@ use algo_lib::out_line;
 
 fn solve(input: &mut Input, _test_case: usize) {
     let n = input.read();
-    let a = input.read_vec::<usize>(n).dec_by_one();
+    let a = input.read_vec::<usize>(n).dec();
 
     let mut ft: FenwickTree<u64> = FenwickTree::new(n);
     let mut ans = 0u64;

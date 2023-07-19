@@ -4,6 +4,7 @@ pub mod arr4d;
 pub mod arr5d;
 pub mod bit_set;
 pub mod default_map;
+pub mod divided_set;
 pub mod dsu;
 pub mod dsu2d;
 pub mod fast_clear_fenwick;

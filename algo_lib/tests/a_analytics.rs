@@ -10,7 +10,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let n = input.read_size();
     let m = input.read_size();
     let q = input.read_size();
-    let changes = input.read_size_pair_vec(m).dec_by_one();
+    let changes = input.read_size_pair_vec(m).dec();
 
     const BUBEN: usize = 350;
     struct Part<'s> {

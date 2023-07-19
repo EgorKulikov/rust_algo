@@ -22,3 +22,9 @@ impl TimeTracker {
         self.0 = Instant::now();
     }
 }
+ impl Default for TimeTracker {
+    fn default() -> Self {
+        Self::new()
+    }
+ }
+ 

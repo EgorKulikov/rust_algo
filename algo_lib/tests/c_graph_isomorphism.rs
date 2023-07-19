@@ -10,8 +10,8 @@ use std::collections::HashSet;
 fn solve(input: &mut Input) {
     let n = input.read();
     let m = input.read();
-    let edges1 = input.read_vec::<(usize, usize)>(m).dec_by_one();
-    let edges2 = input.read_vec::<(usize, usize)>(m).dec_by_one();
+    let edges1 = input.read_vec::<(usize, usize)>(m).dec();
+    let edges2 = input.read_vec::<(usize, usize)>(m).dec();
 
     let set = edges1.into_iter().collect::<HashSet<_>>();
     let mut p = Permutation::new_ident(n);

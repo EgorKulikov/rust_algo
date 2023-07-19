@@ -172,25 +172,25 @@ impl<A, B> Detuple for Vec<(A, B)> {
 
 pub trait IncDec {
     #[must_use]
-    fn inc_by_one(self) -> Self;
+    fn inc(self) -> Self;
     #[must_use]
-    fn dec_by_one(self) -> Self;
+    fn dec(self) -> Self;
 }
 
 impl<T: AddSub + ZeroOne> IncDec for Vec<T> {
-    fn inc_by_one(mut self) -> Self {
+    fn inc(mut self) -> Self {
         self.iter_mut().for_each(|i| *i += T::one());
         self
     }
 
-    fn dec_by_one(mut self) -> Self {
+    fn dec(mut self) -> Self {
         self.iter_mut().for_each(|i| *i -= T::one());
         self
     }
 }
 
 impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne> IncDec for Vec<(T, U)> {
-    fn inc_by_one(mut self) -> Self {
+    fn inc(mut self) -> Self {
         self.iter_mut().for_each(|(i, j)| {
             *i += T::one();
             *j += U::one();
@@ -198,7 +198,7 @@ impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne> IncDec for Vec<(T, U)> {
         self
     }
 
-    fn dec_by_one(mut self) -> Self {
+    fn dec(mut self) -> Self {
         self.iter_mut().for_each(|(i, j)| {
             *i -= T::one();
             *j -= U::one();
@@ -208,7 +208,7 @@ impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne> IncDec for Vec<(T, U)> {
 }
 
 impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne, V: AddSub + ZeroOne> IncDec for Vec<(T, U, V)> {
-    fn inc_by_one(mut self) -> Self {
+    fn inc(mut self) -> Self {
         self.iter_mut().for_each(|(i, j, k)| {
             *i += T::one();
             *j += U::one();
@@ -217,7 +217,7 @@ impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne, V: AddSub + ZeroOne> IncDec for V
         self
     }
 
-    fn dec_by_one(mut self) -> Self {
+    fn dec(mut self) -> Self {
         self.iter_mut().for_each(|(i, j, k)| {
             *i -= T::one();
             *j -= U::one();

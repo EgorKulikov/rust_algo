@@ -54,11 +54,20 @@ impl<M: BaseModInt> PrimeFFT<M> {
                 res.push(M::zero());
             }
         }
+        self.multiply_fix_len(a, b, res);
+    }
+
+    pub fn multiply_fix_len(&mut self, a: &[M], b: &[M], res: &mut [M]) {
+        let res_len = res.len();
         if res_len <= Self::BORDER_LEN {
             res.legacy_fill(M::zero());
             for (i, f) in a.iter().enumerate() {
                 for (j, s) in b.iter().enumerate() {
-                    res[i + j] += (*f) * (*s);
+                    if i + j < res.len() {
+                        res[i + j] += (*f) * (*s);
+                    } else {
+                        break;
+                    }
                 }
             }
             return;
@@ -128,14 +137,7 @@ impl<M: BaseModInt> PrimeFFT<M> {
             self.root_power,
             size_t,
         );
-        if res.len() < res_len {
-            let was_len = res.len();
-            res.copy_from_slice(&self.aa[..was_len]);
-            res.extend_from_slice(&self.aa[was_len..res_len]);
-        } else {
-            res.copy_from_slice(&self.aa[..res_len]);
-            res[res_len..].legacy_fill(M::zero());
-        }
+        res.copy_from_slice(&self.aa[..res_len]);
     }
 
     pub fn multiply(&mut self, a: &[M], b: &[M]) -> Vec<M> {

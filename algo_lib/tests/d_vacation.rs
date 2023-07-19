@@ -28,7 +28,7 @@ fn solve(input: &mut Input) {
             self.n = input.read();
             self.k = input.read();
             self.c = input.read_vec(self.n);
-            self.p = input.read_vec(self.n - 1).dec_by_one();
+            self.p = input.read_vec(self.n - 1).dec();
         }
 
         fn solve(&mut self) {

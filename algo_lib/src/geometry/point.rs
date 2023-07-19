@@ -1,7 +1,9 @@
+use crate::geometry::geo_utils::epsilon;
 use crate::geometry::line::Line;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use crate::numbers::num_traits::ring::Ring;
+use crate::numbers::num_traits::zero_one::ZeroOne;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 #[derive(Copy, Clone, Hash, Ord, PartialOrd, Eq, PartialEq)]
@@ -16,8 +18,14 @@ impl<T> Point<T> {
     }
 }
 
+impl<T: ZeroOne> Point<T> {
+    pub fn origin() -> Self {
+        Self::new(T::zero(), T::zero())
+    }
+}
+
 impl<T: Ring + Copy> Point<T> {
-    pub fn square_dist(&self, p: Self) -> T {
+    pub fn square_dist_point(&self, p: Self) -> T {
         let delta = *self - p;
         delta * delta
     }
@@ -34,8 +42,12 @@ impl Point<f64> {
         Self::new(r * alpha.cos(), r * alpha.sin())
     }
 
-    pub fn dist(&self, p: Point<f64>) -> f64 {
+    pub fn dist_point(&self, p: Point<f64>) -> f64 {
         f64::hypot(self.x - p.x, self.y - p.y)
+    }
+
+    pub fn same(&self, p: Point<f64>) -> bool {
+        (self.x - p.x).abs() < epsilon() && (self.y - p.y).abs() < epsilon()
     }
 }
 

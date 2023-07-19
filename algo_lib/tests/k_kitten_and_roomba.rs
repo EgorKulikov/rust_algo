@@ -14,9 +14,9 @@ use std::collections::HashMap;
 fn solve(input: &mut Input, _test_case: usize) {
     let n: usize = input.read();
     let c = input.read::<usize>() - 1;
-    let edges = input.read_vec::<(usize, usize)>(n - 1).dec_by_one();
+    let edges = input.read_vec::<(usize, usize)>(n - 1).dec();
     let m = input.read();
-    let a = input.read_vec::<usize>(m).dec_by_one();
+    let a = input.read_vec::<usize>(m).dec();
 
     let mut graph = Graph::new(n);
     for (u, v) in edges {

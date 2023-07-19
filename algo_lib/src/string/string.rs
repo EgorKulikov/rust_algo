@@ -320,10 +320,15 @@ impl DerefMut for Str<'_> {
 
 pub trait StrReader {
     fn read_str(&mut self) -> Str<'static>;
+    fn read_str_vec(&mut self, n: usize) -> Vec<Str<'static>>;
 }
 
 impl StrReader for Input<'_> {
     fn read_str(&mut self) -> Str<'static> {
         self.read()
+    }
+
+    fn read_str_vec(&mut self, n: usize) -> Vec<Str<'static>> {
+        self.read_vec(n)
     }
 }

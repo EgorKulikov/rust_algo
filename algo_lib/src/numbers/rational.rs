@@ -9,9 +9,25 @@ use std::hash::Hash;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 #[derive(Eq, PartialEq, Copy, Clone, Hash)]
-pub struct Rational<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> {
+pub struct Rational<T> {
     num: T,
     den: T,
+}
+
+impl<T> Rational<T> {
+    fn new_internal(num: T, den: T) -> Self {
+        Self { num, den }
+    }
+}
+
+impl<T: Copy> Rational<T> {
+    pub fn num(&self) -> T {
+        self.num
+    }
+
+    pub fn den(&self) -> T {
+        self.den
+    }
 }
 
 impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> Rational<T> {
@@ -25,18 +41,7 @@ impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> Rational<T> {
         if den < T::zero() {
             g = T::zero() - g;
         }
-        Self {
-            num: num / g,
-            den: den / g,
-        }
-    }
-
-    pub fn num(&self) -> T {
-        self.num
-    }
-
-    pub fn den(&self) -> T {
-        self.den
+        Self::new_internal(num / g, den / g)
     }
 }
 
@@ -139,5 +144,24 @@ impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> ZeroOne for Rational<T> {
 
     fn one() -> Self {
         Self::new(T::one(), T::one())
+    }
+}
+
+impl<T: ZeroOne> From<T> for Rational<T> {
+    fn from(num: T) -> Self {
+        Self::new_internal(num, T::one())
+    }
+}
+
+pub trait ToRational
+where
+    Self: Sized,
+{
+    fn rat(self) -> Rational<Self>;
+}
+
+impl<T: ZeroOne> ToRational for T {
+    fn rat(self) -> Rational<Self> {
+        self.into()
     }
 }

@@ -14,8 +14,8 @@ fn solve(input: &mut Input, _test_case: usize) {
     let rect: Vec<(usize, usize, usize, usize)> = input.read_vec(k);
 
     let (t, l, b, r) = rect.detuple();
-    let t = t.dec_by_one();
-    let l = l.dec_by_one();
+    let t = t.dec();
+    let l = l.dec();
     let (y, (t, b)) = compress!(t, b);
     let (x, (l, r)) = compress!(l, r);
     let mut ans = gcd(n, m);

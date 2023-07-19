@@ -9,7 +9,7 @@ use algo_lib::out_line;
 fn solve(input: &mut Input, _test_case: usize) {
     let n = input.read();
     let mut a: Vec<usize> = input.read_vec(n);
-    a = a.dec_by_one();
+    a = a.dec();
 
     let ans = do_solve(n, a);
     out_line!(ans);
