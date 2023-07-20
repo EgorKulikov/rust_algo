@@ -201,7 +201,7 @@ macro_rules! write_to_string {
     )+};
 }
 
-write_to_string!(u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64);
+write_to_string!(u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize);
 
 impl<T: Writable, U: Writable> Writable for (T, U) {
     fn write(&self, output: &mut Output) {

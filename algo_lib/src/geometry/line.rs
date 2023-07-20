@@ -1,6 +1,6 @@
-use crate::geometry::geo_utils::epsilon;
 use crate::geometry::point::Point;
 use crate::numbers::num_traits::field::Field;
+use crate::numbers::num_traits::real::RealTrait;
 use crate::numbers::num_traits::ring::Ring;
 
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
@@ -64,9 +64,9 @@ impl<T: Ring + Copy + PartialEq> Line<T> {
     }
 }
 
-impl Line<f64> {
-    pub fn new_f64(a: f64, b: f64, c: f64) -> Self {
-        let h = f64::hypot(a, b);
+impl<T: RealTrait> Line<T> {
+    pub fn new_real(a: T, b: T, c: T) -> Self {
+        let h = T::hypot(a, b);
         Self {
             a: a / h,
             b: b / h,
@@ -74,19 +74,26 @@ impl Line<f64> {
         }
     }
 
-    pub fn dist_point(&self, p: Point<f64>) -> f64 {
+    pub fn dist_point(&self, p: Point<T>) -> T {
         self.square_dist_point(p).sqrt()
     }
 
-    pub fn contains_f64(&self, p: Point<f64>) -> bool {
-        (self.a * p.x + self.b * p.y + self.c).abs() < 1e-9
+    pub fn contains_real(&self, p: Point<T>) -> bool {
+        self.dist_point(p) < T::epsilon()
     }
 
-    pub fn is_parallel_f64(&self, other: Line<f64>) -> bool {
-        (self.a * other.b - self.b * other.a).abs() < epsilon()
+    pub fn is_parallel_real(&self, other: Line<T>) -> bool {
+        (self.a * other.b - self.b * other.a).abs() < T::epsilon()
     }
 
-    pub fn is_perpendicular_f64(&self, other: Line<f64>) -> bool {
-        (self.a * other.a + self.b * other.b).abs() < epsilon()
+    pub fn is_perpendicular_real(&self, other: Line<T>) -> bool {
+        (self.a * other.a + self.b * other.b).abs() < T::epsilon()
+    }
+
+    pub fn canonize(&mut self) {
+        let h = T::hypot(self.a, self.b);
+        self.a /= h;
+        self.b /= h;
+        self.c /= h;
     }
 }

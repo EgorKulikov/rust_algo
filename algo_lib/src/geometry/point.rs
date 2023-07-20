@@ -1,7 +1,8 @@
-use crate::geometry::geo_utils::epsilon;
+use crate::geometry::geometry_utils::canonize_angle;
 use crate::geometry::line::Line;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
+use crate::numbers::num_traits::real::RealTrait;
 use crate::numbers::num_traits::ring::Ring;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
@@ -37,17 +38,25 @@ impl<T: Ring + Copy> Point<T> {
     }
 }
 
-impl Point<f64> {
-    pub fn from_polar(r: f64, alpha: f64) -> Self {
+impl<T: RealTrait> Point<T> {
+    pub fn from_polar(r: T, alpha: T) -> Self {
         Self::new(r * alpha.cos(), r * alpha.sin())
     }
 
-    pub fn dist_point(&self, p: Point<f64>) -> f64 {
-        f64::hypot(self.x - p.x, self.y - p.y)
+    pub fn dist_point(&self, p: Self) -> T {
+        self.square_dist_point(p).sqrt()
     }
 
-    pub fn same(&self, p: Point<f64>) -> bool {
-        (self.x - p.x).abs() < epsilon() && (self.y - p.y).abs() < epsilon()
+    pub fn same(&self, p: Self) -> bool {
+        (self.x - p.x).abs() < T::epsilon() && (self.y - p.y).abs() < T::epsilon()
+    }
+
+    pub fn angle(&self) -> T {
+        T::atan2(self.y, self.x)
+    }
+
+    pub fn angle_to(&self, p: Self) -> T {
+        canonize_angle(p.angle() - self.angle()).abs()
     }
 }
 

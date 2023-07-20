@@ -11,3 +11,4 @@ pub mod ring;
 pub mod sign;
 pub mod wideable;
 pub mod zero_one;
+pub mod real;

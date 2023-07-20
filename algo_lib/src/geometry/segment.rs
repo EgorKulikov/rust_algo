@@ -1,7 +1,7 @@
-use crate::geometry::geo_utils::epsilon;
 use crate::geometry::line::Line;
 use crate::geometry::point::Point;
 use crate::numbers::num_traits::field::Field;
+use crate::numbers::num_traits::real::RealTrait;
 use crate::numbers::num_traits::ring::Ring;
 
 #[derive(Copy, Clone, Hash, Ord, PartialOrd, Eq, PartialEq)]
@@ -76,40 +76,40 @@ impl<T: Field + Copy + PartialEq + Ord> Segment<T> {
     }
 }
 
-impl Segment<f64> {
-    pub fn contains_f64(&self, p: Point<f64>) -> bool {
+impl<T: RealTrait> Segment<T> {
+    pub fn contains_real(&self, p: Point<T>) -> bool {
         if self.p1.same(self.p2) {
             return self.p1.same(p);
         }
         let line = self.line();
-        if !line.contains(p) {
+        if !line.contains_real(p) {
             return false;
         }
         let x1 = self.p1.x.min(self.p2.x);
         let x2 = self.p1.x.max(self.p2.x);
         let y1 = self.p1.y.min(self.p2.y);
         let y2 = self.p1.y.max(self.p2.y);
-        x1 <= p.x + epsilon()
-            && p.x <= x2 + epsilon()
-            && y1 <= p.y + epsilon()
-            && p.y <= y2 + epsilon()
+        x1 <= p.x + T::epsilon()
+            && p.x <= x2 + T::epsilon()
+            && y1 <= p.y + T::epsilon()
+            && p.y <= y2 + T::epsilon()
     }
 
-    pub fn dist_point(&self, p: Point<f64>) -> f64 {
+    pub fn dist_point(&self, p: Point<T>) -> T {
         if self.p1.same(self.p2) {
             return self.p1.dist_point(p);
         }
         let line = self.line();
         let perp = line.perpendicular(p);
         let pp = line.intersect(perp);
-        if self.contains_f64(pp) {
+        if self.contains_real(pp) {
             pp.dist_point(p)
         } else {
             self.p1.dist_point(p).min(self.p2.dist_point(p))
         }
     }
 
-    pub fn dist_segment(&self, s: Segment<f64>) -> f64 {
+    pub fn dist_segment(&self, s: Segment<T>) -> T {
         if self.p1.same(self.p2) {
             return s.dist_point(self.p1);
         }
@@ -118,10 +118,10 @@ impl Segment<f64> {
         }
         let l1 = self.line();
         let l2 = s.line();
-        if !l1.is_parallel_f64(l2) {
+        if !l1.is_parallel_real(l2) {
             let p = l1.intersect(l2);
-            if self.contains_f64(p) && s.contains_f64(p) {
-                return 0.0;
+            if self.contains_real(p) && s.contains_real(p) {
+                return T::zero();
             }
         }
         self.dist_point(s.p1)

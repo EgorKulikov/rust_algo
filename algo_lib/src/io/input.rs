@@ -219,11 +219,6 @@ impl<'s> Input<'s> {
     read_impl!(i64, read_long, read_long_vec, read_long_pair_vec);
     read_impl!(i128, read_i128, read_i128_vec);
     read_impl!(isize, read_isize, read_isize_vec);
-    read_impl!(f64, read_float, read_float_vec);
-
-    fn read_float_impl(&mut self) -> f64 {
-        self.read::<String>().parse().unwrap()
-    }
 
     fn refill_buffer(&mut self) -> bool {
         if self.at == self.buf_read {
@@ -330,12 +325,6 @@ impl Readable for String {
 impl Readable for char {
     fn read(input: &mut Input) -> Self {
         input.read_char()
-    }
-}
-
-impl Readable for f64 {
-    fn read(input: &mut Input) -> Self {
-        input.read_float_impl()
     }
 }
 

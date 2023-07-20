@@ -8,6 +8,8 @@ use algo_lib::graph::edges::edge_trait::EdgeTrait;
 use algo_lib::graph::graph::Graph;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::{output, Output, OUTPUT};
+use algo_lib::numbers::num_traits::real::{IntoReal, Real};
+use algo_lib::numbers::num_traits::zero_one::ZeroOne;
 use algo_lib::out_line;
 use std::collections::HashMap;
 
@@ -22,11 +24,11 @@ fn solve(input: &mut Input, _test_case: usize) {
     for (u, v) in edges {
         graph.add_edge(u, BiEdge::new(v));
     }
-    let mut ans = 0f64;
-    let mut per_room = vec![0f64; n];
+    let mut ans = Real::zero();
+    let mut per_room = vec![Real::zero(); n];
     let mut per_edge = Vec::with_capacity(n);
     for i in 0..n {
-        per_edge.push(vec![0f64; graph[i].len()]);
+        per_edge.push(vec![Real::zero(); graph[i].len()]);
     }
     let mut next: Option<usize> = None;
     let mut edge_id = vec![HashMap::new(); n];
@@ -41,13 +43,13 @@ fn solve(input: &mut Input, _test_case: usize) {
             Some(next) => {
                 per_room[vert] -= per_edge[vert][edge_id[vert][&next]];
                 per_edge[vert][edge_id[vert][&next]] =
-                    1. + per_room[next] / (graph[next].len() as f64);
+                    Real::one() + per_room[next] / graph[next].len().into_real();
                 per_room[vert] += per_edge[vert][edge_id[vert][&next]];
             }
         }
         next = Some(vert);
         if c == vert {
-            ans = 1. + per_room[vert] / (graph[vert].len() as f64);
+            ans = Real::one() + per_room[vert] / graph[vert].len().into_real();
         }
     }
     out_line!(ans);

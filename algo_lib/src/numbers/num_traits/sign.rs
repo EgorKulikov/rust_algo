@@ -38,4 +38,4 @@ macro_rules! signed_impl {
     )+};
 }
 
-signed_impl!(i128 i64 i32 i16 i8 isize f64 f32);
+signed_impl!(i128 i64 i32 i16 i8 isize);

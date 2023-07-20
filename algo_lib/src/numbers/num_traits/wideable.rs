@@ -18,4 +18,4 @@ macro_rules! wideable_impl {
     )+};
 }
 
-wideable_impl!(i128 i128, i64 i128, i32 i64, i16 i32, i8 i16, isize isize, u128 u128, u64 u128, u32 u64, u16 u32, u8 u16, usize usize, f64 f64, f32 f64);
+wideable_impl!(i128 i128, i64 i128, i32 i64, i16 i32, i8 i16, isize isize, u128 u128, u64 u128, u32 u64, u16 u32, u8 u16, usize usize);

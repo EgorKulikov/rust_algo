@@ -2,6 +2,7 @@ use crate::io::output::{Output, Writable};
 use crate::numbers::gcd::gcd;
 use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::mul_div_rem::MulDivRem;
+use crate::numbers::num_traits::real::{IntoReal, Real};
 use crate::numbers::num_traits::zero_one::ZeroOne;
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
@@ -42,6 +43,13 @@ impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> Rational<T> {
             g = T::zero() - g;
         }
         Self::new_internal(num / g, den / g)
+    }
+
+    pub fn abs(mut self) -> Self {
+        if self.num < T::zero() {
+            self.num = T::zero() - self.num;
+        }
+        self
     }
 }
 
@@ -163,5 +171,11 @@ where
 impl<T: ZeroOne> ToRational for T {
     fn rat(self) -> Rational<Self> {
         self.into()
+    }
+}
+
+impl<T: IntoReal> Rational<T> {
+    pub fn real(self) -> Real {
+        self.num.into_real() / self.den.into_real()
     }
 }

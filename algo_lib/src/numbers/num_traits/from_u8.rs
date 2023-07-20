@@ -12,4 +12,4 @@ macro_rules! from_u8_impl {
     )+};
 }
 
-from_u8_impl!(i128 i64 i32 i16 i8 isize u128 u64 u32 u16 u8 usize f32 f64);
+from_u8_impl!(i128 i64 i32 i16 i8 isize u128 u64 u32 u16 u8 usize);
