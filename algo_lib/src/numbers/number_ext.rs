@@ -3,6 +3,7 @@ use crate::numbers::num_traits::from_u8::FromU8;
 use crate::numbers::num_traits::mul_div_rem::{MulDiv, MulDivRem, Multable};
 use crate::numbers::num_traits::zero_one::ZeroOne;
 use crate::when;
+use std::ops::Mul;
 
 pub trait Power {
     #[must_use]
@@ -36,5 +37,15 @@ impl<S: ZeroOne + FromU8 + MulDiv + Copy + PartialEq> NumDigs for S {
             res += 1;
         }
         res
+    }
+}
+
+pub trait Square {
+    fn square(self) -> Self;
+}
+
+impl<T: Mul<Output = T> + Copy> Square for T {
+    fn square(self) -> Self {
+        self * self
     }
 }

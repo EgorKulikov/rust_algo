@@ -22,7 +22,7 @@ fn solve(input: &mut Input, _test_case: usize) {
             let mut res = BitSet::new(m);
             for (i, c) in s.into_iter().enumerate() {
                 if c == b'1' {
-                    res.set(i, true);
+                    res.set(i);
                 }
             }
             res

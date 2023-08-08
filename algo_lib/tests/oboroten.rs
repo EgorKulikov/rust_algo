@@ -36,13 +36,13 @@ fn solve(input: &mut Input, _test_case: usize) {
     let mut order = graph.topological_sort().unwrap();
     let mut victim = BitSet::new(n);
     for i in victims {
-        victim.set(i, true);
+        victim.set(i);
     }
     let mut victim_descendants = victim.clone();
     for &i in &order {
         if victim_descendants[i] {
             for e in &graph[i] {
-                victim_descendants.set(e.to(), true);
+                victim_descendants.set(e.to());
             }
         }
     }
@@ -51,7 +51,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     for i in order {
         if victim_ascendants[i] {
             for e in &graph_tr[i] {
-                victim_ascendants.set(e.to(), true);
+                victim_ascendants.set(e.to());
             }
         }
     }

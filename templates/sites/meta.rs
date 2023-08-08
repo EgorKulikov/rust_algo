@@ -1,7 +1,9 @@
 use algo_lib::out_line;
 use algo_lib::misc::run_parallel::{run_parallel, ParallelJob};
 
-fn solve(input: &mut Input) {
+type PreCalc = ();
+
+fn solve(input: &mut Input, _data: &PreCalc) {
     #[derive(Clone, Default)]
     struct Job {}
 
@@ -21,7 +23,8 @@ fn solve(input: &mut Input) {
 }
 
 pub(crate) fn run(mut input: Input) -> bool {
-    solve(&mut input);
+    let pre_calc = ();
+    solve(&mut input, &pre_calc);
     output().flush();
     input.skip_whitespace();
     !input.peek().is_some()

@@ -19,7 +19,7 @@ pub fn hungarian_algorithm(a: &Arr2d<i64>) -> i64 {
         used.fill(false);
         min_v.legacy_fill(inf);
         while p[j0] != n {
-            used.set(j0, true);
+            used.set(j0);
             let i0 = p[j0];
             let mut delta = inf;
             let mut j1 = n;

@@ -21,7 +21,7 @@ impl<E: EdgeTrait> StronglyConnectedComponents for Graph<E> {
                     if visited[vert] {
                         return;
                     }
-                    visited.set(vert, true);
+                    visited.set(vert);
                     for e in self[vert].iter() {
                         f.call(e.to());
                     }
@@ -53,7 +53,7 @@ impl<E: EdgeTrait> StronglyConnectedComponents for Graph<E> {
                         return;
                     }
                     color[vert] = index;
-                    visited.set(vert, true);
+                    visited.set(vert);
                     for e in gt[vert].iter() {
                         f.call(e.to());
                     }

@@ -25,7 +25,7 @@ fn solve(input: &mut Input) {
                 out_line!(0);
                 return;
             }
-            free.set(j as usize, false);
+            free.unset(j as usize);
         }
     }
 

@@ -20,7 +20,7 @@ impl<E: EdgeTrait> BridgeSearch for Graph<E> {
         for i in 0..n {
             if !used[i] {
                 let mut dfs = RecursiveFunction2::new(|f, vert: usize, prev: usize| {
-                    used.set(vert, true);
+                    used.set(vert);
                     tin[vert] = timer;
                     fup[vert] = timer;
                     timer += 1;

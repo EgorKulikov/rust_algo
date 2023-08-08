@@ -1,111 +1,84 @@
-//Codeforces - UTPC Contest 12-03-21 Div. 1 (Advanced)
-//{"type":"stdin","fileName":null,"pattern":null}
-//{"type":"stdout","fileName":null,"pattern":null}
+//{"name":"F. Сумма и произведение","group":"Codeforces - Codeforces Round 891 (Div. 3)","url":"https://codeforces.com/contest/1857/problem/F","interactive":false,"timeLimit":4000,"tests":[{"input":"3\n3\n1 3 2\n4\n3 2\n5 6\n3 1\n5 5\n4\n1 1 1 1\n1\n2 1\n6\n1 4 -2 3 3 3\n3\n2 -8\n-1 -2\n7 12\n","output":"1 1 0 0\n6\n1 1 3\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"FSummaIProizvedenie"}}}
 
-use algo_lib::collections::arr2d::Arr2dRead;
-use algo_lib::collections::bit_set::BitSet;
-use algo_lib::collections::dsu::DSU;
-use algo_lib::graph::edges::edge::Edge;
-use algo_lib::graph::edges::edge_trait::EdgeTrait;
-use algo_lib::graph::graph::Graph;
+use algo_lib::collections::default_map::DefaultHashMap;
 use algo_lib::io::input::Input;
-use algo_lib::io::output::{output, Output, OUTPUT};
+use algo_lib::io::output::output;
+use algo_lib::numbers::integer_sqrt::IntegerSqrt;
 use algo_lib::out_line;
-use std::collections::VecDeque;
 
-fn solve(input: &mut Input, _test_case: usize) {
-    let r = input.read();
-    let c = input.read();
-    let maze = input.read_table::<char>(r, c);
+type PreCalc = ();
 
-    let mut graph = Graph::new(r * c);
-    let mut gt = Graph::new(r * c);
-    let id = |i, j| i * c + j;
-    for i in 0..r {
-        for j in 0..c {
-            match maze[(i, j)] {
-                '>' => {
-                    if j + 1 < c {
-                        graph.add_edge(id(i, j + 1), Edge::new(id(i, j)));
-                    }
-                }
-                '<' => {
-                    if j > 0 {
-                        graph.add_edge(id(i, j - 1), Edge::new(id(i, j)));
-                    }
-                }
-                '^' => {
-                    if i > 0 {
-                        graph.add_edge(id(i - 1, j), Edge::new(id(i, j)));
-                    }
-                }
-                'v' => {
-                    if i + 1 < r {
-                        graph.add_edge(id(i + 1, j), Edge::new(id(i, j)));
-                    }
-                }
-                _ => {}
-            }
-        }
+fn solve(input: &mut Input, _test_case: usize, _data: &PreCalc) {
+    let n = input.read_size();
+    let a = input.read_long_vec(n);
+
+    let mut qty = DefaultHashMap::<_, usize>::new();
+    for i in a {
+        qty[i] += 1;
     }
-    for i in 0..graph.vertex_count() {
-        for e in graph[i].iter() {
-            gt.add_edge(e.to(), Edge::new(i));
-        }
-    }
-    let mut ans = 0;
-    let mut q = VecDeque::new();
-    let mut w = BitSet::new(graph.vertex_count());
-    for i in 0..graph.vertex_count() {
-        if graph[i].is_empty() {
-            q.push_back(i);
-        }
-    }
-    while let Some(cur) = q.pop_front() {
-        w.set(cur);
-        for e in gt[cur].iter() {
-            let mut has = false;
-            for f in graph[e.to()].iter() {
-                if !w[f.to()] {
-                    has = true;
-                    break;
-                }
-            }
-            if !has {
-                q.push_back(e.to());
-            }
-        }
-    }
-    let mut dsu = DSU::new(graph.vertex_count());
-    for i in 0..graph.vertex_count() {
-        if w[i] {
+
+    let q = input.read_size();
+    for _ in 0..q {
+        let b = -input.read_long();
+        let c = input.read_long();
+
+        let d = b * b - 4 * c;
+        if d < 0 {
+            out_line!(0);
             continue;
         }
-        for e in graph[i].iter() {
-            if !w[e.to()] {
-                dsu.join(i, e.to());
+        if let Some(d) = d.sqrt() {
+            let x1 = (-b - d) / 2;
+            let x2 = (-b + d) / 2;
+            if x1 != x2 {
+                out_line!(qty[x1] * qty[x2]);
+            } else if qty[x1] > 0 {
+                out_line!(qty[x1] * (qty[x1] - 1) / 2);
+            } else {
+                out_line!(0);
+            }
+        } else {
+            out_line!(0);
+        }
+    }
+}
+
+pub(crate) fn run(mut input: Input) -> bool {
+    let pre_calc = ();
+
+    #[allow(dead_code)]
+    enum TestType {
+        Single,
+        MultiNumber,
+        MultiEof,
+    }
+    let test_type = TestType::MultiNumber;
+    match test_type {
+        TestType::Single => solve(&mut input, 1, &pre_calc),
+        TestType::MultiNumber => {
+            let t = input.read();
+            for i in 0usize..t {
+                solve(&mut input, i + 1, &pre_calc);
+            }
+        }
+        TestType::MultiEof => {
+            let mut i = 1usize;
+            while input.peek().is_some() {
+                solve(&mut input, i, &pre_calc);
+                i += 1;
             }
         }
     }
-    for i in dsu.iter() {
-        let sz = dsu.size(i) as u64;
-        ans += sz * (sz - 1) / 2;
-    }
-    out_line!(ans);
-}
-
-//START SKIP
-//END SKIP
-
-fn run(mut input: Input) -> bool {
-    solve(&mut input, 1);
     output().flush();
     input.skip_whitespace();
     !input.peek().is_some()
 }
 
-//START SKIP
-fn check(expected: &mut &[u8], actual: &mut &[u8]) -> Result<(), String> {
+mod tester {
+use algo_lib::io::input::Input;
+use algo_lib::io::output::{Output, OUTPUT};
+
+pub fn check(expected: &mut &[u8], actual: &mut &[u8]) -> Result<(), String> {
     let mut expected = Input::new(expected);
     let mut actual = Input::new(actual);
     let mut token_num = 0usize;
@@ -119,7 +92,7 @@ fn check(expected: &mut &[u8], actual: &mut &[u8]) -> Result<(), String> {
                 return Err(format!("Actual has only {} tokens", token_num));
             } else {
                 return Err(format!(
-                    "Token #{} differs, expectes {}, actual {}",
+                    "Token #{} differs, expected {}, actual {}",
                     token_num,
                     String::from_utf8(expected_token.unwrap()).unwrap(),
                     String::from_utf8(actual_token.unwrap()).unwrap()
@@ -151,14 +124,14 @@ impl std::io::Write for WriteDelegate {
     }
 }
 
-fn run_tests() -> bool {
+pub(crate) fn run_tests() -> bool {
     let blue = "\x1B[34m";
     let red = "\x1B[31m";
     let green = "\x1B[32m";
     let yellow = "\x1B[33m";
     let def = "\x1B[0m";
-    let time_limit = std::time::Duration::from_millis(1500);
-    let mut paths = std::fs::read_dir("./tests/h_maze_escape_pt_i_i/")
+    let time_limit = std::time::Duration::from_millis(4000);
+    let mut paths = std::fs::read_dir("./tests/f_summa_iproizvedenie/")
         .unwrap()
         .map(|res| res.unwrap())
         .collect::<Vec<_>>();
@@ -206,7 +179,7 @@ fn run_tests() -> bool {
                             unsafe {
                                 OUTPUT = Some(Output::new(Box::new(WriteDelegate {})));
                             }
-                            let is_exhausted = run(input);
+                            let is_exhausted = crate::run(input);
                             let res = started.elapsed();
                             let output;
                             unsafe {
@@ -248,10 +221,16 @@ fn run_tests() -> bool {
                             }
                             Err(err) => {
                                 test_failed += 1;
-                                println!(
-                                    "{}Verdict: {}RuntimeError ({:#?}){}",
-                                    blue, red, err, def
-                                );
+                                match err.downcast::<&str>() {
+                                    Ok(as_string) => println!(
+                                        "{}Verdict: {}RuntimeError ({:?}){}",
+                                        blue, red, as_string, def
+                                    ),
+                                    Err(err) => println!(
+                                        "{}Verdict: {}RuntimeError ({:?}){}",
+                                        blue, red, err, def
+                                    ),
+                                }
                             }
                         }
                     }
@@ -272,8 +251,8 @@ fn run_tests() -> bool {
     }
     test_failed == 0
 }
-//END SKIP
+}
 #[test]
-fn h_maze_escape_pt_i_i() {
-    assert!(run_tests());
+fn f_summa_iproizvedenie() {
+    assert!(tester::run_tests());
 }

@@ -1,15 +1,36 @@
+use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use crate::numbers::num_traits::primitive::Primitive;
 use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::string::string::{Str, StrReader};
 use std::cmp::Ordering;
 use std::ops::{Add, AddAssign, DivAssign, MulAssign, Sub, SubAssign};
 
-const BASE: u32 = 1000000000;
+const DIGITS: usize = 9;
+const BASE: u32 = 10u32.pow(DIGITS as u32);
 // const FFT_MIN_SIZE: usize = 50000;
 
 #[derive(Eq, PartialEq, Clone)]
 pub struct UBigInt {
     z: Vec<u32>,
+}
+
+impl From<Str<'_>> for UBigInt {
+    fn from(value: Str) -> Self {
+        let mut at = value.len();
+        let mut res = Vec::with_capacity((at + DIGITS - 1) / DIGITS);
+        while at > 0 {
+            let mut cur = 0;
+            let start = at.saturating_sub(DIGITS);
+            for &c in &value[start..at] {
+                cur *= 10;
+                cur += (c - b'0') as u32;
+            }
+            res.push(cur);
+            at = start;
+        }
+        Self { z: res }
+    }
 }
 
 impl From<u32> for UBigInt {
@@ -175,13 +196,27 @@ impl DivAssign<u32> for UBigInt {
 
 impl Writable for UBigInt {
     fn write(&self, output: &mut Output) {
-        if self.z.is_empty() {
-            0u32.write(output);
-        } else {
-            self.z.last().unwrap().write(output);
-            for i in self.z[0..(self.z.len() - 1)].iter().rev() {
-                format!("{:09}", *i).write(output);
+        if let Some(tail) = self.z.last() {
+            tail.write(output);
+            for &i in self.z.iter().rev().skip(1) {
+                format!("{:09}", i).write(output);
             }
+        } else {
+            0u32.write(output);
+        }
+    }
+}
+
+impl ToString for UBigInt {
+    fn to_string(&self) -> String {
+        if let Some(tail) = self.z.last() {
+            let mut ans = tail.to_string();
+            for &i in self.z.iter().rev().skip(1) {
+                ans += format!("{:09}", i).as_str();
+            }
+            ans
+        } else {
+            "0".to_string()
         }
     }
 }
@@ -203,5 +238,11 @@ impl Ord for UBigInt {
             }
         }
         Ordering::Equal
+    }
+}
+
+impl Readable for UBigInt {
+    fn read(input: &mut Input) -> Self {
+        input.read_str().into()
     }
 }

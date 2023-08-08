@@ -2,6 +2,7 @@ use crate::collections::legacy_fill::LegacyFill;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::ops::{Index, IndexMut};
+use std::slice::Iter;
 use std::vec::IntoIter;
 
 #[derive(Clone, Eq, PartialEq, Default)]
@@ -43,7 +44,7 @@ impl<T> Arr2d<T> {
         self.d2
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
+    pub fn iter(&self) -> Iter<'_, T> {
         self.data.iter()
     }
 
@@ -158,6 +159,15 @@ impl<T> IntoIterator for Arr2d<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.data.into_iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a Arr2d<T> {
+    type Item = &'a T;
+    type IntoIter = Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
 

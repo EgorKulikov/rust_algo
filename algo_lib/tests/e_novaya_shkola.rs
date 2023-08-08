@@ -34,13 +34,13 @@ fn solve(input: &mut Input, _test_case: usize) {
     let mut down = BitSet::new(m);
     for i in 0..m {
         if ratio[i] <= Rational::new(a[i], 1) {
-            same.set(i, true);
+            same.set(i);
         }
         if i > 0 && ratio[i] <= Rational::new(a[i - 1], 1) {
-            up.set(i, true);
+            up.set(i);
         }
         if i < m - 1 && ratio[i] <= Rational::new(a[i + 1], 1) {
-            down.set(i, true);
+            down.set(i);
         }
     }
     fn count(b: &BitSet) -> Vec<usize> {

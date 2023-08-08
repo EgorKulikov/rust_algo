@@ -25,17 +25,26 @@ impl BitSet {
         }
     }
 
-    pub fn set(&mut self, at: usize, value: bool) {
+    pub fn set(&mut self, at: usize) {
         assert!(at < self.len);
+        self.data[Self::index(at)].set_bit(at & 63);
+    }
+
+    pub fn unset(&mut self, at: usize) {
+        assert!(at < self.len);
+        self.data[Self::index(at)].unset_bit(at & 63);
+    }
+
+    pub fn change(&mut self, at: usize, value: bool) {
         if value {
-            self.data[Self::index(at)].set_bit(at & 63);
+            self.set(at);
         } else {
-            self.data[Self::index(at)].unset_bit(at & 63);
+            self.unset(at);
         }
     }
 
     pub fn flip(&mut self, at: usize) {
-        self.set(at, !self[at]);
+        self.change(at, !self[at]);
     }
 
     #[allow(clippy::len_without_is_empty)]
@@ -147,7 +156,7 @@ impl From<Vec<bool>> for BitSet {
     fn from(data: Vec<bool>) -> Self {
         let mut res = Self::new(data.len());
         for (i, &value) in data.iter().enumerate() {
-            res.set(i, value);
+            res.change(i, value);
         }
         res
     }
