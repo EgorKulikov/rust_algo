@@ -40,6 +40,10 @@ impl LCA {
             ) as usize
         }
     }
+    
+    pub fn position(&self, vertex: usize) -> usize {
+        self.position[vertex] as usize
+    }
 
     pub fn on_path(&self, a: usize, b: usize, c: usize) -> bool {
         let lca = self.lca(a, b);

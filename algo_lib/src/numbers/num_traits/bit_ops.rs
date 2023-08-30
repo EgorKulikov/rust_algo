@@ -1,5 +1,7 @@
 use crate::numbers::num_traits::zero_one::ZeroOne;
-use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, Shl};
+use std::ops::{
+    BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, RangeInclusive, Shl,
+};
 use std::ops::{ShlAssign, Shr, ShrAssign};
 
 pub trait BitOps:
@@ -56,6 +58,10 @@ pub trait BitOps:
             res.set_bit(i);
         }
         res
+    }
+
+    fn iter_all(n: usize) -> RangeInclusive<Self> {
+        Self::zero()..=Self::all_bits(n)
     }
 }
 

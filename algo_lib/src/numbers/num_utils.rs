@@ -1,7 +1,8 @@
+use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::as_index::AsIndex;
 use crate::numbers::num_traits::mul_div_rem::Multable;
 use crate::numbers::num_traits::zero_one::ZeroOne;
-use std::ops::Add;
+use std::ops::{Add, Div};
 
 pub fn factorials<T: ZeroOne + Multable + AsIndex>(len: usize) -> Vec<T> {
     let mut res = Vec::new();
@@ -45,5 +46,15 @@ impl<T: ZeroOne + Add<Output = T> + Copy> PartialSums<T> for [T] {
             res.push(*res.last().unwrap() + *i);
         }
         res
+    }
+}
+
+pub trait UpperDiv {
+    fn upper_div(self, other: Self) -> Self;
+}
+
+impl<T: Div<Output = T> + AddSub + ZeroOne + Copy> UpperDiv for T {
+    fn upper_div(self, other: Self) -> Self {
+        (self + other - Self::one()) / other
     }
 }

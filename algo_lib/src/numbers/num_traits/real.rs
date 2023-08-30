@@ -23,6 +23,12 @@ pub trait RealTrait: Ord + Field {
 #[derive(Copy, Clone, PartialOrd, PartialEq, Debug)]
 pub struct Real(f64);
 
+impl Real {
+    pub fn round(&self) -> i64 {
+        self.0.round() as i64
+    }
+}
+
 impl Eq for Real {}
 
 #[allow(clippy::derive_ord_xor_partial_ord)]

@@ -1,6 +1,7 @@
 use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 use std::iter::{Skip, Zip};
+use std::ops::Range;
 use std::slice::Iter;
 
 pub trait Qty {
@@ -284,5 +285,26 @@ impl<T: Ord> NextPermutation for [T] {
         self.swap(i - 1, j);
         self[i..].reverse();
         true
+    }
+}
+
+pub trait Sorted {
+    fn sorted(self) -> Self;
+}
+
+impl<T: Ord> Sorted for Vec<T> {
+    fn sorted(mut self) -> Self {
+        self.sort();
+        self
+    }
+}
+
+pub trait Indices {
+    fn indices(&self) -> Range<usize>;
+}
+
+impl<T> Indices for [T] {
+    fn indices(&self) -> Range<usize> {
+        0..self.len()
     }
 }
