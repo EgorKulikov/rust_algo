@@ -67,20 +67,3 @@ pub fn stress_test(
         }
     }
 }
-
-static mut OUT: Vec<u8> = Vec::new();
-
-struct WriteDelegate {}
-
-impl Write for WriteDelegate {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        unsafe {
-            OUT.append(&mut Vec::from(buf));
-        }
-        Ok(buf.len())
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        Ok(())
-    }
-}
