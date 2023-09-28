@@ -1,4 +1,4 @@
-use crate::numbers::primes::Factorize;
+use crate::numbers::primes::factorize::Factorize;
 
 mod mod_int {
     use crate::numbers::mod_int::ModInt7;

@@ -3,7 +3,6 @@ use crate::graph::edges::edge_trait::BidirectionalEdgeTrait;
 use crate::graph::graph::Graph;
 use crate::misc::owned_cell::OwnedCell;
 use crate::numbers::num_traits::bit_ops::Bits;
-use crate::numbers::num_traits::primitive::Primitive;
 
 pub struct LCA {
     position: Vec<u32>,
@@ -82,12 +81,12 @@ impl LCA {
             }
         }
         let vertex_count = self.position.len();
-        let len = (u32::bits() - vertex_count.into_u32().leading_zeros()) as usize;
+        let len = (u32::bits() - (vertex_count as u32).leading_zeros()) as usize;
         let mut predecessors = Arr2d::new(len, vertex_count, -1);
         for i in 0..vertex_count {
             predecessors[(0, i)] = match self.parent(i) {
                 None => -1,
-                Some(v) => v.into_i32(),
+                Some(v) => v as i32,
             };
         }
         for i in 1..len {
@@ -96,7 +95,7 @@ impl LCA {
                 if p == -1 {
                     predecessors[(i, j)] = -1;
                 } else {
-                    predecessors[(i, j)] = predecessors[(i - 1, p.into_usize())];
+                    predecessors[(i, j)] = predecessors[(i - 1, p as usize)];
                 }
             }
         }

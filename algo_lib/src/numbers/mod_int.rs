@@ -314,7 +314,7 @@ impl<T: AddSub + Copy + ZeroOne + Ord + MulDivRem + AsIndex, V: Value<T>> AsInde
         Self::new(T::from_index(idx))
     }
 
-    fn to_index(&self) -> usize {
+    fn to_index(self) -> usize {
         self.n.to_index()
     }
 }

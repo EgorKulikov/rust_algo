@@ -1,6 +1,6 @@
 pub trait AsIndex {
     fn from_index(idx: usize) -> Self;
-    fn to_index(&self) -> usize;
+    fn to_index(self) -> usize;
 }
 
 macro_rules! from_index_impl {
@@ -10,8 +10,8 @@ macro_rules! from_index_impl {
                 idx as $t
             }
 
-            fn to_index(&self) -> usize {
-                *self as usize
+            fn to_index(self) -> usize {
+                self as usize
             }
         }
     )+};

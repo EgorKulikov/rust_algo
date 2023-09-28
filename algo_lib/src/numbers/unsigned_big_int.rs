@@ -1,6 +1,5 @@
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
-use crate::numbers::num_traits::primitive::Primitive;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 use crate::string::str::{Str, StrReader};
 use std::cmp::Ordering;
@@ -162,27 +161,30 @@ impl MulAssign<u32> for UBigInt {
             *self = Self::zero();
             return;
         }
-        let rhs = rhs.into_u64();
+        let rhs = rhs as u64;
         let mut carry = 0;
+        let base = BASE as u64;
         for i in self.z.iter_mut() {
-            let val = i.into_u64() * rhs + carry;
-            *i = (val % BASE.into_u64()).into_u32();
-            carry = val / BASE.into_u64();
+            let val: u64 = (*i as u64) * rhs + carry;
+            *i = (val % base) as u32;
+            carry = val / base;
         }
         while carry > 0 {
-            self.z.push((carry % BASE.into_u64()).into_u32());
-            carry /= BASE.into_u64();
+            self.z.push((carry % base) as u32);
+            carry /= base;
         }
     }
 }
 
 impl DivAssign<u32> for UBigInt {
     fn div_assign(&mut self, rhs: u32) {
+        let rhs = rhs as u64;
         let mut carry = 0;
+        let base = BASE as u64;
         for i in self.z.iter_mut().rev() {
-            let val = carry + i.into_u64();
-            *i = (val / rhs.into_u64()).into_u32();
-            carry = (val % rhs.into_u64()) * BASE.into_u64();
+            let val = carry + *i as u64;
+            *i = (val / rhs) as u32;
+            carry = (val % rhs) * base;
         }
         while let Some(d) = self.z.last() {
             if *d == 0 {

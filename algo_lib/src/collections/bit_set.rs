@@ -1,6 +1,5 @@
 use crate::collections::legacy_fill::LegacyFill;
 use crate::numbers::num_traits::bit_ops::BitOps;
-use crate::numbers::num_traits::primitive::Primitive;
 use std::ops::{BitAndAssign, BitOrAssign, Index};
 
 const TRUE: bool = true;
@@ -80,7 +79,7 @@ impl BitSet {
     }
 
     pub fn count_ones(&self) -> usize {
-        self.data.iter().map(|x| x.count_ones().into_usize()).sum()
+        self.data.iter().map(|x| x.count_ones() as usize).sum()
     }
 }
 

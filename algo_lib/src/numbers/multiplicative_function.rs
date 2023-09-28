@@ -1,6 +1,6 @@
-use crate::numbers::num_traits::primitive::Primitive;
 use crate::numbers::number_ext::Power;
-use crate::numbers::primes::{divisor_table, Factorize};
+use crate::numbers::primes::factorize::Factorize;
+use crate::numbers::primes::sieve::divisor_table;
 
 pub struct MulitplicativeFunction(Box<dyn Fn(i64, usize, i64) -> i64>);
 
@@ -35,13 +35,13 @@ impl MulitplicativeFunction {
                 j /= d;
                 exp += 1;
             }
-            res.push(res[j] * self.0(d.into_i64(), exp, (i / j).into_i64()));
+            res.push(res[j] * self.0(d as i64, exp, (i / j) as i64));
         }
         res
     }
 
     pub fn divisor_count() -> Self {
-        Self::new(|_, exp, _| exp.into_i64() + 1)
+        Self::new(|_, exp, _| exp as i64 + 1)
     }
 
     pub fn divisor_sum() -> Self {

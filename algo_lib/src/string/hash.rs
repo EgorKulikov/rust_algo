@@ -5,7 +5,7 @@ use crate::numbers::mod_int::ModInt;
 use crate::numbers::num_traits::invertable::Invertable;
 use crate::numbers::num_traits::primitive::Primitive;
 use crate::numbers::num_traits::zero_one::ZeroOne;
-use crate::numbers::primes::next_prime;
+use crate::numbers::primes::prime::next_prime;
 use crate::{dynamic_value, value_ref, when};
 use std::collections::Bound;
 use std::ops::RangeBounds;
@@ -28,11 +28,9 @@ impl HashBase {
             return;
         }
         HM::set_val(next_prime(
-            random()
-                .next_bounds(10u64.pow(18), 2 * 10u64.pow(18))
-                .into_i64(),
+            random().next_bounds(10u64.pow(18), 2 * 10u64.pow(18)).to(),
         ));
-        let multiplier = HashMod::new(random().next_bounds(257, 5 * 10u64.pow(17)).into_i64());
+        let multiplier = HashMod::new(random().next_bounds(257, 5 * 10u64.pow(17)).to());
         let inv_multiplier = multiplier.inv().unwrap();
         HashBaseContainer::set_val(Self {
             multiplier,
@@ -72,14 +70,14 @@ pub struct SimpleHash {
 }
 
 impl SimpleHash {
-    pub fn new(str: &[impl Primitive + Copy]) -> Self {
+    pub fn new(str: &[impl Primitive<i64>]) -> Self {
         HashBaseContainer::val_mut().ensure_capacity(str.len() + 1);
         let mut hash = Vec::with_capacity(str.len() + 1);
         hash.push(HashMod::zero());
         let multiplier = HashBaseContainer::val().multiplier;
         let mut power = HashMod::one();
         for c in str {
-            let c = HashMod::new(c.into_i64());
+            let c = HashMod::new(c.to());
             let cur = *hash.last().unwrap() + c * power;
             hash.push(cur);
             power *= multiplier;
@@ -174,15 +172,21 @@ impl<'s, Hash1: StringHash + ?Sized, Hash2: StringHash + ?Sized> StringHash
     }
 }
 
-pub fn hash(str: &[impl Primitive + Copy]) -> i64 {
-    HashBaseContainer::val_mut().ensure_capacity(str.len() + 1);
-    let mut res = HashMod::zero();
-    let multiplier = HashBaseContainer::val().multiplier;
-    let mut power = HashMod::one();
-    for c in str {
-        let c = HashMod::new(c.into_i64());
-        res += c * power;
-        power *= multiplier;
+pub trait Hashable {
+    fn str_hash(&self) -> i64;
+}
+
+impl<T: Primitive<i64>> Hashable for [T] {
+    fn str_hash(&self) -> i64 {
+        HashBaseContainer::val_mut().ensure_capacity(self.len() + 1);
+        let mut res = HashMod::zero();
+        let multiplier = HashBaseContainer::val().multiplier;
+        let mut power = HashMod::one();
+        for c in self {
+            let c = HashMod::new(c.to());
+            res += c * power;
+            power *= multiplier;
+        }
+        res.val()
     }
-    res.val()
 }

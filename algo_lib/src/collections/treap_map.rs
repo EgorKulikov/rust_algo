@@ -1,6 +1,5 @@
 use crate::collections::treap::{KeyPayload, Payload, PureDataPayload, SizePayload, TreapNode};
 use crate::misc::direction::Direction;
-use crate::numbers::num_traits::primitive::Primitive;
 use std::cmp::Ordering;
 use std::mem::swap;
 use std::ops::{Deref, DerefMut, Index, RangeBounds};
@@ -79,7 +78,7 @@ impl<T: Ord, V> TreapMap<T, V> {
                 }
             });
         if found {
-            Some(res.into_usize())
+            Some(res as usize)
         } else {
             None
         }
