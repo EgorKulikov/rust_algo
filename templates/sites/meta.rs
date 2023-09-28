@@ -1,9 +1,8 @@
-use algo_lib::out_line;
 use algo_lib::misc::run_parallel::{run_parallel, ParallelJob};
 
 type PreCalc = ();
 
-fn solve(input: &mut Input, _data: &PreCalc) {
+fn solve(input: &mut Input, output: &mut Output, _data: &PreCalc) {
     #[derive(Clone, Default)]
     struct Job {}
 
@@ -14,18 +13,18 @@ fn solve(input: &mut Input, _data: &PreCalc) {
 
         fn solve(&mut self) {}
 
-        fn write_output(&mut self, test_case: usize) {
-            out_line!(format!("Case #{}:", test_case));
+        fn write_output(&mut self, out: &mut Output, test_case: usize) {
+            out.print_line((format!("Case #{}:", test_case), ));
         }
     }
 
-    run_parallel::<Job>(input);
+    run_parallel::<Job>(input, output);
 }
 
-pub(crate) fn run(mut input: Input) -> bool {
+pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
     let pre_calc = ();
-    solve(&mut input, &pre_calc);
-    output().flush();
+    solve(&mut input, &mut output, &pre_calc);
+    output.flush();
     input.skip_whitespace();
-    !input.peek().is_some()
+    input.peek().is_none()
 }

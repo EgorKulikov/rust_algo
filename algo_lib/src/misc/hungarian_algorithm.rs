@@ -1,6 +1,6 @@
-use crate::collections::arr2d::Arr2d;
 use crate::collections::bit_set::BitSet;
 use crate::collections::legacy_fill::LegacyFill;
+use crate::collections::md_arr::arr2d::Arr2d;
 use crate::numbers::num_traits::ord::MinMax;
 
 pub fn hungarian_algorithm(a: &Arr2d<i64>) -> i64 {

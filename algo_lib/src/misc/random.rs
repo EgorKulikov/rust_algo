@@ -1,3 +1,4 @@
+use crate::collections::slice_ext::indices::Indices;
 use std::time::SystemTime;
 
 const NN: usize = 312;
@@ -77,10 +78,9 @@ pub trait Shuffle {
     fn shuffle(&mut self);
 }
 
-impl<T> Shuffle for &mut [T] {
+impl<T> Shuffle for [T] {
     fn shuffle(&mut self) {
-        let len = self.len();
-        for i in 0..len {
+        for i in self.indices() {
             let at = (random().gen() % ((i + 1) as u64)) as usize;
             self.swap(i, at);
         }

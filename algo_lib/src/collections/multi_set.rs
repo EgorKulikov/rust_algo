@@ -150,7 +150,7 @@ impl<T: Ord> MultiTreeSet<T> {
     }
 
     pub fn last(&self) -> Option<&T> {
-        self.map.iter().rev().next().map(|(value, _)| value)
+        self.map.iter().next_back().map(|(value, _)| value)
     }
 }
 
@@ -170,7 +170,7 @@ impl<T: Ord + Clone> MultiTreeSet<T> {
     }
 
     pub fn pop_last(&mut self) -> Option<T> {
-        if let Some((value, count)) = self.map.iter_mut().rev().next() {
+        if let Some((value, count)) = self.map.iter_mut().next_back() {
             *count -= 1;
             self.size -= 1;
             let res = value.clone();

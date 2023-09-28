@@ -1,6 +1,6 @@
-use crate::collections::iter_ext::IterExt;
+use crate::collections::iter_ext::collect::IterCollect;
 use crate::collections::legacy_fill::LegacyFill;
-use crate::collections::vec_ext::Bounds;
+use crate::collections::slice_ext::bounds::Bounds;
 use std::cell::Cell;
 
 #[derive(Clone)]

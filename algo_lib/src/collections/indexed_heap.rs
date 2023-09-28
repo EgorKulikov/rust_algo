@@ -1,7 +1,9 @@
 use crate::collections::legacy_fill::LegacyFill;
 use std::mem;
 
+#[derive(Default)]
 enum Opt<T> {
+    #[default]
     None,
     Some(u32, T),
 }
@@ -45,12 +47,6 @@ impl<T> Opt<T> {
             Opt::None => panic!("unreachable"),
             Opt::Some(ind, val) => (ind as usize, val),
         }
-    }
-}
-
-impl<T> Default for Opt<T> {
-    fn default() -> Self {
-        Opt::None
     }
 }
 

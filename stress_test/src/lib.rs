@@ -1,59 +1,47 @@
 use algo_lib::io::input::Input;
-use algo_lib::io::output::{output, Output, OUTPUT};
+use algo_lib::io::output::Output;
 use algo_lib::misc::random::random;
-use algo_lib::out_line;
 use std::io::{stdout, Write};
-use std::mem::swap;
 
-fn generate_test() {
-    let n = random().next(100) + 1;
-    out_line!(n);
+fn generate_test(out: &mut Output) {
+    let a = random().next(100) + 1;
+    let b = random().next(100) + 1;
+    out.print_line((a, b));
 }
 
-fn stupid(input: &mut Input) {
-    let n = input.read_size();
-    out_line!(n * n);
+fn stupid(input: &mut Input, out: &mut Output) {
+    let a = input.read_size();
+    let b = input.read_size();
+    out.print_line(a + b);
 }
 
 pub fn stress_test(
-    solution: impl Fn(Input) -> bool,
+    solution: impl Fn(Input, Output) -> bool,
     checker: impl Fn(&mut &[u8], &mut &[u8]) -> Result<(), String>,
 ) {
-    fn take_output() -> Vec<u8> {
-        let mut res = Vec::new();
-        unsafe {
-            swap(&mut res, &mut OUT);
-        }
-        res
-    }
-
     fn generate_test_int() -> Vec<u8> {
-        unsafe {
-            OUTPUT = Some(Output::new(Box::new(WriteDelegate {})));
-        }
-        generate_test();
-        output().flush();
-        take_output()
+        let mut res = Vec::new();
+        let mut output = Output::new(&mut res);
+        generate_test(&mut output);
+        output.flush();
+        res
     }
 
     fn stupid_int(mut input: &[u8]) -> Vec<u8> {
         let mut input = Input::new(&mut input);
-        unsafe {
-            OUTPUT = Some(Output::new(Box::new(WriteDelegate {})));
-        }
-        stupid(&mut input);
-        output().flush();
-        take_output()
+        let mut res = Vec::new();
+        let mut output = Output::new(&mut res);
+        stupid(&mut input, &mut output);
+        output.flush();
+        res
     }
 
-    fn actual(mut input: &[u8], solution: &impl Fn(Input) -> bool) -> Vec<u8> {
+    fn actual(mut input: &[u8], solution: &impl Fn(Input, Output) -> bool) -> Vec<u8> {
         let input = Input::new(&mut input);
-        unsafe {
-            OUTPUT = Some(Output::new(Box::new(WriteDelegate {})));
-        }
-        solution(input);
-        output().flush();
-        take_output()
+        let mut res = Vec::new();
+        let output = Output::new(&mut res);
+        solution(input, output);
+        res
     }
 
     println!("");

@@ -1,16 +1,16 @@
-use crate::collections::iter_ext::IterExt;
+use crate::collections::iter_ext::find_count::IterFindCount;
+use crate::string::str::Str;
 
-pub fn string_to_card(s: &str) -> (usize, usize) {
-    let mut chars = s.chars();
-    let rank = "23456789TJQKA".find(chars.next().unwrap()).unwrap();
-    let suit = "CDHS".find(chars.next().unwrap()).unwrap();
+pub fn string_to_card(s: &Str) -> (usize, usize) {
+    assert!(s.len() == 2);
+    let rank = b"23456789TJQKA".iter().find(&s[0]).unwrap();
+    let suit = b"CDHS".iter().find(&s[1]).unwrap();
     (rank, suit)
 }
 
-pub fn card_to_string(rank: usize, suit: usize) -> String {
-    format!(
-        "{}{}",
-        "23456789TJQKA".chars().collect_vec()[rank],
-        "CDHS".chars().collect_vec()[suit]
-    )
+pub fn card_to_string(rank: usize, suit: usize) -> Str<'static> {
+    let mut res = Str::with_capacity(2);
+    res.push(b"23456789TJQKA"[rank]);
+    res.push(b"CDHS"[suit]);
+    res
 }

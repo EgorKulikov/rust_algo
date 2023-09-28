@@ -1,4 +1,4 @@
-use crate::collections::iter_ext::IterExt;
+use crate::collections::iter_ext::collect::IterCollect;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::mem::MaybeUninit;

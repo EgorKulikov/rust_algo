@@ -1,5 +1,5 @@
 use crate::collections::dsu::DSU;
-use crate::collections::iter_ext::IterExt;
+use crate::collections::iter_ext::collect::IterCollect;
 use std::ops::{Deref, DerefMut};
 
 #[derive(Clone)]

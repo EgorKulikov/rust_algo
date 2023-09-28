@@ -1,5 +1,5 @@
 use algo_lib::io::input::Input;
-use algo_lib::io::output::{Output, OUTPUT};
+use algo_lib::io::output::Output;
 
 pub fn check(expected: &mut &[u8], actual: &mut &[u8]) -> Result<(), String> {
     let mut expected = Input::new(expected);
@@ -28,23 +28,6 @@ pub fn check(expected: &mut &[u8], actual: &mut &[u8]) -> Result<(), String> {
         }
     }
     Ok(())
-}
-
-static mut OUT: Vec<u8> = Vec::new();
-
-struct WriteDelegate {}
-
-impl std::io::Write for WriteDelegate {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        unsafe {
-            OUT.append(&mut Vec::from(buf));
-        }
-        Ok(buf.len())
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        Ok(())
-    }
 }
 
 pub(crate) fn run_tests() -> bool {
@@ -93,21 +76,11 @@ pub(crate) fn run_tests() -> bool {
                         }
                         println!("{}Output:{}", blue, def);
                         match std::panic::catch_unwind(|| {
-                            unsafe {
-                                OUT.clear();
-                            }
                             let mut file = std::fs::File::open(&path).unwrap();
-                            let input = Input::new(&mut file);
                             let started = std::time::Instant::now();
-                            unsafe {
-                                OUTPUT = Some(Output::new(Box::new(WriteDelegate {})));
-                            }
-                            let is_exhausted = crate::run(input);
+                            let mut output = Vec::new();
+                            let is_exhausted = crate::run(Input::new(&mut file), Output::new(&mut output));
                             let res = started.elapsed();
-                            let output;
-                            unsafe {
-                                output = OUT.clone();
-                            }
                             println!("{}", String::from_utf8_lossy(&output));
                             (output, res, is_exhausted)
                         }) {

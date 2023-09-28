@@ -1,7 +1,7 @@
 //$JSON
 
 use algo_lib::io::input::Input;
-use algo_lib::io::output::output;
+use algo_lib::io::output::Output;
 
 $SOLVE
 

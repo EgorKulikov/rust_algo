@@ -2,7 +2,7 @@ use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use crate::numbers::num_traits::primitive::Primitive;
 use crate::numbers::num_traits::zero_one::ZeroOne;
-use crate::string::string::{Str, StrReader};
+use crate::string::str::{Str, StrReader};
 use std::cmp::Ordering;
 use std::ops::{Add, AddAssign, DivAssign, MulAssign, Sub, SubAssign};
 

@@ -1,7 +1,3 @@
-pub mod arr2d;
-pub mod arr3d;
-pub mod arr4d;
-pub mod arr5d;
 pub mod bit_set;
 pub mod default_map;
 pub mod divided_set;
@@ -13,11 +9,13 @@ pub mod id;
 pub mod indexed_heap;
 pub mod iter_ext;
 pub mod legacy_fill;
+pub mod md_arr;
 pub mod min_max;
 pub mod multi_set;
 pub mod permutation;
 pub mod persistent_fenwick;
 pub mod segment_tree;
+pub mod slice_ext;
 #[cfg(test)]
 mod test;
 pub mod treap;

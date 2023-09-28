@@ -1,4 +1,4 @@
-use crate::collections::iter_ext::cur_next;
+use crate::collections::iter_ext::cur_next::cur_next;
 use crate::geometry::point::Point;
 use crate::numbers::num_traits::field::Field;
 use crate::numbers::num_traits::ring::Ring;

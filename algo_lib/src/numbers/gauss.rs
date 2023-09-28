@@ -1,4 +1,4 @@
-use crate::collections::arr2d::Arr2d;
+use crate::collections::md_arr::arr2d::Arr2d;
 use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::mul_div_rem::MulDiv;
 use crate::numbers::num_traits::zero_one::ZeroOne;

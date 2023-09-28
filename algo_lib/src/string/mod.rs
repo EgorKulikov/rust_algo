@@ -1,4 +1,5 @@
+pub mod composite_slicelike;
 pub mod hash;
-#[allow(clippy::module_inception)]
-pub mod string;
+pub mod slicelike;
+pub mod str;
 pub mod string_algorithms;

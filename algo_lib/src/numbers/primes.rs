@@ -1,5 +1,5 @@
 use crate::collections::bit_set::BitSet;
-use crate::collections::iter_ext::IterExt;
+use crate::collections::iter_ext::collect::IterCollect;
 use crate::misc::random::random;
 use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
 use crate::misc::value::DynamicValue;

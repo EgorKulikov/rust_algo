@@ -4,4 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-rayon = "~1.5"
+rayon = "~1.7"
+regex = "~1.9"

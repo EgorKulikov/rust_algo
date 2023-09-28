@@ -1,4 +1,4 @@
-use crate::collections::arr2d::Arr2d;
+use crate::collections::md_arr::arr2d::Arr2d;
 use crate::collections::min_max::MinimMaxim;
 use crate::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
 use crate::graph::graph::Graph;

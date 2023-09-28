@@ -1,7 +1,7 @@
 use crate::collections::legacy_fill::LegacyFill;
 use crate::numbers::num_traits::bit_ops::BitOps;
 use crate::numbers::num_traits::primitive::Primitive;
-use std::ops::{BitOrAssign, Index};
+use std::ops::{BitAndAssign, BitOrAssign, Index};
 
 const TRUE: bool = true;
 const FALSE: bool = false;
@@ -133,8 +133,17 @@ impl<'a> IntoIterator for &'a BitSet {
 impl BitOrAssign<&BitSet> for BitSet {
     fn bitor_assign(&mut self, rhs: &BitSet) {
         assert_eq!(self.len, rhs.len);
-        for i in 0..self.data.len() {
-            self.data[i] |= rhs.data[i];
+        for (i, &j) in self.data.iter_mut().zip(rhs.data.iter()) {
+            *i |= j;
+        }
+    }
+}
+
+impl BitAndAssign<&BitSet> for BitSet {
+    fn bitand_assign(&mut self, rhs: &BitSet) {
+        assert_eq!(self.len, rhs.len);
+        for (i, &j) in self.data.iter_mut().zip(rhs.data.iter()) {
+            *i &= j;
         }
     }
 }

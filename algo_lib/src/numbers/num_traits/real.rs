@@ -162,7 +162,12 @@ impl RealTrait for Real {
 
 impl Readable for Real {
     fn read(input: &mut Input) -> Self {
-        Self(input.read_string().parse().unwrap())
+        Self(
+            String::from_utf8(input.next_token().unwrap())
+                .unwrap()
+                .parse()
+                .unwrap(),
+        )
     }
 }
 

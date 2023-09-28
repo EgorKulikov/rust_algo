@@ -1,3 +1,4 @@
+use crate::collections::vec_ext::default::default_vec;
 use std::io::Write;
 
 #[derive(Copy, Clone)]
@@ -32,31 +33,31 @@ impl BoolOutput {
     }
 }
 
-pub struct Output {
-    output: Box<dyn Write>,
+pub struct Output<'s> {
+    output: &'s mut dyn Write,
     buf: Vec<u8>,
     at: usize,
     auto_flush: bool,
     bool_output: BoolOutput,
 }
 
-impl Output {
+impl<'s> Output<'s> {
     const DEFAULT_BUF_SIZE: usize = 4096;
 
-    pub fn new(output: Box<dyn Write>) -> Self {
+    pub fn new(output: &'s mut dyn Write) -> Self {
         Self {
             output,
-            buf: vec![0; Self::DEFAULT_BUF_SIZE],
+            buf: default_vec(Self::DEFAULT_BUF_SIZE),
             at: 0,
             auto_flush: false,
             bool_output: BoolOutput::YesNoCaps,
         }
     }
 
-    pub fn new_with_auto_flush(output: Box<dyn Write>) -> Self {
+    pub fn new_with_auto_flush(output: &'s mut dyn Write) -> Self {
         Self {
             output,
-            buf: vec![0; Self::DEFAULT_BUF_SIZE],
+            buf: default_vec(Self::DEFAULT_BUF_SIZE),
             at: 0,
             auto_flush: true,
             bool_output: BoolOutput::YesNoCaps,
@@ -71,8 +72,13 @@ impl Output {
         }
     }
 
-    pub fn print<T: Writable>(&mut self, s: &T) {
+    pub fn print<T: Writable>(&mut self, s: T) {
         s.write(self);
+    }
+
+    pub fn print_line<T: Writable>(&mut self, s: T) {
+        self.print(s);
+        self.put(b'\n');
     }
 
     pub fn put(&mut self, b: u8) {
@@ -119,13 +125,13 @@ impl Output {
             e.write(self);
         }
     }
+
+    pub fn set_bool_output(&mut self, bool_output: BoolOutput) {
+        self.bool_output = bool_output;
+    }
 }
 
-pub fn set_bool_output(bool_output: BoolOutput) {
-    output().bool_output = bool_output
-}
-
-impl Write for Output {
+impl Write for Output<'_> {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let mut start = 0usize;
         let mut rem = buf.len();
@@ -139,9 +145,7 @@ impl Write for Output {
             start += len;
             rem -= len;
         }
-        if self.auto_flush {
-            self.flush();
-        }
+        self.maybe_flush();
         Ok(buf.len())
     }
 
@@ -173,7 +177,13 @@ impl Writable for char {
     }
 }
 
-impl<T: Writable> Writable for &[T] {
+impl<T: Writable> Writable for [T] {
+    fn write(&self, output: &mut Output) {
+        output.print_iter_ref(self.iter());
+    }
+}
+
+impl<T: Writable, const N: usize> Writable for [T; N] {
     fn write(&self, output: &mut Output) {
         output.print_iter_ref(self.iter());
     }
@@ -187,7 +197,7 @@ impl<T: Writable> Writable for &T {
 
 impl<T: Writable> Writable for Vec<T> {
     fn write(&self, output: &mut Output) {
-        (&self[..]).write(output);
+        self.as_slice().write(output);
     }
 }
 
@@ -203,49 +213,28 @@ macro_rules! write_to_string {
 
 write_to_string!(u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize);
 
-impl<T: Writable, U: Writable> Writable for (T, U) {
-    fn write(&self, output: &mut Output) {
-        self.0.write(output);
-        output.put(b' ');
-        self.1.write(output);
+macro_rules! tuple_writable {
+    ($name0:ident $($name:ident: $id:tt )*) => {
+        impl<$name0: Writable, $($name: Writable,)*> Writable for ($name0, $($name,)*) {
+            fn write(&self, out: &mut Output) {
+                self.0.write(out);
+                $(
+                out.put(b' ');
+                self.$id.write(out);
+                )*
+            }
+        }
     }
 }
 
-impl<T: Writable, U: Writable, V: Writable> Writable for (T, U, V) {
-    fn write(&self, output: &mut Output) {
-        self.0.write(output);
-        output.put(b' ');
-        self.1.write(output);
-        output.put(b' ');
-        self.2.write(output);
-    }
-}
-
-impl<T: Writable, U: Writable, V: Writable, W: Writable> Writable for (T, U, V, W) {
-    fn write(&self, output: &mut Output) {
-        self.0.write(output);
-        output.put(b' ');
-        self.1.write(output);
-        output.put(b' ');
-        self.2.write(output);
-        output.put(b' ');
-        self.3.write(output);
-    }
-}
-
-impl<T: Writable, U: Writable, V: Writable, W: Writable, X: Writable> Writable for (T, U, V, W, X) {
-    fn write(&self, output: &mut Output) {
-        self.0.write(output);
-        output.put(b' ');
-        self.1.write(output);
-        output.put(b' ');
-        self.2.write(output);
-        output.put(b' ');
-        self.3.write(output);
-        output.put(b' ');
-        self.4.write(output);
-    }
-}
+tuple_writable! {T}
+tuple_writable! {T U:1}
+tuple_writable! {T U:1 V:2}
+tuple_writable! {T U:1 V:2 X:3}
+tuple_writable! {T U:1 V:2 X:3 Y:4}
+tuple_writable! {T U:1 V:2 X:3 Y:4 Z:5}
+tuple_writable! {T U:1 V:2 X:3 Y:4 Z:5 A:6}
+tuple_writable! {T U:1 V:2 X:3 Y:4 Z:5 A:6 B:7}
 
 impl<T: Writable> Writable for Option<T> {
     fn write(&self, output: &mut Output) {
@@ -261,41 +250,4 @@ impl Writable for bool {
         let bool_output = output.bool_output;
         bool_output.output(output, *self)
     }
-}
-
-pub static mut OUTPUT: Option<Output> = None;
-
-pub fn output() -> &'static mut Output {
-    unsafe {
-        match &mut OUTPUT {
-            None => {
-                panic!("Panic");
-            }
-            Some(output) => output,
-        }
-    }
-}
-
-#[macro_export]
-macro_rules! out {
-    ($first: expr $(,$args:expr )*) => {
-        $crate::io::output::output().print(&$first);
-        $($crate::io::output::output().put(b' ');
-        $crate::io::output::output().print(&$args);
-        )*
-        $crate::io::output::output().maybe_flush();
-    }
-}
-
-#[macro_export]
-macro_rules! out_line {
-    ($first: expr $(, $args:expr )* ) => {
-        $crate::out!($first $(,$args)*);
-        $crate::io::output::output().put(b'\n');
-        $crate::io::output::output().maybe_flush();
-    };
-    () => {
-        output().put(b'\n');
-        output().maybe_flush();
-    };
 }

@@ -1,5 +1,5 @@
 use crate::collections::min_max::MinimMaxim;
-use crate::collections::vec_ext::Bounds;
+use crate::collections::slice_ext::bounds::Bounds;
 use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 use std::cmp::Ordering;

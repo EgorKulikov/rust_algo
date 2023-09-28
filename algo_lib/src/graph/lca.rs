@@ -1,4 +1,4 @@
-use crate::collections::arr2d::Arr2d;
+use crate::collections::md_arr::arr2d::Arr2d;
 use crate::graph::edges::edge_trait::BidirectionalEdgeTrait;
 use crate::graph::graph::Graph;
 use crate::misc::owned_cell::OwnedCell;
@@ -40,7 +40,7 @@ impl LCA {
             ) as usize
         }
     }
-    
+
     pub fn position(&self, vertex: usize) -> usize {
         self.position[vertex] as usize
     }

@@ -1,4 +1,4 @@
-use crate::collections::iter_ext::IterOrdExt;
+use crate::collections::iter_ext::min_max::IterMinMaxPos;
 use crate::graph::edges::edge_trait::{BidirectionalEdgeTrait, EdgeTrait};
 use crate::graph::graph::Graph;
 use std::collections::VecDeque;
