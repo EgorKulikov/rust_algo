@@ -3,8 +3,8 @@ use crate::string::str::Str;
 
 pub fn string_to_card(s: &Str) -> (usize, usize) {
     assert!(s.len() == 2);
-    let rank = b"23456789TJQKA".iter().find(&s[0]).unwrap();
-    let suit = b"CDHS".iter().find(&s[1]).unwrap();
+    let rank = b"23456789TJQKA".iter().find_eq(&s[0]).unwrap();
+    let suit = b"CDHS".iter().find_eq(&s[1]).unwrap();
     (rank, suit)
 }
 

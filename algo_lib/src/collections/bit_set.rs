@@ -1,4 +1,4 @@
-use crate::collections::legacy_fill::LegacyFill;
+use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::numbers::num_traits::bit_ops::BitOps;
 use std::ops::{BitAndAssign, BitOrAssign, Index};
 

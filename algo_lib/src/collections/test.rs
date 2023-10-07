@@ -5,8 +5,8 @@ use crate::collections::slice_ext::compress::compress;
 #[test]
 fn test_find() {
     let v = vec![1, 2, 3];
-    assert_eq!(Some(1), v.iter().find(&2));
-    assert_eq!(None, v.iter().find(&0));
+    assert_eq!(Some(1), v.iter().find_eq(&2));
+    assert_eq!(None, v.iter().find_eq(&0));
 }
 
 #[test]

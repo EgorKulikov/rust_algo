@@ -4,7 +4,7 @@ pub trait MinimMaxim<Rhs = Self>: PartialOrd + Sized {
     fn maxim(&mut self, other: Rhs) -> bool;
 }
 
-impl<T: PartialOrd + Sized> MinimMaxim for T {
+impl<T: PartialOrd> MinimMaxim for T {
     fn minim(&mut self, other: Self) -> bool {
         if other < *self {
             *self = other;
@@ -24,7 +24,7 @@ impl<T: PartialOrd + Sized> MinimMaxim for T {
     }
 }
 
-impl<T: PartialOrd + Sized> MinimMaxim<T> for Option<T> {
+impl<T: PartialOrd> MinimMaxim<T> for Option<T> {
     fn minim(&mut self, other: T) -> bool {
         match self {
             None => {

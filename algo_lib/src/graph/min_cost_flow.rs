@@ -1,6 +1,6 @@
 use crate::collections::indexed_heap::IndexedHeap;
-use crate::collections::legacy_fill::LegacyFill;
 use crate::collections::min_max::MinimMaxim;
+use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::graph::edges::edge_id::EdgeId;
 use crate::graph::edges::edge_trait::EdgeTrait;
 use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;

@@ -1,5 +1,5 @@
-use crate::collections::legacy_fill::LegacyFill;
 use crate::collections::min_max::MinimMaxim;
+use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::zero_one::ZeroOne;
 use std::ops::RangeBounds;

@@ -1,5 +1,5 @@
 pub trait IterFindCount<T: PartialEq>: Iterator<Item = T> + Sized {
-    fn find(mut self, item: T) -> Option<usize> {
+    fn find_eq(mut self, item: T) -> Option<usize> {
         self.position(|r| r == item)
     }
     fn count_eq(self, item: &T) -> usize {

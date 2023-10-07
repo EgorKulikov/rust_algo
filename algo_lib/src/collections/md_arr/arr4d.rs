@@ -1,4 +1,4 @@
-use crate::collections::legacy_fill::LegacyFill;
+use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::ops::{Index, IndexMut};

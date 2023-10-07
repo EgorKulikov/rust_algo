@@ -1,4 +1,4 @@
-use crate::collections::legacy_fill::LegacyFill;
+use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::numbers::mod_int::BaseModInt;
 use crate::numbers::num_traits::add_sub::AddSub;
 use crate::numbers::num_traits::mul_div_rem::MulDivRem;

@@ -1,4 +1,4 @@
-use crate::collections::legacy_fill::LegacyFill;
+use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
 use crate::graph::flow_graph::FlowGraph;
 use crate::graph::graph::Graph;

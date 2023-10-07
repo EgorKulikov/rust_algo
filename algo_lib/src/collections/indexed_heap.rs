@@ -1,4 +1,4 @@
-use crate::collections::legacy_fill::LegacyFill;
+use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use std::mem;
 
 #[derive(Default)]
