@@ -160,6 +160,7 @@ macro_rules! read_integer {
     ($($t:ident)+) => {$(
         impl Readable for $t {
             fn read(input: &mut Input) -> Self {
+                input.skip_whitespace();
                 let mut c = input.get().unwrap();
                 let sgn = match c {
                     b'-' => {

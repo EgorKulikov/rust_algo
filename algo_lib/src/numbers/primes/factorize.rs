@@ -1,7 +1,8 @@
+use crate::collections::vec_ext::sorted::Sorted;
 use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
 use crate::numbers::num_traits::as_index::AsIndex;
 use crate::numbers::num_traits::primitive::Primitive;
-use crate::numbers::primes::prime;
+use crate::numbers::primes::prime::find_divisor;
 use crate::numbers::primes::sieve::divisor_table;
 use std::cmp::Ordering;
 use std::ops::Mul;
@@ -20,7 +21,7 @@ impl<T: Primitive<i64>> Factorize for T {
             return Vec::new();
         }
         let d = if n > 100 {
-            prime::find_divisor(n)
+            find_divisor(n)
         } else {
             let mut res = n;
             let mut i = 2;
@@ -80,7 +81,7 @@ impl<T: Primitive<i64>> Factorize for T {
             }
         });
         rec.call(1, 0);
-        res
+        res.sorted()
     }
 
     fn max_power(self, p: Self) -> usize {

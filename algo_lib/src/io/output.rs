@@ -1,5 +1,5 @@
 use crate::collections::vec_ext::default::default_vec;
-use std::io::Write;
+use std::io::{stdout, Stdout, Write};
 
 #[derive(Copy, Clone)]
 pub enum BoolOutput {
@@ -201,6 +201,10 @@ impl<T: Writable> Writable for Vec<T> {
     }
 }
 
+impl Writable for () {
+    fn write(&self, _output: &mut Output) {}
+}
+
 macro_rules! write_to_string {
     ($($t:ident)+) => {$(
         impl Writable for $t {
@@ -249,5 +253,15 @@ impl Writable for bool {
     fn write(&self, output: &mut Output) {
         let bool_output = output.bool_output;
         bool_output.output(output, *self)
+    }
+}
+
+static mut ERR: Option<Stdout> = None;
+pub fn err() -> Output<'static> {
+    unsafe {
+        if ERR.is_none() {
+            ERR = Some(stdout());
+        }
+        Output::new(ERR.as_mut().unwrap())
     }
 }
