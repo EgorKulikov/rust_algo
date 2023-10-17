@@ -85,10 +85,12 @@ impl<'s> Str<'s> {
     fn transform_to_extendable(&mut self) {
         match self {
             Str::Extendable(_, _) => {}
-            Str::Owned(s, _) => {
-                let mut slice: Box<[_]> = Box::new([]);
-                s.swap_with_slice(slice.as_mut());
-                *self = Str::Extendable(slice.into_vec(), PhantomData)
+            Str::Owned(_, _) => {
+                let mut fake = Str::new();
+                std::mem::swap(self, &mut fake);
+                if let Str::Owned(s, _) = fake {
+                    *self = Str::Extendable(s.to_vec(), PhantomData)
+                }
             }
             Str::Ref(s) => *self = Str::Extendable(s.to_vec(), PhantomData),
         }

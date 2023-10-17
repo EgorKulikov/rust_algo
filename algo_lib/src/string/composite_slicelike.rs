@@ -21,7 +21,7 @@ where
         s2: &'a S2,
     ) -> CompositeSlicelike<'a, Self::Output, Self, S2> {
         CompositeSlicelike {
-            s1: &self,
+            s1: self,
             s2,
             phantom: std::marker::PhantomData,
         }
