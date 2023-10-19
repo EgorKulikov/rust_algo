@@ -224,3 +224,19 @@ tuple_readable! {T U V X Y Z A B C}
 tuple_readable! {T U V X Y Z A B C D}
 tuple_readable! {T U V X Y Z A B C D E}
 tuple_readable! {T U V X Y Z A B C D E F}
+
+impl Read for Input<'_> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        if self.at == self.buf_read {
+            self.input.read(buf)
+        } else {
+            let mut i = 0;
+            while i < buf.len() && self.at < self.buf_read {
+                buf[i] = self.buf[self.at];
+                i += 1;
+                self.at += 1;
+            }
+            Ok(i)
+        }
+    }
+}

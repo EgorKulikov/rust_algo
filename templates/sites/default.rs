@@ -18,8 +18,8 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
         TestType::Single => solve(&mut input, &mut output, 1, &pre_calc),
         TestType::MultiNumber => {
             let t = input.read();
-            for i in 0usize..t {
-                solve(&mut input, &mut output, i + 1, &pre_calc);
+            for i in 1..=t {
+                solve(&mut input, &mut output, i, &pre_calc);
             }
         }
         TestType::MultiEof => {

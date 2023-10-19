@@ -1,7 +1,15 @@
+//{"name":"B. Palindromic substring","group":"CPython.uz - CPython Beginner Contest #37","url":"https://cpython.uz/competitions/contests/contest/312/problem/B","interactive":false,"timeLimit":1000,"tests":[{"input":"abcaba\n","output":"aba\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"BPalindromicSubstring"}}}
+
+use algo_lib::io::input::Input;
+use algo_lib::io::output::Output;
+use algo_lib::string::str::StrReader;
+
 type PreCalc = ();
 
 fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc) {
-    $CARET
+    let s = input.read_str();
+
+    out.print_line(s[0] as char);
 }
 
 pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
@@ -13,12 +21,12 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
         MultiNumber,
         MultiEof,
     }
-    let test_type = TestType::MultiNumber;
+    let test_type = TestType::Single;
     match test_type {
         TestType::Single => solve(&mut input, &mut output, 1, &pre_calc),
         TestType::MultiNumber => {
             let t = input.read();
-            for i in 1..=t {
+            for i in 0usize..t {
                 solve(&mut input, &mut output, i + 1, &pre_calc);
             }
         }
@@ -34,3 +42,12 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
     input.skip_whitespace();
     input.peek().is_none()
 }
+
+//START MAIN
+mod tester;
+
+fn main() {
+    tester::run_tests();
+    //    stress_test::stress_test(run, tester::check);
+}
+//END MAIN

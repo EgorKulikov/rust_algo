@@ -1,6 +1,6 @@
+use std::collections::HashMap;
 use std::hash::Hash;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
-use std::collections::HashMap;
 
 #[derive(Default, Clone, Eq, PartialEq)]
 pub struct DefaultHashMap<K: Hash + Eq, V>(HashMap<K, V>, V);

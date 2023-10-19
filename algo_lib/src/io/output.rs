@@ -262,6 +262,6 @@ pub fn err() -> Output<'static> {
         if ERR.is_none() {
             ERR = Some(stdout());
         }
-        Output::new(ERR.as_mut().unwrap())
+        Output::new_with_auto_flush(ERR.as_mut().unwrap())
     }
 }
