@@ -1,23 +1,35 @@
+use algo_lib::collections::md_arr::arr2d::Arr2d;
 use algo_lib::io::input::Input;
-use algo_lib::io::output::Output;
+use algo_lib::io::output::{err, Output};
 use algo_lib::misc::random::random;
+use algo_lib::numbers::gauss::invert;
+use algo_lib::numbers::mod_int::ModInt7;
 use std::io::{stdout, Write};
 
 fn generate_test(out: &mut Output) {
-    let a = random().next(100) + 1;
-    let b = random().next(100) + 1;
-    out.print_line((a, b));
+    let n = 500;
+    type Mod = ModInt7;
+    let a = Arr2d::generate(n, n, |_, _| Mod::new(random().next(1000) as i32));
+    let mut b = invert(&a).unwrap();
+    let rand = random();
+    let m = rand.next(13) as usize;
+    for _ in 0..m {
+        let i = rand.next(n as u64) as usize;
+        let j = rand.next(n as u64) as usize;
+        let v = Mod::new(rand.next(1000) as i32);
+        b[(i, j)] = v;
+    }
+    err().print_line(("Changed", m));
+    out.print_line(n);
+    out.print_line(a);
+    out.print_line(b);
 }
 
-fn stupid(input: &mut Input, out: &mut Output) {
-    let a = input.read_size();
-    let b = input.read_size();
-    out.print_line(a + b);
-}
+fn stupid(_input: &mut Input, _out: &mut Output) {}
 
 pub fn stress_test(
     solution: impl Fn(Input, Output) -> bool,
-    checker: impl Fn(&mut &[u8], &mut &[u8]) -> Result<(), String>,
+    checker: impl Fn(&mut &[u8], &mut &[u8], &mut &[u8]) -> Result<(), String>,
 ) {
     fn generate_test_int() -> Vec<u8> {
         let mut res = Vec::new();
@@ -50,7 +62,13 @@ pub fn stress_test(
         let input = generate_test_int();
         let expected = stupid_int(&input);
         let actual = actual(&input, &solution);
-        let res = checker(&mut expected.as_slice(), &mut actual.as_slice());
+        print!("#");
+        stdout().flush().unwrap();
+        let res = checker(
+            &mut input.as_slice(),
+            &mut expected.as_slice(),
+            &mut actual.as_slice(),
+        );
         match res {
             Ok(_) => {
                 print!(".");

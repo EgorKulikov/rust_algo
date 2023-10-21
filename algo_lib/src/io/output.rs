@@ -1,5 +1,5 @@
 use crate::collections::vec_ext::default::default_vec;
-use std::io::{stdout, Stdout, Write};
+use std::io::{stderr, Stderr, Write};
 
 #[derive(Copy, Clone)]
 pub enum BoolOutput {
@@ -74,11 +74,13 @@ impl<'s> Output<'s> {
 
     pub fn print<T: Writable>(&mut self, s: T) {
         s.write(self);
+        self.maybe_flush();
     }
 
     pub fn print_line<T: Writable>(&mut self, s: T) {
         self.print(s);
         self.put(b'\n');
+        self.maybe_flush();
     }
 
     pub fn put(&mut self, b: u8) {
@@ -256,11 +258,11 @@ impl Writable for bool {
     }
 }
 
-static mut ERR: Option<Stdout> = None;
+static mut ERR: Option<Stderr> = None;
 pub fn err() -> Output<'static> {
     unsafe {
         if ERR.is_none() {
-            ERR = Some(stdout());
+            ERR = Some(stderr());
         }
         Output::new_with_auto_flush(ERR.as_mut().unwrap())
     }

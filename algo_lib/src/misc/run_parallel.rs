@@ -16,10 +16,9 @@ pub fn run_parallel<J: ParallelJob>(input: &mut Input, output: &mut Output) {
     for job in jobs.iter_mut() {
         job.read_input(input);
     }
-    ThreadPoolBuilder::new()
+    let _ = ThreadPoolBuilder::new()
         .stack_size(1000000000)
-        .build_global()
-        .unwrap();
+        .build_global();
     let rem = AtomicUsize::new(t);
     jobs.par_iter_mut().enumerate().for_each(|(test, job)| {
         job.solve();

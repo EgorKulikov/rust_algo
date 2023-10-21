@@ -78,3 +78,30 @@ pub fn det<T: ZeroOne + AddSub + MulDiv + Eq + Copy>(mat: &mut Arr2d<T>) -> T {
     }
     ans
 }
+
+pub fn invert<T: ZeroOne + AddSub + MulDiv + Eq>(mat: &Arr2d<T>) -> Option<Arr2d<T>> {
+    assert_eq!(mat.d1(), mat.d2());
+    let mut m = Arr2d::generate(mat.d1(), 2 * mat.d2(), |i, j| {
+        if j < mat.d2() {
+            mat[(i, j)]
+        } else if i == j - mat.d2() {
+            T::one()
+        } else {
+            T::zero()
+        }
+    });
+    gauss(&mut m);
+    for i in 0..mat.d2() {
+        if m[(i, i)] == T::zero() {
+            return None;
+        }
+    }
+    let mut ans = Arr2d::generate(mat.d1(), mat.d2(), |i, j| m[(i, j + mat.d2())]);
+    for i in 0..mat.d2() {
+        let v = m[(i, i)];
+        for j in 0..mat.d2() {
+            ans[(i, j)] /= v;
+        }
+    }
+    Some(ans)
+}

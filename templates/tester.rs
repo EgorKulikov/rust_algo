@@ -1,7 +1,8 @@
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 
-pub fn check(expected: &mut &[u8], actual: &mut &[u8]) -> Result<(), String> {
+pub fn check(input: &mut &[u8], expected: &mut &[u8], actual: &mut &[u8]) -> Result<(), String> {
+    let mut _input = Input::new(input);
     let mut expected = Input::new(expected);
     let mut actual = Input::new(actual);
     let mut token_num = 0usize;
@@ -58,7 +59,8 @@ pub(crate) fn run_tests() -> bool {
                         let name = &name[..name.len() - 3];
                         println!("{}Test {}{}", blue, name, def);
                         println!("{}Input:{}", blue, def);
-                        println!("{}", std::fs::read_to_string(&path).unwrap());
+                        let input = std::fs::read_to_string(&path).unwrap();
+                        println!("{}", input);
                         let expected = match std::fs::read_to_string(
                             path.parent().unwrap().join(format!("{}.out", name)),
                         ) {
@@ -96,7 +98,11 @@ pub(crate) fn run_tests() -> bool {
                                 }
                                 if let Some(expected) = expected {
                                     let mut expected_bytes = expected.as_bytes().clone();
-                                    match check(&mut expected_bytes, &mut &output[..]) {
+                                    match check(
+                                        &mut input.as_bytes(),
+                                        &mut expected_bytes,
+                                        &mut &output[..],
+                                    ) {
                                         Ok(_) => {}
                                         Err(err) => {
                                             println!(
