@@ -1,27 +1,39 @@
 use crate::graph::edges::bi_edge_trait::BiEdgeTrait;
 use crate::graph::edges::edge_id::{EdgeId, NoId, WithId};
 use crate::graph::edges::edge_trait::{BidirectionalEdgeTrait, EdgeTrait};
-use crate::graph::graph::Graph;
-use crate::io::input::{Input, Readable};
 
 #[derive(Clone)]
-pub struct BiEdgeRaw<Id: EdgeId> {
+pub struct BiEdgeRaw<Id: EdgeId, P> {
     to: u32,
     id: Id,
+    payload: P,
 }
 
-impl<Id: EdgeId> BiEdgeRaw<Id> {
+impl<Id: EdgeId> BiEdgeRaw<Id, ()> {
     pub fn new(to: usize) -> Self {
         Self {
             to: to as u32,
             id: Id::new(),
+            payload: (),
         }
     }
 }
 
-impl<Id: EdgeId> BidirectionalEdgeTrait for BiEdgeRaw<Id> {}
+impl<Id: EdgeId, P> BiEdgeRaw<Id, P> {
+    pub fn with_payload(to: usize, payload: P) -> Self {
+        Self {
+            to: to as u32,
+            id: Id::new(),
+            payload,
+        }
+    }
+}
 
-impl<Id: EdgeId> EdgeTrait for BiEdgeRaw<Id> {
+impl<Id: EdgeId, P: Clone> BidirectionalEdgeTrait for BiEdgeRaw<Id, P> {}
+
+impl<Id: EdgeId, P: Clone> EdgeTrait for BiEdgeRaw<Id, P> {
+    type Payload = P;
+
     const REVERSABLE: bool = true;
 
     fn to(&self) -> usize {
@@ -43,37 +55,15 @@ impl<Id: EdgeId> EdgeTrait for BiEdgeRaw<Id> {
     fn set_reverse_id(&mut self, _: usize) {}
 
     fn reverse_edge(&self, from: usize) -> Self {
-        Self::new(from)
+        Self::with_payload(from, self.payload.clone())
+    }
+
+    fn payload(&self) -> &P {
+        &self.payload
     }
 }
 
-impl<Id: EdgeId> BiEdgeTrait for BiEdgeRaw<Id> {}
+impl<Id: EdgeId, P: Clone> BiEdgeTrait for BiEdgeRaw<Id, P> {}
 
-pub type BiEdge = BiEdgeRaw<NoId>;
-pub type BiEdgeWithId = BiEdgeRaw<WithId>;
-
-pub trait ReadBiEdgeGraph {
-    fn read_graph<Id: EdgeId>(&mut self, n: usize, m: usize) -> Graph<BiEdgeRaw<Id>>;
-
-    fn read_tree<Id: EdgeId>(&mut self, n: usize) -> Graph<BiEdgeRaw<Id>> {
-        self.read_graph(n, n - 1)
-    }
-}
-
-impl ReadBiEdgeGraph for Input<'_> {
-    fn read_graph<Id: EdgeId>(&mut self, n: usize, m: usize) -> Graph<BiEdgeRaw<Id>> {
-        let mut graph = Graph::new(n);
-        for _ in 0..m {
-            graph.add_edge(self.read(), BiEdgeRaw::new(self.read()));
-        }
-        graph
-    }
-}
-
-impl<Id: EdgeId> Readable for Graph<BiEdgeRaw<Id>> {
-    fn read(input: &mut Input) -> Self {
-        let n = input.read();
-        let m = input.read();
-        <Input as ReadBiEdgeGraph>::read_graph(input, n, m)
-    }
-}
+pub type BiEdge<P> = BiEdgeRaw<NoId, P>;
+pub type BiEdgeWithId<P> = BiEdgeRaw<WithId, P>;

@@ -5,11 +5,11 @@ use crate::graph::graph::Graph;
 use crate::misc::recursive_function::{Callable, RecursiveFunction};
 
 pub trait StronglyConnectedComponents {
-    fn strongly_connected_components(&self) -> (Vec<usize>, Graph<Edge>);
+    fn strongly_connected_components(&self) -> (Vec<usize>, Graph<Edge<()>>);
 }
 
 impl<E: EdgeTrait> StronglyConnectedComponents for Graph<E> {
-    fn strongly_connected_components(&self) -> (Vec<usize>, Graph<Edge>) {
+    fn strongly_connected_components(&self) -> (Vec<usize>, Graph<Edge<()>>) {
         assert!(!E::REVERSABLE);
         let n = self.vertex_count();
         let mut order = Vec::with_capacity(n);

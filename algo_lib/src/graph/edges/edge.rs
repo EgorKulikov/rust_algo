@@ -1,24 +1,36 @@
 use crate::graph::edges::edge_id::{EdgeId, NoId, WithId};
 use crate::graph::edges::edge_trait::EdgeTrait;
-use crate::graph::graph::Graph;
-use crate::io::input::{Input, Readable};
 
 #[derive(Clone)]
-pub struct EdgeRaw<Id: EdgeId> {
+pub struct EdgeRaw<Id: EdgeId, P> {
     to: u32,
     id: Id,
+    payload: P,
 }
 
-impl<Id: EdgeId> EdgeRaw<Id> {
+impl<Id: EdgeId> EdgeRaw<Id, ()> {
     pub fn new(to: usize) -> Self {
         Self {
             to: to as u32,
             id: Id::new(),
+            payload: (),
         }
     }
 }
 
-impl<Id: EdgeId> EdgeTrait for EdgeRaw<Id> {
+impl<Id: EdgeId, P> EdgeRaw<Id, P> {
+    pub fn with_payload(to: usize, payload: P) -> Self {
+        Self {
+            to: to as u32,
+            id: Id::new(),
+            payload,
+        }
+    }
+}
+
+impl<Id: EdgeId, P: Clone> EdgeTrait for EdgeRaw<Id, P> {
+    type Payload = P;
+
     const REVERSABLE: bool = false;
 
     fn to(&self) -> usize {
@@ -44,29 +56,11 @@ impl<Id: EdgeId> EdgeTrait for EdgeRaw<Id> {
     fn reverse_edge(&self, _: usize) -> Self {
         panic!("no reverse")
     }
-}
 
-pub type Edge = EdgeRaw<NoId>;
-pub type EdgeWithId = EdgeRaw<WithId>;
-
-pub trait ReadEdgeGraph {
-    fn read_graph<Id: EdgeId>(&mut self, n: usize, m: usize) -> Graph<EdgeRaw<Id>>;
-}
-
-impl ReadEdgeGraph for Input<'_> {
-    fn read_graph<Id: EdgeId>(&mut self, n: usize, m: usize) -> Graph<EdgeRaw<Id>> {
-        let mut graph = Graph::new(n);
-        for _ in 0..m {
-            graph.add_edge(self.read(), EdgeRaw::new(self.read()));
-        }
-        graph
+    fn payload(&self) -> &P {
+        &self.payload
     }
 }
 
-impl<Id: EdgeId> Readable for Graph<EdgeRaw<Id>> {
-    fn read(input: &mut Input) -> Self {
-        let n = input.read();
-        let m = input.read();
-        <Input as ReadEdgeGraph>::read_graph(input, n, m)
-    }
-}
+pub type Edge<P> = EdgeRaw<NoId, P>;
+pub type EdgeWithId<P> = EdgeRaw<WithId, P>;

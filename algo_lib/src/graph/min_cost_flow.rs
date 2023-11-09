@@ -21,8 +21,8 @@ pub trait MinCostFlow<C> {
     fn min_cost_max_flow(&mut self, source: usize, sink: usize) -> (C, C);
 }
 
-fn min_cost_flow_impl<C, Id>(
-    or_graph: &mut Graph<WeightedFlowEdgeRaw<C, C, Id>>,
+fn min_cost_flow_impl<C, Id, P: Clone>(
+    or_graph: &mut Graph<WeightedFlowEdgeRaw<C, C, Id, P>>,
     source: usize,
     sink: usize,
     take_positive_cycles: bool,
@@ -78,11 +78,11 @@ where
     let mut pre = vec![(0usize, 0usize); n + 1];
     let mut heap = IndexedHeap::new(n + 1);
 
-    let c = |from: usize, e: &WeightedFlowEdgeRaw<C, C, Id>, p: &Vec<C>| -> C {
+    let c = |from: usize, e: &WeightedFlowEdgeRaw<C, C, Id, ()>, p: &Vec<C>| -> C {
         p[from] + e.weight() - p[e.to()]
     };
 
-    let dijkstra = |graph: &mut Graph<WeightedFlowEdgeRaw<C, C, Id>>,
+    let dijkstra = |graph: &mut Graph<WeightedFlowEdgeRaw<C, C, Id, ()>>,
                     dis: &mut Vec<C>,
                     pre: &mut Vec<(usize, usize)>,
                     heap: &mut IndexedHeap<C>,
@@ -109,51 +109,52 @@ where
         }
     };
 
-    let mut add_one = |graph: &mut Graph<WeightedFlowEdgeRaw<C, C, Id>>, from: usize, id: usize| {
-        if graph[from][id].capacity() > C::zero() {
-            *graph[from][id].capacity_mut() += C::one();
-            return;
-        }
-        let mut u = from;
-        let e = &graph[from][id];
-        let v = e.to();
-        let cur_len = c(u, e, &p);
-        dijkstra(graph, &mut dis, &mut pre, &mut heap, &p, v);
-        let e = &graph[from][id];
-        if dis[u] < inf && dis[u] + c(u, e, &p) < C::zero() {
-            let rev_id = e.reverse_id();
-            *graph[v][rev_id].capacity_mut() += C::one();
-            while u != v {
-                graph.push_flow(graph[pre[u].0][pre[u].1].push_flow(C::one()));
-                u = pre[u].0;
+    let mut add_one =
+        |graph: &mut Graph<WeightedFlowEdgeRaw<C, C, Id, ()>>, from: usize, id: usize| {
+            if graph[from][id].capacity() > C::zero() {
+                *graph[from][id].capacity_mut() += C::one();
+                return;
             }
-        } else {
-            *graph[from][id].capacity_mut() += C::one();
-        }
-        let mut max_dis = C::zero();
-        for i in dis.iter().take(n) {
-            if *i != inf {
-                max_dis.maxim(*i);
-            }
-        }
-        for i in 0..n {
-            p[i] += if dis[i] < inf {
-                dis[i]
+            let mut u = from;
+            let e = &graph[from][id];
+            let v = e.to();
+            let cur_len = c(u, e, &p);
+            dijkstra(graph, &mut dis, &mut pre, &mut heap, &p, v);
+            let e = &graph[from][id];
+            if dis[u] < inf && dis[u] + c(u, e, &p) < C::zero() {
+                let rev_id = e.reverse_id();
+                *graph[v][rev_id].capacity_mut() += C::one();
+                while u != v {
+                    graph.push_flow(graph[pre[u].0][pre[u].1].push_flow(C::one()));
+                    u = pre[u].0;
+                }
             } else {
-                max_dis
-                    + if cur_len > C::zero() {
-                        cur_len
-                    } else {
-                        C::zero() - cur_len
-                    }
-            };
-        }
-        dijkstra(graph, &mut dis, &mut pre, &mut heap, &p, n);
-        for i in 0..n {
-            let npi = dis[i] - p[n];
-            p[i] += npi;
-        }
-    };
+                *graph[from][id].capacity_mut() += C::one();
+            }
+            let mut max_dis = C::zero();
+            for i in dis.iter().take(n) {
+                if *i != inf {
+                    max_dis.maxim(*i);
+                }
+            }
+            for i in 0..n {
+                p[i] += if dis[i] < inf {
+                    dis[i]
+                } else {
+                    max_dis
+                        + if cur_len > C::zero() {
+                            cur_len
+                        } else {
+                            C::zero() - cur_len
+                        }
+                };
+            }
+            dijkstra(graph, &mut dis, &mut pre, &mut heap, &p, n);
+            for i in 0..n {
+                let npi = dis[i] - p[n];
+                p[i] += npi;
+            }
+        };
 
     add_one(&mut graph, sink, back);
     for i in (0..bits).rev() {
@@ -182,7 +183,7 @@ where
     (min_cost, max_flow)
 }
 
-impl<C, Id> MinCostFlow<C> for Graph<WeightedFlowEdgeRaw<C, C, Id>>
+impl<C, Id, P: Clone> MinCostFlow<C> for Graph<WeightedFlowEdgeRaw<C, C, Id, P>>
 where
     C: AddSub + Neg<Output = C> + Multable + PartialOrd + Copy + ZeroOne + MinMax + Bits + Display,
     Id: EdgeId,

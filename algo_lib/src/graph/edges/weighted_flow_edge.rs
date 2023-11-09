@@ -12,19 +12,21 @@ pub struct WeightedFlowEdgeRaw<
     W: Addable + Neg<Output = W> + Copy + ZeroOne,
     C: AddSub + PartialOrd + Copy + ZeroOne,
     Id: EdgeId,
+    P,
 > {
     to: u32,
     weight: W,
     capacity: C,
     reverse_id: u32,
     id: Id,
+    payload: P,
 }
 
 impl<
         W: Addable + Neg<Output = W> + Copy + ZeroOne,
         C: AddSub + PartialOrd + Copy + ZeroOne,
         Id: EdgeId,
-    > WeightedFlowEdgeRaw<W, C, Id>
+    > WeightedFlowEdgeRaw<W, C, Id, ()>
 {
     pub fn new(to: usize, w: W, c: C) -> Self {
         Self {
@@ -33,6 +35,7 @@ impl<
             capacity: c,
             reverse_id: 0,
             id: Id::new(),
+            payload: (),
         }
     }
 }
@@ -41,8 +44,29 @@ impl<
         W: Addable + Neg<Output = W> + Copy + ZeroOne,
         C: AddSub + PartialOrd + Copy + ZeroOne,
         Id: EdgeId,
-    > EdgeTrait for WeightedFlowEdgeRaw<W, C, Id>
+        P,
+    > WeightedFlowEdgeRaw<W, C, Id, P>
 {
+    pub fn with_payload(to: usize, w: W, c: C, payload: P) -> Self {
+        Self {
+            to: to as u32,
+            weight: w,
+            capacity: c,
+            reverse_id: 0,
+            id: Id::new(),
+            payload,
+        }
+    }
+}
+
+impl<
+        W: Addable + Neg<Output = W> + Copy + ZeroOne,
+        C: AddSub + PartialOrd + Copy + ZeroOne,
+        Id: EdgeId,
+        P: Clone,
+    > EdgeTrait for WeightedFlowEdgeRaw<W, C, Id, P>
+{
+    type Payload = P;
     const REVERSABLE: bool = true;
 
     fn to(&self) -> usize {
@@ -66,7 +90,11 @@ impl<
     }
 
     fn reverse_edge(&self, from: usize) -> Self {
-        Self::new(from, -self.weight, C::zero())
+        Self::with_payload(from, -self.weight, C::zero(), self.payload.clone())
+    }
+
+    fn payload(&self) -> &P {
+        &self.payload
     }
 }
 
@@ -74,7 +102,8 @@ impl<
         W: Addable + Neg<Output = W> + Copy + ZeroOne,
         C: AddSub + PartialOrd + Copy + ZeroOne,
         Id: EdgeId,
-    > WeightedEdgeTrait<W> for WeightedFlowEdgeRaw<W, C, Id>
+        P: Clone,
+    > WeightedEdgeTrait<W> for WeightedFlowEdgeRaw<W, C, Id, P>
 {
     fn weight(&self) -> W {
         self.weight
@@ -89,7 +118,8 @@ impl<
         W: Addable + Neg<Output = W> + Copy + ZeroOne,
         C: AddSub + PartialOrd + Copy + ZeroOne,
         Id: EdgeId,
-    > FlowEdgeTrait<C> for WeightedFlowEdgeRaw<W, C, Id>
+        P: Clone,
+    > FlowEdgeTrait<C> for WeightedFlowEdgeRaw<W, C, Id, P>
 {
     fn capacity(&self) -> C {
         self.capacity
@@ -104,5 +134,5 @@ impl<
     }
 }
 
-pub type WeightedFlowEdge<W, C> = WeightedFlowEdgeRaw<W, C, NoId>;
-pub type WeightedFlowEdgeWithId<W, C> = WeightedFlowEdgeRaw<W, C, WithId>;
+pub type WeightedFlowEdge<W, C, P> = WeightedFlowEdgeRaw<W, C, NoId, P>;
+pub type WeightedFlowEdgeWithId<W, C, P> = WeightedFlowEdgeRaw<W, C, WithId, P>;

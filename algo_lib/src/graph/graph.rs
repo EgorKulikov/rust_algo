@@ -101,7 +101,7 @@ impl<E: EdgeTrait> IndexMut<usize> for Graph<E> {
     }
 }
 
-impl Graph<Edge> {
+impl Graph<Edge<()>> {
     pub fn from_edges(n: usize, edges: &[(usize, usize)]) -> Self {
         let mut graph = Self::new(n);
         for &(from, to) in edges {
@@ -111,7 +111,7 @@ impl Graph<Edge> {
     }
 }
 
-impl Graph<BiEdge> {
+impl Graph<BiEdge<()>> {
     pub fn from_biedges(n: usize, edges: &[(usize, usize)]) -> Self {
         let mut graph = Self::new(n);
         for &(from, to) in edges {

@@ -5,3 +5,6 @@ members = [
     "main",
     "stress_test",
 ]
+
+[profile.release]
+overflow-checks = true

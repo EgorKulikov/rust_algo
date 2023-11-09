@@ -1,4 +1,6 @@
 pub trait EdgeTrait: Clone {
+    type Payload;
+    
     const REVERSABLE: bool;
 
     fn to(&self) -> usize;
@@ -8,6 +10,7 @@ pub trait EdgeTrait: Clone {
     fn set_reverse_id(&mut self, reverse_id: usize);
     #[must_use]
     fn reverse_edge(&self, from: usize) -> Self;
+    fn payload(&self) -> &Self::Payload;
 }
 
 pub trait BidirectionalEdgeTrait: EdgeTrait {}

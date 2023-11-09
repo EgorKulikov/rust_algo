@@ -32,14 +32,14 @@ macro_rules! memoization {
             }
         }
 
-        impl<F, $($type : Hash + Eq + Copy, )*Output: Clone> $trait<$($type, )*Output> for $name<F, $($type, )*Output>
+        impl<F, $($type : Hash + Eq + Clone, )*Output: Clone> $trait<$($type, )*Output> for $name<F, $($type, )*Output>
         where
             F: FnMut(&mut dyn $trait<$($type, )*Output>, $($type, )*) -> Output,
         {
             fn call(&mut self, $($arg: $type, )*) -> Output {
-                match self.res.get(&($($arg, )*)).cloned() {
+                match self.res.get(&($($arg.clone(), )*)).cloned() {
                     None => {
-                        let res = unsafe { (*self.f.get())(self, $($arg, )*) };
+                        let res = unsafe { (*self.f.get())(self, $($arg.clone(), )*) };
                         self.res.insert(($($arg, )*), res.clone());
                         res
                     }

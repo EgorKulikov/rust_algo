@@ -23,6 +23,14 @@ impl BitSet {
             len,
         }
     }
+    
+    pub fn from_slice(len: usize, set: &[usize]) -> Self {
+        let mut res = Self::new(len);
+        for &i in set {
+            res.set(i);
+        }
+        res
+    }
 
     pub fn set(&mut self, at: usize) {
         assert!(at < self.len);

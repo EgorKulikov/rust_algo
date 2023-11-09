@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::hash::Hash;
+use std::iter::FromIterator;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 
 #[derive(Default, Clone, Eq, PartialEq)]
