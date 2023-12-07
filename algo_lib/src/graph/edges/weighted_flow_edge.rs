@@ -28,15 +28,18 @@ impl<
         Id: EdgeId,
     > WeightedFlowEdgeRaw<W, C, Id, ()>
 {
-    pub fn new(to: usize, w: W, c: C) -> Self {
-        Self {
-            to: to as u32,
-            weight: w,
-            capacity: c,
-            reverse_id: 0,
-            id: Id::new(),
-            payload: (),
-        }
+    pub fn new(from: usize, to: usize, w: W, c: C) -> (usize, Self) {
+        (
+            from,
+            Self {
+                to: to as u32,
+                weight: w,
+                capacity: c,
+                reverse_id: 0,
+                id: Id::new(),
+                payload: (),
+            },
+        )
     }
 }
 
@@ -47,7 +50,11 @@ impl<
         P,
     > WeightedFlowEdgeRaw<W, C, Id, P>
 {
-    pub fn with_payload(to: usize, w: W, c: C, payload: P) -> Self {
+    pub fn with_payload(from: usize, to: usize, w: W, c: C, payload: P) -> (usize, Self) {
+        (from, Self::with_payload_impl(to, w, c, payload))
+    }
+
+    fn with_payload_impl(to: usize, w: W, c: C, payload: P) -> Self {
         Self {
             to: to as u32,
             weight: w,
@@ -90,7 +97,7 @@ impl<
     }
 
     fn reverse_edge(&self, from: usize) -> Self {
-        Self::with_payload(from, -self.weight, C::zero(), self.payload.clone())
+        Self::with_payload_impl(from, -self.weight, C::zero(), self.payload.clone())
     }
 
     fn payload(&self) -> &P {

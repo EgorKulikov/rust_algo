@@ -13,18 +13,25 @@ pub struct WeightedEdgeRaw<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId,
 }
 
 impl<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId> WeightedEdgeRaw<W, Id, ()> {
-    pub fn new(to: usize, w: W) -> Self {
-        Self {
-            to: to as u32,
-            weight: w,
-            id: Id::new(),
-            payload: (),
-        }
+    pub fn new(from: usize, to: usize, w: W) -> (usize, Self) {
+        (
+            from,
+            Self {
+                to: to as u32,
+                weight: w,
+                id: Id::new(),
+                payload: (),
+            },
+        )
     }
 }
 
 impl<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId, P> WeightedEdgeRaw<W, Id, P> {
-    pub fn with_payload(to: usize, w: W, payload: P) -> Self {
+    pub fn with_payload(from: usize, to: usize, w: W, payload: P) -> (usize, Self) {
+        (from, Self::with_payload_impl(to, w, payload))
+    }
+
+    fn with_payload_impl(to: usize, w: W, payload: P) -> Self {
         Self {
             to: to as u32,
             weight: w,

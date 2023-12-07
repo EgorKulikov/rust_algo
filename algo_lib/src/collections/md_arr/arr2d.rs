@@ -1,7 +1,7 @@
 use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
-use std::ops::{Index, IndexMut};
+use std::ops::{Index, IndexMut, Range};
 use std::slice::Iter;
 use std::vec::IntoIter;
 
@@ -78,6 +78,14 @@ impl<T> Arr2d<T> {
         assert!(c1 < self.d2);
         assert!(c2 < self.d2);
         self.data.swap(r1 * self.d2 + c1, r2 * self.d2 + c2);
+    }
+
+    pub fn rows(&self) -> Range<usize> {
+        0..self.d1
+    }
+
+    pub fn cols(&self) -> Range<usize> {
+        0..self.d2
     }
 }
 

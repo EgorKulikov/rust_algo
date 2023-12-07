@@ -21,10 +21,12 @@ impl<C: AddSub + PartialOrd + Copy + ZeroOne + MinMax, E: FlowEdgeTrait<C, Paylo
         for i in 0..self.vertex_count() {
             for (j, e) in self[i].iter().enumerate() {
                 if e.capacity() != C::zero() {
-                    flow_graph.add_edge(
+                    flow_graph.add_edge(FlowEdge::with_payload(
                         i,
-                        FlowEdge::with_payload(e.to(), e.capacity() - *e.payload(), (i, j)),
-                    );
+                        e.to(),
+                        e.capacity() - *e.payload(),
+                        (i, j),
+                    ));
                     demand[e.to()] += *e.payload();
                     demand[i] -= *e.payload();
                 }
@@ -33,30 +35,28 @@ impl<C: AddSub + PartialOrd + Copy + ZeroOne + MinMax, E: FlowEdgeTrait<C, Paylo
         let mut total_demand = C::zero();
         for (i, d) in demand.into_iter().enumerate() {
             if d > C::zero() {
-                flow_graph.add_edge(
+                flow_graph.add_edge(FlowEdge::with_payload(
                     self.vertex_count(),
-                    FlowEdge::with_payload(i, d, (self.vertex_count(), self.vertex_count())),
-                );
+                    i,
+                    d,
+                    (self.vertex_count(), self.vertex_count()),
+                ));
                 total_demand += d;
             } else if d < C::zero() {
-                flow_graph.add_edge(
+                flow_graph.add_edge(FlowEdge::with_payload(
                     i,
-                    FlowEdge::with_payload(
-                        self.vertex_count() + 1,
-                        C::zero() - d,
-                        (self.vertex_count(), self.vertex_count()),
-                    ),
-                );
+                    self.vertex_count() + 1,
+                    C::zero() - d,
+                    (self.vertex_count(), self.vertex_count()),
+                ));
             }
         }
-        flow_graph.add_edge(
+        flow_graph.add_edge(FlowEdge::with_payload(
             destination,
-            FlowEdge::with_payload(
-                source,
-                C::max_val(),
-                (self.vertex_count(), self.vertex_count()),
-            ),
-        );
+            source,
+            C::max_val(),
+            (self.vertex_count(), self.vertex_count()),
+        ));
         let res = flow_graph.max_flow(self.vertex_count(), self.vertex_count() + 1) == total_demand;
         if !res {
             return false;

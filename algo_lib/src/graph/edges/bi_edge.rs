@@ -10,17 +10,24 @@ pub struct BiEdgeRaw<Id: EdgeId, P> {
 }
 
 impl<Id: EdgeId> BiEdgeRaw<Id, ()> {
-    pub fn new(to: usize) -> Self {
-        Self {
-            to: to as u32,
-            id: Id::new(),
-            payload: (),
-        }
+    pub fn new(from: usize, to: usize) -> (usize, Self) {
+        (
+            from,
+            Self {
+                to: to as u32,
+                id: Id::new(),
+                payload: (),
+            },
+        )
     }
 }
 
 impl<Id: EdgeId, P> BiEdgeRaw<Id, P> {
-    pub fn with_payload(to: usize, payload: P) -> Self {
+    pub fn with_payload(from: usize, to: usize, payload: P) -> (usize, Self) {
+        (from, Self::with_payload_impl(to, payload))
+    }
+
+    fn with_payload_impl(to: usize, payload: P) -> BiEdgeRaw<Id, P> {
         Self {
             to: to as u32,
             id: Id::new(),
@@ -55,7 +62,7 @@ impl<Id: EdgeId, P: Clone> EdgeTrait for BiEdgeRaw<Id, P> {
     fn set_reverse_id(&mut self, _: usize) {}
 
     fn reverse_edge(&self, from: usize) -> Self {
-        Self::with_payload(from, self.payload.clone())
+        Self::with_payload_impl(from, self.payload.clone())
     }
 
     fn payload(&self) -> &P {

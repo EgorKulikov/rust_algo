@@ -12,18 +12,25 @@ pub struct BiWeightedEdgeRaw<W: Copy, Id: EdgeId, P> {
 }
 
 impl<W: Copy, Id: EdgeId> BiWeightedEdgeRaw<W, Id, ()> {
-    pub fn new(to: usize, w: W) -> Self {
-        Self {
-            to: to as u32,
-            weight: w,
-            id: Id::new(),
-            payload: (),
-        }
+    pub fn new(from: usize, to: usize, w: W) -> (usize, Self) {
+        (
+            from,
+            Self {
+                to: to as u32,
+                weight: w,
+                id: Id::new(),
+                payload: (),
+            },
+        )
     }
 }
 
 impl<W: Copy, Id: EdgeId, P> BiWeightedEdgeRaw<W, Id, P> {
-    pub fn with_payload(to: usize, w: W, payload: P) -> Self {
+    pub fn with_payload(from: usize, to: usize, w: W, payload: P) -> (usize, Self) {
+        (from, Self::with_payload_impl(to, w, payload))
+    }
+
+    fn with_payload_impl(to: usize, w: W, payload: P) -> Self {
         Self {
             to: to as u32,
             weight: w,
@@ -58,7 +65,7 @@ impl<W: Copy, Id: EdgeId, P: Clone> EdgeTrait for BiWeightedEdgeRaw<W, Id, P> {
     fn set_reverse_id(&mut self, _: usize) {}
 
     fn reverse_edge(&self, from: usize) -> Self {
-        Self::with_payload(from, self.weight, self.payload.clone())
+        Self::with_payload_impl(from, self.weight, self.payload.clone())
     }
 
     fn payload(&self) -> &P {

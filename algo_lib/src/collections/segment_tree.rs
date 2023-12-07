@@ -1,6 +1,6 @@
+use crate::collections::bounds::clamp;
 use crate::misc::direction::Direction;
 use crate::when;
-use std::collections::Bound;
 use std::marker::PhantomData;
 use std::ops::RangeBounds;
 
@@ -246,23 +246,8 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
     where
         Node: Pushable<&'a T>,
     {
-        self.do_update(
-            2 * self.n - 2,
-            0,
-            self.n,
-            match range.start_bound() {
-                Bound::Included(&x) => x,
-                Bound::Excluded(&x) => x + 1,
-                Bound::Unbounded => 0,
-            },
-            match range.end_bound() {
-                Bound::Included(&x) => x + 1,
-                Bound::Excluded(&x) => x,
-                Bound::Unbounded => self.n,
-            }
-            .min(self.n),
-            val,
-        )
+        let (from, to) = clamp(range, self.n);
+        self.do_update(2 * self.n - 2, 0, self.n, from, to, val)
     }
 
     pub fn do_update<'a, T>(
@@ -297,24 +282,8 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         op: &mut dyn Operation<Node, Args, Res>,
         args: &Args,
     ) -> Res {
-        self.do_operation(
-            2 * self.n - 2,
-            0,
-            self.n,
-            match range.start_bound() {
-                Bound::Included(&x) => x,
-                Bound::Excluded(&x) => x + 1,
-                Bound::Unbounded => 0,
-            },
-            match range.end_bound() {
-                Bound::Included(&x) => x + 1,
-                Bound::Excluded(&x) => x,
-                Bound::Unbounded => self.n,
-            }
-            .min(self.n),
-            op,
-            args,
-        )
+        let (from, to) = clamp(range, self.n);
+        self.do_operation(2 * self.n - 2, 0, self.n, from, to, op, args)
     }
 
     pub fn do_operation<Args, Res>(
@@ -404,17 +373,7 @@ impl<Node: SegmentTreeNode + Clone> SegmentTree<Node> {
     where
         Node: QueryResult<T>,
     {
-        let from = match range.start_bound() {
-            Bound::Included(&x) => x,
-            Bound::Excluded(&x) => x + 1,
-            Bound::Unbounded => 0,
-        };
-        let to = match range.end_bound() {
-            Bound::Included(&x) => x + 1,
-            Bound::Excluded(&x) => x,
-            Bound::Unbounded => self.n,
-        }
-        .min(self.n);
+        let (from, to) = clamp(range, self.n);
         if from >= to {
             Node::empty_result()
         } else {

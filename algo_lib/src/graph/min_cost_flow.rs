@@ -49,7 +49,7 @@ where
                 corresponding.push((
                     i,
                     j,
-                    graph.add_edge(i, WeightedFlowEdgeRaw::new(e.to(), e.weight(), C::zero())),
+                    graph.add_edge(WeightedFlowEdgeRaw::new(i, e.to(), e.weight(), C::zero())),
                 ));
             }
         }
@@ -58,20 +58,18 @@ where
     while (C::one() << bits) <= max_capacity {
         bits += 1;
     }
-    let back = graph.add_edge(
+    let back = graph.add_edge(WeightedFlowEdgeRaw::new(
         sink,
-        WeightedFlowEdgeRaw::new(
-            source,
-            if take_positive_cycles {
-                C::zero() - sum_weight - C::one()
-            } else {
-                C::zero()
-            },
-            C::zero(),
-        ),
-    );
+        source,
+        if take_positive_cycles {
+            C::zero() - sum_weight - C::one()
+        } else {
+            C::zero()
+        },
+        C::zero(),
+    ));
     for i in 0..n {
-        graph.add_edge(n, WeightedFlowEdgeRaw::new(i, C::zero(), C::one()));
+        graph.add_edge(WeightedFlowEdgeRaw::new(n, i, C::zero(), C::one()));
     }
 
     let mut dis = vec![C::zero(); n + 1];

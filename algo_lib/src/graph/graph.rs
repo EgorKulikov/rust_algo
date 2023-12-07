@@ -17,7 +17,7 @@ impl<E: EdgeTrait> Graph<E> {
         }
     }
 
-    pub fn add_edge(&mut self, from: usize, mut edge: E) -> usize {
+    pub fn add_edge(&mut self, (from, mut edge): (usize, E)) -> usize {
         let to = edge.to();
         assert!(to < self.edges.len());
         let direct_id = self.edges[from].len();
@@ -52,6 +52,10 @@ impl<E: EdgeTrait> Graph<E> {
 
     pub fn edge_count(&self) -> usize {
         self.edge_count
+    }
+
+    pub fn degrees(&self) -> Vec<usize> {
+        self.edges.iter().map(|v| v.len()).collect()
     }
 }
 
@@ -105,7 +109,7 @@ impl Graph<Edge<()>> {
     pub fn from_edges(n: usize, edges: &[(usize, usize)]) -> Self {
         let mut graph = Self::new(n);
         for &(from, to) in edges {
-            graph.add_edge(from, Edge::new(to));
+            graph.add_edge(Edge::new(from, to));
         }
         graph
     }
@@ -115,7 +119,7 @@ impl Graph<BiEdge<()>> {
     pub fn from_biedges(n: usize, edges: &[(usize, usize)]) -> Self {
         let mut graph = Self::new(n);
         for &(from, to) in edges {
-            graph.add_edge(from, BiEdge::new(to));
+            graph.add_edge(BiEdge::new(from, to));
         }
         graph
     }

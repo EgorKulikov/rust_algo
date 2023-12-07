@@ -13,7 +13,7 @@ impl StringSearch for Str<'_> {
     fn index_of(&self, pattern: &Self) -> Option<usize> {
         pattern
             .as_slice()
-            .zip(self.as_slice())
+            .chain(self.as_slice())
             .z_algorithm()
             .iter()
             .skip(pattern.len())

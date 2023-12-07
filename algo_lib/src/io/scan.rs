@@ -1,8 +1,5 @@
 #[macro_export]
 macro_rules! scan {
-    ($input: expr, $s: expr) => {
-        $crate::scan!($input, s,);
-    };
     ($input: expr, $s: expr $(, $v:ident: $t: ty)* $(,)?) => {
         $crate::scan!($input, $s, '@', $($v: $t,)*);
     };

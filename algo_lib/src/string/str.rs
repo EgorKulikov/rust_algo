@@ -2,12 +2,13 @@ use crate::collections::iter_ext::collect::IterCollect;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::cmp::Ordering;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::iter::{Copied, FromIterator};
 use std::marker::PhantomData;
 use std::ops::{Add, AddAssign, Deref, DerefMut, Index, IndexMut};
 use std::slice::{Iter, IterMut, SliceIndex};
+use std::str::FromStr;
 use std::vec::IntoIter;
 
 pub enum Str<'s> {
@@ -129,7 +130,7 @@ impl<'s> Str<'s> {
         self.as_mut_slice().reverse();
     }
 
-    pub fn trim(&self) -> &[u8] {
+    pub fn trim(&self) -> Str<'_> {
         let mut start = 0;
         let mut end = self.len();
         while start < end && (self[start] as char).is_whitespace() {
@@ -138,7 +139,41 @@ impl<'s> Str<'s> {
         while start < end && (self[end - 1] as char).is_whitespace() {
             end -= 1;
         }
-        &self[start..end]
+        self[start..end].into()
+    }
+
+    pub fn split<'a, 'b>(&'a self, sep: impl Into<Str<'b>>) -> Vec<Str<'a>>
+    where
+        's: 'a,
+    {
+        let sep = sep.into();
+        let mut res = Vec::new();
+        let mut start = 0;
+        for i in 0..self.len() {
+            if self[i..].starts_with(sep.as_slice()) {
+                res.push(self[start..i].into());
+                start = i + sep.len();
+            }
+        }
+        res.push(self[start..].into());
+        res
+    }
+
+    pub fn parse<F: FromStr>(self) -> F
+    where
+        F::Err: Debug,
+    {
+        self.into_string().parse().unwrap()
+    }
+
+    pub fn parse_vec<T: Readable>(&self) -> Vec<T> {
+        let mut bytes = self.as_slice();
+        let mut input = Input::new(&mut bytes);
+        let mut res = Vec::new();
+        while !input.is_exhausted() {
+            res.push(input.read());
+        }
+        res
     }
 }
 
@@ -180,6 +215,12 @@ impl<'s> From<&'s [u8]> for Str<'s> {
     }
 }
 
+impl<'s, const N: usize> From<&'s [u8; N]> for Str<'s> {
+    fn from(s: &'s [u8; N]) -> Self {
+        Str::Ref(s)
+    }
+}
+
 impl<'s> From<&'s String> for Str<'s> {
     fn from(s: &'s String) -> Self {
         Str::Ref(s.as_bytes())
@@ -195,6 +236,12 @@ impl<'s> From<&'s Vec<u8>> for Str<'s> {
 impl From<u8> for Str<'static> {
     fn from(c: u8) -> Self {
         Str::Owned(Box::new([c]), PhantomData)
+    }
+}
+
+impl From<char> for Str<'static> {
+    fn from(c: char) -> Self {
+        Str::from(c as u8)
     }
 }
 

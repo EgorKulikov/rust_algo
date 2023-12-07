@@ -16,7 +16,7 @@ pub trait SlicelikeZip: Slicelike
 where
     Self::Output: Sized,
 {
-    fn zip<'a, S2: Slicelike<Output = Self::Output> + ?Sized>(
+    fn chain<'a, S2: Slicelike<Output = Self::Output> + ?Sized>(
         &'a self,
         s2: &'a S2,
     ) -> CompositeSlicelike<'a, Self::Output, Self, S2> {

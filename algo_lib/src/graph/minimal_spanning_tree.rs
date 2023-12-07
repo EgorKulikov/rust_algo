@@ -24,7 +24,7 @@ impl<W: Ord + Copy, E: WeightedEdgeTrait<W> + BidirectionalEdgeTrait> MinimalSpa
         let mut dsu = DSU::new(self.vertex_count());
         for (i, e) in edges {
             if dsu.join(i, e.to()) {
-                res.add_edge(i, e);
+                res.add_edge((i, e));
             }
         }
         res

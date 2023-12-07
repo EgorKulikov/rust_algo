@@ -1,4 +1,6 @@
 pub mod bit_set;
+pub mod bounds;
+pub mod btree_ext;
 pub mod default_map;
 pub mod divided_set;
 pub mod dsu;
@@ -16,6 +18,7 @@ pub mod permutation;
 pub mod persistent_fenwick;
 pub mod segment_tree;
 pub mod slice_ext;
+pub mod sliding_window;
 #[cfg(test)]
 mod test;
 pub mod treap;

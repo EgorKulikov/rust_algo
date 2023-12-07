@@ -15,19 +15,26 @@ pub struct FlowEdgeRaw<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId, P> {
 }
 
 impl<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId> FlowEdgeRaw<C, Id, ()> {
-    pub fn new(to: usize, c: C) -> Self {
-        Self {
-            to: to as u32,
-            capacity: c,
-            reverse_id: 0,
-            id: Id::new(),
-            payload: (),
-        }
+    pub fn new(from: usize, to: usize, c: C) -> (usize, Self) {
+        (
+            from,
+            Self {
+                to: to as u32,
+                capacity: c,
+                reverse_id: 0,
+                id: Id::new(),
+                payload: (),
+            },
+        )
     }
 }
 
 impl<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId, P> FlowEdgeRaw<C, Id, P> {
-    pub fn with_payload(to: usize, c: C, payload: P) -> Self {
+    pub fn with_payload(from: usize, to: usize, c: C, payload: P) -> (usize, Self) {
+        (from, Self::with_payload_impl(to, c, payload))
+    }
+
+    fn with_payload_impl(to: usize, c: C, payload: P) -> Self {
         Self {
             to: to as u32,
             capacity: c,
@@ -65,7 +72,7 @@ impl<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId, P: Clone> EdgeTrait
     }
 
     fn reverse_edge(&self, from: usize) -> Self {
-        Self::with_payload(from, C::zero(), self.payload.clone())
+        Self::with_payload_impl(from, C::zero(), self.payload.clone())
     }
 
     fn payload(&self) -> &P {

@@ -38,7 +38,7 @@ impl<E: EdgeTrait> StronglyConnectedComponents for Graph<E> {
         let mut gt = Graph::new(n);
         for i in 0..n {
             for e in self[i].iter() {
-                gt.add_edge(e.to(), Edge::new(i));
+                gt.add_edge(Edge::new(e.to(), i));
             }
         }
         for i in (0..n).rev() {
@@ -61,7 +61,7 @@ impl<E: EdgeTrait> StronglyConnectedComponents for Graph<E> {
                 second_dfs.call(order[i]);
                 res.add_vertices(1);
                 for j in queue.drain(..) {
-                    res.add_edge(j, Edge::new(index));
+                    res.add_edge(Edge::new(j, index));
                 }
                 index += 1;
             }
