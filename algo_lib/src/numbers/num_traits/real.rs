@@ -21,7 +21,7 @@ pub trait RealTrait: Ord + Field {
 }
 
 #[derive(Copy, Clone, PartialOrd, PartialEq, Debug)]
-pub struct Real(f64);
+pub struct Real(pub f64);
 
 impl Real {
     pub fn round(&self) -> i64 {

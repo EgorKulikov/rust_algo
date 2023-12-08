@@ -111,6 +111,7 @@ impl<'s> Str<'s> {
     }
 
     pub fn as_mut_slice(&mut self) -> &mut [u8] {
+        self.transform_to_owned();
         match self {
             Str::Extendable(s, _) => s.as_mut_slice(),
             Str::Owned(s, _) => s.as_mut(),
@@ -364,6 +365,7 @@ pub trait StrReader {
     fn read_str(&mut self) -> Str<'static>;
     fn read_str_vec(&mut self, n: usize) -> Vec<Str<'static>>;
     fn read_line(&mut self) -> Str<'static>;
+    fn read_lines(&mut self, n: usize) -> Vec<Str<'static>>;
 }
 
 impl StrReader for Input<'_> {
@@ -382,6 +384,14 @@ impl StrReader for Input<'_> {
                 break;
             }
             res.push(c);
+        }
+        res
+    }
+
+    fn read_lines(&mut self, n: usize) -> Vec<Str<'static>> {
+        let mut res = Vec::with_capacity(n);
+        for _ in 0..n {
+            res.push(self.read_line());
         }
         res
     }
