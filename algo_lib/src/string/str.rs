@@ -39,6 +39,11 @@ impl<'s> Str<'s> {
         self.as_extendable().push(c)
     }
 
+    pub fn pop(&mut self) -> Option<u8> {
+        self.transform_to_extendable();
+        self.as_extendable().pop()
+    }
+
     pub fn as_slice(&self) -> &[u8] {
         match self {
             Str::Extendable(s, _) => s.as_ref(),
@@ -246,6 +251,12 @@ impl From<char> for Str<'static> {
     }
 }
 
+impl<'s, 't: 's> From<&'s Str<'t>> for Str<'s> {
+    fn from(value: &'s Str<'t>) -> Self {
+        Str::Ref(value.as_slice())
+    }
+}
+
 impl<R: SliceIndex<[u8]>> Index<R> for Str<'_> {
     type Output = R::Output;
 
@@ -365,7 +376,8 @@ pub trait StrReader {
     fn read_str(&mut self) -> Str<'static>;
     fn read_str_vec(&mut self, n: usize) -> Vec<Str<'static>>;
     fn read_line(&mut self) -> Str<'static>;
-    fn read_lines(&mut self, n: usize) -> Vec<Str<'static>>;
+    fn read_line_vec(&mut self, n: usize) -> Vec<Str<'static>>;
+    fn read_lines(&mut self) -> Vec<Str<'static>>;
 }
 
 impl StrReader for Input<'_> {
@@ -388,10 +400,23 @@ impl StrReader for Input<'_> {
         res
     }
 
-    fn read_lines(&mut self, n: usize) -> Vec<Str<'static>> {
+    fn read_line_vec(&mut self, n: usize) -> Vec<Str<'static>> {
         let mut res = Vec::with_capacity(n);
         for _ in 0..n {
             res.push(self.read_line());
+        }
+        res
+    }
+
+    fn read_lines(&mut self) -> Vec<Str<'static>> {
+        let mut res = Vec::new();
+        while !self.is_exhausted() {
+            res.push(self.read_line());
+        }
+        if let Some(s) = res.last() {
+            if s.is_empty() {
+                res.pop();
+            }
         }
         res
     }

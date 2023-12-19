@@ -1,4 +1,8 @@
 use crate::collections::slice_ext::indices::Indices;
+use crate::numbers::num_traits::add_sub::AddSub;
+use crate::numbers::num_traits::primitive::Primitive;
+use crate::numbers::num_traits::zero_one::ZeroOne;
+use std::ops::Rem;
 use std::time::SystemTime;
 
 const NN: usize = 312;
@@ -52,12 +56,22 @@ impl Random {
         x
     }
 
-    pub fn next(&mut self, n: u64) -> u64 {
-        self.gen() % n
+    pub fn next<T: Rem<Output = T> + Primitive<u64>>(&mut self, n: T) -> T
+    where
+        u64: Primitive<T>,
+    {
+        (self.gen() % n.to()).to()
     }
 
-    pub fn next_bounds(&mut self, f: u64, t: u64) -> u64 {
-        f + self.next(t - f + 1)
+    pub fn next_bounds<T: Rem<Output = T> + AddSub + ZeroOne + Primitive<u64>>(
+        &mut self,
+        f: T,
+        t: T,
+    ) -> T
+    where
+        u64: Primitive<T>,
+    {
+        f + self.next(t - f + T::one())
     }
 }
 
@@ -81,7 +95,7 @@ pub trait Shuffle {
 impl<T> Shuffle for [T] {
     fn shuffle(&mut self) {
         for i in self.indices() {
-            let at = (random().gen() % ((i + 1) as u64)) as usize;
+            let at = random().next(i + 1);
             self.swap(i, at);
         }
     }
