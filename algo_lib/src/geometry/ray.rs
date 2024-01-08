@@ -43,6 +43,20 @@ impl<T: Field + Copy + Ord> Ray<T> {
         true
     }
 
+    pub fn intersect_ray(&self, other: Self) -> Option<Point<T>> {
+        let l1 = self.line();
+        let l2 = other.line();
+        if l1.is_parallel(l2) {
+            return None;
+        }
+        let p = l1.intersect(l2);
+        if self.contains(p) && other.contains(p) {
+            Some(p)
+        } else {
+            None
+        }
+    }
+
     pub fn square_dist_point(&self, p: Point<T>) -> T {
         let line = self.line();
         let perp = line.perpendicular(p);

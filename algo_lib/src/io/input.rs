@@ -104,6 +104,12 @@ impl<'s> Input<'s> {
         self.peek().is_none()
     }
 
+    //noinspection RsSelfConvention
+    pub fn is_empty(&mut self) -> bool {
+        self.skip_whitespace();
+        self.is_exhausted()
+    }
+
     pub fn read<T: Readable>(&mut self) -> T {
         T::read(self)
     }

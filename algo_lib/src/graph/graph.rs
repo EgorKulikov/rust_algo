@@ -4,6 +4,7 @@ use crate::graph::edges::edge::Edge;
 use crate::graph::edges::edge_trait::{BidirectionalEdgeTrait, EdgeTrait};
 use std::ops::{Index, IndexMut};
 
+#[derive(Clone)]
 pub struct Graph<E: EdgeTrait> {
     pub(super) edges: Vec<Vec<E>>,
     edge_count: usize,

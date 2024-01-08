@@ -7,7 +7,9 @@ use std::io::{stdout, Write};
 
 fn generate_test(out: &mut Output) {}
 
-fn stupid(input: &mut Input, out: &mut Output) {}
+fn stupid(input: &mut Input, out: &mut Output) -> bool {
+    false
+}
 
 pub fn check(input: &mut &[u8], expected: &mut &[u8], actual: &mut &[u8]) -> Result<(), String> {
     let mut _input = Input::new(input);
@@ -162,10 +164,7 @@ pub(crate) fn run_tests() -> bool {
     test_failed == 0
 }
 
-pub(crate) fn stress_test(
-    solution: impl Fn(Input, Output) -> bool,
-    checker: impl Fn(&mut &[u8], &mut &[u8], &mut &[u8]) -> Result<(), String>,
-) {
+pub(crate) fn stress_test() {
     fn generate_test_int() -> Vec<u8> {
         let mut res = Vec::new();
         let mut output = Output::new(&mut res);
@@ -174,21 +173,36 @@ pub(crate) fn stress_test(
         res
     }
 
-    fn stupid_int(mut input: &[u8]) -> Vec<u8> {
+    fn stupid_int(mut input: &[u8]) -> Option<Vec<u8>> {
         let mut input = Input::new(&mut input);
         let mut res = Vec::new();
         let mut output = Output::new(&mut res);
-        stupid(&mut input, &mut output);
+        if !stupid(&mut input, &mut output) {
+            return None;
+        }
         output.flush();
-        res
+        Some(res)
     }
 
-    fn actual(mut input: &[u8], solution: &impl Fn(Input, Output) -> bool) -> Vec<u8> {
-        let input = Input::new(&mut input);
-        let mut res = Vec::new();
-        let output = Output::new(&mut res);
-        solution(input, output);
-        res
+    fn actual(inp: &[u8]) -> Vec<u8> {
+        match std::panic::catch_unwind(|| {
+            let mut inp = inp;
+            let input = Input::new(&mut inp);
+            let mut res = Vec::new();
+            let output = Output::new(&mut res);
+            crate::run(input, output);
+            res
+        }) {
+            Err(_) => {
+                println!();
+                println!(
+                    "Crashed on test:\n{}",
+                    String::from_utf8(inp.to_vec()).unwrap()
+                );
+                panic!();
+            }
+            Ok(res) => res,
+        }
     }
 
     println!("");
@@ -196,27 +210,31 @@ pub(crate) fn stress_test(
     loop {
         let input = generate_test_int();
         let expected = stupid_int(&input);
-        let actual = actual(&input, &solution);
+        let actual = actual(&input);
         print!("#");
         stdout().flush().unwrap();
-        let res = checker(
-            &mut input.as_slice(),
-            &mut expected.as_slice(),
-            &mut actual.as_slice(),
-        );
-        match res {
-            Ok(_) => {
-                print!(".");
-                stdout().flush().unwrap();
+        if let Some(expected) = expected {
+            let res = check(
+                &mut input.as_slice(),
+                &mut expected.as_slice(),
+                &mut actual.as_slice(),
+            );
+            match res {
+                Ok(_) => {
+                    print!(".");
+                    stdout().flush().unwrap();
+                }
+                Err(err) => {
+                    println!();
+                    println!("Failed on test:\n{}", String::from_utf8(input).unwrap());
+                    println!("Expected:\n{}", String::from_utf8(expected).unwrap());
+                    println!("Actual:\n{}", String::from_utf8(actual).unwrap());
+                    println!("Error: {}", err);
+                    panic!();
+                }
             }
-            Err(err) => {
-                println!();
-                println!("Failed on test:\n{}", String::from_utf8(input).unwrap());
-                println!("Expected:\n{}", String::from_utf8(expected).unwrap());
-                println!("Actual:\n{}", String::from_utf8(actual).unwrap());
-                println!("Error: {}", err);
-                panic!();
-            }
+        } else {
+            print!(".");
         }
     }
 }

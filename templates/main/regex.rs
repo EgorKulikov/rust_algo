@@ -15,4 +15,4 @@
         }
     }
     let mut in_file = std::fs::File::open(result.unwrap()).unwrap();
-    let input = io::input::Input::new(&mut in_file);
+    let input = algo_lib::io::input::Input::new(&mut in_file);

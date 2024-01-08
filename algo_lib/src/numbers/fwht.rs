@@ -15,10 +15,8 @@ impl<T: AddSub + MulDiv + AsIndex + Copy> FWHT for [T] {
         while len < n {
             for i in (0..n).step_by(2 * len) {
                 let (head, tail) = self.split_at_mut(i + len);
-                for (u, v) in head.iter_mut().skip(i).zip(tail.iter_mut().take(len)) {
-                    let nu = *u + *v;
-                    *v = *u - *v;
-                    *u = nu;
+                for (u, v) in head.iter_mut().skip(i).zip(tail.iter_mut()) {
+                    (*u, *v) = (*u + *v, *u - *v);
                 }
             }
             len *= 2;

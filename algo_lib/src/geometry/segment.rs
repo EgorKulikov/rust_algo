@@ -37,6 +37,27 @@ impl<T: Field + Copy + PartialEq + Ord> Segment<T> {
         let y2 = self.p1.y.max(self.p2.y);
         x1 <= p.x && p.x <= x2 && y1 <= p.y && p.y <= y2
     }
+    
+    pub fn intersect_segment(&self, s: Self) -> Option<Point<T>> {
+        if self.p1 == self.p2 || s.p1 == s.p2 {
+            return None;
+        }
+        let l1 = self.line();
+        let l2 = s.line();
+        if l1.is_parallel(l2) {
+            return None;
+        }
+        let p = l1.intersect(l2);
+        if self.contains(p) && s.contains(p) {
+            Some(p)
+        } else {
+            None
+        }
+    }
+    
+    pub fn square_len(&self) -> T {
+        self.p1.square_dist_point(self.p2)
+    }
 
     pub fn square_dist_point(&self, p: Point<T>) -> T {
         if self.p1 == self.p2 {
@@ -93,6 +114,10 @@ impl<T: RealTrait> Segment<T> {
             && p.x <= x2 + T::epsilon()
             && y1 <= p.y + T::epsilon()
             && p.y <= y2 + T::epsilon()
+    }
+    
+    pub fn len(&self) -> T {
+        self.p1.dist_point(self.p2)
     }
 
     pub fn dist_point(&self, p: Point<T>) -> T {

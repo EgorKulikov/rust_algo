@@ -1,5 +1,6 @@
 pub mod all_distances;
 pub mod bridges;
+mod central_decomposition;
 pub mod cut_points;
 pub mod dfs_order;
 pub mod distances;

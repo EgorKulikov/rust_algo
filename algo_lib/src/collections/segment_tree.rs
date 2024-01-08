@@ -21,6 +21,12 @@ impl<T: SegmentTreeNode> Pushable<&T> for T {
     }
 }
 
+impl<T: SegmentTreeNode> Pushable<T> for T {
+    fn push(&mut self, delta: T, _left: usize, _right: usize) {
+        *self = delta;
+    }
+}
+
 pub trait QueryResult<Result>: SegmentTreeNode {
     fn empty_result() -> Result;
     fn result(&self) -> Result;
