@@ -3,7 +3,7 @@ mod memoization_test {
     use crate::misc::memo::memoization_2d::Memoization2d;
     use crate::misc::recursive_function::Callable2;
     use crate::numbers::mod_int::ModIntF;
-    use crate::numbers::num_traits::zero_one::ZeroOne;
+    use crate::numbers::num_traits::algebra::One;
 
     #[test]
     fn test() {
