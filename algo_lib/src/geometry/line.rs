@@ -1,7 +1,6 @@
 use crate::geometry::point::Point;
-use crate::numbers::num_traits::field::Field;
-use crate::numbers::num_traits::real::RealTrait;
-use crate::numbers::num_traits::ring::Ring;
+use crate::numbers::num_traits::algebra::{Field, Ring};
+use crate::numbers::real::RealTrait;
 
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct Line<T> {
@@ -34,7 +33,7 @@ impl<T: Ring + Copy> Line<T> {
     }
 }
 
-impl<T: Ring + Copy + PartialEq> Line<T> {
+impl<T: Ring + Copy> Line<T> {
     pub fn is_parallel(&self, other: Line<T>) -> bool {
         self.a * other.b == self.b * other.a
     }
@@ -64,7 +63,7 @@ impl<T: Ring + Copy + PartialEq> Line<T> {
     }
 }
 
-impl<T: RealTrait> Line<T> {
+impl<T: RealTrait + Copy> Line<T> {
     pub fn new_real(a: T, b: T, c: T) -> Self {
         let h = T::hypot(a, b);
         Self {

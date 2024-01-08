@@ -15,6 +15,7 @@ pub mod number_iterator;
 pub mod prime_fft;
 pub mod primes;
 pub mod rational;
+pub mod real;
 pub mod signed_big_int;
 #[cfg(test)]
 mod test;

@@ -1,7 +1,7 @@
 use crate::geometry::geometry_utils::canonize_angle_base;
 use crate::geometry::point::Point;
 use crate::geometry::ray::Ray;
-use crate::numbers::num_traits::real::RealTrait;
+use crate::numbers::real::RealTrait;
 
 pub struct Angle<T> {
     pub origin: Point<T>,
@@ -15,7 +15,7 @@ impl<T> Angle<T> {
     }
 }
 
-impl<T: RealTrait> Angle<T> {
+impl<T: RealTrait + Copy> Angle<T> {
     pub fn value(&self) -> T {
         let a1 = (self.dir1 - self.origin).angle();
         let a2 = (self.dir2 - self.origin).angle();

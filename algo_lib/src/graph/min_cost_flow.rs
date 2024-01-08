@@ -8,13 +8,10 @@ use crate::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
 use crate::graph::edges::weighted_flow_edge::WeightedFlowEdgeRaw;
 use crate::graph::flow_graph::FlowGraph;
 use crate::graph::graph::Graph;
-use crate::numbers::num_traits::add_sub::AddSub;
+use crate::numbers::num_traits::algebra::Ring;
 use crate::numbers::num_traits::bit_ops::Bits;
-use crate::numbers::num_traits::mul_div_rem::Multable;
 use crate::numbers::num_traits::ord::MinMax;
-use crate::numbers::num_traits::zero_one::ZeroOne;
 use std::fmt::Display;
-use std::ops::Neg;
 
 pub trait MinCostFlow<C> {
     fn min_cost_flow(&mut self, source: usize, sink: usize) -> (C, C);
@@ -28,7 +25,7 @@ fn min_cost_flow_impl<C, Id, P: Clone>(
     take_positive_cycles: bool,
 ) -> (C, C)
 where
-    C: AddSub + Neg<Output = C> + Multable + PartialOrd + Copy + ZeroOne + MinMax + Bits + Display,
+    C: Ring + Ord + Copy + MinMax + Bits + Display,
     Id: EdgeId,
 {
     let inf = C::max_val() >> 1;
@@ -45,7 +42,7 @@ where
         for (j, e) in or_graph[i].iter().enumerate() {
             if e.capacity() > C::zero() {
                 max_capacity.maxim(e.capacity());
-                sum_weight += e.weight().maximum(C::zero() - e.weight());
+                sum_weight += e.weight().max(C::zero() - e.weight());
                 corresponding.push((
                     i,
                     j,
@@ -183,7 +180,7 @@ where
 
 impl<C, Id, P: Clone> MinCostFlow<C> for Graph<WeightedFlowEdgeRaw<C, C, Id, P>>
 where
-    C: AddSub + Neg<Output = C> + Multable + PartialOrd + Copy + ZeroOne + MinMax + Bits + Display,
+    C: Ring + Ord + Copy + MinMax + Bits + Display,
     Id: EdgeId,
 {
     fn min_cost_flow(&mut self, source: usize, sink: usize) -> (C, C) {

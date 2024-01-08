@@ -1,9 +1,7 @@
 use crate::collections::md_arr::arr2d::Arr2d;
-use crate::numbers::num_traits::add_sub::AddSub;
-use crate::numbers::num_traits::mul_div_rem::MulDiv;
-use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::numbers::num_traits::algebra::Field;
 
-pub fn gauss<T: ZeroOne + AddSub + MulDiv + Eq>(mat: &mut Arr2d<T>) {
+pub fn gauss<T: Field + Copy>(mat: &mut Arr2d<T>) {
     let mut skip = 0;
     for i in 0..mat.d2() {
         let mut good = false;
@@ -36,7 +34,7 @@ pub fn gauss<T: ZeroOne + AddSub + MulDiv + Eq>(mat: &mut Arr2d<T>) {
     }
 }
 
-pub fn det<T: ZeroOne + AddSub + MulDiv + Eq + Copy>(mat: &mut Arr2d<T>) -> T {
+pub fn det<T: Field + Copy>(mat: &mut Arr2d<T>) -> T {
     if mat.d1() != mat.d2() {
         return T::zero();
     }
@@ -79,7 +77,7 @@ pub fn det<T: ZeroOne + AddSub + MulDiv + Eq + Copy>(mat: &mut Arr2d<T>) -> T {
     ans
 }
 
-pub fn invert<T: ZeroOne + AddSub + MulDiv + Eq>(mat: &Arr2d<T>) -> Option<Arr2d<T>> {
+pub fn invert<T: Field + Copy>(mat: &Arr2d<T>) -> Option<Arr2d<T>> {
     assert_eq!(mat.d1(), mat.d2());
     let mut m = Arr2d::generate(mat.d1(), 2 * mat.d2(), |i, j| {
         if j < mat.d2() {

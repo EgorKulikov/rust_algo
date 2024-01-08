@@ -2,17 +2,14 @@ use crate::collections::md_arr::arr2d::Arr2d;
 use crate::collections::min_max::MinimMaxim;
 use crate::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
 use crate::graph::graph::Graph;
-use crate::numbers::num_traits::add_sub::Addable;
+use crate::numbers::num_traits::algebra::SemiRing;
 use crate::numbers::num_traits::ord::MinMax;
-use crate::numbers::num_traits::zero_one::ZeroOne;
 
-pub trait AllDistances<W: Addable + PartialOrd + Copy + ZeroOne + MinMax> {
+pub trait AllDistances<W: SemiRing + Ord + Copy + MinMax> {
     fn all_distances(&self) -> Arr2d<W>;
 }
 
-impl<W: Addable + PartialOrd + Copy + ZeroOne + MinMax, E: WeightedEdgeTrait<W>> AllDistances<W>
-    for Graph<E>
-{
+impl<W: SemiRing + Ord + Copy + MinMax, E: WeightedEdgeTrait<W>> AllDistances<W> for Graph<E> {
     fn all_distances(&self) -> Arr2d<W> {
         let n = self.vertex_count();
         let inf = W::max_val();

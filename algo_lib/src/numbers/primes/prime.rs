@@ -2,8 +2,8 @@ use crate::misc::random::random;
 use crate::misc::value::DynamicValue;
 use crate::numbers::gcd::gcd;
 use crate::numbers::mod_int::ModInt;
+use crate::numbers::num_traits::algebra::{One, Zero};
 use crate::numbers::num_traits::primitive::Primitive;
-use crate::numbers::num_traits::zero_one::ZeroOne;
 use crate::numbers::number_ext::Power;
 use crate::{dynamic_value, when};
 
@@ -34,7 +34,7 @@ pub fn is_prime(n: impl Primitive<i64>) -> bool {
         let mut dd = d;
         let mut good = true;
         for _ in 0..s {
-            if a.power(dd) + Mod::one() == Mod::zero() {
+            if a.power(dd) == -Mod::one() {
                 good = false;
                 break;
             }

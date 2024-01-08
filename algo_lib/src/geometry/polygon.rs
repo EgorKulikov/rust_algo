@@ -1,7 +1,6 @@
 use crate::collections::iter_ext::cur_next::cur_next;
 use crate::geometry::point::Point;
-use crate::numbers::num_traits::field::Field;
-use crate::numbers::num_traits::ring::Ring;
+use crate::numbers::num_traits::algebra::{Field, Ring};
 
 pub struct Polygon<T> {
     pub points: Vec<Point<T>>,
@@ -15,12 +14,18 @@ impl<T> Polygon<T> {
 
 impl<T: Field + Copy> Polygon<T> {
     pub fn area(&self) -> T {
+        self.double_area() / (T::one() + T::one())
+    }
+}
+
+impl<T: Ring + Copy> Polygon<T> {
+    pub fn double_area(&self) -> T {
         let mut ans = T::zero();
         for (i, j) in cur_next(self.points.len()) {
             ans += self.points[i].x * self.points[j].y;
             ans -= self.points[i].y * self.points[j].x;
         }
-        ans / (T::one() + T::one())
+        ans
     }
 }
 

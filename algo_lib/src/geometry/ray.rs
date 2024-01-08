@@ -1,8 +1,7 @@
 use crate::geometry::line::Line;
 use crate::geometry::point::Point;
-use crate::numbers::num_traits::field::Field;
-use crate::numbers::num_traits::real::RealTrait;
-use crate::numbers::num_traits::ring::Ring;
+use crate::numbers::num_traits::algebra::{Field, Ring};
+use crate::numbers::real::RealTrait;
 
 pub struct Ray<T> {
     pub origin: Point<T>,
@@ -21,7 +20,7 @@ impl<T: Ring + Copy> Ray<T> {
     }
 }
 
-impl<T: Field + Copy + Ord> Ray<T> {
+impl<T: Ring + Ord + Copy> Ray<T> {
     pub fn contains(&self, p: Point<T>) -> bool {
         if p == self.origin {
             return true;
@@ -42,7 +41,9 @@ impl<T: Field + Copy + Ord> Ray<T> {
         }
         true
     }
+}
 
+impl<T: Field + Copy + Ord> Ray<T> {
     pub fn intersect_ray(&self, other: Self) -> Option<Point<T>> {
         let l1 = self.line();
         let l2 = other.line();
@@ -69,7 +70,7 @@ impl<T: Field + Copy + Ord> Ray<T> {
     }
 }
 
-impl<T: RealTrait> Ray<T> {
+impl<T: RealTrait + Copy> Ray<T> {
     pub fn angle(&self) -> T {
         (self.direction - self.origin).angle()
     }

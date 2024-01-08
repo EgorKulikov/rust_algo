@@ -1,7 +1,6 @@
 use crate::collections::min_max::MinimMaxim;
 use crate::collections::slice_ext::legacy_fill::LegacyFill;
-use crate::numbers::num_traits::add_sub::AddSub;
-use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::numbers::num_traits::algebra::AdditionMonoidWithSub;
 use std::ops::RangeBounds;
 
 #[derive(Clone)]
@@ -9,7 +8,7 @@ pub struct FenwickTree<T> {
     value: Vec<T>,
 }
 
-impl<T: AddSub + ZeroOne> FenwickTree<T> {
+impl<T: AdditionMonoidWithSub + Copy> FenwickTree<T> {
     pub fn new(size: usize) -> Self {
         Self {
             value: vec![T::zero(); size],
@@ -65,7 +64,7 @@ impl<T: AddSub + ZeroOne> FenwickTree<T> {
     }
 }
 
-impl<T: AddSub + ZeroOne> From<&[T]> for FenwickTree<T> {
+impl<T: AdditionMonoidWithSub + Copy> From<&[T]> for FenwickTree<T> {
     fn from(slice: &[T]) -> Self {
         let mut result = Self::new(slice.len());
         for (i, &v) in slice.iter().enumerate() {

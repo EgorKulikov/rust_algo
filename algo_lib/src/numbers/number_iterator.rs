@@ -1,17 +1,15 @@
-use crate::numbers::num_traits::add_sub::Addable;
+use crate::numbers::num_traits::algebra::IntegerSemiRing;
 use crate::numbers::num_traits::from_u8::FromU8;
-use crate::numbers::num_traits::mul_div_rem::MulDiv;
 use crate::numbers::num_traits::ord::MinMax;
-use crate::numbers::num_traits::zero_one::ZeroOne;
 
-pub fn iterate<T: Copy + Addable + MulDiv + ZeroOne + FromU8 + Ord + MinMax>(
+pub fn iterate<T: Copy + IntegerSemiRing + Ord + FromU8 + MinMax>(
     from: T,
     to: T,
 ) -> Vec<(T, usize, T)> {
     iterate_with_base(from, to, T::from_u8(10))
 }
 
-pub fn iterate_with_base<T: Copy + Addable + MulDiv + ZeroOne + Ord + MinMax>(
+pub fn iterate_with_base<T: Copy + IntegerSemiRing + Ord + MinMax>(
     mut from: T,
     mut to: T,
     base: T,

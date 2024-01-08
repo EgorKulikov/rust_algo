@@ -3,19 +3,16 @@ use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
 use crate::graph::flow_graph::FlowGraph;
 use crate::graph::graph::Graph;
 use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
-use crate::numbers::num_traits::add_sub::AddSub;
+use crate::numbers::num_traits::algebra::AdditionMonoidWithSub;
 use crate::numbers::num_traits::ord::MinMax;
-use crate::numbers::num_traits::zero_one::ZeroOne;
 use crate::when;
 use std::collections::VecDeque;
 
-pub trait MaxFlow<C: AddSub + PartialOrd + Copy + ZeroOne + MinMax> {
+pub trait MaxFlow<C: AdditionMonoidWithSub + Ord + Copy + MinMax> {
     fn max_flow(&mut self, source: usize, destination: usize) -> C;
 }
 
-impl<C: AddSub + PartialOrd + Copy + ZeroOne + MinMax, E: FlowEdgeTrait<C>> MaxFlow<C>
-    for Graph<E>
-{
+impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> MaxFlow<C> for Graph<E> {
     fn max_flow(&mut self, source: usize, destination: usize) -> C {
         let n = self.vertex_count();
         let mut dist = vec![0u32; n];
@@ -55,7 +52,7 @@ impl<C: AddSub + PartialOrd + Copy + ZeroOne + MinMax, E: FlowEdgeTrait<C>> MaxF
                         while (next_edge[source] as usize) < self[source].len() {
                             let edge = &self[source][next_edge[source] as usize];
                             if edge.capacity() != C::zero() && dist[edge.to()] == dist[source] + 1 {
-                                let pushed = f.call(edge.to(), flow.minimum(edge.capacity()));
+                                let pushed = f.call(edge.to(), flow.min(edge.capacity()));
                                 if pushed != C::zero() {
                                     let push_data = edge.push_flow(pushed);
                                     self.push_flow(push_data);

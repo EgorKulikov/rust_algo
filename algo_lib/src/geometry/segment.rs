@@ -1,8 +1,7 @@
 use crate::geometry::line::Line;
 use crate::geometry::point::Point;
-use crate::numbers::num_traits::field::Field;
-use crate::numbers::num_traits::real::RealTrait;
-use crate::numbers::num_traits::ring::Ring;
+use crate::numbers::num_traits::algebra::{Field, Ring};
+use crate::numbers::real::RealTrait;
 
 #[derive(Copy, Clone, Hash, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Segment<T> {
@@ -20,9 +19,13 @@ impl<T: Ring + Copy> Segment<T> {
     pub fn line(&self) -> Line<T> {
         self.p1.line(self.p2)
     }
+
+    pub fn square_len(&self) -> T {
+        self.p1.square_dist_point(self.p2)
+    }
 }
 
-impl<T: Field + Copy + PartialEq + Ord> Segment<T> {
+impl<T: Ring + Ord + Copy> Segment<T> {
     pub fn contains(&self, p: Point<T>) -> bool {
         if self.p1 == self.p2 {
             return self.p1 == p;
@@ -37,7 +40,9 @@ impl<T: Field + Copy + PartialEq + Ord> Segment<T> {
         let y2 = self.p1.y.max(self.p2.y);
         x1 <= p.x && p.x <= x2 && y1 <= p.y && p.y <= y2
     }
-    
+}
+
+impl<T: Field + Copy + PartialEq + Ord> Segment<T> {
     pub fn intersect_segment(&self, s: Self) -> Option<Point<T>> {
         if self.p1 == self.p2 || s.p1 == s.p2 {
             return None;
@@ -53,10 +58,6 @@ impl<T: Field + Copy + PartialEq + Ord> Segment<T> {
         } else {
             None
         }
-    }
-    
-    pub fn square_len(&self) -> T {
-        self.p1.square_dist_point(self.p2)
     }
 
     pub fn square_dist_point(&self, p: Point<T>) -> T {
@@ -97,7 +98,7 @@ impl<T: Field + Copy + PartialEq + Ord> Segment<T> {
     }
 }
 
-impl<T: RealTrait> Segment<T> {
+impl<T: RealTrait + Copy> Segment<T> {
     pub fn contains_real(&self, p: Point<T>) -> bool {
         if self.p1.same(self.p2) {
             return self.p1.same(p);
@@ -115,7 +116,7 @@ impl<T: RealTrait> Segment<T> {
             && y1 <= p.y + T::epsilon()
             && p.y <= y2 + T::epsilon()
     }
-    
+
     pub fn len(&self) -> T {
         self.p1.dist_point(self.p2)
     }

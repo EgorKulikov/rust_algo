@@ -1,5 +1,4 @@
-use crate::numbers::num_traits::add_sub::AddSub;
-use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::numbers::num_traits::algebra::{AdditionMonoidWithSub, One};
 
 pub trait IncDec {
     #[must_use]
@@ -8,7 +7,7 @@ pub trait IncDec {
     fn dec(self) -> Self;
 }
 
-impl<T: AddSub + ZeroOne> IncDec for Vec<T> {
+impl<T: AdditionMonoidWithSub + One> IncDec for Vec<T> {
     fn inc(mut self) -> Self {
         self.iter_mut().for_each(|i| *i += T::one());
         self
@@ -20,7 +19,7 @@ impl<T: AddSub + ZeroOne> IncDec for Vec<T> {
     }
 }
 
-impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne> IncDec for Vec<(T, U)> {
+impl<T: AdditionMonoidWithSub + One, U: AdditionMonoidWithSub + One> IncDec for Vec<(T, U)> {
     fn inc(mut self) -> Self {
         self.iter_mut().for_each(|(i, j)| {
             *i += T::one();
@@ -38,7 +37,7 @@ impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne> IncDec for Vec<(T, U)> {
     }
 }
 
-impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne, V> IncDec for Vec<(T, U, V)> {
+impl<T: AdditionMonoidWithSub + One, U: AdditionMonoidWithSub + One, V> IncDec for Vec<(T, U, V)> {
     fn inc(mut self) -> Self {
         self.iter_mut().for_each(|(i, j, _)| {
             *i += T::one();
@@ -56,7 +55,9 @@ impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne, V> IncDec for Vec<(T, U, V)> {
     }
 }
 
-impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne, V, W> IncDec for Vec<(T, U, V, W)> {
+impl<T: AdditionMonoidWithSub + One, U: AdditionMonoidWithSub + One, V, W> IncDec
+    for Vec<(T, U, V, W)>
+{
     fn inc(mut self) -> Self {
         self.iter_mut().for_each(|(i, j, ..)| {
             *i += T::one();
@@ -74,7 +75,9 @@ impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne, V, W> IncDec for Vec<(T, U, V, W)
     }
 }
 
-impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne, V, W, X> IncDec for Vec<(T, U, V, W, X)> {
+impl<T: AdditionMonoidWithSub + One, U: AdditionMonoidWithSub + One, V, W, X> IncDec
+    for Vec<(T, U, V, W, X)>
+{
     fn inc(mut self) -> Self {
         self.iter_mut().for_each(|(i, j, ..)| {
             *i += T::one();
@@ -92,7 +95,7 @@ impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne, V, W, X> IncDec for Vec<(T, U, V,
     }
 }
 
-impl<T: AddSub + ZeroOne, U: AddSub + ZeroOne> IncDec for (T, U) {
+impl<T: AdditionMonoidWithSub + One, U: AdditionMonoidWithSub + One> IncDec for (T, U) {
     fn inc(mut self) -> Self {
         self.0 += T::one();
         self.1 += U::one();

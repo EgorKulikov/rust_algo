@@ -1,6 +1,5 @@
 use crate::collections::min_max::MinimMaxim;
-use crate::numbers::num_traits::add_sub::AddSub;
-use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::numbers::num_traits::algebra::AdditionMonoidWithSub;
 
 #[derive(Clone)]
 pub struct FastClearFenwickTree<T> {
@@ -8,7 +7,7 @@ pub struct FastClearFenwickTree<T> {
     epoch: u32,
 }
 
-impl<T: AddSub + ZeroOne> FastClearFenwickTree<T> {
+impl<T: AdditionMonoidWithSub + Copy> FastClearFenwickTree<T> {
     pub fn new(size: usize) -> Self {
         Self {
             value: vec![(0, T::zero()); size],

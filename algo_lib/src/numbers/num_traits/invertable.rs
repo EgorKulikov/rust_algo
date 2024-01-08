@@ -1,5 +1,5 @@
 pub trait Invertable: Sized {
     type Output;
 
-    fn inv(&self) -> Option<Self>;
+    fn inv(&self) -> Option<Self::Output>;
 }

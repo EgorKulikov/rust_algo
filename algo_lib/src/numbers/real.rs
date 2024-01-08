@@ -1,7 +1,7 @@
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
-use crate::numbers::num_traits::field::Field;
-use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::numbers::num_traits::algebra::{Field, One, Zero};
+use crate::numbers::num_traits::invertable::Invertable;
 use std::cmp::Ordering;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
@@ -106,11 +106,13 @@ impl Neg for Real {
     }
 }
 
-impl ZeroOne for Real {
+impl Zero for Real {
     fn zero() -> Self {
         Self(0.0)
     }
+}
 
+impl One for Real {
     fn one() -> Self {
         Self(1.0)
     }
@@ -156,6 +158,18 @@ impl RealTrait for Real {
     fn set_epsilon(eps: Self) {
         unsafe {
             EPSILON = eps;
+        }
+    }
+}
+
+impl Invertable for Real {
+    type Output = Self;
+
+    fn inv(&self) -> Option<Self::Output> {
+        if self == &Self::zero() {
+            None
+        } else {
+            Some(Self(1.0 / self.0))
         }
     }
 }

@@ -1,6 +1,6 @@
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
-use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::numbers::num_traits::algebra::{One, Zero};
 use crate::string::str::{Str, StrReader};
 use std::cmp::Ordering;
 use std::ops::{Add, AddAssign, DivAssign, MulAssign, Sub, SubAssign};
@@ -43,11 +43,13 @@ impl From<u32> for UBigInt {
     }
 }
 
-impl ZeroOne for UBigInt {
+impl Zero for UBigInt {
     fn zero() -> Self {
         Self::from(0)
     }
+}
 
+impl One for UBigInt {
     fn one() -> Self {
         Self::from(1)
     }

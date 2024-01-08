@@ -1,11 +1,11 @@
 use crate::collections::vec_ext::sorted::Sorted;
 use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
+use crate::numbers::num_traits::algebra::MultiplicationMonoid;
 use crate::numbers::num_traits::as_index::AsIndex;
 use crate::numbers::num_traits::primitive::Primitive;
 use crate::numbers::primes::prime::find_divisor;
 use crate::numbers::primes::sieve::divisor_table;
 use std::cmp::Ordering;
-use std::ops::Mul;
 
 pub trait Factorize {
     fn prime_divisors(self) -> Vec<(i64, usize)>;
@@ -98,7 +98,7 @@ impl<T: Primitive<i64>> Factorize for T {
     }
 }
 
-pub fn all_divisors<T: AsIndex + PartialEq + Copy + Mul<Output = T> + Ord>(
+pub fn all_divisors<T: AsIndex + PartialEq + Copy + MultiplicationMonoid + Ord>(
     n: usize,
     sorted: bool,
 ) -> Vec<Vec<T>> {
@@ -122,7 +122,7 @@ pub fn all_divisors<T: AsIndex + PartialEq + Copy + Mul<Output = T> + Ord>(
         for j in 0..=q {
             cur.extend(res[c].iter().map(|&x| x * by));
             if j != q {
-                by = by * p;
+                by *= p;
             }
         }
         if sorted {

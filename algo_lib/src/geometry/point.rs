@@ -2,9 +2,8 @@ use crate::geometry::geometry_utils::canonize_angle;
 use crate::geometry::line::Line;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
-use crate::numbers::num_traits::real::RealTrait;
-use crate::numbers::num_traits::ring::Ring;
-use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::numbers::num_traits::algebra::{Ring, Zero};
+use crate::numbers::real::RealTrait;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 #[derive(Copy, Clone, Hash, Ord, PartialOrd, Eq, PartialEq)]
@@ -19,7 +18,7 @@ impl<T> Point<T> {
     }
 }
 
-impl<T: ZeroOne> Point<T> {
+impl<T: Zero> Point<T> {
     pub fn origin() -> Self {
         Self::new(T::zero(), T::zero())
     }
@@ -38,7 +37,7 @@ impl<T: Ring + Copy> Point<T> {
     }
 }
 
-impl<T: RealTrait> Point<T> {
+impl<T: RealTrait + Copy> Point<T> {
     pub fn from_polar(r: T, alpha: T) -> Self {
         Self::new(r * alpha.cos(), r * alpha.sin())
     }

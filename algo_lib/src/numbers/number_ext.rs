@@ -1,17 +1,17 @@
-use crate::numbers::num_traits::add_sub::AddSub;
+use crate::numbers::num_traits::algebra::{
+    AdditionMonoidWithSub, IntegerSemiRing, MultiplicationMonoid,
+};
 use crate::numbers::num_traits::from_u8::FromU8;
-use crate::numbers::num_traits::mul_div_rem::{MulDiv, MulDivRem, Multable};
-use crate::numbers::num_traits::zero_one::ZeroOne;
 use crate::when;
 use std::ops::Mul;
 
 pub trait Power {
     #[must_use]
-    fn power<T: ZeroOne + PartialEq + MulDivRem + AddSub + Copy>(&self, exp: T) -> Self;
+    fn power<T: IntegerSemiRing + AdditionMonoidWithSub + Copy>(&self, exp: T) -> Self;
 }
 
-impl<S: ZeroOne + Copy + Multable> Power for S {
-    fn power<T: ZeroOne + PartialEq + MulDivRem + AddSub + Copy>(&self, exp: T) -> Self {
+impl<S: MultiplicationMonoid + Copy> Power for S {
+    fn power<T: IntegerSemiRing + AdditionMonoidWithSub + Copy>(&self, exp: T) -> Self {
         when! {
             exp == T::zero() => S::one(),
             exp % (T::one() + T::one()) == T::zero() => {
@@ -27,7 +27,7 @@ pub trait NumDigs {
     fn num_digs(&self) -> usize;
 }
 
-impl<S: ZeroOne + FromU8 + MulDiv + Copy + PartialEq> NumDigs for S {
+impl<S: IntegerSemiRing + FromU8 + Copy> NumDigs for S {
     fn num_digs(&self) -> usize {
         let mut copy = *self;
         let ten = S::from_u8(10);

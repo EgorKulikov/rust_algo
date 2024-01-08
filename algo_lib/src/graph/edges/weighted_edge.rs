@@ -1,18 +1,17 @@
 use crate::graph::edges::edge_id::{EdgeId, NoId, WithId};
 use crate::graph::edges::edge_trait::EdgeTrait;
 use crate::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
-use crate::numbers::num_traits::add_sub::Addable;
-use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::numbers::num_traits::algebra::AdditionMonoidWithSub;
 
 #[derive(Clone)]
-pub struct WeightedEdgeRaw<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId, P> {
+pub struct WeightedEdgeRaw<W: AdditionMonoidWithSub + Copy, Id: EdgeId, P> {
     to: u32,
     weight: W,
     id: Id,
     payload: P,
 }
 
-impl<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId> WeightedEdgeRaw<W, Id, ()> {
+impl<W: AdditionMonoidWithSub + Copy, Id: EdgeId> WeightedEdgeRaw<W, Id, ()> {
     pub fn new(from: usize, to: usize, w: W) -> (usize, Self) {
         (
             from,
@@ -26,7 +25,7 @@ impl<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId> WeightedEdgeRaw<W, Id
     }
 }
 
-impl<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId, P> WeightedEdgeRaw<W, Id, P> {
+impl<W: AdditionMonoidWithSub + Copy, Id: EdgeId, P> WeightedEdgeRaw<W, Id, P> {
     pub fn with_payload(from: usize, to: usize, w: W, payload: P) -> (usize, Self) {
         (from, Self::with_payload_impl(to, w, payload))
     }
@@ -41,7 +40,7 @@ impl<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId, P> WeightedEdgeRaw<W,
     }
 }
 
-impl<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId, P: Clone> EdgeTrait
+impl<W: AdditionMonoidWithSub + Copy, Id: EdgeId, P: Clone> EdgeTrait
     for WeightedEdgeRaw<W, Id, P>
 {
     type Payload = P;
@@ -76,7 +75,7 @@ impl<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId, P: Clone> EdgeTrait
     }
 }
 
-impl<W: Addable + PartialOrd + Copy + ZeroOne, Id: EdgeId, P: Clone> WeightedEdgeTrait<W>
+impl<W: AdditionMonoidWithSub + Copy, Id: EdgeId, P: Clone> WeightedEdgeTrait<W>
     for WeightedEdgeRaw<W, Id, P>
 {
     fn weight(&self) -> W {

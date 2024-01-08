@@ -1,8 +1,6 @@
 use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::numbers::mod_int::BaseModInt;
-use crate::numbers::num_traits::add_sub::AddSub;
-use crate::numbers::num_traits::mul_div_rem::MulDivRem;
-use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::numbers::num_traits::algebra::{IntegerRing, One, Zero};
 use crate::numbers::number_ext::Power;
 
 pub struct PrimeFFT<M: BaseModInt> {
@@ -150,18 +148,14 @@ impl<M: BaseModInt> PrimeFFT<M> {
         }
     }
 
-    pub fn power<T: ZeroOne + PartialEq + MulDivRem + AddSub + Copy>(
-        &mut self,
-        a: &[M],
-        exp: T,
-    ) -> Vec<M> {
+    pub fn power<T: IntegerRing + Copy>(&mut self, a: &[M], exp: T) -> Vec<M> {
         let mut res = Vec::new();
         let mut temp = Vec::new();
         self.power_impl(a, exp, &mut res, &mut temp);
         res
     }
 
-    fn power_impl<T: ZeroOne + PartialEq + MulDivRem + AddSub + Copy>(
+    fn power_impl<T: IntegerRing + Copy>(
         &mut self,
         a: &[M],
         exp: T,
@@ -184,7 +178,10 @@ impl<M: BaseModInt> PrimeFFT<M> {
 
     const BORDER_LEN: usize = 100;
 
-    fn fft(a: &mut [M], invert: bool, root: M, root_power: M::T, size_t: M::T) {
+    fn fft(a: &mut [M], invert: bool, root: M, root_power: M::T, size_t: M::T)
+    where
+        M::T: Copy,
+    {
         let mut j = 0usize;
         for i in 1..a.len() {
             let mut bit = a.len() >> 1;

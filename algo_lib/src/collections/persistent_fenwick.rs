@@ -1,7 +1,6 @@
 use crate::collections::min_max::MinimMaxim;
 use crate::collections::slice_ext::bounds::Bounds;
-use crate::numbers::num_traits::add_sub::AddSub;
-use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::numbers::num_traits::algebra::AdditionMonoidWithSub;
 use std::cmp::Ordering;
 
 #[derive(Clone)]
@@ -28,7 +27,7 @@ impl<T, E: PartialOrd> PartialOrd for Value<T, E> {
     }
 }
 
-impl<T: AddSub + ZeroOne, E: PartialOrd + Copy> PersistentFenwickTree<T, E> {
+impl<T: AdditionMonoidWithSub + Copy, E: PartialOrd + Copy> PersistentFenwickTree<T, E> {
     pub fn new(size: usize, base: E) -> Self {
         Self {
             base,

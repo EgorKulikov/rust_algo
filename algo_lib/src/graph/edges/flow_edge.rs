@@ -2,11 +2,10 @@ use crate::graph::edges::edge_id::{EdgeId, NoId, WithId};
 use crate::graph::edges::edge_trait::EdgeTrait;
 use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
 use crate::graph::graph::Graph;
-use crate::numbers::num_traits::add_sub::AddSub;
-use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::numbers::num_traits::algebra::AdditionMonoidWithSub;
 
 #[derive(Clone)]
-pub struct FlowEdgeRaw<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId, P> {
+pub struct FlowEdgeRaw<C: AdditionMonoidWithSub + PartialOrd + Copy, Id: EdgeId, P> {
     to: u32,
     capacity: C,
     reverse_id: u32,
@@ -14,7 +13,7 @@ pub struct FlowEdgeRaw<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId, P> {
     payload: P,
 }
 
-impl<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId> FlowEdgeRaw<C, Id, ()> {
+impl<C: AdditionMonoidWithSub + PartialOrd + Copy, Id: EdgeId> FlowEdgeRaw<C, Id, ()> {
     pub fn new(from: usize, to: usize, c: C) -> (usize, Self) {
         (
             from,
@@ -29,7 +28,7 @@ impl<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId> FlowEdgeRaw<C, Id, ()>
     }
 }
 
-impl<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId, P> FlowEdgeRaw<C, Id, P> {
+impl<C: AdditionMonoidWithSub + PartialOrd + Copy, Id: EdgeId, P> FlowEdgeRaw<C, Id, P> {
     pub fn with_payload(from: usize, to: usize, c: C, payload: P) -> (usize, Self) {
         (from, Self::with_payload_impl(to, c, payload))
     }
@@ -45,7 +44,7 @@ impl<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId, P> FlowEdgeRaw<C, Id, 
     }
 }
 
-impl<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId, P: Clone> EdgeTrait
+impl<C: AdditionMonoidWithSub + PartialOrd + Copy, Id: EdgeId, P: Clone> EdgeTrait
     for FlowEdgeRaw<C, Id, P>
 {
     type Payload = P;
@@ -80,7 +79,7 @@ impl<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId, P: Clone> EdgeTrait
     }
 }
 
-impl<C: AddSub + PartialOrd + Copy + ZeroOne, Id: EdgeId, P: Clone> FlowEdgeTrait<C>
+impl<C: AdditionMonoidWithSub + PartialOrd + Copy, Id: EdgeId, P: Clone> FlowEdgeTrait<C>
     for FlowEdgeRaw<C, Id, P>
 {
     fn capacity(&self) -> C {

@@ -4,15 +4,15 @@ use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
 use crate::graph::flow_graph::FlowGraph;
 use crate::graph::graph::Graph;
 use crate::graph::max_flow::MaxFlow;
-use crate::numbers::num_traits::add_sub::AddSub;
+use crate::numbers::num_traits::algebra::AdditionMonoidWithSub;
 use crate::numbers::num_traits::ord::MinMax;
-use crate::numbers::num_traits::zero_one::ZeroOne;
+use std::cmp::Ordering;
 
-pub trait FlowWithDemand<C: AddSub + PartialOrd + Copy + ZeroOne + MinMax> {
+pub trait FlowWithDemand<C: AdditionMonoidWithSub + Ord + Copy + MinMax> {
     fn flow_with_demand(&mut self, source: usize, destination: usize) -> bool;
 }
 
-impl<C: AddSub + PartialOrd + Copy + ZeroOne + MinMax, E: FlowEdgeTrait<C, Payload = C>>
+impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C, Payload = C>>
     FlowWithDemand<C> for Graph<E>
 {
     fn flow_with_demand(&mut self, source: usize, destination: usize) -> bool {
@@ -34,21 +34,25 @@ impl<C: AddSub + PartialOrd + Copy + ZeroOne + MinMax, E: FlowEdgeTrait<C, Paylo
         }
         let mut total_demand = C::zero();
         for (i, d) in demand.into_iter().enumerate() {
-            if d > C::zero() {
-                flow_graph.add_edge(FlowEdge::with_payload(
-                    self.vertex_count(),
-                    i,
-                    d,
-                    (self.vertex_count(), self.vertex_count()),
-                ));
-                total_demand += d;
-            } else if d < C::zero() {
-                flow_graph.add_edge(FlowEdge::with_payload(
-                    i,
-                    self.vertex_count() + 1,
-                    C::zero() - d,
-                    (self.vertex_count(), self.vertex_count()),
-                ));
+            match d.cmp(&C::zero()) {
+                Ordering::Greater => {
+                    flow_graph.add_edge(FlowEdge::with_payload(
+                        self.vertex_count(),
+                        i,
+                        d,
+                        (self.vertex_count(), self.vertex_count()),
+                    ));
+                    total_demand += d;
+                }
+                Ordering::Less => {
+                    flow_graph.add_edge(FlowEdge::with_payload(
+                        i,
+                        self.vertex_count() + 1,
+                        C::zero() - d,
+                        (self.vertex_count(), self.vertex_count()),
+                    ));
+                }
+                Ordering::Equal => {}
             }
         }
         flow_graph.add_edge(FlowEdge::with_payload(

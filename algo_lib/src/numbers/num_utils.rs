@@ -1,10 +1,7 @@
-use crate::numbers::num_traits::add_sub::AddSub;
+use crate::numbers::num_traits::algebra::{AdditionMonoid, IntegerRing, MultiplicationMonoid};
 use crate::numbers::num_traits::as_index::AsIndex;
-use crate::numbers::num_traits::mul_div_rem::Multable;
-use crate::numbers::num_traits::zero_one::ZeroOne;
-use std::ops::{Add, Div};
 
-pub fn factorials<T: ZeroOne + Multable + AsIndex>(len: usize) -> Vec<T> {
+pub fn factorials<T: MultiplicationMonoid + Copy + AsIndex>(len: usize) -> Vec<T> {
     let mut res = Vec::new();
     if len > 0 {
         res.push(T::one());
@@ -15,7 +12,7 @@ pub fn factorials<T: ZeroOne + Multable + AsIndex>(len: usize) -> Vec<T> {
     res
 }
 
-pub fn powers<T: ZeroOne + Multable + AsIndex>(base: T, len: usize) -> Vec<T> {
+pub fn powers<T: MultiplicationMonoid + Copy + AsIndex>(base: T, len: usize) -> Vec<T> {
     let mut res = Vec::new();
     if len > 0 {
         res.push(T::one());
@@ -26,7 +23,7 @@ pub fn powers<T: ZeroOne + Multable + AsIndex>(base: T, len: usize) -> Vec<T> {
     res
 }
 
-pub fn factorial<T: ZeroOne + Multable + AsIndex>(n: usize) -> T {
+pub fn factorial<T: MultiplicationMonoid + AsIndex>(n: usize) -> T {
     let mut res = T::one();
     for i in 1..=n {
         res *= T::from_index(i);
@@ -38,7 +35,7 @@ pub trait PartialSums<T> {
     fn partial_sums(&self) -> Vec<T>;
 }
 
-impl<T: ZeroOne + Add<Output = T> + Copy> PartialSums<T> for [T] {
+impl<T: AdditionMonoid + Copy> PartialSums<T> for [T] {
     fn partial_sums(&self) -> Vec<T> {
         let mut res = Vec::with_capacity(self.len() + 1);
         res.push(T::zero());
@@ -53,7 +50,7 @@ pub trait UpperDiv {
     fn upper_div(self, other: Self) -> Self;
 }
 
-impl<T: Div<Output = T> + AddSub + ZeroOne + Copy> UpperDiv for T {
+impl<T: IntegerRing + Copy> UpperDiv for T {
     fn upper_div(self, other: Self) -> Self {
         (self + other - Self::one()) / other
     }

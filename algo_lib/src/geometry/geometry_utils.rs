@@ -1,10 +1,10 @@
-use crate::numbers::num_traits::real::RealTrait;
+use crate::numbers::real::RealTrait;
 
-pub fn canonize_angle<T: RealTrait>(angle: T) -> T {
+pub fn canonize_angle<T: RealTrait + Copy>(angle: T) -> T {
     canonize_angle_base(angle, T::zero() - T::PI)
 }
 
-pub fn canonize_angle_base<T: RealTrait>(angle: T, base: T) -> T {
+pub fn canonize_angle_base<T: RealTrait + Copy>(angle: T, base: T) -> T {
     let two = T::one() + T::one();
     let mut angle = angle;
     while angle < base - T::epsilon() {

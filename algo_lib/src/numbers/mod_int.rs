@@ -2,13 +2,11 @@ use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use crate::misc::value::Value;
 use crate::numbers::gcd::extended_gcd;
-use crate::numbers::num_traits::add_sub::AddSub;
+use crate::numbers::num_traits::algebra::{Field, IntegerRing, One, Ring, Zero};
 use crate::numbers::num_traits::as_index::AsIndex;
 use crate::numbers::num_traits::from_u8::FromU8;
 use crate::numbers::num_traits::invertable::Invertable;
-use crate::numbers::num_traits::mul_div_rem::{MulDiv, MulDivRem};
 use crate::numbers::num_traits::wideable::Wideable;
-use crate::numbers::num_traits::zero_one::ZeroOne;
 use crate::{value, when};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
@@ -16,11 +14,9 @@ use std::hash::Hash;
 use std::marker::PhantomData;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-pub trait BaseModInt:
-    AddSub + MulDiv + Neg<Output = Self> + Copy + ZeroOne + PartialEq + Invertable<Output = Self>
-{
-    type W: AddSub + MulDivRem + Copy + ZeroOne + From<Self::T>;
-    type T: AddSub + MulDivRem + Copy + PartialEq + ZeroOne + Wideable<W = Self::W> + Ord;
+pub trait BaseModInt: Field + Copy {
+    type W: IntegerRing + Copy + From<Self::T>;
+    type T: IntegerRing + Ord + Copy + Wideable<W = Self::W>;
 
     fn from(v: Self::T) -> Self;
     fn module() -> Self::T;
@@ -38,7 +34,7 @@ impl<T: Copy, V: Value<T>> ModInt<T, V> {
     }
 }
 
-impl<T: AddSub + Copy + ZeroOne + Ord, V: Value<T>> ModInt<T, V> {
+impl<T: Ring + Ord + Copy, V: Value<T>> ModInt<T, V> {
     unsafe fn unchecked_new(n: T) -> Self {
         debug_assert!(n >= T::zero() && n < V::val());
         Self {
@@ -56,16 +52,15 @@ impl<T: AddSub + Copy + ZeroOne + Ord, V: Value<T>> ModInt<T, V> {
     }
 }
 
-impl<T: AddSub + Copy + ZeroOne + Ord + MulDivRem, V: Value<T>> ModInt<T, V> {
+impl<T: IntegerRing + Ord + Copy, V: Value<T>> ModInt<T, V> {
     pub fn new(n: T) -> Self {
         unsafe { Self::unchecked_new(Self::maybe_subtract_mod(n % (V::val()) + V::val())) }
     }
 }
 
-impl<T: Copy + ZeroOne + AddSub + MulDivRem + Wideable + PartialEq + Ord + Hash, V: Value<T>>
-    ModInt<T, V>
+impl<T: Copy + IntegerRing + Ord + Wideable + Hash, V: Value<T>> ModInt<T, V>
 where
-    T::W: Copy + ZeroOne + AddSub + MulDivRem,
+    T::W: Copy + IntegerRing,
 {
     pub fn log(&self, alpha: Self) -> T {
         let mut base = HashMap::new();
@@ -94,9 +89,9 @@ where
     }
 }
 
-impl<T: Wideable + AddSub + Copy + ZeroOne + Ord, V: Value<T>> ModInt<T, V>
+impl<T: Wideable + Ring + Ord + Copy, V: Value<T>> ModInt<T, V>
 where
-    T::W: MulDivRem,
+    T::W: IntegerRing,
 {
     pub fn new_from_wide(n: T::W) -> Self {
         unsafe {
@@ -107,10 +102,9 @@ where
     }
 }
 
-impl<T: Copy + ZeroOne + AddSub + MulDivRem + Wideable + PartialEq + Ord, V: Value<T>> Invertable
-    for ModInt<T, V>
+impl<T: Copy + IntegerRing + Ord + Wideable, V: Value<T>> Invertable for ModInt<T, V>
 where
-    T::W: Copy + ZeroOne + AddSub + MulDivRem,
+    T::W: Copy + IntegerRing,
 {
     type Output = Self;
 
@@ -124,10 +118,9 @@ where
     }
 }
 
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> BaseModInt
-    for ModInt<T, V>
+impl<T: IntegerRing + Ord + Copy + Wideable, V: Value<T>> BaseModInt for ModInt<T, V>
 where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+    T::W: IntegerRing + Copy,
 {
     type W = T::W;
     type T = T;
@@ -141,19 +134,19 @@ where
     }
 }
 
-impl<T: AddSub + Copy + ZeroOne + Ord + MulDivRem, V: Value<T>> From<T> for ModInt<T, V> {
+impl<T: IntegerRing + Ord + Copy, V: Value<T>> From<T> for ModInt<T, V> {
     fn from(n: T) -> Self {
         Self::new(n)
     }
 }
 
-impl<T: AddSub + Copy + ZeroOne + Ord, V: Value<T>> AddAssign for ModInt<T, V> {
+impl<T: Ring + Ord + Copy, V: Value<T>> AddAssign for ModInt<T, V> {
     fn add_assign(&mut self, rhs: Self) {
         self.n = unsafe { Self::maybe_subtract_mod(self.n + rhs.n) };
     }
 }
 
-impl<T: AddSub + Copy + ZeroOne + Ord, V: Value<T>> Add for ModInt<T, V> {
+impl<T: Ring + Ord + Copy, V: Value<T>> Add for ModInt<T, V> {
     type Output = Self;
 
     fn add(mut self, rhs: Self) -> Self::Output {
@@ -162,13 +155,13 @@ impl<T: AddSub + Copy + ZeroOne + Ord, V: Value<T>> Add for ModInt<T, V> {
     }
 }
 
-impl<T: AddSub + Copy + ZeroOne + Ord, V: Value<T>> SubAssign for ModInt<T, V> {
+impl<T: Ring + Ord + Copy, V: Value<T>> SubAssign for ModInt<T, V> {
     fn sub_assign(&mut self, rhs: Self) {
         self.n = unsafe { Self::maybe_subtract_mod(self.n + V::val() - rhs.n) };
     }
 }
 
-impl<T: AddSub + Copy + ZeroOne + Ord, V: Value<T>> Sub for ModInt<T, V> {
+impl<T: Ring + Ord + Copy, V: Value<T>> Sub for ModInt<T, V> {
     type Output = Self;
 
     fn sub(mut self, rhs: Self) -> Self::Output {
@@ -177,19 +170,18 @@ impl<T: AddSub + Copy + ZeroOne + Ord, V: Value<T>> Sub for ModInt<T, V> {
     }
 }
 
-impl<T: AddSub + MulDivRem + Copy + Wideable + ZeroOne + Ord, V: Value<T>> MulAssign
-    for ModInt<T, V>
+impl<T: IntegerRing + Ord + Copy + Wideable, V: Value<T>> MulAssign for ModInt<T, V>
 where
-    T::W: MulDivRem + Copy,
+    T::W: IntegerRing + Copy,
 {
     fn mul_assign(&mut self, rhs: Self) {
         self.n = T::downcast(T::W::from(self.n) * T::W::from(rhs.n) % T::W::from(V::val()));
     }
 }
 
-impl<T: AddSub + MulDivRem + Copy + Wideable + ZeroOne + Ord, V: Value<T>> Mul for ModInt<T, V>
+impl<T: IntegerRing + Ord + Copy + Wideable, V: Value<T>> Mul for ModInt<T, V>
 where
-    T::W: MulDivRem + Copy,
+    T::W: IntegerRing + Copy,
 {
     type Output = Self;
 
@@ -199,10 +191,9 @@ where
     }
 }
 
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> DivAssign
-    for ModInt<T, V>
+impl<T: IntegerRing + Ord + Copy + Wideable, V: Value<T>> DivAssign for ModInt<T, V>
 where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+    T::W: IntegerRing + Copy,
 {
     #[allow(clippy::suspicious_op_assign_impl)]
     fn div_assign(&mut self, rhs: Self) {
@@ -210,10 +201,9 @@ where
     }
 }
 
-impl<T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord, V: Value<T>> Div
-    for ModInt<T, V>
+impl<T: IntegerRing + Ord + Copy + Wideable, V: Value<T>> Div for ModInt<T, V>
 where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+    T::W: IntegerRing + Copy,
 {
     type Output = Self;
 
@@ -223,7 +213,7 @@ where
     }
 }
 
-impl<T: AddSub + Copy + ZeroOne + Ord, V: Value<T>> Neg for ModInt<T, V> {
+impl<T: Ring + Ord + Copy, V: Value<T>> Neg for ModInt<T, V> {
     type Output = Self;
 
     fn neg(mut self) -> Self::Output {
@@ -238,9 +228,7 @@ impl<T: Display, V: Value<T>> Display for ModInt<T, V> {
     }
 }
 
-impl<T: AddSub + Copy + ZeroOne + Ord + MulDivRem + Readable, V: Value<T>> Readable
-    for ModInt<T, V>
-{
+impl<T: IntegerRing + Ord + Copy + Readable, V: Value<T>> Readable for ModInt<T, V> {
     fn read(input: &mut Input) -> Self {
         Self::new(T::read(input))
     }
@@ -252,11 +240,13 @@ impl<T: Writable, V: Value<T>> Writable for ModInt<T, V> {
     }
 }
 
-impl<T: ZeroOne + MulDivRem + AddSub + Copy + Ord, V: Value<T>> ZeroOne for ModInt<T, V> {
+impl<T: Ring + Ord + Copy, V: Value<T>> Zero for ModInt<T, V> {
     fn zero() -> Self {
         unsafe { Self::unchecked_new(T::zero()) }
     }
+}
 
+impl<T: IntegerRing + Ord + Copy, V: Value<T>> One for ModInt<T, V> {
     fn one() -> Self {
         Self::new(T::one())
     }
@@ -270,20 +260,18 @@ impl<T, V: Value<T>> Wideable for ModInt<T, V> {
     }
 }
 
-impl<T: AddSub + Copy + ZeroOne + Ord + MulDivRem + FromU8, V: Value<T>> FromU8 for ModInt<T, V> {
+impl<T: IntegerRing + Ord + Copy + FromU8, V: Value<T>> FromU8 for ModInt<T, V> {
     fn from_u8(n: u8) -> Self {
         Self::new(T::from_u8(n))
     }
 }
 
-impl<
-        T: AddSub + MulDivRem + Copy + PartialEq + Wideable + ZeroOne + Ord + Display + FromU8,
-        V: Value<T>,
-    > std::fmt::Debug for ModInt<T, V>
+impl<T: IntegerRing + Ord + Copy + Wideable + Display + FromU8, V: Value<T>> std::fmt::Debug
+    for ModInt<T, V>
 where
-    T::W: AddSub + MulDivRem + Copy + ZeroOne,
+    T::W: IntegerRing + Copy,
 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         let max = T::from_u8(100);
         when! {
             self.n <= max => write!(f, "{}", self.n),
@@ -309,7 +297,7 @@ where
     }
 }
 
-impl<T: AddSub + Copy + ZeroOne + Ord + MulDivRem + AsIndex, V: Value<T>> AsIndex for ModInt<T, V> {
+impl<T: IntegerRing + Ord + Copy + AsIndex, V: Value<T>> AsIndex for ModInt<T, V> {
     fn from_index(idx: usize) -> Self {
         Self::new(T::from_index(idx))
     }

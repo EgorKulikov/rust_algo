@@ -1,13 +1,12 @@
 use crate::io::output::{Output, Writable};
 use crate::numbers::gcd::gcd;
-use crate::numbers::num_traits::add_sub::AddSub;
-use crate::numbers::num_traits::mul_div_rem::MulDivRem;
-use crate::numbers::num_traits::real::{IntoReal, Real};
-use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::numbers::num_traits::algebra::{IntegerRing, One, Zero};
+use crate::numbers::num_traits::invertable::Invertable;
+use crate::numbers::real::{IntoReal, Real};
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 #[derive(Eq, PartialEq, Copy, Clone, Hash)]
 pub struct Rational<T> {
@@ -31,7 +30,7 @@ impl<T: Copy> Rational<T> {
     }
 }
 
-impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> Rational<T> {
+impl<T: Copy + IntegerRing + Ord> Rational<T> {
     pub fn new(num: T, den: T) -> Self {
         assert!(den != T::zero());
         let mut g = gcd(num, den);
@@ -53,7 +52,7 @@ impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> Rational<T> {
     }
 }
 
-impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> Add for Rational<T> {
+impl<T: Copy + IntegerRing + Ord> Add for Rational<T> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -61,7 +60,7 @@ impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> Add for Rational<T> {
     }
 }
 
-impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> Sub for Rational<T> {
+impl<T: Copy + IntegerRing + Ord> Sub for Rational<T> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -69,7 +68,7 @@ impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> Sub for Rational<T> {
     }
 }
 
-impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> Mul for Rational<T> {
+impl<T: Copy + IntegerRing + Ord> Mul for Rational<T> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -77,7 +76,7 @@ impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> Mul for Rational<T> {
     }
 }
 
-impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> Div for Rational<T> {
+impl<T: Copy + IntegerRing + Ord> Div for Rational<T> {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -85,31 +84,31 @@ impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> Div for Rational<T> {
     }
 }
 
-impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> AddAssign for Rational<T> {
+impl<T: Copy + IntegerRing + Ord> AddAssign for Rational<T> {
     fn add_assign(&mut self, rhs: Self) {
         *self = *self + rhs
     }
 }
 
-impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> SubAssign for Rational<T> {
+impl<T: Copy + IntegerRing + Ord> SubAssign for Rational<T> {
     fn sub_assign(&mut self, rhs: Self) {
         *self = *self - rhs
     }
 }
 
-impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> MulAssign for Rational<T> {
+impl<T: Copy + IntegerRing + Ord> MulAssign for Rational<T> {
     fn mul_assign(&mut self, rhs: Self) {
         *self = *self * rhs
     }
 }
 
-impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> DivAssign for Rational<T> {
+impl<T: Copy + IntegerRing + Ord> DivAssign for Rational<T> {
     fn div_assign(&mut self, rhs: Self) {
         *self = *self / rhs
     }
 }
 
-impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord + Debug> Debug for Rational<T> {
+impl<T: Copy + Debug> Debug for Rational<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.num.fmt(f)?;
         <char as Debug>::fmt(&'/', f)?;
@@ -117,7 +116,7 @@ impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord + Debug> Debug for Rational<T>
     }
 }
 
-impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord + Display> Display for Rational<T> {
+impl<T: Copy + Display> Display for Rational<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.num.fmt(f)?;
         <char as Display>::fmt(&'/', f)?;
@@ -125,7 +124,7 @@ impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord + Display> Display for Rationa
     }
 }
 
-impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord + Writable> Writable for Rational<T> {
+impl<T: Copy + Writable> Writable for Rational<T> {
     fn write(&self, output: &mut Output) {
         self.num.write(output);
         output.put(b'/');
@@ -133,31 +132,53 @@ impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord + Writable> Writable for Ratio
     }
 }
 
-impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> PartialOrd for Rational<T> {
+impl<T: Copy + IntegerRing + Ord> PartialOrd for Rational<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some((self.num * other.den).cmp(&(other.num * self.den)))
     }
 }
 
-impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> Ord for Rational<T> {
+impl<T: Copy + IntegerRing + Ord> Ord for Rational<T> {
     fn cmp(&self, other: &Self) -> Ordering {
         (self.num * other.den).cmp(&(other.num * self.den))
     }
 }
 
-impl<T: Copy + ZeroOne + MulDivRem + AddSub + Ord> ZeroOne for Rational<T> {
+impl<T: Copy + IntegerRing + Ord> Zero for Rational<T> {
     fn zero() -> Self {
         Self::new(T::zero(), T::one())
     }
+}
 
+impl<T: Copy + IntegerRing + Ord> One for Rational<T> {
     fn one() -> Self {
         Self::new(T::one(), T::one())
     }
 }
 
-impl<T: ZeroOne> From<T> for Rational<T> {
+impl<T: One> From<T> for Rational<T> {
     fn from(num: T) -> Self {
         Self::new_internal(num, T::one())
+    }
+}
+
+impl<T: IntegerRing + Ord + Copy> Invertable for Rational<T> {
+    type Output = Self;
+
+    fn inv(&self) -> Option<Self::Output> {
+        if self.num == T::zero() {
+            None
+        } else {
+            Some(Self::new(self.den, self.num))
+        }
+    }
+}
+
+impl<T: IntegerRing + Ord + Copy> Neg for Rational<T> {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Self::new_internal(-self.num, self.den)
     }
 }
 
@@ -168,7 +189,7 @@ where
     fn rat(self) -> Rational<Self>;
 }
 
-impl<T: ZeroOne> ToRational for T {
+impl<T: One> ToRational for T {
     fn rat(self) -> Rational<Self> {
         self.into()
     }

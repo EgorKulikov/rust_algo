@@ -1,13 +1,11 @@
 use crate::collections::md_arr::arr2d::Arr2d;
-use crate::numbers::num_traits::add_sub::Addable;
-use crate::numbers::num_traits::mul_div_rem::Multable;
-use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::numbers::num_traits::algebra::{One, SemiRing, Zero};
 use std::ops::{Deref, DerefMut};
 
 #[derive(Clone)]
 pub struct Matrix<T>(Arr2d<T>);
 
-impl<T: ZeroOne + Clone> Matrix<T> {
+impl<T: Zero + One + Clone> Matrix<T> {
     pub fn zero(n: usize, m: usize) -> Self {
         Self(Arr2d::new(n, m, T::zero()))
     }
@@ -40,7 +38,7 @@ impl<T: Copy> Matrix<T> {
     }
 }
 
-impl<T: ZeroOne + Addable + Multable + Copy> Matrix<T> {
+impl<T: SemiRing + Copy> Matrix<T> {
     pub fn mult(&self, a: &Matrix<T>) -> Self {
         let mut res = Self::zero(self.d1(), a.d2());
         Self::do_mult(&mut res, self, a);

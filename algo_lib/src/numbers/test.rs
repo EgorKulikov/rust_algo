@@ -2,7 +2,7 @@ use crate::numbers::primes::factorize::Factorize;
 
 mod mod_int {
     use crate::numbers::mod_int::ModInt7;
-    use crate::numbers::num_traits::zero_one::ZeroOne;
+    use crate::numbers::num_traits::algebra::{One, Zero};
 
     type Mod = ModInt7;
 

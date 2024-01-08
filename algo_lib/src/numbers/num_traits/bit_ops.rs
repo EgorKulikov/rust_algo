@@ -1,4 +1,4 @@
-use crate::numbers::num_traits::zero_one::ZeroOne;
+use crate::numbers::num_traits::algebra::{One, Zero};
 use std::ops::{
     BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, RangeInclusive, Shl,
 };
@@ -17,7 +17,8 @@ pub trait BitOps:
     + ShlAssign<usize>
     + Shr<usize, Output = Self>
     + ShrAssign<usize>
-    + ZeroOne
+    + Zero
+    + One
     + PartialEq
 {
     fn bit(at: usize) -> Self {
@@ -78,7 +79,8 @@ impl<
             + ShlAssign<usize>
             + Shr<usize, Output = Self>
             + ShrAssign<usize>
-            + ZeroOne
+            + One
+            + Zero
             + PartialEq,
     > BitOps for T
 {

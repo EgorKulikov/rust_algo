@@ -1,15 +1,10 @@
-use crate::numbers::num_traits::add_sub::AddSub;
-use crate::numbers::num_traits::mul_div_rem::{MulDivRem, Multable};
+use crate::numbers::num_traits::algebra::{IntegerRing, One, Ring, Zero};
 use crate::numbers::num_traits::wideable::Wideable;
-use crate::numbers::num_traits::zero_one::ZeroOne;
 use std::mem::swap;
 
-pub fn extended_gcd<T: Copy + ZeroOne + AddSub + MulDivRem + Wideable + PartialEq>(
-    a: T,
-    b: T,
-) -> (T, T::W, T::W)
+pub fn extended_gcd<T: IntegerRing + Wideable + Copy>(a: T, b: T) -> (T, T::W, T::W)
 where
-    T::W: Copy + ZeroOne + AddSub + Multable,
+    T::W: Copy + Ring,
 {
     if a == T::zero() {
         (b, T::W::zero(), T::W::one())
@@ -20,7 +15,7 @@ where
     }
 }
 
-pub fn gcd<T: Copy + ZeroOne + MulDivRem + PartialEq>(mut a: T, mut b: T) -> T {
+pub fn gcd<T: Copy + IntegerRing>(mut a: T, mut b: T) -> T {
     while b != T::zero() {
         a %= b;
         swap(&mut a, &mut b);
@@ -28,6 +23,6 @@ pub fn gcd<T: Copy + ZeroOne + MulDivRem + PartialEq>(mut a: T, mut b: T) -> T {
     a
 }
 
-pub fn lcm<T: Copy + ZeroOne + MulDivRem + PartialEq>(a: T, b: T) -> T {
+pub fn lcm<T: Copy + IntegerRing>(a: T, b: T) -> T {
     (a / gcd(a, b)) * b
 }
