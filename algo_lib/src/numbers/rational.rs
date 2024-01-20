@@ -1,7 +1,7 @@
 use crate::io::output::{Output, Writable};
 use crate::numbers::gcd::gcd;
 use crate::numbers::num_traits::algebra::{IntegerRing, One, Zero};
-use crate::numbers::num_traits::invertable::Invertable;
+use crate::numbers::num_traits::invertible::Invertible;
 use crate::numbers::real::{IntoReal, Real};
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
@@ -162,7 +162,7 @@ impl<T: One> From<T> for Rational<T> {
     }
 }
 
-impl<T: IntegerRing + Ord + Copy> Invertable for Rational<T> {
+impl<T: IntegerRing + Ord + Copy> Invertible for Rational<T> {
     type Output = Self;
 
     fn inv(&self) -> Option<Self::Output> {

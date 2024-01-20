@@ -1,11 +1,11 @@
-use crate::numbers::num_traits::algebra::{AdditionMonoidWithSub, IntegerSemiRing};
+use crate::numbers::num_traits::algebra::IntegerSemiRingWithSub;
 use crate::numbers::num_traits::as_index::AsIndex;
 
 pub trait FWHT {
     fn fwht(&mut self, inverse: bool);
 }
 
-impl<T: IntegerSemiRing + AdditionMonoidWithSub + AsIndex + Copy> FWHT for [T] {
+impl<T: IntegerSemiRingWithSub + AsIndex + Copy> FWHT for [T] {
     fn fwht(&mut self, inverse: bool) {
         assert!(!self.is_empty());
         let n = self.len();

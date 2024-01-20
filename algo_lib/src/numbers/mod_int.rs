@@ -4,8 +4,7 @@ use crate::misc::value::Value;
 use crate::numbers::gcd::extended_gcd;
 use crate::numbers::num_traits::algebra::{Field, IntegerRing, One, Ring, Zero};
 use crate::numbers::num_traits::as_index::AsIndex;
-use crate::numbers::num_traits::from_u8::FromU8;
-use crate::numbers::num_traits::invertable::Invertable;
+use crate::numbers::num_traits::invertible::Invertible;
 use crate::numbers::num_traits::wideable::Wideable;
 use crate::{value, when};
 use std::collections::HashMap;
@@ -102,7 +101,7 @@ where
     }
 }
 
-impl<T: Copy + IntegerRing + Ord + Wideable, V: Value<T>> Invertable for ModInt<T, V>
+impl<T: Copy + IntegerRing + Ord + Wideable, V: Value<T>> Invertible for ModInt<T, V>
 where
     T::W: Copy + IntegerRing,
 {
@@ -260,19 +259,13 @@ impl<T, V: Value<T>> Wideable for ModInt<T, V> {
     }
 }
 
-impl<T: IntegerRing + Ord + Copy + FromU8, V: Value<T>> FromU8 for ModInt<T, V> {
-    fn from_u8(n: u8) -> Self {
-        Self::new(T::from_u8(n))
-    }
-}
-
-impl<T: IntegerRing + Ord + Copy + Wideable + Display + FromU8, V: Value<T>> std::fmt::Debug
+impl<T: IntegerRing + Ord + Copy + Wideable + Display + AsIndex, V: Value<T>> std::fmt::Debug
     for ModInt<T, V>
 where
     T::W: IntegerRing + Copy,
 {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-        let max = T::from_u8(100);
+        let max = T::from_index(100);
         when! {
             self.n <= max => write!(f, "{}", self.n),
             self.n >= V::val() - max => write!(f, "{}", self.n - V::val()),

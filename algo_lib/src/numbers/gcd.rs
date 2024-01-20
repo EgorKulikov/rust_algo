@@ -1,10 +1,12 @@
-use crate::numbers::num_traits::algebra::{IntegerRing, One, Ring, Zero};
+use crate::numbers::num_traits::algebra::{
+    IntegerMultiplicationMonoid, IntegerSemiRingWithSub, One, SemiRingWithSub, Zero,
+};
 use crate::numbers::num_traits::wideable::Wideable;
 use std::mem::swap;
 
-pub fn extended_gcd<T: IntegerRing + Wideable + Copy>(a: T, b: T) -> (T, T::W, T::W)
+pub fn extended_gcd<T: IntegerSemiRingWithSub + Wideable + Copy>(a: T, b: T) -> (T, T::W, T::W)
 where
-    T::W: Copy + Ring,
+    T::W: Copy + SemiRingWithSub,
 {
     if a == T::zero() {
         (b, T::W::zero(), T::W::one())
@@ -15,7 +17,7 @@ where
     }
 }
 
-pub fn gcd<T: Copy + IntegerRing>(mut a: T, mut b: T) -> T {
+pub fn gcd<T: Copy + Zero + IntegerMultiplicationMonoid>(mut a: T, mut b: T) -> T {
     while b != T::zero() {
         a %= b;
         swap(&mut a, &mut b);
@@ -23,6 +25,6 @@ pub fn gcd<T: Copy + IntegerRing>(mut a: T, mut b: T) -> T {
     a
 }
 
-pub fn lcm<T: Copy + IntegerRing>(a: T, b: T) -> T {
+pub fn lcm<T: Copy + Zero + IntegerMultiplicationMonoid>(a: T, b: T) -> T {
     (a / gcd(a, b)) * b
 }

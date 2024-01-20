@@ -1,7 +1,7 @@
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use crate::numbers::num_traits::algebra::{Field, One, Zero};
-use crate::numbers::num_traits::invertable::Invertable;
+use crate::numbers::num_traits::invertible::Invertible;
 use std::cmp::Ordering;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
@@ -162,7 +162,7 @@ impl RealTrait for Real {
     }
 }
 
-impl Invertable for Real {
+impl Invertible for Real {
     type Output = Self;
 
     fn inv(&self) -> Option<Self::Output> {

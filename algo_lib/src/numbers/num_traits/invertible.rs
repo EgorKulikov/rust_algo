@@ -1,4 +1,4 @@
-pub trait Invertable: Sized {
+pub trait Invertible {
     type Output;
 
     fn inv(&self) -> Option<Self::Output>;

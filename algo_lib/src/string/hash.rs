@@ -3,7 +3,7 @@ use crate::misc::value::DynamicValue;
 use crate::misc::value_ref::ValueRef;
 use crate::numbers::mod_int::ModInt;
 use crate::numbers::num_traits::algebra::{One, Zero};
-use crate::numbers::num_traits::invertable::Invertable;
+use crate::numbers::num_traits::invertible::Invertible;
 use crate::numbers::num_traits::primitive::Primitive;
 use crate::numbers::primes::prime::next_prime;
 use crate::{dynamic_value, value_ref, when};

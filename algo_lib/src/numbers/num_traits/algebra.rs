@@ -1,4 +1,4 @@
-use crate::numbers::num_traits::invertable::Invertable;
+use crate::numbers::num_traits::invertible::Invertible;
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
 };
@@ -38,11 +38,11 @@ impl<T: MultiplicationMonoid + Div<Output = Self> + Rem<Output = Self> + DivAssi
 }
 
 pub trait MultiplicationGroup:
-    MultiplicationMonoid + Div<Output = Self> + DivAssign + Invertable<Output = Self>
+    MultiplicationMonoid + Div<Output = Self> + DivAssign + Invertible<Output = Self>
 {
 }
 
-impl<T: MultiplicationMonoid + Div<Output = Self> + DivAssign + Invertable<Output = Self>>
+impl<T: MultiplicationMonoid + Div<Output = Self> + DivAssign + Invertible<Output = Self>>
     MultiplicationGroup for T
 {
 }
@@ -51,6 +51,10 @@ pub trait SemiRing: AdditionMonoid + MultiplicationMonoid {}
 
 impl<T: AdditionMonoid + MultiplicationMonoid> SemiRing for T {}
 
+pub trait SemiRingWithSub: AdditionMonoidWithSub + SemiRing {}
+
+impl<T: AdditionMonoidWithSub + SemiRing> SemiRingWithSub for T {}
+
 pub trait Ring: SemiRing + AdditionGroup {}
 
 impl<T: SemiRing + AdditionGroup> Ring for T {}
@@ -58,6 +62,10 @@ impl<T: SemiRing + AdditionGroup> Ring for T {}
 pub trait IntegerSemiRing: SemiRing + IntegerMultiplicationMonoid {}
 
 impl<T: SemiRing + IntegerMultiplicationMonoid> IntegerSemiRing for T {}
+
+pub trait IntegerSemiRingWithSub: SemiRingWithSub + IntegerSemiRing {}
+
+impl<T: SemiRingWithSub + IntegerSemiRing> IntegerSemiRingWithSub for T {}
 
 pub trait IntegerRing: IntegerSemiRing + Ring {}
 

@@ -1,8 +1,7 @@
 pub mod algebra;
 pub mod as_index;
 pub mod bit_ops;
-pub mod from_u8;
-pub mod invertable;
+pub mod invertible;
 pub mod ord;
 pub mod primitive;
 pub mod sign;

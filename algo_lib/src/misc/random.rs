@@ -1,5 +1,5 @@
 use crate::collections::slice_ext::indices::Indices;
-use crate::numbers::num_traits::algebra::{AdditionMonoidWithSub, IntegerSemiRing};
+use crate::numbers::num_traits::algebra::IntegerSemiRingWithSub;
 use crate::numbers::num_traits::primitive::Primitive;
 use std::ops::Rem;
 use std::time::SystemTime;
@@ -62,11 +62,7 @@ impl Random {
         (self.gen() % n.to()).to()
     }
 
-    pub fn next_bounds<T: IntegerSemiRing + AdditionMonoidWithSub + Primitive<u64>>(
-        &mut self,
-        f: T,
-        t: T,
-    ) -> T
+    pub fn next_bounds<T: IntegerSemiRingWithSub + Primitive<u64>>(&mut self, f: T, t: T) -> T
     where
         u64: Primitive<T>,
     {
