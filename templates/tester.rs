@@ -1,9 +1,32 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
+use crate::run;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
-use std::io::{stdout, Write};
+use algo_lib::string::str::StrReader;
+use std::io::{stdin, stdout, Write};
+use std::sync::mpsc::{Receiver, Sender};
+use std::thread;
+
+const PRINT_LIMIT: usize = 1000;
+
+fn interact(
+    mut _sol_input: Input,
+    mut sol_output: Output,
+    mut _input: Input,
+) -> Result<(), String> {
+    let mut stdin = stdin();
+    let mut input = Input::new(&mut stdin);
+    while !input.is_exhausted() {
+        let line = input.read_line();
+        if line == "###".into() {
+            break;
+        }
+        sol_output.print_line(line);
+    }
+    Ok(())
+}
 
 fn generate_test(out: &mut Output) {}
 
@@ -41,6 +64,112 @@ pub fn check(input: &mut &[u8], expected: &mut &[u8], actual: &mut &[u8]) -> Res
     Ok(())
 }
 
+struct ReadDelegate {
+    rcv: Receiver<Vec<u8>>,
+    cur_buf: Vec<u8>,
+    cur_at: usize,
+}
+
+impl ReadDelegate {
+    fn new(rcv: Receiver<Vec<u8>>) -> Self {
+        Self {
+            rcv,
+            cur_buf: Vec::new(),
+            cur_at: 0,
+        }
+    }
+}
+
+impl std::io::Read for ReadDelegate {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        if self.cur_at == self.cur_buf.len() {
+            self.cur_buf = self.rcv.recv().unwrap();
+            self.cur_at = 0;
+        }
+        let to_read = std::cmp::min(buf.len(), self.cur_buf.len() - self.cur_at);
+        buf[..to_read].copy_from_slice(&self.cur_buf[self.cur_at..self.cur_at + to_read]);
+        self.cur_at += to_read;
+        Ok(to_read)
+    }
+}
+
+struct WriteDelegate {
+    snd: Sender<Vec<u8>>,
+    prefix: &'static str,
+    need_show: bool,
+    remaining_show: usize,
+}
+
+impl WriteDelegate {
+    fn new(snd: Sender<Vec<u8>>, prefix: &'static str) -> Self {
+        Self {
+            snd,
+            prefix,
+            need_show: true,
+            remaining_show: PRINT_LIMIT,
+        }
+    }
+}
+
+impl Write for WriteDelegate {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        if self.remaining_show != 0 {
+            for c in buf {
+                if self.need_show {
+                    print!("{}", self.prefix);
+                    self.need_show = false;
+                }
+                if *c == b'\n' {
+                    self.need_show = true;
+                }
+                print!("{}", *c as char);
+                self.remaining_show -= 1;
+                if self.remaining_show == 0 {
+                    println!("...");
+                    break;
+                }
+            }
+        }
+        self.snd.send(buf.to_vec()).unwrap();
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+fn do_interact(input: Input) -> Result<(), String> {
+    let (snd1, rcv1) = std::sync::mpsc::channel();
+    let (snd2, rcv2) = std::sync::mpsc::channel();
+
+    let handle = thread::spawn(move || {
+        let mut read_delegate = ReadDelegate::new(rcv2);
+        let mut write_delegate = WriteDelegate::new(snd1, "> ");
+        run(
+            Input::new_with_size(&mut read_delegate, 1),
+            Output::new_with_auto_flush(&mut write_delegate),
+        );
+    });
+
+    let mut read_delegate = ReadDelegate::new(rcv1);
+    let mut write_delegate = WriteDelegate::new(snd2, "< ");
+    let result = interact(
+        Input::new_with_size(&mut read_delegate, 1),
+        Output::new_with_auto_flush(&mut write_delegate),
+        input,
+    );
+    result
+}
+
+fn print_string_with_limit(s: &str) {
+    if s.len() <= PRINT_LIMIT {
+        println!("{}", s);
+    } else {
+        println!("{}...", s.split_at(PRINT_LIMIT).0);
+    }
+}
+
 pub(crate) fn run_tests() -> bool {
     let blue = "\x1B[34m";
     let red = "\x1B[31m";
@@ -70,7 +199,20 @@ pub(crate) fn run_tests() -> bool {
                         println!("{}Test {}{}", blue, name, def);
                         println!("{}Input:{}", blue, def);
                         let input = std::fs::read_to_string(&path).unwrap();
-                        println!("{}", input);
+                        print_string_with_limit(&input);
+                        if $INTERACTIVE {
+                            println!("{}Interacting:{}", blue, def);
+                            match do_interact(Input::new(&mut input.as_bytes())) {
+                                Ok(_) => {
+                                    println!("{}Verdict: {}OK{}", blue, green, def);
+                                }
+                                Err(err) => {
+                                    println!("{}Error: {}{}{}", red, err, blue, def);
+                                    test_failed += 1;
+                                }
+                            }
+                            continue;
+                        }
                         let expected = match std::fs::read_to_string(
                             path.parent().unwrap().join(format!("{}.out", name)),
                         ) {
@@ -83,7 +225,7 @@ pub(crate) fn run_tests() -> bool {
                                 println!("{}Not provided{}", yellow, def);
                             }
                             Some(expected) => {
-                                println!("{}", expected);
+                                print_string_with_limit(&expected);
                             }
                         }
                         println!("{}Output:{}", blue, def);
@@ -91,9 +233,11 @@ pub(crate) fn run_tests() -> bool {
                             let mut file = std::fs::File::open(&path).unwrap();
                             let started = std::time::Instant::now();
                             let mut output = Vec::new();
-                            let is_exhausted = crate::run(Input::new(&mut file), Output::new(&mut output));
+                            let is_exhausted =
+                                crate::run(Input::new(&mut file), Output::new(&mut output));
                             let res = started.elapsed();
-                            println!("{}", String::from_utf8_lossy(&output));
+                            let out_str = String::from_utf8_lossy(&output);
+                            print_string_with_limit(out_str.as_ref());
                             (output, res, is_exhausted)
                         }) {
                             Ok((output, duration, is_exhausted)) => {

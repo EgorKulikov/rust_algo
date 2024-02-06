@@ -19,7 +19,7 @@ pub trait IntegerSqrt: Sized {
 impl IntegerSqrt for i64 {
     fn root(self, k: usize) -> Option<Self> {
         let s = self.lower_root(k);
-        if self.power(k) == self {
+        if s.power(k) == self {
             Some(s)
         } else {
             None

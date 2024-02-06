@@ -78,28 +78,23 @@ pub fn det<T: Field + Copy>(mat: &mut Arr2d<T>) -> T {
 }
 
 pub fn invert<T: Field + Copy>(mat: &Arr2d<T>) -> Option<Arr2d<T>> {
-    assert_eq!(mat.d1(), mat.d2());
-    let mut m = Arr2d::generate(mat.d1(), 2 * mat.d2(), |i, j| {
-        if j < mat.d2() {
+    let n = mat.d2();
+    assert_eq!(mat.d1(), n);
+    let mut m = Arr2d::generate(n, 2 * n, |i, j| {
+        if j < n {
             mat[(i, j)]
-        } else if i == j - mat.d2() {
+        } else if i == j - n {
             T::one()
         } else {
             T::zero()
         }
     });
     gauss(&mut m);
-    for i in 0..mat.d2() {
+    for i in 0..n {
         if m[(i, i)] == T::zero() {
             return None;
         }
+        assert!(m[(i, i)] == T::one());
     }
-    let mut ans = Arr2d::generate(mat.d1(), mat.d2(), |i, j| m[(i, j + mat.d2())]);
-    for i in 0..mat.d2() {
-        let v = m[(i, i)];
-        for j in 0..mat.d2() {
-            ans[(i, j)] /= v;
-        }
-    }
-    Some(ans)
+    Some(Arr2d::generate(mat.d1(), n, |i, j| m[(i, j + n)]))
 }
