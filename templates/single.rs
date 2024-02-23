@@ -1,1 +1,1 @@
-solve(&mut input, 1);
+TestType::Single

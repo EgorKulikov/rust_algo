@@ -1,6 +1,6 @@
 use crate::numbers::mod_int::BaseModInt;
 use crate::numbers::num_traits::as_index::AsIndex;
-use crate::numbers::num_utils::factorials;
+use crate::numbers::num_utils::{factorial, factorials};
 
 pub fn inverses<M: BaseModInt>(len: usize) -> Vec<M>
 where
@@ -75,4 +75,19 @@ where
     pub fn inv_fact(&self, n: usize) -> M {
         self.inv_fact[n]
     }
+}
+
+pub fn combinations<M: BaseModInt + AsIndex>(n: usize, mut k: usize) -> M {
+    if k > n {
+        return M::zero();
+    }
+    if k > n - k {
+        k = n - k;
+    }
+    let mut res = M::one();
+    for i in n - k + 1..=n {
+        res *= M::from_index(i);
+    }
+    res /= factorial(k);
+    res
 }

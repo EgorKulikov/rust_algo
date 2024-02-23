@@ -7,6 +7,7 @@ use crate::numbers::num_traits::invertible::Invertible;
 use crate::numbers::num_traits::primitive::Primitive;
 use crate::numbers::primes::prime::next_prime;
 use crate::{dynamic_value, value_ref, when};
+use std::cmp::Ordering;
 use std::collections::Bound;
 use std::ops::RangeBounds;
 
@@ -28,9 +29,9 @@ impl HashBase {
             return;
         }
         HM::set_val(next_prime(
-            random().next_bounds(10u64.pow(18), 2 * 10u64.pow(18)).to(),
+            random().next_bounds(10i64.pow(18), 2 * 10i64.pow(18)),
         ));
-        let multiplier = HashMod::new(random().next_bounds(257, 5 * 10u64.pow(17)).to());
+        let multiplier = HashMod::new(random().next_bounds(4 * 10i64.pow(17), 5 * 10i64.pow(17)));
         let inv_multiplier = multiplier.inv().unwrap();
         HashBaseContainer::set_val(Self {
             multiplier,
@@ -188,5 +189,25 @@ impl<T: Primitive<i64>> Hashable for [T] {
             power *= multiplier;
         }
         res.val()
+    }
+}
+
+fn compare(h1: &impl StringHash, h2: &impl StringHash) -> Ordering {
+    let mut left = 0;
+    let mut right = h1.len().min(h2.len());
+
+    while left < right {
+        let mid = (left + right + 1) / 2;
+        if h1.hash(..mid) == h2.hash(..mid) {
+            left = mid;
+        } else {
+            right = mid - 1;
+        }
+    }
+
+    if left == h1.len().min(h2.len()) {
+        h1.len().cmp(&h2.len())
+    } else {
+        h1.hash(left..=left).cmp(&h2.hash(left..=left))
     }
 }

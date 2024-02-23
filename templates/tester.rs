@@ -251,7 +251,7 @@ pub(crate) fn run_tests() -> bool {
                                     println!("{}Input not exhausted{}", red, def);
                                 }
                                 if let Some(expected) = expected {
-                                    let mut expected_bytes = expected.as_bytes().clone();
+                                    let mut expected_bytes = expected.as_bytes();
                                     match check(
                                         &mut input.as_bytes(),
                                         &mut expected_bytes,
