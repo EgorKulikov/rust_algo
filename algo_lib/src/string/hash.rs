@@ -66,6 +66,7 @@ pub trait StringHash {
     }
 }
 
+#[derive(Clone)]
 pub struct SimpleHash {
     hash: Vec<HashMod>,
 }
@@ -99,6 +100,7 @@ impl StringHash for SimpleHash {
     }
 }
 
+#[derive(Clone)]
 pub struct SubstrigHash<'s, BaseHash: StringHash + ?Sized> {
     base: &'s BaseHash,
     from: usize,
@@ -139,6 +141,7 @@ fn convert_bounds<R: RangeBounds<usize>>(r: R, len: usize) -> (usize, usize) {
     (from, to)
 }
 
+#[derive(Clone)]
 pub struct CompositeHash<'s, Hash1: StringHash + ?Sized, Hash2: StringHash + ?Sized> {
     base1: &'s Hash1,
     base2: &'s Hash2,
@@ -192,7 +195,7 @@ impl<T: Primitive<i64>> Hashable for [T] {
     }
 }
 
-fn compare(h1: &impl StringHash, h2: &impl StringHash) -> Ordering {
+pub fn compare(h1: &impl StringHash, h2: &impl StringHash) -> Ordering {
     let mut left = 0;
     let mut right = h1.len().min(h2.len());
 

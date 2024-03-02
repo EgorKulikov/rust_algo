@@ -24,6 +24,7 @@ fn interact(
             break;
         }
         sol_output.print_line(line);
+        sol_output.flush();
     }
     Ok(())
 }
@@ -155,8 +156,8 @@ fn do_interact(input: Input) -> Result<(), String> {
     let mut read_delegate = ReadDelegate::new(rcv1);
     let mut write_delegate = WriteDelegate::new(snd2, "< ");
     let result = interact(
-        Input::new_with_size(&mut read_delegate, 1),
-        Output::new_with_auto_flush(&mut write_delegate),
+        Input::new(&mut read_delegate),
+        Output::new(&mut write_delegate),
         input,
     );
     result

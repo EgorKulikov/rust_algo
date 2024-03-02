@@ -116,18 +116,6 @@ impl<'s> Output<'s> {
         }
     }
 
-    pub fn print_iter_ref<'a, T: 'a + Writable, I: Iterator<Item = &'a T>>(&mut self, iter: I) {
-        let mut first = true;
-        for e in iter {
-            if first {
-                first = false;
-            } else {
-                self.put(b' ');
-            }
-            e.write(self);
-        }
-    }
-
     pub fn set_bool_output(&mut self, bool_output: BoolOutput) {
         self.bool_output = bool_output;
     }
@@ -181,13 +169,13 @@ impl Writable for char {
 
 impl<T: Writable> Writable for [T] {
     fn write(&self, output: &mut Output) {
-        output.print_iter_ref(self.iter());
+        output.print_iter(self.iter());
     }
 }
 
 impl<T: Writable, const N: usize> Writable for [T; N] {
     fn write(&self, output: &mut Output) {
-        output.print_iter_ref(self.iter());
+        output.print_iter(self.iter());
     }
 }
 
@@ -241,6 +229,7 @@ tuple_writable! {T U:1 V:2 X:3 Y:4}
 tuple_writable! {T U:1 V:2 X:3 Y:4 Z:5}
 tuple_writable! {T U:1 V:2 X:3 Y:4 Z:5 A:6}
 tuple_writable! {T U:1 V:2 X:3 Y:4 Z:5 A:6 B:7}
+tuple_writable! {T U:1 V:2 X:3 Y:4 Z:5 A:6 B:7 C:8}
 
 impl<T: Writable> Writable for Option<T> {
     fn write(&self, output: &mut Output) {
@@ -259,6 +248,7 @@ impl Writable for bool {
 }
 
 static mut ERR: Option<Stderr> = None;
+
 pub fn err() -> Output<'static> {
     unsafe {
         if ERR.is_none() {
