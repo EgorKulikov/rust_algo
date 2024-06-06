@@ -1,4 +1,5 @@
 use crate::collections::vec_ext::default::default_vec;
+use std::cmp::Reverse;
 use std::io::{stderr, Stderr, Write};
 
 #[derive(Copy, Clone)]
@@ -179,7 +180,7 @@ impl<T: Writable, const N: usize> Writable for [T; N] {
     }
 }
 
-impl<T: Writable> Writable for &T {
+impl<T: Writable + ?Sized> Writable for &T {
     fn write(&self, output: &mut Output) {
         T::write(self, output)
     }
@@ -244,6 +245,12 @@ impl Writable for bool {
     fn write(&self, output: &mut Output) {
         let bool_output = output.bool_output;
         bool_output.output(output, *self)
+    }
+}
+
+impl<T: Writable> Writable for Reverse<T> {
+    fn write(&self, output: &mut Output) {
+        self.0.write(output);
     }
 }
 

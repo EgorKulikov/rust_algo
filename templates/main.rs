@@ -10,6 +10,5 @@ mod tester;
 
 fn main() {
     tester::run_tests();
-//    tester::stress_test();
 }
 //END MAIN

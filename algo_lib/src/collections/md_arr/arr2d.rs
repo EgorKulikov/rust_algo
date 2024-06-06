@@ -87,6 +87,17 @@ impl<T> Arr2d<T> {
     pub fn cols(&self) -> Range<usize> {
         0..self.d2
     }
+
+    pub fn swap_rows(&mut self, r1: usize, r2: usize) {
+        assert!(r1 < self.d1);
+        assert!(r2 < self.d1);
+        if r1 == r2 {
+            return;
+        }
+        let (r1, r2) = (r1.min(r2), r1.max(r2));
+        let (head, tail) = self.data.split_at_mut(r2 * self.d2);
+        head[r1 * self.d2..(r1 + 1) * self.d2].swap_with_slice(&mut tail[..self.d2]);
+    }
 }
 
 impl<T: Clone> Arr2d<T> {

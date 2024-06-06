@@ -5,7 +5,7 @@ use std::ops::{BitAndAssign, BitOrAssign, Index};
 const TRUE: bool = true;
 const FALSE: bool = false;
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub struct BitSet {
     data: Vec<u64>,
     len: usize,
@@ -23,7 +23,7 @@ impl BitSet {
             len,
         }
     }
-    
+
     pub fn from_slice(len: usize, set: &[usize]) -> Self {
         let mut res = Self::new(len);
         for &i in set {

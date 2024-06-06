@@ -181,6 +181,18 @@ impl<'s> Str<'s> {
         }
         res
     }
+
+    pub fn qty(&self, from: u8, to: u8) -> Vec<usize> {
+        let mut res = vec![0; (to - from + 1) as usize];
+        for &c in self.as_slice() {
+            res[(c - from) as usize] += 1;
+        }
+        res
+    }
+
+    pub fn qty_lower(&self) -> Vec<usize> {
+        self.qty(b'a', b'z')
+    }
 }
 
 impl<'s> IntoIterator for Str<'s> {

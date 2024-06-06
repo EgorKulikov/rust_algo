@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "algo_lib",
     "main",
+    "tester",
 ]
 
 [profile.release]

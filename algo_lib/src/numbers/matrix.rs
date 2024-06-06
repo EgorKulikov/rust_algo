@@ -100,6 +100,40 @@ impl<T: SemiRing + Copy> Matrix<T> {
             }
         }
     }
+
+    pub fn sum_power(&self, n: usize) -> Self {
+        assert_eq!(self.d1(), self.d2());
+        let mut res = Self::zero(self.d1(), self.d2());
+        let mut temp = Self::zero(self.d1(), self.d2());
+        let mut pw = Self::ident(self.d1());
+        let mut temp_pw = Self::ident(self.d1());
+        Self::do_sum_power(self, &mut res, &mut temp, &mut pw, &mut temp_pw, n);
+        res
+    }
+
+    fn do_sum_power(
+        a: &Matrix<T>,
+        res: &mut Matrix<T>,
+        temp: &mut Matrix<T>,
+        pw: &mut Matrix<T>,
+        temp_pw: &mut Matrix<T>,
+        n: usize,
+    ) {
+        if n != 0 {
+            if (n & 1) == 0 {
+                Self::do_sum_power(a, temp, res, temp_pw, pw, n >> 1);
+                pw.do_mult(temp_pw, temp_pw);
+                for i in 0..pw.d1() {
+                    temp_pw[(i, i)] += T::one();
+                }
+                res.do_mult(temp, temp_pw);
+            } else {
+                Self::do_sum_power(a, res, temp, temp_pw, pw, n - 1);
+                pw.do_mult(temp_pw, a);
+                res.add_to(temp_pw);
+            }
+        }
+    }
 }
 
 impl<T> Deref for Matrix<T> {
