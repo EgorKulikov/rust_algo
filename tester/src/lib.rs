@@ -139,7 +139,7 @@ impl Tester {
                             .write_all(&expected)
                             .unwrap();
                     } else {
-                        remove_file(format!("{}/tests/0.out", self.task_folder)).unwrap();
+                        let _ = remove_file(format!("{}/tests/0.out", self.task_folder));
                     }
                     return false;
                 }
