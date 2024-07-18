@@ -63,12 +63,20 @@ impl<P: Payload> TreapNodeInner<P> {
         self.payload.push(delta);
     }
 
+    fn into_payload(self) -> P {
+        self.payload
+    }
+}
+
+impl<P: PayloadWithKey> TreapNodeInner<P> {
     fn key(&self) -> &P::Key {
         self.payload.key()
     }
+}
 
-    fn into_payload(self) -> P {
-        self.payload
+impl<P: SizedPayload> TreapNodeInner<P> {
+    fn size(&self) -> usize {
+        self.payload.size()
     }
 }
 
@@ -96,10 +104,6 @@ impl<P: Payload> TreapNode<P> {
         self.as_mut().unwrap().payload.replace(data)
     }
 
-    pub fn key(&self) -> Option<&P::Key> {
-        self.as_ref().map(|node| node.key())
-    }
-
     pub fn push(&mut self, parent_payload: &P, direction: Direction) {
         if let Some(node) = self.as_mut() {
             node.push(parent_payload, direction);
@@ -113,6 +117,61 @@ impl<P: Payload> TreapNode<P> {
         if let Some(node) = self.as_mut() {
             node.push_delta(delta);
         }
+    }
+
+    pub fn priority(&self) -> u64 {
+        self.as_ref().map(|node| node.priority).unwrap_or(0)
+    }
+
+    pub fn merge(left: Self, right: Self) -> Self {
+        match left.inner {
+            None => right,
+            Some(mut left) => TreapNode {
+                inner: Some(match right.inner {
+                    None => left,
+                    Some(mut right) => {
+                        if left.priority > right.priority {
+                            left.push_down();
+                            left.right =
+                                Box::new(Self::merge(*left.right, Self { inner: Some(right) }));
+                            left.update();
+                            left
+                        } else {
+                            right.push_down();
+                            right.left =
+                                Box::new(Self::merge(Self { inner: Some(left) }, *right.left));
+                            right.update();
+                            right
+                        }
+                    }
+                }),
+            },
+        }
+    }
+
+    pub fn binary_search<'s, F>(&'s self, mut f: F)
+    where
+        F: FnMut(&'s P, Option<&'s P>, Option<&'s P>) -> Option<Direction>,
+    {
+        if let Some(node) = self.deref() {
+            let direction = f(&node.payload, node.left.payload(), node.right.payload());
+            if let Some(direction) = direction {
+                match direction {
+                    Direction::Left => {
+                        node.left.binary_search(f);
+                    }
+                    Direction::Right => {
+                        node.right.binary_search(f);
+                    }
+                }
+            }
+        }
+    }
+}
+
+impl<P: PayloadWithKey> TreapNode<P> {
+    pub fn key(&self) -> Option<&P::Key> {
+        self.as_ref().map(|node| node.key())
     }
 
     pub fn split(self, split_key: &P::Key, to_left: bool) -> (Self, Self) {
@@ -216,71 +275,13 @@ impl<P: Payload> TreapNode<P> {
         })
     }
 
-    pub fn priority(&self) -> u64 {
-        self.as_ref().map(|node| node.priority).unwrap_or(0)
-    }
-
-    pub fn merge(left: Self, right: Self) -> Self {
+    pub fn merge_safe(left: Self, right: Self) -> Self {
         if left.is_some() && right.is_some() {
             assert!(
                 left.rightmost().unwrap().key().unwrap() < right.leftmost().unwrap().key().unwrap()
             );
         }
-        unsafe { Self::merge_unsafe(left, right) }
-    }
-
-    pub unsafe fn merge_unsafe(left: Self, right: Self) -> Self {
-        match left.inner {
-            None => right,
-            Some(mut left) => TreapNode {
-                inner: Some(match right.inner {
-                    None => left,
-                    Some(mut right) => {
-                        if left.priority > right.priority {
-                            left.push_down();
-                            left.right = Box::new(Self::merge_unsafe(
-                                *left.right,
-                                Self { inner: Some(right) },
-                            ));
-                            left.update();
-                            left
-                        } else {
-                            right.push_down();
-                            right.left = Box::new(Self::merge_unsafe(
-                                Self { inner: Some(left) },
-                                *right.left,
-                            ));
-                            right.update();
-                            right
-                        }
-                    }
-                }),
-            },
-        }
-    }
-
-    pub fn binary_search<'s, F>(&'s self, mut f: F)
-    where
-        F: FnMut(&'s P::Key, &'s P, Option<&'s P>, Option<&'s P>) -> Option<Direction>,
-    {
-        if let Some(node) = self.deref() {
-            let direction = f(
-                node.key(),
-                &node.payload,
-                node.left.payload(),
-                node.right.payload(),
-            );
-            if let Some(direction) = direction {
-                match direction {
-                    Direction::Left => {
-                        node.left.binary_search(f);
-                    }
-                    Direction::Right => {
-                        node.right.binary_search(f);
-                    }
-                }
-            }
-        }
+        Self::merge(left, right)
     }
 
     pub fn find(&self, key: &P::Key) -> &Self {
@@ -294,6 +295,42 @@ impl<P: Payload> TreapNode<P> {
                     Ordering::Greater => node.left.find(key),
                 }
             }
+        }
+    }
+
+    pub fn insert(self, node: P) -> (Self, Option<P>) {
+        let (left, right) = self.split(node.key(), false);
+        let (mid, right) = right.split(node.key(), true);
+        (
+            Self::merge_safe(left, Self::merge_safe(Self::new(node), right)),
+            mid.into_payload(),
+        )
+    }
+}
+
+impl<P: SizedPayload> TreapNode<P> {
+    pub fn size(&self) -> usize {
+        self.as_ref().map(|node| node.size()).unwrap_or(0)
+    }
+
+    pub fn split_at(self, at: usize) -> (Self, Self) {
+        match self.inner {
+            Some(mut node) => {
+                node.push_down();
+                let left_size = node.left.size();
+                if left_size < at {
+                    let (left, right) = node.right.split_at(at - left_size - 1);
+                    node.right = Box::new(left);
+                    node.update();
+                    (Self { inner: Some(node) }, right)
+                } else {
+                    let (left, right) = node.left.split_at(at);
+                    node.left = Box::new(right);
+                    node.update();
+                    (left, Self { inner: Some(node) })
+                }
+            }
+            None => (Self::NONE, Self::NONE),
         }
     }
 }
@@ -311,12 +348,15 @@ impl<P: Payload> Default for TreapNode<P> {
 }
 
 pub trait Payload {
-    type Key: Ord;
-
-    fn key(&self) -> &Self::Key;
     fn reset_delta(&mut self);
     fn update(&mut self, left: Option<&Self>, right: Option<&Self>);
     fn push_delta(&mut self, delta: &Self, direction: Direction);
+}
+
+pub trait PayloadWithKey: Payload {
+    type Key: Ord;
+
+    fn key(&self) -> &Self::Key;
 }
 
 pub trait Pushable<Delta>: Payload {
@@ -333,6 +373,7 @@ pub trait Replaceable<Delta>: Payload {
     fn replace(&mut self, delta: Delta) -> Delta;
 }
 
+#[derive(Copy, Clone)]
 pub struct SizePayload<InnerPayload: Payload> {
     pub inner: InnerPayload,
     pub size: u32,
@@ -348,12 +389,6 @@ impl<Data> From<Data> for SizePayload<PureDataPayload<Data>> {
 }
 
 impl<InnerPayload: Payload> Payload for SizePayload<InnerPayload> {
-    type Key = InnerPayload::Key;
-
-    fn key(&self) -> &Self::Key {
-        self.inner.key()
-    }
-
     fn reset_delta(&mut self) {
         self.inner.reset_delta();
     }
@@ -367,6 +402,20 @@ impl<InnerPayload: Payload> Payload for SizePayload<InnerPayload> {
 
     fn push_delta(&mut self, delta: &Self, direction: Direction) {
         self.inner.push_delta(&delta.inner, direction);
+    }
+}
+
+impl<InnerPayload: PayloadWithKey> PayloadWithKey for SizePayload<InnerPayload> {
+    type Key = InnerPayload::Key;
+
+    fn key(&self) -> &Self::Key {
+        self.inner.key()
+    }
+}
+
+impl<InnerPayload: Payload> SizedPayload for SizePayload<InnerPayload> {
+    fn size(&self) -> usize {
+        self.size as usize
     }
 }
 
@@ -395,12 +444,6 @@ impl<Key: Ord, InnerPayload: Payload, Data: Into<InnerPayload>> From<(Key, Data)
 }
 
 impl<Key: Ord, InnerPayload: Payload> Payload for KeyPayload<Key, InnerPayload> {
-    type Key = Key;
-
-    fn key(&self) -> &Self::Key {
-        &self.key
-    }
-
     fn reset_delta(&mut self) {
         self.inner.reset_delta();
     }
@@ -412,6 +455,14 @@ impl<Key: Ord, InnerPayload: Payload> Payload for KeyPayload<Key, InnerPayload> 
 
     fn push_delta(&mut self, delta: &Self, direction: Direction) {
         self.inner.push_delta(&delta.inner, direction);
+    }
+}
+
+impl<Key: Ord, InnerPayload: Payload> PayloadWithKey for KeyPayload<Key, InnerPayload> {
+    type Key = Key;
+
+    fn key(&self) -> &Self::Key {
+        &self.key
     }
 }
 
@@ -434,12 +485,6 @@ impl<Data> From<Data> for PureDataPayload<Data> {
 }
 
 impl<Data> Payload for PureDataPayload<Data> {
-    type Key = usize;
-
-    fn key(&self) -> &Self::Key {
-        unreachable!()
-    }
-
     fn reset_delta(&mut self) {}
 
     fn update(&mut self, _: Option<&Self>, _: Option<&Self>) {}
@@ -454,6 +499,7 @@ impl<Data> Replaceable<Data> for PureDataPayload<Data> {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct ImpliedKeyPayload<InnerPayload: Payload> {
     pub inner: SizePayload<InnerPayload>,
 }
@@ -475,12 +521,6 @@ impl<Data, InnerPayload: Payload + Replaceable<Data>> Replaceable<Data>
 }
 
 impl<InnerPayload: Payload> Payload for ImpliedKeyPayload<InnerPayload> {
-    type Key = u32;
-
-    fn key(&self) -> &Self::Key {
-        &self.inner.size
-    }
-
     fn reset_delta(&mut self) {
         self.inner.reset_delta();
     }
@@ -495,6 +535,12 @@ impl<InnerPayload: Payload> Payload for ImpliedKeyPayload<InnerPayload> {
     }
 }
 
+impl<InnerPayload: Payload> SizedPayload for ImpliedKeyPayload<InnerPayload> {
+    fn size(&self) -> usize {
+        self.inner.size as usize
+    }
+}
+
 // TODO: get rid of log
 pub struct Iter<'a, P> {
     root: &'a TreapNode<P>,
@@ -502,7 +548,7 @@ pub struct Iter<'a, P> {
     to: Option<&'a TreapNode<P>>,
 }
 
-impl<'a, P: Payload> Iter<'a, P> {
+impl<'a, P: PayloadWithKey> Iter<'a, P> {
     pub fn new<'b>(root: &'a TreapNode<P>, r: impl RangeBounds<&'b P::Key>) -> Self
     where
         'a: 'b,
@@ -523,7 +569,7 @@ impl<'a, P: Payload> Iter<'a, P> {
     }
 }
 
-impl<'a, P: Payload> Iterator for Iter<'a, P> {
+impl<'a, P: PayloadWithKey> Iterator for Iter<'a, P> {
     type Item = &'a TreapNode<P>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -537,7 +583,7 @@ impl<'a, P: Payload> Iterator for Iter<'a, P> {
     }
 }
 
-impl<'a, P: Payload> DoubleEndedIterator for Iter<'a, P> {
+impl<'a, P: PayloadWithKey> DoubleEndedIterator for Iter<'a, P> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.from?.key().unwrap() <= self.to?.key().unwrap() {
             let res = self.to;
@@ -547,4 +593,8 @@ impl<'a, P: Payload> DoubleEndedIterator for Iter<'a, P> {
             None
         }
     }
+}
+
+pub trait SizedPayload: Payload {
+    fn size(&self) -> usize;
 }

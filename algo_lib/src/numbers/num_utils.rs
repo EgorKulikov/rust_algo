@@ -12,7 +12,7 @@ pub fn factorials<T: MultiplicationMonoid + Copy + AsIndex>(len: usize) -> Vec<T
     res
 }
 
-pub fn powers<T: MultiplicationMonoid + Copy + AsIndex>(base: T, len: usize) -> Vec<T> {
+pub fn powers<T: MultiplicationMonoid + Copy>(base: T, len: usize) -> Vec<T> {
     let mut res = Vec::new();
     if len > 0 {
         res.push(T::one());
@@ -21,6 +21,24 @@ pub fn powers<T: MultiplicationMonoid + Copy + AsIndex>(base: T, len: usize) -> 
         res.push((*res.last().unwrap()) * base);
     }
     res
+}
+
+pub struct Powers<T: MultiplicationMonoid + Copy> {
+    small: Vec<T>,
+    big: Vec<T>,
+}
+
+impl<T: MultiplicationMonoid + Copy> Powers<T> {
+    pub fn new(base: T, len: usize) -> Self {
+        let small = powers(base, len);
+        let big = powers(small[len - 1] * base, len);
+        Self { small, big }
+    }
+
+    pub fn power(&self, exp: usize) -> T {
+        debug_assert!(exp < self.small.len() * self.small.len());
+        self.big[exp / self.small.len()] * self.small[exp % self.small.len()]
+    }
 }
 
 pub fn factorial<T: MultiplicationMonoid + AsIndex>(n: usize) -> T {

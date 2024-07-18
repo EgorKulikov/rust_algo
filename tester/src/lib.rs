@@ -1,5 +1,5 @@
 use std::any::Any;
-use std::fs::File;
+use std::fs::{remove_file, File};
 use std::io::Write;
 use std::time::Duration;
 
@@ -138,6 +138,8 @@ impl Tester {
                             .unwrap()
                             .write_all(&expected)
                             .unwrap();
+                    } else {
+                        remove_file(format!("{}/tests/0.out", self.task_folder)).unwrap();
                     }
                     return false;
                 }

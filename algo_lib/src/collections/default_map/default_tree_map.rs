@@ -1,5 +1,6 @@
 use std::collections::btree_map::{IntoIter, IntoValues};
 use std::collections::BTreeMap;
+use std::iter::FromIterator;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 
 #[derive(Default, Clone, Eq, PartialEq)]

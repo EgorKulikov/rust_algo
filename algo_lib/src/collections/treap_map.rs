@@ -1,4 +1,6 @@
-use crate::collections::treap::{KeyPayload, Payload, PureDataPayload, SizePayload, TreapNode};
+use crate::collections::treap::{
+    KeyPayload, PayloadWithKey, PureDataPayload, SizePayload, TreapNode,
+};
 use crate::misc::direction::Direction;
 use std::cmp::Ordering;
 use std::mem::swap;
@@ -20,7 +22,7 @@ impl<T: Ord, V> TreapMap<T, V> {
     pub unsafe fn from_sorted(iter: impl Iterator<Item = (T, V)>) -> Self {
         let mut res = Self::new();
         for (t, v) in iter {
-            res.root = TreapNode::merge_unsafe(res.root, TreapNode::new((t, v).into()));
+            res.root = TreapNode::merge(res.root, TreapNode::new((t, v).into()));
         }
         res
     }
@@ -39,9 +41,7 @@ impl<T: Ord, V> TreapMap<T, V> {
             node = TreapNode::new((key, value).into());
             None
         };
-        unsafe {
-            self.root = TreapNode::merge_unsafe(left, TreapNode::merge_unsafe(node, right));
-        }
+        self.root = TreapNode::merge(left, TreapNode::merge(node, right));
         res
     }
 
@@ -49,17 +49,16 @@ impl<T: Ord, V> TreapMap<T, V> {
         let mut root = TreapNode::NONE;
         swap(&mut self.root, &mut root);
         let (left, node, right) = root.split_range(key..=key);
-        unsafe {
-            self.root = TreapNode::merge_unsafe(left, right);
-        }
+        self.root = TreapNode::merge(left, right);
         node.into_payload().map(|data| data.inner.inner.data)
     }
 
     pub fn index(&self, key: &T) -> Option<usize> {
         let mut res = 0;
         let mut found = false;
-        self.root
-            .binary_search(|k, _, left_data, _| match key.cmp(k) {
+        self.root.binary_search(|payload, left_data, _| {
+            let k = payload.key();
+            match key.cmp(k) {
                 Ordering::Less => Some(Direction::Left),
                 Ordering::Equal => {
                     if let Some(data) = left_data {
@@ -76,7 +75,8 @@ impl<T: Ord, V> TreapMap<T, V> {
                     }
                     Some(Direction::Right)
                 }
-            });
+            }
+        });
         if found {
             Some(res as usize)
         } else {
@@ -96,7 +96,8 @@ impl<T: Ord, V> TreapMap<T, V> {
             None
         } else {
             let mut res = None;
-            self.root.binary_search(|key, value, left, _| {
+            self.root.binary_search(|value, left, _| {
+                let key = value.key();
                 let to_left = left.map(|data| data.inner.size as usize).unwrap_or(0);
                 match to_left {
                     v if v > at => Some(Direction::Left),

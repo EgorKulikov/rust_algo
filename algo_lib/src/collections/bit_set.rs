@@ -1,6 +1,6 @@
 use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::numbers::num_traits::bit_ops::BitOps;
-use std::ops::{BitAndAssign, BitOrAssign, Index};
+use std::ops::{BitAndAssign, BitOrAssign, Index, ShlAssign, ShrAssign};
 
 const TRUE: bool = true;
 const FALSE: bool = false;
@@ -89,6 +89,13 @@ impl BitSet {
     pub fn count_ones(&self) -> usize {
         self.data.iter().map(|x| x.count_ones() as usize).sum()
     }
+
+    fn fix_last(&mut self) {
+        if self.len & 63 != 0 {
+            let mask = (1 << (self.len & 63)) - 1;
+            *self.data.last_mut().unwrap() &= mask;
+        }
+    }
 }
 
 pub struct BitSetIter<'s> {
@@ -151,6 +158,54 @@ impl BitAndAssign<&BitSet> for BitSet {
         assert_eq!(self.len, rhs.len);
         for (i, &j) in self.data.iter_mut().zip(rhs.data.iter()) {
             *i &= j;
+        }
+    }
+}
+
+impl ShlAssign<usize> for BitSet {
+    fn shl_assign(&mut self, rhs: usize) {
+        if rhs == 0 {
+            return;
+        }
+        let small_shift = rhs & 63;
+        if small_shift != 0 {
+            let mut carry = 0;
+            for i in 0..self.data.len() {
+                let new_carry = self.data[i] >> (64 - small_shift);
+                self.data[i] <<= small_shift;
+                self.data[i] |= carry;
+                carry = new_carry;
+            }
+        }
+        let big_shift = rhs >> 6;
+        if big_shift != 0 {
+            self.data.rotate_right(big_shift);
+            self.data[..big_shift].fill(0);
+        }
+        self.fix_last();
+    }
+}
+
+impl ShrAssign<usize> for BitSet {
+    fn shr_assign(&mut self, rhs: usize) {
+        if rhs == 0 {
+            return;
+        }
+        let small_shift = rhs & 63;
+        if small_shift != 0 {
+            let mut carry = 0;
+            for i in (0..self.data.len()).rev() {
+                let new_carry = self.data[i] << (64 - small_shift);
+                self.data[i] >>= small_shift;
+                self.data[i] |= carry;
+                carry = new_carry;
+            }
+        }
+        let big_shift = rhs >> 6;
+        if big_shift != 0 {
+            self.data.rotate_left(big_shift);
+            let from = self.data.len() - big_shift;
+            self.data[from..].fill(0);
         }
     }
 }

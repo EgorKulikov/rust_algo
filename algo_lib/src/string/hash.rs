@@ -86,6 +86,14 @@ impl SimpleHash {
         }
         Self { hash }
     }
+
+    pub fn push(&mut self, c: impl Primitive<i64>) {
+        HashBaseContainer::val_mut().ensure_capacity(self.hash.len() + 1);
+        self.hash.push(
+            *self.hash.last().unwrap()
+                + HashMod::new(c.to()) * HashBaseContainer::val().power[self.len()],
+        );
+    }
 }
 
 impl StringHash for SimpleHash {

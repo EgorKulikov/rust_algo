@@ -48,4 +48,8 @@ where
         }
         res * product
     }
+
+    pub fn degree(&self) -> usize {
+        self.values.len() - 1
+    }
 }
