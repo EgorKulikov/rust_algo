@@ -95,7 +95,9 @@ impl<'s> Str<'s> {
                 let mut fake = Str::new();
                 std::mem::swap(self, &mut fake);
                 if let Str::Owned(s, _) = fake {
-                    *self = Str::Extendable(s.to_vec(), PhantomData)
+                    *self = Str::Extendable(s.into_vec(), PhantomData)
+                } else {
+                    unreachable!();
                 }
             }
             Str::Ref(s) => *self = Str::Extendable(s.to_vec(), PhantomData),
