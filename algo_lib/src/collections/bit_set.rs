@@ -61,7 +61,10 @@ impl BitSet {
 
     pub fn fill(&mut self, value: bool) {
         // 1.43
-        self.data.legacy_fill(if value { std::u64::MAX } else { 0 })
+        self.data.legacy_fill(if value { std::u64::MAX } else { 0 });
+        if value {
+            self.fix_last();
+        }
     }
 
     pub fn is_superset(&self, other: &Self) -> bool {

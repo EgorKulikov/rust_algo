@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! scan {
     ($input: expr, $s: expr, $($v:ident: $t: ty),*) => {
-        $crate::scan!($input, $s, '@', $($v: $t),*);
+        scan!($input, $s, '@', $($v: $t),*);
     };
     ($input: expr, $s: expr, $sp: expr, $($v:ident: $t: ty),*) => {
         let mut parse = |pattern: &str, special: char| -> std::collections::VecDeque<Vec<u8>> {
