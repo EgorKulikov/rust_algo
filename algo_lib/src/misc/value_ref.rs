@@ -22,6 +22,9 @@ macro_rules! const_value_ref {
             }
         }
     };
+    ($name: ident $val_name: ident: $int_t: ty = $base: expr) => {
+        const_value_ref!($name $val_name: $int_t as $int_t = $base);
+    };
 }
 
 #[macro_export]
@@ -48,4 +51,8 @@ macro_rules! value_ref {
             }
         }
     };
+    ($name: ident $val_name: ident: $t: ty = $init_val: expr) => {
+        value_ref!($name $val_name: $t);
+        $name::set_val($init_val);
+    }
 }

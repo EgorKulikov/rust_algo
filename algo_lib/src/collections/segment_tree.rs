@@ -198,9 +198,9 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
             let left_child = root - 2 * (right - mid);
             let right_child = root - 1;
             if at < mid {
-                self.do_point_update(left_child, left, mid, at, val);
+                self.do_point_through_update(left_child, left, mid, at, val);
             } else {
-                self.do_point_update(right_child, mid, right, at, val);
+                self.do_point_through_update(right_child, mid, right, at, val);
             }
         }
     }
@@ -372,9 +372,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         self.do_push_down(root, root - 1, mid, right);
         self.nodes[root].reset_delta(left, right);
     }
-}
 
-impl<Node: SegmentTreeNode + Clone> SegmentTree<Node> {
     pub fn query<T>(&mut self, range: impl RangeBounds<usize>) -> T
     where
         Node: QueryResult<T>,
