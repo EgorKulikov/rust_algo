@@ -4,17 +4,13 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     $CARET
 }
 
+pub static TEST_TYPE: TestType = TestType::$INVOKE;
+pub static TASK_TYPE: TaskType = TaskType::$INTERACTIVE;
+
 pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
     let mut pre_calc = ();
 
-    #[allow(dead_code)]
-    enum TestType {
-        Single,
-        MultiNumber,
-        MultiEof,
-    }
-    let test_type = $INVOKE;
-    match test_type {
+    match TEST_TYPE {
         TestType::Single => solve(&mut input, &mut output, 1, &mut pre_calc),
         TestType::MultiNumber => {
             let t = input.read();
@@ -31,10 +27,11 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
         }
     }
     output.flush();
-    if $INTERACTIVE {
-        true
-    } else {
-        input.skip_whitespace();
-        input.peek().is_none()
+    match TASK_TYPE {
+        TaskType::Classic => {
+            input.skip_whitespace();
+            input.peek().is_none()
+        }
+        TaskType::Interactive => true,
     }
 }

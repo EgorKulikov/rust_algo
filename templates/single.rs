@@ -1,1 +1,1 @@
-TestType::Single
+Single

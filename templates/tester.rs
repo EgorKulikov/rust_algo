@@ -2,7 +2,7 @@
 #![allow(unused_mut)]
 #![allow(dead_code)]
 
-use crate::run;
+use crate::{run, TASK_TYPE};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use tester::classic::default_checker;
@@ -40,24 +40,27 @@ impl GeneratedTestSet for StressTest {
 pub(crate) fn run_tests() -> bool {
     let path = "./$TASK";
     let time_limit = $TIME_LIMIT;
-    let tester = if $INTERACTIVE {
-        Tester::new_interactive(
-            time_limit,
-            PRINT_LIMIT,
-            path.to_string(),
-            run,
-            std_interactor,
-        )
-        //Tester::new_interactive(time_limit, PRINT_LIMIT, path.to_string(), run, interact)
-    } else {
-        Tester::new_classic(
-            time_limit,
-            PRINT_LIMIT,
-            path.to_string(),
-            run,
-            default_checker,
-        )
-        //Tester::new_classic(time_limit, PRINT_LIMIT, path.to_string(), run, check)
+    let tester = match TASK_TYPE {
+        crate::TaskType::Interactive => {
+            Tester::new_interactive(
+                time_limit,
+                PRINT_LIMIT,
+                path.to_string(),
+                run,
+                std_interactor,
+            )
+            //Tester::new_interactive(time_limit, PRINT_LIMIT, path.to_string(), run, interact)
+        }
+        crate::TaskType::Classic => {
+            Tester::new_classic(
+                time_limit,
+                PRINT_LIMIT,
+                path.to_string(),
+                run,
+                default_checker,
+            )
+            //Tester::new_classic(time_limit, PRINT_LIMIT, path.to_string(), run, check)
+        }
     };
     let passed = tester.test_samples();
     // tester.test_generated("Stress test", false, StressTest);
