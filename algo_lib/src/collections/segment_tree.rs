@@ -1,8 +1,9 @@
 use crate::collections::bounds::clamp;
 use crate::misc::direction::Direction;
+use crate::numbers::num_traits::algebra::{One, Zero};
 use crate::when;
 use std::marker::PhantomData;
-use std::ops::RangeBounds;
+use std::ops::{Add, MulAssign, RangeBounds};
 
 pub trait SegmentTreeNode {
     fn new(left: usize, right: usize) -> Self;
@@ -61,6 +62,36 @@ impl<T: SegmentTreeNode + Clone> QueryResult<T> for T {
     }
 }
 
+impl<
+        Key: Add<Output = Key> + MulAssign<Delta> + Zero + Copy,
+        Delta: MulAssign<Delta> + One + Copy,
+    > SegmentTreeNode for (Key, Delta)
+{
+    fn new(_left: usize, _right: usize) -> Self {
+        (Key::zero(), Delta::one())
+    }
+
+    fn join(
+        &mut self,
+        left_val: &Self,
+        right_val: &Self,
+        _left: usize,
+        _mid: usize,
+        _right: usize,
+    ) {
+        self.0 = left_val.0 + right_val.0;
+    }
+
+    fn accumulate(&mut self, value: &Self, _left: usize, _right: usize) {
+        self.0 *= value.1;
+        self.1 *= value.1;
+    }
+
+    fn reset_delta(&mut self, _left: usize, _right: usize) {
+        self.1 = Delta::one();
+    }
+}
+
 #[derive(Clone)]
 pub struct SegmentTree<Node> {
     n: usize,
@@ -83,7 +114,10 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         F: FnMut(usize) -> Node,
     {
         if n == 0 {
-            panic!("Empty seg trees not allowed");
+            return Self {
+                n,
+                nodes: vec![Node::new(0, 0)],
+            };
         }
         let mut res = Self {
             n,
@@ -126,7 +160,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
 
     pub fn point_query(&mut self, at: usize) -> &Node {
         assert!(at < self.n);
-        self.do_point_query(2 * self.n - 2, 0, self.n, at)
+        self.do_point_query(self.nodes.len() - 1, 0, self.n, at)
     }
 
     fn do_point_query(&mut self, root: usize, left: usize, right: usize, at: usize) -> &Node {
@@ -150,7 +184,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         Node: Pushable<T>,
     {
         assert!(at < self.n);
-        self.do_point_update(2 * self.n - 2, 0, self.n, at, val);
+        self.do_point_update(self.nodes.len() - 1, 0, self.n, at, val);
     }
 
     fn do_point_update<T>(&mut self, root: usize, left: usize, right: usize, at: usize, val: T)
@@ -178,7 +212,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         Node: Pushable<&'a T>,
     {
         assert!(at < self.n);
-        self.do_point_through_update(2 * self.n - 2, 0, self.n, at, val);
+        self.do_point_through_update(self.nodes.len() - 1, 0, self.n, at, val);
     }
 
     fn do_point_through_update<'a, T>(
@@ -210,7 +244,8 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         op: &mut dyn PointOperation<Node, Args, Res>,
         args: Args,
     ) -> Res {
-        self.do_point_operation(op, 2 * self.n - 2, 0, self.n, args)
+        assert_ne!(self.n, 0);
+        self.do_point_operation(op, self.nodes.len() - 1, 0, self.n, args)
     }
 
     fn do_point_operation<Args, Res>(
@@ -253,7 +288,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         Node: Pushable<&'a T>,
     {
         let (from, to) = clamp(range, self.n);
-        self.do_update(2 * self.n - 2, 0, self.n, from, to, val)
+        self.do_update(self.nodes.len() - 1, 0, self.n, from, to, val)
     }
 
     pub fn do_update<'a, T>(
@@ -289,7 +324,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         args: &Args,
     ) -> Res {
         let (from, to) = clamp(range, self.n);
-        self.do_operation(2 * self.n - 2, 0, self.n, from, to, op, args)
+        self.do_operation(self.nodes.len() - 1, 0, self.n, from, to, op, args)
     }
 
     pub fn do_operation<Args, Res>(
@@ -323,7 +358,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         wh: impl FnMut(&Node, &Node) -> Direction,
         calc: impl FnMut(&Node, usize) -> Res,
     ) -> Res {
-        self.do_binary_search(2 * self.n - 2, 0, self.n, wh, calc)
+        self.do_binary_search(self.nodes.len() - 1, 0, self.n, wh, calc)
     }
 
     fn do_binary_search<Res>(
@@ -381,7 +416,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         if from >= to {
             Node::empty_result()
         } else {
-            self.do_query(2 * self.n - 2, 0, self.n, from, to)
+            self.do_query(self.nodes.len() - 1, 0, self.n, from, to)
         }
     }
 
