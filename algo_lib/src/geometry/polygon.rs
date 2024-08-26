@@ -42,7 +42,7 @@ impl<T: Ring + Copy + PartialOrd> ConvexHull<T> for &mut [Point<T>] {
         let mut down = vec![p1];
         for &p in self.iter().skip(1) {
             if p == pn || p1.line(pn).value(p) > T::zero() {
-                while up.len() >= 2 && up[up.len() - 2].line(up[up.len() - 1]).value(p) <= T::zero()
+                while up.len() >= 2 && up[up.len() - 2].line(p).value(up[up.len() - 1]) <= T::zero()
                 {
                     up.pop();
                 }
@@ -50,7 +50,7 @@ impl<T: Ring + Copy + PartialOrd> ConvexHull<T> for &mut [Point<T>] {
             }
             if p == pn || p1.line(pn).value(p) < T::zero() {
                 while down.len() >= 2
-                    && down[down.len() - 2].line(down[down.len() - 1]).value(p) >= T::zero()
+                    && down[down.len() - 2].line(p).value(down[down.len() - 1]) >= T::zero()
                 {
                     down.pop();
                 }

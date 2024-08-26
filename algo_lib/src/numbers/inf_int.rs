@@ -8,7 +8,7 @@ use std::ops::{Add, AddAssign, Mul, MulAssign};
 
 #[derive(Ord, PartialOrd, Eq, PartialEq, Copy, Clone)]
 pub struct InfInt<T, V: Value<T>> {
-    n: T,
+    pub n: T,
     phantom: PhantomData<V>,
 }
 

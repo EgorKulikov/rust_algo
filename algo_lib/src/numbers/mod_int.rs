@@ -95,7 +95,7 @@ where
     pub fn new_from_wide(n: T::W) -> Self {
         unsafe {
             Self::unchecked_new(Self::maybe_subtract_mod(
-                T::downcast(n % (V::val()).into()) + V::val(),
+                T::downcast(n % V::val().into()) + V::val(),
             ))
         }
     }

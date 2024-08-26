@@ -24,8 +24,10 @@ impl<E: EdgeTrait> BridgeSearch for Graph<E> {
                     tin[vert] = timer;
                     fup[vert] = timer;
                     timer += 1;
+                    let mut first = true;
                     for e in &self[vert] {
-                        if e.to() == prev {
+                        if e.to() == prev && first {
+                            first = false;
                             continue;
                         }
                         let to = e.to();

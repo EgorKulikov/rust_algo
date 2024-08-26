@@ -1,1 +1,1 @@
-TestType::MultiEof
+MultiEof

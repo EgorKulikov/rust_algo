@@ -1,1 +1,1 @@
-TestType::MultiNumber
+MultiNumber

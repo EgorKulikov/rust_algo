@@ -28,28 +28,29 @@ impl<T: SegmentTreeNode> Pushable<T> for T {
     }
 }
 
-pub trait QueryResult<Result>: SegmentTreeNode {
-    fn empty_result() -> Result;
-    fn result(&self) -> Result;
+pub trait QueryResult<Result, Args>: SegmentTreeNode {
+    fn empty_result(args: &Args) -> Result;
+    fn result(&self, args: &Args) -> Result;
     fn join_results(
         left_res: Result,
         right_res: Result,
+        args: &Args,
         left: usize,
         mid: usize,
         right: usize,
     ) -> Result;
 }
 
-impl<T: SegmentTreeNode + Clone> QueryResult<T> for T {
-    fn empty_result() -> T {
+impl<T: SegmentTreeNode + Clone> QueryResult<T, ()> for T {
+    fn empty_result(_: &()) -> T {
         Self::new(0, 0)
     }
 
-    fn result(&self) -> T {
+    fn result(&self, _: &()) -> T {
         self.clone()
     }
 
-    fn join_results(left_res: T, right_res: T, left: usize, mid: usize, right: usize) -> T {
+    fn join_results(left_res: T, right_res: T, _: &(), left: usize, mid: usize, right: usize) -> T {
         when! {
             left == mid => right_res,
             right == mid => left_res,
@@ -410,34 +411,54 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
 
     pub fn query<T>(&mut self, range: impl RangeBounds<usize>) -> T
     where
-        Node: QueryResult<T>,
+        Node: QueryResult<T, ()>,
     {
         let (from, to) = clamp(range, self.n);
         if from >= to {
-            Node::empty_result()
+            Node::empty_result(&())
         } else {
-            self.do_query(self.nodes.len() - 1, 0, self.n, from, to)
+            self.do_query(self.nodes.len() - 1, 0, self.n, from, to, &())
         }
     }
 
-    fn do_query<T>(&mut self, root: usize, left: usize, right: usize, from: usize, to: usize) -> T
+    pub fn query_with_args<T, Args>(&mut self, range: impl RangeBounds<usize>, args: &Args) -> T
     where
-        Node: QueryResult<T>,
+        Node: QueryResult<T, Args>,
+    {
+        let (from, to) = clamp(range, self.n);
+        if from >= to {
+            Node::empty_result(args)
+        } else {
+            self.do_query(self.nodes.len() - 1, 0, self.n, from, to, args)
+        }
+    }
+
+    fn do_query<T, Args>(
+        &mut self,
+        root: usize,
+        left: usize,
+        right: usize,
+        from: usize,
+        to: usize,
+        args: &Args,
+    ) -> T
+    where
+        Node: QueryResult<T, Args>,
     {
         if left >= from && right <= to {
-            self.nodes[root].result()
+            self.nodes[root].result(args)
         } else {
             let mid = (left + right) >> 1;
             self.push_down(root, left, mid, right);
             let left_child = root - 2 * (right - mid);
             let right_child = root - 1;
             when! {
-                to <= mid => self.do_query(left_child, left, mid, from, to),
-                from >= mid => self.do_query(right_child, mid, right, from, to),
+                to <= mid => self.do_query(left_child, left, mid, from, to, args),
+                from >= mid => self.do_query(right_child, mid, right, from, to, args),
                 else => {
-                    let left_result = self.do_query(left_child, left, mid, from, to);
-                    let right_result = self.do_query(right_child, mid, right, from, to);
-                    Node::join_results(left_result, right_result, left, mid, right)
+                    let left_result = self.do_query(left_child, left, mid, from, to, args);
+                    let right_result = self.do_query(right_child, mid, right, from, to, args);
+                    Node::join_results(left_result, right_result, args, left, mid, right)
                 },
             }
         }
