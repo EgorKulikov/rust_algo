@@ -7,6 +7,16 @@ pub trait IncDec {
     fn dec(self) -> Self;
 }
 
+impl<T: AdditionMonoidWithSub + One> IncDec for T {
+    fn inc(self) -> Self {
+        self + T::one()
+    }
+
+    fn dec(self) -> Self {
+        self - T::one()
+    }
+}
+
 impl<T: AdditionMonoidWithSub + One> IncDec for Vec<T> {
     fn inc(mut self) -> Self {
         self.iter_mut().for_each(|i| *i += T::one());
