@@ -99,10 +99,7 @@ impl<'s> Output<'s> {
     }
 
     pub fn print_per_line<T: Writable>(&mut self, arg: &[T]) {
-        for i in arg {
-            i.write(self);
-            self.put(b'\n');
-        }
+        self.print_per_line_iter(arg.iter());
     }
 
     pub fn print_iter<T: Writable, I: Iterator<Item = T>>(&mut self, iter: I) {
@@ -114,6 +111,18 @@ impl<'s> Output<'s> {
                 self.put(b' ');
             }
             e.write(self);
+        }
+    }
+
+    pub fn print_line_iter<T: Writable, I: Iterator<Item = T>>(&mut self, iter: I) {
+        self.print_iter(iter);
+        self.put(b'\n');
+    }
+
+    pub fn print_per_line_iter<T: Writable, I: Iterator<Item = T>>(&mut self, iter: I) {
+        for e in iter {
+            e.write(self);
+            self.put(b'\n');
         }
     }
 

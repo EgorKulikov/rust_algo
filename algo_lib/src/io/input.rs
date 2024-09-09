@@ -76,7 +76,7 @@ impl<'s> Input<'s> {
 
     pub fn skip_whitespace(&mut self) {
         while let Some(b) = self.peek() {
-            if !char::from(b).is_whitespace() {
+            if !b.is_ascii_whitespace() {
                 return;
             }
             self.get();
@@ -87,7 +87,7 @@ impl<'s> Input<'s> {
         self.skip_whitespace();
         let mut res = Vec::new();
         while let Some(c) = self.get() {
-            if char::from(c).is_whitespace() {
+            if c.is_ascii_whitespace() {
                 break;
             }
             res.push(c);
