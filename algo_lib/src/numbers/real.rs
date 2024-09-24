@@ -20,7 +20,7 @@ pub trait RealTrait: Ord + Field {
     fn set_epsilon(eps: Self);
 }
 
-#[derive(Copy, Clone, PartialOrd, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialOrd, PartialEq, Debug, Default)]
 pub struct Real(pub f64);
 
 impl Real {

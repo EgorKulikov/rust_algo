@@ -25,9 +25,9 @@ impl<P> DerefMut for TreapNode<P> {
 
 pub struct TreapNodeInner<P> {
     priority: u64,
-    payload: P,
-    left: Box<TreapNode<P>>,
-    right: Box<TreapNode<P>>,
+    pub payload: P,
+    pub left: Box<TreapNode<P>>,
+    pub right: Box<TreapNode<P>>,
 }
 
 impl<P: Payload> TreapNodeInner<P> {
@@ -46,7 +46,7 @@ impl<P: Payload> TreapNodeInner<P> {
         self.payload.update(left_data, right_data);
     }
 
-    fn push_down(&mut self) {
+    pub fn push_down(&mut self) {
         self.left.push(&self.payload, Direction::Left);
         self.right.push(&self.payload, Direction::Right);
         self.payload.reset_delta();
@@ -162,6 +162,26 @@ impl<P: Payload> TreapNode<P> {
                     }
                     Direction::Right => {
                         node.right.binary_search(f);
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn binary_search_mut<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&P, Option<&P>, Option<&P>) -> Option<Direction>,
+    {
+        if let Some(node) = self.deref_mut() {
+            node.push_down();
+            let direction = f(&node.payload, node.left.payload(), node.right.payload());
+            if let Some(direction) = direction {
+                match direction {
+                    Direction::Left => {
+                        node.left.binary_search_mut(f);
+                    }
+                    Direction::Right => {
+                        node.right.binary_search_mut(f);
                     }
                 }
             }

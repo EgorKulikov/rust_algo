@@ -64,6 +64,10 @@ where
         }
     }
 
+    pub fn comb_with_rep(&self, n: usize, k: usize) -> M {
+        self.c(n + k - 1, k)
+    }
+
     pub fn c_inv(&self, n: usize, k: usize) -> M {
         self.inv_fact[n] * self.fact[k] * self.fact[n - k]
     }

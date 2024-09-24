@@ -18,8 +18,10 @@ fn solve(input: &mut Input, output: &mut Output, _data: &PreCalc) {
         }
     }
 
-    run_parallel::<Job>(input, output);
+    run_parallel::<Job>(input, output, true);
 }
+
+pub static TASK_TYPE: TaskType = TaskType::Classic;
 
 pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
     let pre_calc = ();
