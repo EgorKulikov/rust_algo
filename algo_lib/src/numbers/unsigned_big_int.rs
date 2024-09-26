@@ -211,19 +211,19 @@ impl Writable for UBigInt {
     }
 }
 
-impl ToString for UBigInt {
-    fn to_string(&self) -> String {
-        if let Some(tail) = self.z.last() {
-            let mut ans = tail.to_string();
-            for &i in self.z.iter().rev().skip(1) {
-                ans += format!("{:09}", i).as_str();
-            }
-            ans
-        } else {
-            "0".to_string()
-        }
-    }
-}
+// impl ToString for UBigInt {
+//     fn to_string(&self) -> String {
+//         if let Some(tail) = self.z.last() {
+//             let mut ans = tail.to_string();
+//             for &i in self.z.iter().rev().skip(1) {
+//                 ans += format!("{:09}", i).as_str();
+//             }
+//             ans
+//         } else {
+//             "0".to_string()
+//         }
+//     }
+// }
 
 impl PartialOrd<Self> for UBigInt {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {

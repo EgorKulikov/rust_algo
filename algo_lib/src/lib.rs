@@ -1,6 +1,7 @@
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::type_complexity)]
 #![allow(clippy::missing_safety_doc)]
+#![allow(clippy::legacy_numeric_constants)]
 
 pub mod collections;
 pub mod geometry;

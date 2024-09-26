@@ -7,3 +7,6 @@ edition = "2021"
 
 [dependencies]
 algo_lib = { path = "../algo_lib" }
+
+[features]
+test = []

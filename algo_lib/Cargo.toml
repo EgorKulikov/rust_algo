@@ -6,3 +6,6 @@ edition = "2021"
 [dependencies]
 rayon = "1.8"
 rand = "0.8.5"
+
+[dev-dependencies]
+tester = { path = "../tester", features = ["test"] }

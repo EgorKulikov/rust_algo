@@ -1,202 +1,172 @@
-use crate::collections::treap::{
-    KeyPayload, PayloadWithKey, PureDataPayload, SizePayload, TreapNode,
-};
-use crate::misc::direction::Direction;
-use std::cmp::Ordering;
-use std::mem::swap;
-use std::ops::{Deref, DerefMut, Index, RangeBounds};
+use crate::collections::treap::{Payload, PayloadWithKey, Treap};
+use crate::misc::extensions::with::With;
+use std::ops::{Bound, Deref, DerefMut, RangeBounds};
 
-type TreapValue<T, V> = KeyPayload<T, SizePayload<PureDataPayload<V>>>;
+struct MapPayload<T, V> {
+    key: T,
+    value: V,
+}
 
-pub struct TreapMap<T: Ord, V> {
-    root: TreapNode<TreapValue<T, V>>,
+impl<T, V> MapPayload<T, V> {
+    fn new(key: T, value: V) -> Self {
+        Self { key, value }
+    }
+}
+
+impl<T, V> Payload for MapPayload<T, V> {
+    #[inline]
+    fn reset_delta(&mut self) {}
+
+    #[inline]
+    fn update(&mut self, _left: Option<&Self>, _right: Option<&Self>) {}
+
+    #[inline]
+    fn push_delta(&mut self, _delta: &Self) {}
+}
+
+impl<T: Ord, V> PayloadWithKey for MapPayload<T, V> {
+    type Key = T;
+
+    fn key(&self) -> &Self::Key {
+        &self.key
+    }
+}
+
+pub struct TreapMap<T, V> {
+    root: Treap<MapPayload<T, V>>,
 }
 
 impl<T: Ord, V> TreapMap<T, V> {
     pub fn new() -> Self {
-        Self {
-            root: TreapNode::NONE,
-        }
+        Self { root: Treap::new() }
     }
 
     pub unsafe fn from_sorted(iter: impl Iterator<Item = (T, V)>) -> Self {
         let mut res = Self::new();
         for (t, v) in iter {
-            res.root = TreapNode::merge(res.root, TreapNode::new((t, v).into()));
+            res.root = Treap::merge(res.root, Treap::single(MapPayload::new(t, v)));
         }
         res
     }
 
-    pub fn len(&self) -> usize {
-        self.root.payload().map(|data| data.inner.size).unwrap_or(0) as usize
+    pub fn len(&mut self) -> usize {
+        self.root.size()
     }
 
     pub fn insert(&mut self, key: T, value: V) -> Option<V> {
-        let mut root = TreapNode::NONE;
-        swap(&mut self.root, &mut root);
-        let (left, mut node, right) = root.split_range(&key..=&key);
-        let res = if node.is_some() {
-            Some(node.replace(value))
-        } else {
-            node = TreapNode::new((key, value).into());
-            None
-        };
-        self.root = TreapNode::merge(left, TreapNode::merge(node, right));
-        res
+        self.root
+            .insert(MapPayload::new(key, value))
+            .map(|payload| payload.value)
     }
 
     pub fn remove(&mut self, key: &T) -> Option<V> {
-        let mut root = TreapNode::NONE;
-        swap(&mut self.root, &mut root);
-        let (left, node, right) = root.split_range(key..=key);
-        self.root = TreapNode::merge(left, right);
-        node.into_payload().map(|data| data.inner.inner.data)
+        self.root.remove(key).map(|payload| payload.value)
     }
 
-    pub fn index(&self, key: &T) -> Option<usize> {
-        let mut res = 0;
-        let mut found = false;
-        self.root.binary_search(|payload, left_data, _| {
-            let k = payload.key();
-            match key.cmp(k) {
-                Ordering::Less => Some(Direction::Left),
-                Ordering::Equal => {
-                    if let Some(data) = left_data {
-                        res += data.inner.size;
-                    }
-                    found = true;
-                    None
-                }
-                Ordering::Greater => {
-                    if let Some(data) = left_data {
-                        res += data.inner.size + 1;
-                    } else {
-                        res += 1;
-                    }
-                    Some(Direction::Right)
-                }
-            }
-        });
-        if found {
-            Some(res as usize)
-        } else {
-            None
-        }
+    pub fn index(&mut self, key: &T) -> Option<usize> {
+        self.root.index(key)
     }
 
-    pub fn lower_bound(&self, key: &T) -> usize {
-        match self.ceil(key) {
-            None => self.len(),
-            Some((key, _)) => self.index(key).unwrap(),
-        }
+    pub fn lower_bound(&mut self, key: &T) -> usize {
+        self.root.range(..key).with(|node| node.size())
     }
 
-    pub fn get_at(&mut self, mut at: usize) -> Option<(&T, &V)> {
-        if at >= self.len() {
-            None
-        } else {
-            let mut res = None;
-            self.root.binary_search(|value, left, _| {
-                let key = value.key();
-                let to_left = left.map(|data| data.inner.size as usize).unwrap_or(0);
-                match to_left {
-                    v if v > at => Some(Direction::Left),
-                    v if v == at => {
-                        res = Some((key, &value.inner.inner.data));
-                        None
-                    }
-                    v if v < at => {
-                        at -= to_left + 1;
-                        Some(Direction::Right)
-                    }
-                    _ => panic!("unreachable"),
-                }
-            });
-            res
-        }
+    pub fn upper_bound(&mut self, key: &T) -> usize {
+        self.root.range(..=key).with(|node| node.size())
     }
 
-    pub fn keys(&self) -> impl DoubleEndedIterator<Item = &T> {
+    pub fn get_at(&mut self, at: usize) -> Option<(&T, &V)> {
+        self.root.get_at(at).payload().map(Self::node_to_pair)
+    }
+
+    pub fn keys(&mut self) -> impl Iterator<Item = &T> {
         self.iter().map(|(key, _)| key)
     }
 
-    pub fn values(&self) -> impl DoubleEndedIterator<Item = &V> {
+    pub fn values(&mut self) -> impl Iterator<Item = &V> {
         self.iter().map(|(_, val)| val)
     }
 
-    pub fn iter(&self) -> impl DoubleEndedIterator<Item = (&T, &V)> {
-        self.range(..)
+    pub fn iter(&mut self) -> impl Iterator<Item = (&T, &V)> {
+        self.root.iter().map(Self::node_to_pair)
     }
 
     pub fn range<'a, 's: 'a>(
-        &'s self,
+        &'s mut self,
         r: impl RangeBounds<&'a T>,
-    ) -> impl DoubleEndedIterator<Item = (&'s T, &'s V)> {
-        self.root.range(r).map(Self::node_to_pair)
+    ) -> impl Iterator<Item = (&'s T, &'s V)> {
+        self.root.range(r).iter().map(Self::node_to_pair)
     }
 
-    pub fn first(&self) -> Option<(&T, &V)> {
-        self.root.leftmost().map(Self::node_to_pair)
+    pub fn first(&mut self) -> Option<(&T, &V)> {
+        self.root.first().map(Self::node_to_pair)
     }
 
-    pub fn last(&self) -> Option<(&T, &V)> {
-        self.root.rightmost().map(Self::node_to_pair)
+    pub fn last(&mut self) -> Option<(&T, &V)> {
+        self.root.last().map(Self::node_to_pair)
     }
 
-    pub fn lower(&self, key: &T) -> Option<(&T, &V)> {
+    pub fn lower(&mut self, key: &T) -> Option<(&T, &V)> {
         self.root.lower(key).map(Self::node_to_pair)
     }
 
-    pub fn higher(&self, key: &T) -> Option<(&T, &V)> {
+    pub fn higher(&mut self, key: &T) -> Option<(&T, &V)> {
         self.root.higher(key).map(Self::node_to_pair)
     }
 
-    pub fn floor(&self, key: &T) -> Option<(&T, &V)> {
+    pub fn floor(&mut self, key: &T) -> Option<(&T, &V)> {
         self.root.floor(key).map(Self::node_to_pair)
     }
 
-    pub fn ceil(&self, key: &T) -> Option<(&T, &V)> {
+    pub fn ceil(&mut self, key: &T) -> Option<(&T, &V)> {
         self.root.ceil(key).map(Self::node_to_pair)
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
+    #[allow(clippy::wrong_self_convention)]
+    pub fn is_empty(&mut self) -> bool {
+        self.root.is_empty()
     }
 
     pub fn clear(&mut self) {
-        self.root = TreapNode::NONE
+        self.root = Treap::new()
     }
 
-    pub fn get(&self, key: &T) -> Option<&V> {
+    pub fn get(&mut self, key: &T) -> Option<&V> {
         self.root
-            .find(key)
-            .payload()
-            .map(|data| &data.inner.inner.data)
+            .get(key)
+            .map(|node| &node.payload().as_ref().unwrap().value)
     }
 
-    pub fn contains(&self, key: &T) -> bool {
-        self.root.find(key).is_some()
+    pub fn contains(&mut self, key: &T) -> bool {
+        self.root.get(key).is_some()
     }
 
-    fn node_to_pair(node: &TreapNode<TreapValue<T, V>>) -> (&T, &V) {
-        (
-            node.payload().as_ref().unwrap().key(),
-            &node.payload().as_ref().unwrap().inner.inner.data,
-        )
+    pub fn more(&mut self, key: &T) -> usize {
+        self.root
+            .range((Bound::Excluded(key), Bound::Unbounded))
+            .size()
+    }
+
+    pub fn more_or_eq(&mut self, key: &T) -> usize {
+        self.root.range(key..).size()
+    }
+
+    pub fn less(&mut self, key: &T) -> usize {
+        self.root.range(..key).size()
+    }
+
+    pub fn less_or_eq(&mut self, key: &T) -> usize {
+        self.root.range(..=key).size()
+    }
+
+    fn node_to_pair(node: &MapPayload<T, V>) -> (&T, &V) {
+        (&node.key, &node.value)
     }
 }
 
 impl<T: Ord, V> Default for TreapMap<T, V> {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-impl<T: Ord, V> Index<&T> for TreapMap<T, V> {
-    type Output = V;
-
-    fn index(&self, index: &T) -> &Self::Output {
-        self.get(index).unwrap()
     }
 }
 
@@ -224,66 +194,38 @@ impl<T: Ord> TreapSet<T> {
         self.0.get_at(idx).map(Self::map_to_key)
     }
 
-    pub fn iter(&self) -> impl DoubleEndedIterator<Item = &T> + '_ {
+    pub fn iter(&mut self) -> impl Iterator<Item = &T> + '_ {
         self.0.keys()
     }
 
     pub fn range<'a, 's: 'a>(
-        &'s self,
+        &'s mut self,
         r: impl RangeBounds<&'a T>,
-    ) -> impl DoubleEndedIterator<Item = &'s T> {
+    ) -> impl Iterator<Item = &'s T> {
         self.0.range(r).map(Self::map_to_key)
     }
 
-    pub fn first(&self) -> Option<&T> {
+    pub fn first(&mut self) -> Option<&T> {
         self.0.first().map(Self::map_to_key)
     }
 
-    pub fn last(&self) -> Option<&T> {
+    pub fn last(&mut self) -> Option<&T> {
         self.0.last().map(Self::map_to_key)
     }
 
-    pub fn lower(&self, key: &T) -> Option<&T> {
+    pub fn lower(&mut self, key: &T) -> Option<&T> {
         self.0.lower(key).map(Self::map_to_key)
     }
 
-    pub fn higher(&self, key: &T) -> Option<&T> {
+    pub fn higher(&mut self, key: &T) -> Option<&T> {
         self.0.higher(key).map(Self::map_to_key)
     }
 
-    pub fn more(&self, key: &T) -> usize {
-        match self.0.higher(key) {
-            Some((k, _)) => self.len() - self.0.index(k).unwrap(),
-            None => 0,
-        }
-    }
-
-    pub fn more_or_eq(&self, key: &T) -> usize {
-        match self.0.ceil(key) {
-            Some((k, _)) => self.len() - self.0.index(k).unwrap(),
-            None => 0,
-        }
-    }
-
-    pub fn less(&self, key: &T) -> usize {
-        match self.0.lower(key) {
-            Some((k, _)) => self.0.index(k).unwrap() + 1,
-            None => 0,
-        }
-    }
-
-    pub fn less_or_eq(&self, key: &T) -> usize {
-        match self.0.floor(key) {
-            Some((k, _)) => self.0.index(k).unwrap() + 1,
-            None => 0,
-        }
-    }
-
-    pub fn floor(&self, key: &T) -> Option<&T> {
+    pub fn floor(&mut self, key: &T) -> Option<&T> {
         self.0.floor(key).map(Self::map_to_key)
     }
 
-    pub fn ceil(&self, key: &T) -> Option<&T> {
+    pub fn ceil(&mut self, key: &T) -> Option<&T> {
         self.0.ceil(key).map(Self::map_to_key)
     }
 

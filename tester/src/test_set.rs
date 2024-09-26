@@ -16,6 +16,20 @@ pub(crate) struct SampleTests {
     pub(crate) task_folder: String,
 }
 
+#[cfg(feature = "test")]
+impl SampleTests {
+    fn test_path(&self) -> String {
+        format!("tests/{}", self.task_folder)
+    }
+}
+
+#[cfg(not(feature = "test"))]
+impl SampleTests {
+    fn test_path(&self) -> String {
+        format!("{}/tests", self.task_folder)
+    }
+}
+
 impl TestSet for SampleTests {
     type TestId = String;
 
@@ -24,7 +38,7 @@ impl TestSet for SampleTests {
     }
 
     fn tests(&self) -> impl Iterator<Item = Self::TestId> {
-        let mut paths = std::fs::read_dir(format!("{}/tests", self.task_folder))
+        let mut paths = std::fs::read_dir(self.test_path())
             .unwrap()
             .map(|res| res.unwrap())
             .collect::<Vec<_>>();
@@ -49,11 +63,19 @@ impl TestSet for SampleTests {
     }
 
     fn input(&self, test: &Self::TestId) -> Vec<u8> {
-        std::fs::read(format!("{}/tests/{}.in", self.task_folder, test)).unwrap()
+        #[cfg(feature = "test")]
+        let file = format!("tests/{}/{}.in", self.task_folder, test);
+        #[cfg(not(feature = "test"))]
+        let file = format!("{}/tests/{}.in", self.task_folder, test);
+        std::fs::read(file).unwrap()
     }
 
     fn output(&self, test: &Self::TestId, _input: &[u8]) -> Option<Vec<u8>> {
-        std::fs::read(format!("{}/tests/{}.out", self.task_folder, test)).ok()
+        #[cfg(feature = "test")]
+        let file = format!("tests/{}/{}.out", self.task_folder, test);
+        #[cfg(not(feature = "test"))]
+        let file = format!("{}/tests/{}.out", self.task_folder, test);
+        std::fs::read(file).ok()
     }
 
     fn print_details(&self) -> bool {
@@ -83,6 +105,9 @@ impl<Set: GeneratedTestSet> TestSet for GeneratedTests<Set> {
     }
 
     fn tests(&self) -> impl Iterator<Item = Self::TestId> {
+        #[cfg(feature = "test")]
+        return self.set.tests().take(100);
+        #[cfg(not(feature = "test"))]
         self.set.tests()
     }
 

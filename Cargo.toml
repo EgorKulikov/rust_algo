@@ -8,3 +8,6 @@ members = [
 
 [profile.release]
 overflow-checks = true
+
+[profile.dev]
+lto = "off"
