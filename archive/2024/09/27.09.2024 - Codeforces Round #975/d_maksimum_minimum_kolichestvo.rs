@@ -1,0 +1,191 @@
+//{"name":"D. Максимум + минимум + количество","group":"Codeforces - Codeforces Round 975 (Div. 1)","url":"https://codeforces.com/contest/2018/problem/D","interactive":false,"timeLimit":2000,"tests":[{"input":"4\n3\n5 4 5\n3\n4 5 4\n10\n3 3 3 3 4 1 2 3 5 4\n10\n17 89 92 42 29 41 92 14 70 45\n","output":"12\n11\n12\n186\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"DMaksimumMinimumKolichestvo"}}}
+
+use algo_lib::collections::bit_set::BitSet;
+use algo_lib::collections::iter_ext::collect::IterCollect;
+use algo_lib::collections::md_arr::arr2d::Arr2d;
+use algo_lib::collections::min_max::MinimMaxim;
+use algo_lib::collections::segment_tree::{Pushable, SegmentTree, SegmentTreeNode};
+use algo_lib::io::input::Input;
+use algo_lib::io::output::Output;
+use algo_lib::misc::test_type::{TaskType, TestType};
+
+type PreCalc = ();
+
+fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut PreCalc) {
+    let n = input.read_size();
+    let x = input.read_long_vec(n);
+
+    #[derive(Copy, Clone)]
+    struct Result {
+        res: i64,
+        max: i64,
+        max_but_one: i64,
+    }
+
+    const INF: i64 = i64::MIN / 10;
+    impl Result {
+        fn new() -> Self {
+            Self {
+                res: INF,
+                max: INF,
+                max_but_one: INF,
+            }
+        }
+
+        fn update(&mut self, res: i64, max: i64) {
+            if self.res + 1 < res {
+                self.res = res;
+                self.max = max;
+                self.max_but_one = INF;
+            } else if self.res + 1 == res {
+                self.max_but_one = self.max;
+                self.res = res;
+                self.max = max;
+            } else if self.res == res {
+                self.max.maxim(max);
+            } else if self.res - 1 == res {
+                self.max_but_one.maxim(max);
+            }
+        }
+
+        fn update_composition(&mut self, a: &Result, b: &Result) {
+            self.update(a.res + b.res, a.max.max(b.max));
+            self.update(a.res + b.res - 1, a.max_but_one.max(b.max_but_one));
+        }
+
+        fn value(&self) -> i64 {
+            (self.res + self.max).max(self.res - 1 + self.max_but_one)
+        }
+    }
+
+    #[derive(Clone)]
+    struct Node {
+        ans: Arr2d<Result>,
+    }
+
+    impl SegmentTreeNode for Node {
+        fn new(_left: usize, _right: usize) -> Self {
+            let mut res = Self {
+                ans: Arr2d::new(2, 2, Result::new()),
+            };
+            res.ans[(0, 0)].update(0, INF);
+            res
+        }
+
+        fn join(
+            &mut self,
+            left_val: &Self,
+            right_val: &Self,
+            _left: usize,
+            _mid: usize,
+            _right: usize,
+        ) {
+            for i in 0..2 {
+                for j in 0..2 {
+                    let mut cur = Result::new();
+                    for l in 0..2 {
+                        for m in 0..2 - l {
+                            cur.update_composition(&left_val.ans[(i, l)], &right_val.ans[(m, j)]);
+                        }
+                    }
+                    self.ans[(i, j)] = cur;
+                }
+            }
+        }
+
+        fn accumulate(&mut self, _value: &Self, _left: usize, _right: usize) {}
+
+        fn reset_delta(&mut self, _left: usize, _right: usize) {}
+    }
+
+    impl Pushable<i64> for Node {
+        fn push(&mut self, delta: i64, _left: usize, _right: usize) {
+            self.ans[(1, 1)].update(1, delta);
+        }
+    }
+
+    /*let mut even_max = Vec::with_capacity(4);
+    let mut odd_max = Vec::with_capacity(4);
+    for i in 0..n {
+        let cur = if i % 2 == 0 {
+            &mut even_max
+        } else {
+            &mut odd_max
+        };
+        cur.push(i);
+        for j in cur.indices().rev().skip(1) {
+            if x[cur[j]] < x[cur[j + 1]] {
+                cur.swap(j, j + 1);
+            } else {
+                break;
+            }
+        }
+        if cur.len() > 3 {
+            cur.pop();
+        }
+    }
+    let max = even_max
+        .into_iter()
+        .chain(odd_max.into_iter())
+        .collect_vec();*/
+    let mut ans = None;
+    let mut order = (0..n).collect_vec();
+    order.sort_by_key(|&i| x[i]);
+    order.reverse();
+    let mut added = BitSet::new(n);
+    let mut st = SegmentTree::<Node>::new(n);
+    for i in order {
+        added.set(i);
+        st.point_update(i, x[i]);
+        let prefix = st.query(0..i);
+        let suffix = st.query(i..n);
+        let mut res = Result::new();
+        for i in 0..2 {
+            for j in 0..2 {
+                res.update_composition(&prefix.ans[(i, 0)], &suffix.ans[(1, j)]);
+            }
+        }
+        ans.maxim(res.value() + x[i]);
+    }
+    out.print_line(ans);
+}
+
+pub static TEST_TYPE: TestType = TestType::MultiNumber;
+pub static TASK_TYPE: TaskType = TaskType::Classic;
+
+pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
+    let mut pre_calc = ();
+
+    match TEST_TYPE {
+        TestType::Single => solve(&mut input, &mut output, 1, &mut pre_calc),
+        TestType::MultiNumber => {
+            let t = input.read();
+            for i in 1..=t {
+                solve(&mut input, &mut output, i, &mut pre_calc);
+            }
+        }
+        TestType::MultiEof => {
+            let mut i = 1;
+            while input.peek().is_some() {
+                solve(&mut input, &mut output, i, &mut pre_calc);
+                i += 1;
+            }
+        }
+    }
+    output.flush();
+    match TASK_TYPE {
+        TaskType::Classic => {
+            input.skip_whitespace();
+            input.peek().is_none()
+        }
+        TaskType::Interactive => true,
+    }
+}
+
+//START MAIN
+mod tester;
+
+fn main() {
+    tester::run_tests();
+}
+//END MAIN
