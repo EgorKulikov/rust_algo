@@ -1,6 +1,7 @@
 use std::any::Any;
-use std::fs::{remove_file, File};
+use std::fs::File;
 use std::io::Write;
+use std::path::Path;
 use std::time::Duration;
 
 use crate::classic::run_single_test_classic;
@@ -117,8 +118,7 @@ impl Tester {
                 expected.as_ref().map(|v| self.trim(v.as_slice())),
                 test_set.print_details(),
             );
-            let outcome =
-                self.run_single_test(&input, expected.as_deref(), test_set.print_details());
+            let outcome = self.run_single_test(&input, expected.as_deref(), &test_set, &test);
             if !matches!(outcome, Outcome::OK { .. }) {
                 test_failed += 1;
                 if !test_set.print_details() {
@@ -129,17 +129,22 @@ impl Tester {
                         true,
                     );
                     print::end_test(outcome, true);
-                    File::create(format!("{}/tests/0.in", self.task_folder))
-                        .unwrap()
-                        .write_all(&input)
-                        .unwrap();
-                    if let Some(expected) = expected {
-                        File::create(format!("{}/tests/0.out", self.task_folder))
+                    for i in (0..1000).rev() {
+                        let in_file = format!("{}/tests/.failed_{:03}.in", self.task_folder, i);
+                        if Path::new(&in_file).exists() {
+                            continue;
+                        }
+                        File::create(in_file).unwrap().write_all(&input).unwrap();
+                        if let Some(expected) = expected {
+                            File::create(format!(
+                                "{}/tests/.failed_{:03}.out",
+                                self.task_folder, i
+                            ))
                             .unwrap()
                             .write_all(&expected)
                             .unwrap();
-                    } else {
-                        let _ = remove_file(format!("{}/tests/0.out", self.task_folder));
+                        }
+                        break;
                     }
                     return false;
                 }
@@ -150,19 +155,24 @@ impl Tester {
         test_failed == 0
     }
 
-    fn run_single_test(
+    fn run_single_test<T: TestSet>(
         &self,
         input: &[u8],
         expected: Option<&[u8]>,
-        print_details: bool,
+        test_set: &T,
+        test_id: &T::TestId,
     ) -> Outcome {
         match self.runner {
             Runner::Classic { checker } => {
-                run_single_test_classic(self, checker, input, expected, print_details)
+                run_single_test_classic(self, checker, input, expected, test_set, test_id)
             }
-            Runner::Interactive { interactor } => {
-                run_single_test_interactive(self, interactor, input, expected, print_details)
-            }
+            Runner::Interactive { interactor } => run_single_test_interactive(
+                self,
+                interactor,
+                input,
+                expected,
+                test_set.print_details(),
+            ),
         }
     }
 

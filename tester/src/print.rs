@@ -1,3 +1,4 @@
+use crate::test_set::TestSet;
 use crate::Outcome;
 use std::fmt::Display;
 
@@ -50,6 +51,11 @@ pub(crate) fn print_output(output: &[u8], print_details: bool) {
         println!("{}Output:{}", BLUE, DEF);
         println!("{}", String::from_utf8_lossy(output));
     }
+}
+
+pub(crate) fn print_diff<T: TestSet>(test_set: &T, test_id: &T::TestId) {
+    println!("{}Diff:{}", BLUE, DEF);
+    test_set.output_diff(test_id);
 }
 
 pub(crate) fn print_interacting(print_details: bool) {

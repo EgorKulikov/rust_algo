@@ -1,6 +1,8 @@
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use std::fmt::Display;
+#[cfg(not(feature = "test"))]
+use std::process::Command;
 
 pub(crate) trait TestSet {
     type TestId: Display + Clone;
@@ -10,6 +12,8 @@ pub(crate) trait TestSet {
     fn input(&self, test: &Self::TestId) -> Vec<u8>;
     fn output(&self, test: &Self::TestId, input: &[u8]) -> Option<Vec<u8>>;
     fn print_details(&self) -> bool;
+    fn save_output(&self, _test: &Self::TestId, _output: &[u8]) {}
+    fn output_diff(&self, _test: &Self::TestId) {}
 }
 
 pub(crate) struct SampleTests {
@@ -80,6 +84,34 @@ impl TestSet for SampleTests {
 
     fn print_details(&self) -> bool {
         true
+    }
+
+    fn save_output(&self, test: &Self::TestId, output: &[u8]) {
+        #[cfg(not(feature = "test"))]
+        {
+            let file = format!("{}/tests/{}.ans", self.task_folder, test);
+            std::fs::write(file, output).unwrap();
+        }
+        #[cfg(feature = "test")]
+        {
+            let _ = (test, output);
+        }
+    }
+
+    fn output_diff(&self, test: &Self::TestId) {
+        #[cfg(not(feature = "test"))]
+        {
+            Command::new("diff")
+                .arg("-u")
+                .arg(format!("{}/tests/{}.out", self.task_folder, test))
+                .arg(format!("{}/tests/{}.ans", self.task_folder, test))
+                .status()
+                .unwrap();
+        }
+        #[cfg(feature = "test")]
+        {
+            let _ = test;
+        }
     }
 }
 

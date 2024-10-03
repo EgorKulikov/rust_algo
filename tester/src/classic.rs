@@ -1,14 +1,16 @@
-use crate::print::print_output;
+use crate::print::{print_diff, print_output};
+use crate::test_set::TestSet;
 use crate::{process_error, Outcome, Tester};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 
-pub(crate) fn run_single_test_classic(
+pub(crate) fn run_single_test_classic<T: TestSet>(
     tester: &Tester,
     checker: fn(Input, Option<Input>, Input) -> Result<(), String>,
     input: &[u8],
     expected: Option<&[u8]>,
-    print_details: bool,
+    test_set: &T,
+    test_id: &T::TestId,
 ) -> Outcome {
     let input = &input;
     let (outcome, output) = match std::panic::catch_unwind(|| {
@@ -20,6 +22,7 @@ pub(crate) fn run_single_test_classic(
         (output, res, is_exhausted)
     }) {
         Ok((output, duration, is_exhausted)) => {
+            test_set.save_output(test_id, &output);
             let mut input = *input;
             let checker_result = if let Some(mut expected) = expected {
                 (checker)(
@@ -35,6 +38,7 @@ pub(crate) fn run_single_test_classic(
                 )
             };
             if let Err(checker_output) = checker_result {
+                test_set.output_diff(test_id);
                 (
                     Outcome::WrongAnswer {
                         input_exhausted: is_exhausted,
@@ -62,8 +66,11 @@ pub(crate) fn run_single_test_classic(
         }
         Err(err) => (process_error(err), Vec::new()),
     };
-    if print_details || !matches!(outcome, Outcome::OK { .. }) {
+    if test_set.print_details() || !matches!(outcome, Outcome::OK { .. }) {
         print_output(tester.trim(&output), true);
+    }
+    if test_set.print_details() && matches!(outcome, Outcome::WrongAnswer { .. }) {
+        print_diff(test_set, test_id);
     }
     outcome
 }
