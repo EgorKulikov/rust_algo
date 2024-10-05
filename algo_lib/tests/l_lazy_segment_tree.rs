@@ -1,114 +1,103 @@
-//{"name":"E. Innocent Students","group":"Codeforces - TheForces Round #35 (LOL-Forces)","url":"https://codeforces.com/gym/105390/problem/E","interactive":false,"timeLimit":4000,"tests":[{"input":"2\n3 5\n1 -2 3\n1 1 3 0\n2 3 -2\n1 2 3 1\n2 1 -4\n1 1 1 -10\n7 8\n1 2 4 2 4 6 7\n1 3 5 5\n1 1 7 5\n2 1 6\n2 4 4\n1 1 7 5\n1 1 3 2\n2 7 1\n1 1 7 -1\n","output":"1\n2\n1\n2\n3\n5\n1\n1\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"EInnocentStudents"}}}
+//{"name":"L - Lazy Segment Tree","group":"AtCoder - AtCoder Library Practice Contest","url":"https://atcoder.jp/contests/practice2/tasks/practice2_l","interactive":false,"timeLimit":5000,"tests":[{"input":"5 5\n0 1 0 0 1\n2 1 5\n1 3 4\n2 2 5\n1 1 3\n2 1 2\n","output":"2\n0\n1\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"LLazySegmentTree"}}}
 
-use algo_lib::collections::multi_set::MultiTreeSet;
-use algo_lib::collections::segment_tree::{Pushable, QueryResult, SegmentTree, SegmentTreeNode};
+use algo_lib::collections::segment_tree::{Pushable, SegmentTree, SegmentTreeNode};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::{TaskType, TestType};
-use std::cmp::Ordering;
 
 type PreCalc = ();
 
 fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut PreCalc) {
-    let n = input.read_size();
-    let q = input.read_size();
-    let mut a = input.read_int_vec(n);
-
+    #[derive(Clone)]
     struct Node {
-        values: MultiTreeSet<i32>,
+        zeroes: usize,
+        ones: usize,
+        num_inversions: usize,
+        inv_num_inversions: usize,
+        delta: bool,
+    }
+
+    impl Node {
+        fn zero() -> Self {
+            Self {
+                zeroes: 1,
+                ones: 0,
+                num_inversions: 0,
+                inv_num_inversions: 0,
+                delta: false,
+            }
+        }
+
+        fn one() -> Self {
+            Self {
+                zeroes: 0,
+                ones: 1,
+                num_inversions: 0,
+                inv_num_inversions: 0,
+                delta: false,
+            }
+        }
     }
 
     impl SegmentTreeNode for Node {
         fn new(_left: usize, _right: usize) -> Self {
-            Self {
-                values: MultiTreeSet::new(),
-            }
+            Self::zero()
         }
 
-        fn join(&mut self, _left_val: &Self, _right_val: &Self) {}
+        fn join(&mut self, left_val: &Self, right_val: &Self) {
+            self.zeroes = left_val.zeroes + right_val.zeroes;
+            self.ones = left_val.ones + right_val.ones;
+            self.num_inversions = left_val.num_inversions
+                + right_val.num_inversions
+                + left_val.ones * right_val.zeroes;
+            self.inv_num_inversions = left_val.inv_num_inversions
+                + right_val.inv_num_inversions
+                + left_val.zeroes * right_val.ones;
+        }
 
-        fn accumulate(&mut self, _value: &Self) {}
+        fn accumulate(&mut self, value: &Self) {
+            self.push(&value.delta);
+        }
 
-        fn reset_delta(&mut self) {}
+        fn reset_delta(&mut self) {
+            self.delta = false;
+        }
     }
 
-    impl QueryResult<(i32, usize), i32> for Node {
-        fn empty_result(_args: &i32) -> (i32, usize) {
-            (i32::MAX, 0)
-        }
-
-        fn result(&self, args: &i32) -> (i32, usize) {
-            let left = self
-                .values
-                .range_rev(..args)
-                .next()
-                .copied()
-                .map(|t| ((t - *args).abs(), *self.values.get(&t).unwrap()))
-                .unwrap_or(Self::empty_result(args));
-            let right = self
-                .values
-                .range(args..)
-                .next()
-                .copied()
-                .map(|t| ((t - *args).abs(), *self.values.get(&t).unwrap()))
-                .unwrap_or(Self::empty_result(args));
-            Self::join_results(left, right, args, 0, 0, 0)
-        }
-
-        fn join_results(
-            left_res: (i32, usize),
-            right_res: (i32, usize),
-            _args: &i32,
-            _left: usize,
-            _mid: usize,
-            _right: usize,
-        ) -> (i32, usize) {
-            match left_res.0.cmp(&right_res.0) {
-                Ordering::Less => left_res,
-                Ordering::Equal => (left_res.0, left_res.1 + right_res.1),
-                Ordering::Greater => right_res,
+    impl Pushable<&bool> for Node {
+        fn push(&mut self, delta: &bool) {
+            if *delta {
+                std::mem::swap(&mut self.zeroes, &mut self.ones);
+                std::mem::swap(&mut self.num_inversions, &mut self.inv_num_inversions);
+                self.delta = !self.delta;
             }
         }
     }
 
-    impl Pushable<&(i32, i32)> for Node {
-        fn push(&mut self, delta: &(i32, i32)) {
-            self.values.remove(&delta.0);
-            self.values.insert(delta.1);
-        }
-    }
+    let n = input.read_size();
+    let q = input.read_size();
+    let a = input.read_size_vec(n);
 
-    impl Pushable<&i32> for Node {
-        fn push(&mut self, delta: &i32) {
-            self.values.insert(*delta);
-        }
-    }
-
-    let mut st = SegmentTree::<Node>::new(n);
-    for i in 0..n {
-        st.point_through_update(i, &a[i]);
-    }
-
+    let mut st =
+        SegmentTree::from_generator(n, |i| if a[i] == 0 { Node::zero() } else { Node::one() });
     for _ in 0..q {
-        match input.read_int() {
+        let t = input.read_int();
+        let l = input.read_size() - 1;
+        let r = input.read_size();
+
+        match t {
             1 => {
-                let l = input.read_size() - 1;
-                let r = input.read_size();
-                let x = input.read_int();
-                out.print_line(st.query_with_args(l..r, &x).1);
+                st.update(l..r, &true);
             }
             2 => {
-                let at = input.read_size() - 1;
-                let n_val = input.read_int();
-                st.point_through_update(at, &(a[at], n_val));
-                a[at] = n_val;
+                out.print_line(st.query(l..r).num_inversions);
             }
             _ => unreachable!(),
         }
     }
 }
 
-pub static TEST_TYPE: TestType = TestType::MultiNumber;
+pub static TEST_TYPE: TestType = TestType::Single;
 pub static TASK_TYPE: TaskType = TaskType::Classic;
 
 pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
@@ -184,8 +173,8 @@ mod tester {
     }
 
     pub(crate) fn run_tests() -> bool {
-        let path = "./e_innocent_students";
-        let time_limit = 4000;
+        let path = "./l_lazy_segment_tree";
+        let time_limit = 5000;
         let tester = match TASK_TYPE {
             crate::TaskType::Interactive => {
                 Tester::new_interactive(
@@ -214,6 +203,6 @@ mod tester {
     }
 }
 #[test]
-fn e_innocent_students() {
+fn l_lazy_segment_tree() {
     assert!(tester::run_tests());
 }
