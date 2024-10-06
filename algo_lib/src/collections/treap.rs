@@ -610,23 +610,27 @@ impl<P: Payload> OptionTreapNode<P> {
         } else if let Some(mut node) = self.0 {
             node.push_down();
             let left_size = node.left.size();
-            if at == left_size {
-                let mut left = Self::NONE;
-                swap(&mut node.left, &mut left);
-                let mut right = Self::NONE;
-                swap(&mut node.right, &mut right);
-                node.update();
-                (left, Self(Some(node)), right)
-            } else if at < left_size {
-                let (left, mid, right) = node.left.split_at_single(at);
-                node.left = right;
-                node.update();
-                (left, mid, Self(Some(node)))
-            } else {
-                let (left, mid, right) = node.right.split_at_single(at - left_size - 1);
-                node.right = left;
-                node.update();
-                (Self(Some(node)), mid, right)
+            match at.cmp(&left_size) {
+                Ordering::Less => {
+                    let (left, mid, right) = node.left.split_at_single(at);
+                    node.left = right;
+                    node.update();
+                    (left, mid, Self(Some(node)))
+                }
+                Ordering::Equal => {
+                    let mut left = Self::NONE;
+                    swap(&mut node.left, &mut left);
+                    let mut right = Self::NONE;
+                    swap(&mut node.right, &mut right);
+                    node.update();
+                    (left, Self(Some(node)), right)
+                }
+                Ordering::Greater => {
+                    let (left, mid, right) = node.right.split_at_single(at - left_size - 1);
+                    node.right = left;
+                    node.update();
+                    (Self(Some(node)), mid, right)
+                }
             }
         } else {
             unreachable!();
