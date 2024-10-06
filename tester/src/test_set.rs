@@ -2,7 +2,9 @@ use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use std::fmt::Display;
 #[cfg(not(feature = "test"))]
-use std::process::Command;
+use std::fs::File;
+#[cfg(not(feature = "test"))]
+use std::io::Read;
 
 pub(crate) trait TestSet {
     type TestId: Display + Clone;
@@ -101,12 +103,20 @@ impl TestSet for SampleTests {
     fn output_diff(&self, test: &Self::TestId) {
         #[cfg(not(feature = "test"))]
         {
-            Command::new("diff")
-                .arg("-u")
-                .arg(format!("{}/tests/{}.out", self.task_folder, test))
-                .arg(format!("{}/tests/{}.ans", self.task_folder, test))
-                .status()
+            let mut expected = String::new();
+            File::open(format!("{}/tests/{}.out", self.task_folder, test))
+                .unwrap()
+                .read_to_string(&mut expected)
                 .unwrap();
+            let mut actual = String::new();
+            File::open(format!("{}/tests/{}.ans", self.task_folder, test))
+                .unwrap()
+                .read_to_string(&mut actual)
+                .unwrap();
+            println!(
+                "{}",
+                pretty_assertions::StrComparison::new(&expected, &actual)
+            );
         }
         #[cfg(feature = "test")]
         {

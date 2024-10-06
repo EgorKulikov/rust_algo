@@ -1,3 +1,5 @@
+use algo_lib::misc::test_type::TestType;
+
 type PreCalc = ();
 
 fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut PreCalc) {
@@ -29,8 +31,7 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
     output.flush();
     match TASK_TYPE {
         TaskType::Classic => {
-            input.skip_whitespace();
-            input.peek().is_none()
+            input.is_empty()
         }
         TaskType::Interactive => true,
     }

@@ -37,32 +37,38 @@ impl GeneratedTestSet for StressTest {
     }
 }
 
+struct MaxTest;
+
+impl GeneratedTestSet for MaxTest {
+    type TestId = usize;
+
+    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
+        1..=1
+    }
+
+    fn input(&self, test: &Self::TestId, out: &mut Output) {
+    }
+
+    fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
+        false
+    }
+}
+
 pub(crate) fn run_tests() -> bool {
     let path = "./$TASK";
-    let time_limit = $TIME_LIMIT;
+    let tl = $TIME_LIMIT;
     let tester = match TASK_TYPE {
         crate::TaskType::Interactive => {
-            Tester::new_interactive(
-                time_limit,
-                PRINT_LIMIT,
-                path.to_string(),
-                run,
-                std_interactor,
-            )
-            //Tester::new_interactive(time_limit, PRINT_LIMIT, path.to_string(), run, interact)
+            Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)
+            // Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, interact)
         }
         crate::TaskType::Classic => {
-            Tester::new_classic(
-                time_limit,
-                PRINT_LIMIT,
-                path.to_string(),
-                run,
-                default_checker,
-            )
-            //Tester::new_classic(time_limit, PRINT_LIMIT, path.to_string(), run, check)
+            Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker)
+            // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
         }
     };
     let passed = tester.test_samples();
+    // tester.test_generated("Max test", true, MaxTest);
     // tester.test_generated("Stress test", false, StressTest);
     passed
 }

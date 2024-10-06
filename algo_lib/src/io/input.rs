@@ -2,7 +2,7 @@ use crate::collections::vec_ext::default::default_vec;
 use std::io::Read;
 
 pub struct Input<'s> {
-    input: &'s mut dyn Read,
+    input: &'s mut (dyn Read + Send),
     buf: Vec<u8>,
     at: usize,
     buf_read: usize,
@@ -31,7 +31,7 @@ macro_rules! read_impl {
 impl<'s> Input<'s> {
     const DEFAULT_BUF_SIZE: usize = 4096;
 
-    pub fn new(input: &'s mut dyn Read) -> Self {
+    pub fn new(input: &'s mut (dyn Read + Send)) -> Self {
         Self {
             input,
             buf: default_vec(Self::DEFAULT_BUF_SIZE),
@@ -40,7 +40,7 @@ impl<'s> Input<'s> {
         }
     }
 
-    pub fn new_with_size(input: &'s mut dyn Read, buf_size: usize) -> Self {
+    pub fn new_with_size(input: &'s mut (dyn Read + Send), buf_size: usize) -> Self {
         Self {
             input,
             buf: default_vec(buf_size),

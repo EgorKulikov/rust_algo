@@ -38,7 +38,6 @@ pub(crate) fn run_single_test_classic<T: TestSet>(
                 )
             };
             if let Err(checker_output) = checker_result {
-                test_set.output_diff(test_id);
                 (
                     Outcome::WrongAnswer {
                         input_exhausted: is_exhausted,

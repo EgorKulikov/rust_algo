@@ -5,6 +5,7 @@ pub mod inf_int;
 pub mod integer_sqrt;
 pub mod interpolation;
 pub mod matrix;
+pub mod matrix_series;
 pub mod mod_int;
 pub mod mod_utils;
 pub mod multiplicative_function;

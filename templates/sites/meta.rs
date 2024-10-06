@@ -1,32 +1,19 @@
-use algo_lib::misc::run_parallel::{run_parallel, ParallelJob};
+use algo_lib::misc::run_parallel::run_parallel;
+use std::sync::MutexGuard;
 
 type PreCalc = ();
 
-fn solve(input: &mut Input, output: &mut Output, _data: &PreCalc) {
-    #[derive(Clone, Default)]
-    struct Job {}
-
-    impl ParallelJob for Job {
-        fn read_input(&mut self, input: &mut Input) {
-            $CARET
-        }
-
-        fn solve(&mut self) {}
-
-        fn write_output(&mut self, out: &mut Output, test_case: usize) {
-            out.print_line((format!("Case #{}:", test_case), ));
-        }
-    }
-
-    run_parallel::<Job>(input, output, true);
+fn solve(mut input: MutexGuard<Input>, out: &mut Output, test_case: usize, _data: &PreCalc) {
+    $CARET
+    drop(input);
+    out.print_line((format!("Case #{}:", test_case),));
 }
 
 pub static TASK_TYPE: TaskType = TaskType::Classic;
 
-pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
+pub(crate) fn run(input: Input, mut output: Output) -> bool {
     let pre_calc = ();
-    solve(&mut input, &mut output, &pre_calc);
+    let is_exhausted = run_parallel(input, &mut output, true, pre_calc, solve);
     output.flush();
-    input.skip_whitespace();
-    input.peek().is_none()
+    is_exhausted
 }

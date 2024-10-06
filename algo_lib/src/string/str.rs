@@ -60,6 +60,11 @@ impl<'s> Str<'s> {
         self.len() == 0
     }
 
+    pub fn resize(&mut self, new_len: usize, value: u8) {
+        self.transform_to_extendable();
+        self.as_extendable().resize(new_len, value);
+    }
+
     pub fn iter(&self) -> Copied<Iter<u8>> {
         match self {
             Str::Extendable(v, _) => v.iter(),

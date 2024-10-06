@@ -1,40 +1,64 @@
 use crate::io::input::Input;
 use crate::io::output::Output;
-use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
-use rayon::ThreadPoolBuilder;
-use std::sync::atomic::AtomicUsize;
+use std::io::Write;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex, MutexGuard, TryLockError};
+use std::thread::{scope, yield_now};
 
-pub trait ParallelJob: Sync + Send + Default + Clone {
-    fn read_input(&mut self, input: &mut Input);
-    fn solve(&mut self);
-    fn write_output(&mut self, output: &mut Output, test_case: usize);
-}
-
-pub fn run_parallel<J: ParallelJob>(input: &mut Input, output: &mut Output, do_parallel: bool) {
-    let t = input.read();
-    let mut jobs = vec![J::default(); t];
-    for job in jobs.iter_mut() {
-        job.read_input(input);
-    }
-    ThreadPoolBuilder::new()
-        .stack_size(1000000000)
-        .build_global()
-        .unwrap();
-    let rem = AtomicUsize::new(t);
-    let do_job = |(test, job): (usize, &mut J)| {
-        job.solve();
-        eprintln!(
-            "Test {} done, {} remaining",
-            test,
-            rem.fetch_sub(1, std::sync::atomic::Ordering::Relaxed) - 1
-        );
-    };
-    if do_parallel {
-        jobs.par_iter_mut().enumerate().for_each(do_job);
-    } else {
-        jobs.iter_mut().enumerate().for_each(do_job);
-    }
-    for (i, mut job) in jobs.into_iter().enumerate() {
-        job.write_output(output, i + 1);
-    }
+pub fn run_parallel<P>(
+    mut input: Input,
+    output: &mut Output,
+    do_parallel: bool,
+    pre_calc: P,
+    run: impl Fn(MutexGuard<Input>, &mut Output, usize, &P) + Send + Sync + 'static + Copy,
+) -> bool
+where
+    for<'a> &'a P: Send,
+{
+    let t = input.read_size();
+    let tests_remaining = AtomicUsize::new(t);
+    let input = Arc::new(Mutex::new(input));
+    scope(|s| {
+        let mut handles = Vec::with_capacity(t);
+        for i in 1..=t {
+            eprintln!("Test {} started", i);
+            let tr = &tests_remaining;
+            let inp = input.clone();
+            let pre_calc = &pre_calc;
+            let handle = s.spawn(move || {
+                let mut res = Vec::new();
+                let mut output = Output::new(&mut res);
+                run(inp.lock().unwrap(), &mut output, i, pre_calc);
+                eprintln!(
+                    "Test {} done, {} tests remaining",
+                    i,
+                    tr.fetch_sub(1, Ordering::Relaxed) - 1
+                );
+                output.flush();
+                res
+            });
+            if do_parallel {
+                while let Err(err) = input.try_lock() {
+                    match err {
+                        TryLockError::Poisoned(poison) => {
+                            panic!("Poisoned lock: {:?}", poison);
+                        }
+                        TryLockError::WouldBlock => {
+                            yield_now();
+                        }
+                    }
+                }
+                handles.push(handle);
+            } else {
+                let res = handle.join().unwrap();
+                output.write_all(&res).unwrap();
+            }
+        }
+        for handle in handles {
+            let res = handle.join().unwrap();
+            output.write_all(&res).unwrap();
+        }
+    });
+    let res = input.lock().unwrap().is_empty();
+    res
 }

@@ -2,7 +2,7 @@ use crate::test_set::TestSet;
 use crate::Outcome;
 use std::fmt::Display;
 
-const BLUE: &str = "\x1B[34m";
+const BLUE: &str = "\x1B[36m";
 const RED: &str = "\x1B[31m";
 const GREEN: &str = "\x1B[32m";
 const DEF: &str = "\x1B[0m";
@@ -54,7 +54,6 @@ pub(crate) fn print_output(output: &[u8], print_details: bool) {
 }
 
 pub(crate) fn print_diff<T: TestSet>(test_set: &T, test_id: &T::TestId) {
-    println!("{}Diff:{}", BLUE, DEF);
     test_set.output_diff(test_id);
 }
 
