@@ -3,7 +3,9 @@ use crate::io::output::{Output, Writable};
 use crate::numbers::num_traits::algebra::{Field, One, Zero};
 use crate::numbers::num_traits::invertible::Invertible;
 use std::cmp::Ordering;
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::ops::{
+    Add, AddAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
+};
 
 pub trait RealTrait: Ord + Field {
     const PI: Self;
@@ -44,6 +46,12 @@ impl AddAssign for Real {
     }
 }
 
+impl AddAssign<f64> for Real {
+    fn add_assign(&mut self, rhs: f64) {
+        self.0 += rhs;
+    }
+}
+
 impl Add for Real {
     type Output = Self;
 
@@ -53,9 +61,32 @@ impl Add for Real {
     }
 }
 
+impl Add<f64> for Real {
+    type Output = Self;
+
+    fn add(mut self, rhs: f64) -> Self::Output {
+        self += rhs;
+        self
+    }
+}
+
+impl Add<Real> for f64 {
+    type Output = Real;
+
+    fn add(self, rhs: Real) -> Self::Output {
+        Real(self + rhs.0)
+    }
+}
+
 impl SubAssign for Real {
     fn sub_assign(&mut self, rhs: Self) {
         self.0 -= rhs.0;
+    }
+}
+
+impl SubAssign<f64> for Real {
+    fn sub_assign(&mut self, rhs: f64) {
+        self.0 -= rhs;
     }
 }
 
@@ -68,9 +99,32 @@ impl Sub for Real {
     }
 }
 
+impl Sub<f64> for Real {
+    type Output = Self;
+
+    fn sub(mut self, rhs: f64) -> Self::Output {
+        self -= rhs;
+        self
+    }
+}
+
+impl Sub<Real> for f64 {
+    type Output = Real;
+
+    fn sub(self, rhs: Real) -> Self::Output {
+        Real(self - rhs.0)
+    }
+}
+
 impl MulAssign for Real {
     fn mul_assign(&mut self, rhs: Self) {
         self.0 *= rhs.0;
+    }
+}
+
+impl MulAssign<f64> for Real {
+    fn mul_assign(&mut self, rhs: f64) {
+        self.0 *= rhs;
     }
 }
 
@@ -83,9 +137,32 @@ impl Mul for Real {
     }
 }
 
+impl Mul<f64> for Real {
+    type Output = Self;
+
+    fn mul(mut self, rhs: f64) -> Self::Output {
+        self.0 *= rhs;
+        self
+    }
+}
+
+impl Mul<Real> for f64 {
+    type Output = Real;
+
+    fn mul(self, rhs: Real) -> Self::Output {
+        Real(self * rhs.0)
+    }
+}
+
 impl DivAssign for Real {
     fn div_assign(&mut self, rhs: Self) {
         self.0 /= rhs.0;
+    }
+}
+
+impl DivAssign<f64> for Real {
+    fn div_assign(&mut self, rhs: f64) {
+        self.0 /= rhs;
     }
 }
 
@@ -95,6 +172,23 @@ impl Div for Real {
     fn div(mut self, rhs: Self) -> Self::Output {
         self /= rhs;
         self
+    }
+}
+
+impl Div<f64> for Real {
+    type Output = Self;
+
+    fn div(mut self, rhs: f64) -> Self::Output {
+        self /= rhs;
+        self
+    }
+}
+
+impl Div<Real> for f64 {
+    type Output = Real;
+
+    fn div(self, rhs: Real) -> Self::Output {
+        Real(self / rhs.0)
     }
 }
 
@@ -159,6 +253,20 @@ impl RealTrait for Real {
         unsafe {
             EPSILON = eps;
         }
+    }
+}
+
+impl Deref for Real {
+    type Target = f64;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Real {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 

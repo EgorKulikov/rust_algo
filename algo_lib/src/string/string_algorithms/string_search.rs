@@ -4,7 +4,7 @@ use crate::string::string_algorithms::z_algorithm::ZAlgorithm;
 
 pub trait StringSearch {
     fn index_of(&self, pattern: &Self) -> Option<usize>;
-    fn contains(&self, pattern: &Self) -> bool {
+    fn str_contains(&self, pattern: &Self) -> bool {
         self.index_of(pattern).is_some()
     }
 }

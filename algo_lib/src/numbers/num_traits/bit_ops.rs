@@ -1,6 +1,6 @@
 use crate::numbers::num_traits::algebra::{One, Zero};
 use std::ops::{
-    BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, RangeInclusive, Shl,
+    BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, RangeInclusive, Shl, Sub,
 };
 use std::ops::{ShlAssign, Shr, ShrAssign};
 
@@ -53,6 +53,12 @@ pub trait BitOps:
         *self ^= Self::bit(at)
     }
 
+    #[must_use]
+    fn flipped_bit(mut self, at: usize) -> Self {
+        self.flip_bit(at);
+        self
+    }
+
     fn all_bits(n: usize) -> Self {
         let mut res = Self::zero();
         for i in 0..n {
@@ -63,6 +69,39 @@ pub trait BitOps:
 
     fn iter_all(n: usize) -> RangeInclusive<Self> {
         Self::zero()..=Self::all_bits(n)
+    }
+}
+
+pub struct BitIter<T> {
+    cur: T,
+    all: T,
+    ended: bool,
+}
+
+impl<T: Copy> BitIter<T> {
+    pub fn new(all: T) -> Self {
+        Self {
+            cur: all,
+            all,
+            ended: false,
+        }
+    }
+}
+
+impl<T: BitOps + Sub<Output = T>> Iterator for BitIter<T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.ended {
+            return None;
+        }
+        let res = self.cur;
+        if self.cur == T::zero() {
+            self.ended = true;
+        } else {
+            self.cur = (self.cur - T::one()) & self.all;
+        }
+        Some(res)
     }
 }
 

@@ -177,6 +177,12 @@ impl Writable for char {
     }
 }
 
+impl Writable for u8 {
+    fn write(&self, output: &mut Output) {
+        output.put(*self);
+    }
+}
+
 impl<T: Writable> Writable for [T] {
     fn write(&self, output: &mut Output) {
         output.print_iter(self.iter());
@@ -215,7 +221,7 @@ macro_rules! write_to_string {
     )+};
 }
 
-write_to_string!(u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize);
+write_to_string!(u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize);
 
 macro_rules! tuple_writable {
     ($name0:ident $($name:ident: $id:tt )*) => {
