@@ -29,6 +29,12 @@ impl Real {
     pub fn round(&self) -> i64 {
         self.0.round() as i64
     }
+    pub fn ceil(&self) -> i64 {
+        self.0.ceil() as i64
+    }
+    pub fn floor(&self) -> i64 {
+        self.0.floor() as i64
+    }
 }
 
 impl Eq for Real {}
