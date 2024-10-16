@@ -14,6 +14,7 @@ pub mod iter_ext;
 pub mod md_arr;
 pub mod min_max;
 pub mod multi_set;
+pub mod multi_treap_set;
 pub mod permutation;
 pub mod persistent_fenwick;
 pub mod segment_tree;
