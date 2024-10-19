@@ -44,7 +44,7 @@ impl<C: AdditionMonoidWithSub + PartialOrd + Copy, Id: EdgeId, P> FlowEdgeRaw<C,
     }
 }
 
-impl<C: AdditionMonoidWithSub + PartialOrd + Copy, Id: EdgeId, P: Clone> EdgeTrait
+impl<C: AdditionMonoidWithSub + PartialOrd + Copy, Id: EdgeId, P: Default + Clone> EdgeTrait
     for FlowEdgeRaw<C, Id, P>
 {
     type Payload = P;
@@ -71,7 +71,7 @@ impl<C: AdditionMonoidWithSub + PartialOrd + Copy, Id: EdgeId, P: Clone> EdgeTra
     }
 
     fn reverse_edge(&self, from: usize) -> Self {
-        Self::with_payload_impl(from, C::zero(), self.payload.clone())
+        Self::with_payload_impl(from, C::zero(), P::default())
     }
 
     fn payload(&self) -> &P {
@@ -79,7 +79,7 @@ impl<C: AdditionMonoidWithSub + PartialOrd + Copy, Id: EdgeId, P: Clone> EdgeTra
     }
 }
 
-impl<C: AdditionMonoidWithSub + PartialOrd + Copy, Id: EdgeId, P: Clone> FlowEdgeTrait<C>
+impl<C: AdditionMonoidWithSub + PartialOrd + Copy, Id: EdgeId, P: Default + Clone> FlowEdgeTrait<C>
     for FlowEdgeRaw<C, Id, P>
 {
     fn capacity(&self) -> C {

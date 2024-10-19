@@ -15,6 +15,7 @@ pub mod lca;
 pub mod max_flow;
 pub mod min_cost_flow;
 pub mod minimal_spanning_tree;
+pub mod negative_distances;
 pub mod strongly_connected_components;
 pub mod topological_sort;
 pub mod two_sat;

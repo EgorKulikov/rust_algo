@@ -18,7 +18,7 @@ pub trait MinCostFlow<C> {
     fn min_cost_max_flow(&mut self, source: usize, sink: usize) -> (C, C);
 }
 
-fn min_cost_flow_impl<C, Id, P: Clone>(
+fn min_cost_flow_impl<C, Id, P: Clone + Default>(
     or_graph: &mut Graph<WeightedFlowEdgeRaw<C, C, Id, P>>,
     source: usize,
     sink: usize,
@@ -178,7 +178,7 @@ where
     (min_cost, max_flow)
 }
 
-impl<C, Id, P: Clone> MinCostFlow<C> for Graph<WeightedFlowEdgeRaw<C, C, Id, P>>
+impl<C, Id, P: Clone + Default> MinCostFlow<C> for Graph<WeightedFlowEdgeRaw<C, C, Id, P>>
 where
     C: Ring + Ord + Copy + MinMax + Bits + Display,
     Id: EdgeId,

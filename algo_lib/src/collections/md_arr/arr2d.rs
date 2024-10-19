@@ -1,6 +1,7 @@
 use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
+use std::mem::MaybeUninit;
 use std::ops::{Index, IndexMut, Range};
 use std::slice::Iter;
 use std::vec::IntoIter;
@@ -97,6 +98,44 @@ impl<T> Arr2d<T> {
         let (r1, r2) = (r1.min(r2), r1.max(r2));
         let (head, tail) = self.data.split_at_mut(r2 * self.d2);
         head[r1 * self.d2..(r1 + 1) * self.d2].swap_with_slice(&mut tail[..self.d2]);
+    }
+
+    pub fn rotate_clockwise(self) -> Self {
+        unsafe {
+            let d1 = self.d1;
+            let d2 = self.d2;
+            let mut res = MaybeUninit::new(Vec::with_capacity(d1 * d2));
+            (*res.as_mut_ptr()).set_len(d1 * d2);
+            for (id, element) in self.into_iter().enumerate() {
+                let (i, j) = (id / d2, id % d2);
+                let ptr: *mut T = (*res.as_mut_ptr()).as_mut_ptr();
+                ptr.add(j * d1 + d1 - i - 1).write(element);
+            }
+            Self {
+                d1: d2,
+                d2: d1,
+                data: res.assume_init(),
+            }
+        }
+    }
+
+    pub fn rotate_counterclockwise(self) -> Self {
+        unsafe {
+            let d1 = self.d1;
+            let d2 = self.d2;
+            let mut res = MaybeUninit::new(Vec::with_capacity(d1 * d2));
+            (*res.as_mut_ptr()).set_len(d1 * d2);
+            for (id, element) in self.into_iter().enumerate() {
+                let (i, j) = (id / d2, id % d2);
+                let ptr: *mut T = (*res.as_mut_ptr()).as_mut_ptr();
+                ptr.add((d2 - j - 1) * d1 + i).write(element);
+            }
+            Self {
+                d1: d2,
+                d2: d1,
+                data: res.assume_init(),
+            }
+        }
     }
 }
 
@@ -195,7 +234,7 @@ pub trait Arr2dRead {
     fn read_int_table(&mut self, d1: usize, d2: usize) -> Arr2d<i32>;
     fn read_long_table(&mut self, d1: usize, d2: usize) -> Arr2d<i64>;
     fn read_size_table(&mut self, d1: usize, d2: usize) -> Arr2d<usize>;
-    fn read_char_table(&mut self, d1: usize, d2: usize) -> Arr2d<char>;
+    fn read_char_table(&mut self, d1: usize, d2: usize) -> Arr2d<u8>;
 }
 
 impl Arr2dRead for Input<'_> {
@@ -215,25 +254,26 @@ impl Arr2dRead for Input<'_> {
         self.read_table(d1, d2)
     }
 
-    fn read_char_table(&mut self, d1: usize, d2: usize) -> Arr2d<char> {
+    fn read_char_table(&mut self, d1: usize, d2: usize) -> Arr2d<u8> {
         self.read_table(d1, d2)
     }
 }
 
 pub trait Arr2dCharWrite {
-    fn print_table(&mut self, table: &Arr2d<char>);
+    fn print_table(&mut self, table: &Arr2d<u8>);
 }
 
 impl Arr2dCharWrite for Output<'_> {
-    fn print_table(&mut self, table: &Arr2d<char>) {
+    fn print_table(&mut self, table: &Arr2d<u8>) {
         let mut at = 0usize;
         for _ in 0..table.d1 {
             for _ in 0..table.d2 {
-                self.print(table.data[at]);
+                self.put(table.data[at]);
                 at += 1;
             }
             self.put(b'\n');
         }
+        self.maybe_flush();
     }
 }
 

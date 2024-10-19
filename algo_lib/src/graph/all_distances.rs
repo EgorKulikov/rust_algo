@@ -5,25 +5,6 @@ use crate::graph::graph::Graph;
 use crate::numbers::num_traits::algebra::SemiRing;
 use std::ops::Add;
 
-#[derive(PartialOrd, PartialEq, Ord, Eq, Copy, Clone)]
-pub enum Distance<W> {
-    Infinite,
-    Finite(W),
-    None,
-}
-
-impl<W: Ord + SemiRing> Add for Distance<W> {
-    type Output = Distance<W>;
-
-    fn add(self, other: Distance<W>) -> Distance<W> {
-        match (self, other) {
-            (Distance::None, _) | (_, Distance::None) => Distance::None,
-            (Distance::Infinite, _) | (_, Distance::Infinite) => Distance::Infinite,
-            (Distance::Finite(a), Distance::Finite(b)) => Distance::Finite(a + b),
-        }
-    }
-}
-
 pub trait AllDistances<W: SemiRing + Ord + Copy> {
     fn all_distances(&self) -> Arr2d<Distance<W>>;
 }
@@ -72,5 +53,24 @@ impl<W: SemiRing + Ord + Copy, E: WeightedEdgeTrait<W>> AllDistances<W> for Grap
             }
         }
         res
+    }
+}
+
+#[derive(PartialOrd, PartialEq, Ord, Eq, Copy, Clone)]
+pub enum Distance<W> {
+    Infinite,
+    Finite(W),
+    None,
+}
+
+impl<W: Ord + SemiRing> Add for Distance<W> {
+    type Output = Distance<W>;
+
+    fn add(self, other: Distance<W>) -> Distance<W> {
+        match (self, other) {
+            (Distance::None, _) | (_, Distance::None) => Distance::None,
+            (Distance::Infinite, _) | (_, Distance::Infinite) => Distance::Infinite,
+            (Distance::Finite(a), Distance::Finite(b)) => Distance::Finite(a + b),
+        }
     }
 }

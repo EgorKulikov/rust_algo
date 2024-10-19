@@ -6,7 +6,7 @@ macro_rules! when {
             _ => unreachable!(),
         }
     };
-    {$($cond: expr => $then: expr,)* else $(=>)? $else: expr,} => {
+    {$($cond: expr => $then: expr,)* else $(=>)? $else: expr$(,)?} => {
         match () {
             $(_ if $cond => $then,)*
             _ => $else,

@@ -1,6 +1,7 @@
 //{"name":"All Pairs Shortest Path","group":"Kattis","url":"https://open.kattis.com/problems/allpairspath","interactive":false,"timeLimit":2000,"tests":[{"input":"4 3 4\n0 1 2\n1 2 2\n3 3 1\n0 2\n1 2\n3 0\n3 3\n2 1 2\n0 1 100\n0 1\n1 0\n0 0 0\n","output":"4\n2\nImpossible\n0\n\n100\nImpossible\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"AllPairsShortestPath"}}}
 
-use algo_lib::graph::all_distances::{AllDistances, Distance};
+use algo_lib::graph::all_distances::AllDistances;
+use algo_lib::graph::all_distances::Distance;
 use algo_lib::graph::edges::weighted_edge::WeightedEdge;
 use algo_lib::graph::graph::Graph;
 use algo_lib::io::input::Input;

@@ -59,6 +59,9 @@ impl<T: Ring + Copy + PartialOrd> ConvexHull<T> for &mut [Point<T>] {
         }
         let mut ans = up;
         ans.extend(down.into_iter().skip(1).rev().skip(1));
+        if ans.len() == 2 && ans[0] == ans[1] {
+            ans.pop();
+        }
         Polygon::new(ans)
     }
 }

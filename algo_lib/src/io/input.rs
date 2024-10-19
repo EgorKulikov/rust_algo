@@ -122,9 +122,9 @@ impl<'s> Input<'s> {
         res
     }
 
-    pub fn read_char(&mut self) -> char {
+    pub fn read_char(&mut self) -> u8 {
         self.skip_whitespace();
-        self.get().unwrap().into()
+        self.get().unwrap()
     }
 
     read_impl!(u32, read_unsigned, read_unsigned_vec);
@@ -149,7 +149,7 @@ pub trait Readable {
     fn read(input: &mut Input) -> Self;
 }
 
-impl Readable for char {
+impl Readable for u8 {
     fn read(input: &mut Input) -> Self {
         input.read_char()
     }
@@ -206,7 +206,7 @@ macro_rules! read_integer {
     )+};
 }
 
-read_integer!(i8 i16 i32 i64 i128 isize u8 u16 u32 u64 u128 usize);
+read_integer!(i8 i16 i32 i64 i128 isize u16 u32 u64 u128 usize);
 
 macro_rules! tuple_readable {
     ($($name:ident)+) => {

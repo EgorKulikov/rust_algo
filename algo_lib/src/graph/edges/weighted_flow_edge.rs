@@ -57,8 +57,12 @@ impl<W: AdditionGroup + Copy, C: AdditionMonoidWithSub + Ord + Copy, Id: EdgeId,
     }
 }
 
-impl<W: AdditionGroup + Copy, C: AdditionMonoidWithSub + Ord + Copy, Id: EdgeId, P: Clone> EdgeTrait
-    for WeightedFlowEdgeRaw<W, C, Id, P>
+impl<
+        W: AdditionGroup + Copy,
+        C: AdditionMonoidWithSub + Ord + Copy,
+        Id: EdgeId,
+        P: Clone + Default,
+    > EdgeTrait for WeightedFlowEdgeRaw<W, C, Id, P>
 {
     type Payload = P;
     const REVERSABLE: bool = true;
@@ -84,7 +88,7 @@ impl<W: AdditionGroup + Copy, C: AdditionMonoidWithSub + Ord + Copy, Id: EdgeId,
     }
 
     fn reverse_edge(&self, from: usize) -> Self {
-        Self::with_payload_impl(from, -self.weight, C::zero(), self.payload.clone())
+        Self::with_payload_impl(from, -self.weight, C::zero(), P::default())
     }
 
     fn payload(&self) -> &P {
@@ -92,8 +96,12 @@ impl<W: AdditionGroup + Copy, C: AdditionMonoidWithSub + Ord + Copy, Id: EdgeId,
     }
 }
 
-impl<W: AdditionGroup + Copy, C: AdditionMonoidWithSub + Ord + Copy, Id: EdgeId, P: Clone>
-    WeightedEdgeTrait<W> for WeightedFlowEdgeRaw<W, C, Id, P>
+impl<
+        W: AdditionGroup + Copy,
+        C: AdditionMonoidWithSub + Ord + Copy,
+        Id: EdgeId,
+        P: Clone + Default,
+    > WeightedEdgeTrait<W> for WeightedFlowEdgeRaw<W, C, Id, P>
 {
     fn weight(&self) -> W {
         self.weight
@@ -104,8 +112,12 @@ impl<W: AdditionGroup + Copy, C: AdditionMonoidWithSub + Ord + Copy, Id: EdgeId,
     }
 }
 
-impl<W: AdditionGroup + Copy, C: AdditionMonoidWithSub + Ord + Copy, Id: EdgeId, P: Clone>
-    FlowEdgeTrait<C> for WeightedFlowEdgeRaw<W, C, Id, P>
+impl<
+        W: AdditionGroup + Copy,
+        C: AdditionMonoidWithSub + Ord + Copy,
+        Id: EdgeId,
+        P: Clone + Default,
+    > FlowEdgeTrait<C> for WeightedFlowEdgeRaw<W, C, Id, P>
 {
     fn capacity(&self) -> C {
         self.capacity
