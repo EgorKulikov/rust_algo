@@ -18,16 +18,16 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let mut ans = 0;
     for i in 0..n {
         for j in 0..m {
-            if map[(i, j)] != 'X' && !visited[(i, j)] {
+            if map[(i, j)] != b'X' && !visited[(i, j)] {
                 queue.push((i, j));
                 visited[(i, j)] = true;
                 let mut good = true;
                 while let Some((r, c)) = queue.pop() {
-                    if map[(r, c)] == '*' {
+                    if map[(r, c)] == b'*' {
                         good = false;
                     }
                     for (nr, nc) in D4::iter(r, c, n, m) {
-                        if !visited[(nr, nc)] && map[(nr, nc)] != 'X' {
+                        if !visited[(nr, nc)] && map[(nr, nc)] != b'X' {
                             visited[(nr, nc)] = true;
                             queue.push((nr, nc));
                         }
@@ -75,74 +75,77 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
 }
 
 mod tester {
-#![allow(unused_variables)]
-#![allow(unused_mut)]
-#![allow(dead_code)]
+    #![allow(unused_variables)]
+    #![allow(unused_mut)]
+    #![allow(dead_code)]
 
-use crate::{run, TASK_TYPE};
-use algo_lib::io::input::Input;
-use algo_lib::io::output::Output;
-use tester::classic::default_checker;
-use tester::interactive::std_interactor;
-use tester::test_set::GeneratedTestSet;
-use tester::Tester;
+    use crate::{run, TASK_TYPE};
+    use algo_lib::io::input::Input;
+    use algo_lib::io::output::Output;
+    use tester::classic::default_checker;
+    use tester::interactive::std_interactor;
+    use tester::test_set::GeneratedTestSet;
+    use tester::Tester;
 
-const PRINT_LIMIT: usize = 1000;
+    const PRINT_LIMIT: usize = 1000;
 
-fn interact(mut sol_input: Input, mut sol_output: Output, mut input: Input) -> Result<(), String> {
-    Ok(())
-}
-
-fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
-    Ok(())
-}
-
-struct StressTest;
-
-impl GeneratedTestSet for StressTest {
-    type TestId = usize;
-
-    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
-        1..
+    fn interact(
+        mut sol_input: Input,
+        mut sol_output: Output,
+        mut input: Input,
+    ) -> Result<(), String> {
+        Ok(())
     }
 
-    fn input(&self, test: &Self::TestId, out: &mut Output) {
+    fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
+        Ok(())
     }
 
-    fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-        false
-    }
-}
+    struct StressTest;
 
-pub(crate) fn run_tests() -> bool {
-    let path = "./p5_coffee_jelly";
-    let time_limit = 1000;
-    let tester = match TASK_TYPE {
-        crate::TaskType::Interactive => {
-            Tester::new_interactive(
-                time_limit,
-                PRINT_LIMIT,
-                path.to_string(),
-                run,
-                std_interactor,
-            )
-            //Tester::new_interactive(time_limit, PRINT_LIMIT, path.to_string(), run, interact)
+    impl GeneratedTestSet for StressTest {
+        type TestId = usize;
+
+        fn tests(&self) -> impl Iterator<Item = Self::TestId> {
+            1..
         }
-        crate::TaskType::Classic => {
-            Tester::new_classic(
-                time_limit,
-                PRINT_LIMIT,
-                path.to_string(),
-                run,
-                default_checker,
-            )
-            //Tester::new_classic(time_limit, PRINT_LIMIT, path.to_string(), run, check)
+
+        fn input(&self, test: &Self::TestId, out: &mut Output) {}
+
+        fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
+            false
         }
-    };
-    let passed = tester.test_samples();
-    // tester.test_generated("Stress test", false, StressTest);
-    passed
-}
+    }
+
+    pub(crate) fn run_tests() -> bool {
+        let path = "./p5_coffee_jelly";
+        let time_limit = 1000;
+        let tester = match TASK_TYPE {
+            crate::TaskType::Interactive => {
+                Tester::new_interactive(
+                    time_limit,
+                    PRINT_LIMIT,
+                    path.to_string(),
+                    run,
+                    std_interactor,
+                )
+                //Tester::new_interactive(time_limit, PRINT_LIMIT, path.to_string(), run, interact)
+            }
+            crate::TaskType::Classic => {
+                Tester::new_classic(
+                    time_limit,
+                    PRINT_LIMIT,
+                    path.to_string(),
+                    run,
+                    default_checker,
+                )
+                //Tester::new_classic(time_limit, PRINT_LIMIT, path.to_string(), run, check)
+            }
+        };
+        let passed = tester.test_samples();
+        // tester.test_generated("Stress test", false, StressTest);
+        passed
+    }
 }
 #[test]
 fn p5_coffee_jelly() {
