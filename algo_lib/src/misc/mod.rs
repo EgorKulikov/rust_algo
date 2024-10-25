@@ -2,6 +2,7 @@ pub mod between;
 pub mod cards;
 pub mod direction;
 pub mod dirs;
+pub mod expression_parser;
 pub mod extensions;
 pub mod hungarian_algorithm;
 pub mod memo;
