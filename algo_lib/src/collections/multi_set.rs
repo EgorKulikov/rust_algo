@@ -1,18 +1,19 @@
-use std::collections::{BTreeMap, HashMap};
+use crate::collections::fx_hash_map::FxHashMap;
+use std::collections::BTreeMap;
 use std::hash::Hash;
 use std::iter::repeat;
 use std::ops::{Deref, RangeBounds};
 
 #[derive(Default)]
 pub struct MultiHashSet<T> {
-    map: HashMap<T, usize>,
+    map: FxHashMap<T, usize>,
     size: usize,
 }
 
 impl<T: Eq + Hash> MultiHashSet<T> {
     pub fn new() -> Self {
         Self {
-            map: HashMap::new(),
+            map: FxHashMap::default(),
             size: 0,
         }
     }
@@ -60,7 +61,7 @@ impl<T: Eq + Hash> MultiHashSet<T> {
 }
 
 impl<T> Deref for MultiHashSet<T> {
-    type Target = HashMap<T, usize>;
+    type Target = FxHashMap<T, usize>;
 
     fn deref(&self) -> &Self::Target {
         &self.map

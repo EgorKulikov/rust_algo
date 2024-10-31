@@ -1,3 +1,4 @@
+use crate::collections::fx_hash_map::FxHashMap;
 use crate::misc::recursive_function::Callable;
 use crate::misc::recursive_function::Callable2;
 use crate::misc::recursive_function::Callable3;
@@ -7,7 +8,6 @@ use crate::misc::recursive_function::Callable6;
 use crate::misc::recursive_function::Callable7;
 use crate::misc::recursive_function::Callable8;
 use crate::misc::recursive_function::Callable9;
-use std::collections::HashMap;
 use std::hash::Hash;
 
 macro_rules! memoization {
@@ -17,7 +17,7 @@ macro_rules! memoization {
             F: FnMut(&mut dyn $trait<$($type, )*Output>, $($type, )*) -> Output,
         {
             f: std::cell::UnsafeCell<F>,
-            res: HashMap<($($type, )*), Output>,
+            res: FxHashMap<($($type, )*), Output>,
         }
 
         impl<F, $($type, )*Output: Clone> $name<F, $($type, )*Output>
@@ -27,7 +27,7 @@ macro_rules! memoization {
             pub fn new(f: F) -> Self {
                 Self {
                     f: std::cell::UnsafeCell::new(f),
-                    res: HashMap::new(),
+                    res: FxHashMap::default(),
                 }
             }
         }

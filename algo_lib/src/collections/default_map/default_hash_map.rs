@@ -1,13 +1,13 @@
-use std::collections::HashMap;
+use crate::collections::fx_hash_map::FxHashMap;
 use std::hash::Hash;
 use std::iter::FromIterator;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 
 #[derive(Default, Clone, Eq, PartialEq)]
-pub struct DefaultHashMap<K: Hash + Eq, V>(HashMap<K, V>, V);
+pub struct DefaultHashMap<K: Hash + Eq, V>(FxHashMap<K, V>, V);
 
 impl<K: Hash + Eq, V> Deref for DefaultHashMap<K, V> {
-    type Target = HashMap<K, V>;
+    type Target = FxHashMap<K, V>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -22,11 +22,7 @@ impl<K: Hash + Eq, V> DerefMut for DefaultHashMap<K, V> {
 
 impl<K: Hash + Eq, V: Default> DefaultHashMap<K, V> {
     pub fn new() -> Self {
-        Self(HashMap::new(), V::default())
-    }
-
-    pub fn with_capacity(cap: usize) -> Self {
-        Self(HashMap::with_capacity(cap), V::default())
+        Self(FxHashMap::default(), V::default())
     }
 
     pub fn get(&self, key: &K) -> &V {

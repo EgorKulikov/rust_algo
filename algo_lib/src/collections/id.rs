@@ -1,17 +1,17 @@
-use std::collections::HashMap;
+use crate::collections::fx_hash_map::FxHashMap;
 use std::hash::Hash;
 use std::mem::MaybeUninit;
 
 #[derive(Default, Clone)]
 pub struct Id<T> {
-    map: HashMap<T, usize>,
+    map: FxHashMap<T, usize>,
     next: usize,
 }
 
 impl<T: Hash + Eq> Id<T> {
     pub fn new() -> Self {
         Self {
-            map: HashMap::new(),
+            map: FxHashMap::default(),
             next: 0,
         }
     }

@@ -1,3 +1,4 @@
+use crate::collections::fx_hash_map::FxHashMap;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use crate::misc::value::Value;
@@ -7,7 +8,6 @@ use crate::numbers::num_traits::as_index::AsIndex;
 use crate::numbers::num_traits::invertible::Invertible;
 use crate::numbers::num_traits::wideable::Wideable;
 use crate::{value, when};
-use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 use std::marker::PhantomData;
@@ -62,7 +62,7 @@ where
     T::W: Copy + IntegerRing,
 {
     pub fn log(&self, alpha: Self) -> T {
-        let mut base = HashMap::new();
+        let mut base = FxHashMap::default();
         let mut exp = T::zero();
         let mut pow = Self::one();
         let mut inv = *self;

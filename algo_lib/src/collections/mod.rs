@@ -8,6 +8,7 @@ pub mod dsu2d;
 pub mod fast_clear_arr;
 pub mod fast_clear_fenwick;
 pub mod fenwick;
+pub mod fx_hash_map;
 pub mod id;
 pub mod indexed_heap;
 pub mod iter_ext;
