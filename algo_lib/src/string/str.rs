@@ -1,4 +1,5 @@
 use crate::collections::iter_ext::collect::IterCollect;
+use crate::collections::slice_ext::backward::Back;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::cmp::Ordering;
@@ -6,7 +7,7 @@ use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::iter::{Copied, FromIterator};
 use std::marker::PhantomData;
-use std::ops::{Add, AddAssign, Deref, DerefMut, Index, IndexMut};
+use std::ops::{Add, AddAssign, Deref, DerefMut, Index, IndexMut, RangeBounds};
 use std::slice::{Iter, IterMut, SliceIndex};
 use std::str::FromStr;
 use std::vec::IntoIter;
@@ -15,6 +16,22 @@ pub enum Str<'s> {
     Extendable(Vec<u8>, PhantomData<&'s [u8]>),
     Owned(Box<[u8]>, PhantomData<&'s [u8]>),
     Ref(&'s [u8]),
+}
+
+impl<'s> Str<'s> {
+    pub fn substr(&self, range: impl RangeBounds<usize>) -> Str {
+        let from = match range.start_bound() {
+            std::ops::Bound::Included(&i) => i,
+            std::ops::Bound::Excluded(&i) => i + 1,
+            std::ops::Bound::Unbounded => 0,
+        };
+        let to = match range.end_bound() {
+            std::ops::Bound::Included(&i) => i + 1,
+            std::ops::Bound::Excluded(&i) => i,
+            std::ops::Bound::Unbounded => self.len(),
+        };
+        Str::from(&self[from..to])
+    }
 }
 
 impl Default for Str<'static> {
@@ -438,5 +455,20 @@ impl StrReader for Input<'_> {
             }
         }
         res
+    }
+}
+
+impl Index<Back> for Str<'_> {
+    type Output = u8;
+
+    fn index(&self, index: Back) -> &Self::Output {
+        &self[self.len() - index.0 - 1]
+    }
+}
+
+impl IndexMut<Back> for Str<'_> {
+    fn index_mut(&mut self, index: Back) -> &mut Self::Output {
+        let len = self.len();
+        &mut self[len - index.0 - 1]
     }
 }

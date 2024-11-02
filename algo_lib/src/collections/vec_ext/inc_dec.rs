@@ -29,6 +29,20 @@ impl<T: AdditionMonoidWithSub + One> IncDec for Vec<T> {
     }
 }
 
+impl<T: AdditionMonoidWithSub + One> IncDec for Vec<Vec<T>> {
+    fn inc(mut self) -> Self {
+        self.iter_mut()
+            .for_each(|v| v.iter_mut().for_each(|i| *i += T::one()));
+        self
+    }
+
+    fn dec(mut self) -> Self {
+        self.iter_mut()
+            .for_each(|v| v.iter_mut().for_each(|i| *i -= T::one()));
+        self
+    }
+}
+
 impl<T: AdditionMonoidWithSub + One, U: AdditionMonoidWithSub + One> IncDec for Vec<(T, U)> {
     fn inc(mut self) -> Self {
         self.iter_mut().for_each(|(i, j)| {
