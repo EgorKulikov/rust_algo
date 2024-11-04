@@ -1,6 +1,7 @@
 use crate::collections::iter_ext::find_count::IterFindCount;
-use crate::collections::permutation::Permutation;
 use crate::collections::slice_ext::compress::compress;
+use crate::collections::slice_ext::permutation::Permutation;
+use crate::collections::vec_ext::inc_dec::IncDec;
 
 #[test]
 fn test_find() {
@@ -11,10 +12,10 @@ fn test_find() {
 
 #[test]
 fn test_permutation_mul() {
-    let p = Permutation::new_with_base(vec![1, 3, 2], 1);
-    let q = Permutation::new_with_base(vec![2, 1, 3], 1);
-    assert_eq!(&p * &q, Permutation::new(vec![2, 0, 1]));
-    assert_eq!(&q * &p, Permutation::new(vec![1, 2, 0]));
+    let p = vec![1, 3, 2].dec();
+    let q = vec![2, 1, 3].dec();
+    assert_eq!(p.mul(&q), vec![2, 0, 1]);
+    assert_eq!(q.mul(&p), vec![1, 2, 0]);
 }
 
 #[test]
