@@ -1,5 +1,3 @@
-use crate::numbers::number_ext::Power;
-
 pub trait IntegerSqrt: Sized {
     fn sqrt(self) -> Option<Self> {
         self.root(2)
@@ -19,7 +17,7 @@ pub trait IntegerSqrt: Sized {
 impl IntegerSqrt for i64 {
     fn root(self, k: usize) -> Option<Self> {
         let s = self.lower_root(k);
-        if s.power(k) == self {
+        if power(s, k) == self {
             Some(s)
         } else {
             None
@@ -29,10 +27,10 @@ impl IntegerSqrt for i64 {
     fn lower_root(self, k: usize) -> Self {
         assert!(self >= 0);
         let mut s = (self as f64).powf(1. / (k as f64)).round() as i64;
-        while s.power(k) > self {
+        while power(s, k) > self {
             s -= 1;
         }
-        while (s + 1).power(k) <= self {
+        while power(s + 1, k) <= self {
             s += 1;
         }
         s
@@ -40,10 +38,23 @@ impl IntegerSqrt for i64 {
 
     fn upper_root(self, k: usize) -> Self {
         let s = self.lower_root(k);
-        if s.power(k) == self {
+        if power(s, k) == self {
             s
         } else {
             s + 1
         }
+    }
+}
+
+fn power(n: i64, exp: usize) -> i64 {
+    if exp == 0 {
+        1
+    } else {
+        let mut res = power(n, exp / 2);
+        res = res.saturating_mul(res);
+        if exp % 2 == 1 {
+            res = res.saturating_mul(n);
+        }
+        res
     }
 }

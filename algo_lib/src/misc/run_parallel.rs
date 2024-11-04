@@ -3,7 +3,7 @@ use crate::io::output::Output;
 use std::io::Write;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, TryLockError};
-use std::thread::{available_parallelism, scope, yield_now};
+use std::thread::{available_parallelism, scope, yield_now, Builder};
 
 pub fn run_parallel<P>(
     mut input: Input,
@@ -31,7 +31,8 @@ where
             input_locked.store(true, Ordering::Relaxed);
             let il = &input_locked;
             let fs = &free_slots;
-            let handle = s.spawn(move || {
+            let builder = Builder::new().stack_size(1_000_000_000);
+            let handle = builder.spawn_scoped(s, move || {
                 let lock = inp.lock().unwrap();
                 il.store(false, Ordering::Relaxed);
                 let mut res = Vec::new();
@@ -63,9 +64,9 @@ where
                 while free_slots.load(Ordering::Relaxed) == 0 {
                     yield_now();
                 }
-                handles.push(handle);
+                handles.push(handle.unwrap());
             } else {
-                let res = handle.join().unwrap();
+                let res = handle.unwrap().join().unwrap();
                 output.write_all(&res).unwrap();
             }
         }

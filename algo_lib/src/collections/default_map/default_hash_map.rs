@@ -3,7 +3,7 @@ use std::hash::Hash;
 use std::iter::FromIterator;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 
-#[derive(Default, Clone, Eq, PartialEq)]
+#[derive(Default, Clone, Eq, PartialEq, Debug)]
 pub struct DefaultHashMap<K: Hash + Eq, V>(FxHashMap<K, V>, V);
 
 impl<K: Hash + Eq, V> Deref for DefaultHashMap<K, V> {

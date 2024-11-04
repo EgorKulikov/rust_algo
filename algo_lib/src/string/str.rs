@@ -472,3 +472,9 @@ impl IndexMut<Back> for Str<'_> {
         &mut self[len - index.0 - 1]
     }
 }
+
+impl AsRef<[u8]> for Str<'_> {
+    fn as_ref(&self) -> &[u8] {
+        self.as_slice()
+    }
+}
