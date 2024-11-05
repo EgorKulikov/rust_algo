@@ -1,37 +1,24 @@
-name: Rust
+name: Cargo Build & Test
 
 on:
   push:
-    branches: [ master ]
   pull_request:
-    branches: [ master ]
 
-env:
+env: 
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  build_and_test:
+    name: Rust project - latest
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+          - beta
+          - nightly
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: nightly
-        override: true
-    - uses: actions-rs/cargo@v1
-      with:
-        command: test
-        args: --all-features --no-fail-fast  # Customize args for your own needs
-      env:
-        CARGO_INCREMENTAL: '0'
-        RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
-        RUSTDOCFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
-#    - id: coverage
-#      uses: actions-rs/grcov@v0.1.5
-#    - name: Coveralls upload
-#      uses: coverallsapp/github-action@master
-#      with:
-#        github-token: ${{ secrets.GITHUB_TOKEN }}
-#        path-to-lcov: ${{ steps.coverage.outputs.report }}
+      - uses: actions/checkout@v4
+      - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
+      - run: cargo build --verbose
+      - run: cargo test --verbose
