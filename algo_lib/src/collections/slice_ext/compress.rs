@@ -1,7 +1,13 @@
 use crate::collections::slice_ext::bounds::Bounds;
 use std::mem::MaybeUninit;
 
-pub fn compress<T: Ord + Clone, const N: usize>(vs: [&[T]; N]) -> (Vec<T>, [Vec<usize>; N]) {
+#[derive(Eq, PartialEq, Debug)]
+pub struct Compressed<T, const N: usize> {
+    pub order: Vec<T>,
+    pub arrs: [Vec<usize>; N],
+}
+
+pub fn compress<T: Ord + Clone, const N: usize>(vs: [&[T]; N]) -> Compressed<T, N> {
     let mut size = 0;
     for v in &vs {
         size += v.len();
@@ -23,5 +29,5 @@ pub fn compress<T: Ord + Clone, const N: usize>(vs: [&[T]; N]) -> (Vec<T>, [Vec<
         }
         arr.assume_init()
     };
-    (all, arrs)
+    Compressed { order: all, arrs }
 }

@@ -1,3 +1,4 @@
+pub mod aho_corasick;
 pub mod composite_slicelike;
 pub mod hash;
 pub mod slicelike;

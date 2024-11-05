@@ -1,16 +1,21 @@
 use crate::graph::edges::edge_trait::BidirectionalEdgeTrait;
 use crate::graph::graph::Graph;
 
-pub trait DFSOrder {
-    fn dfs_order_with_root(&self, root: usize) -> (Vec<usize>, Vec<usize>);
+pub struct DFSOrder {
+    pub position: Vec<usize>,
+    pub end: Vec<usize>,
+}
 
-    fn dfs_order(&self) -> (Vec<usize>, Vec<usize>) {
+pub trait DFSOrderTrait {
+    fn dfs_order_with_root(&self, root: usize) -> DFSOrder;
+
+    fn dfs_order(&self) -> DFSOrder {
         self.dfs_order_with_root(0)
     }
 }
 
-impl<E: BidirectionalEdgeTrait> DFSOrder for Graph<E> {
-    fn dfs_order_with_root(&self, root: usize) -> (Vec<usize>, Vec<usize>) {
+impl<E: BidirectionalEdgeTrait> DFSOrderTrait for Graph<E> {
+    fn dfs_order_with_root(&self, root: usize) -> DFSOrder {
         debug_assert!(self.is_tree());
         let count = self.vertex_count();
         let mut position = vec![0; count];
@@ -42,6 +47,6 @@ impl<E: BidirectionalEdgeTrait> DFSOrder for Graph<E> {
                 size += 1;
             }
         }
-        (position, end)
+        DFSOrder { position, end }
     }
 }

@@ -4,12 +4,17 @@ use crate::graph::edges::edge_trait::EdgeTrait;
 use crate::graph::graph::Graph;
 use crate::misc::recursive_function::{Callable, RecursiveFunction};
 
-pub trait StronglyConnectedComponents {
-    fn strongly_connected_components(&self) -> (Vec<usize>, Graph<Edge<()>>);
+pub struct StronglyConnectedComponents {
+    pub color: Vec<usize>,
+    pub condensed: Graph<Edge<()>>,
 }
 
-impl<E: EdgeTrait> StronglyConnectedComponents for Graph<E> {
-    fn strongly_connected_components(&self) -> (Vec<usize>, Graph<Edge<()>>) {
+pub trait StronglyConnectedComponentsTrait {
+    fn strongly_connected_components(&self) -> StronglyConnectedComponents;
+}
+
+impl<E: EdgeTrait> StronglyConnectedComponentsTrait for Graph<E> {
+    fn strongly_connected_components(&self) -> StronglyConnectedComponents {
         assert!(!E::REVERSABLE);
         let n = self.vertex_count();
         let mut order = Vec::with_capacity(n);
@@ -66,6 +71,9 @@ impl<E: EdgeTrait> StronglyConnectedComponents for Graph<E> {
                 index += 1;
             }
         }
-        (color, res)
+        StronglyConnectedComponents {
+            color,
+            condensed: res,
+        }
     }
 }

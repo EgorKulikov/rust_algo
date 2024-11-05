@@ -5,7 +5,7 @@ use algo_lib::graph::edges::edge_trait::EdgeTrait;
 use algo_lib::graph::edges::flow_edge_trait::FlowEdgeTrait;
 use algo_lib::graph::edges::weighted_flow_edge::WeightedFlowEdge;
 use algo_lib::graph::graph::Graph;
-use algo_lib::graph::min_cost_flow::MinCostFlow;
+use algo_lib::graph::min_cost_flow::{CostAndFlow, MinCostFlow};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::{TaskType, TestType};
@@ -27,7 +27,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             graph.add_edge(WeightedFlowEdge::new(i, j + n, -a[i][j], 1));
         }
     }
-    let (cost, _) = graph.min_cost_flow(source, sink);
+    let CostAndFlow { cost, .. } = graph.min_cost_flow(source, sink);
     out.print_line(-cost);
     let mut ans = Arr2d::new(n, n, b'.');
     for i in 0..n {

@@ -1,5 +1,5 @@
 use crate::collections::iter_ext::find_count::IterFindCount;
-use crate::collections::slice_ext::compress::compress;
+use crate::collections::slice_ext::compress::{compress, Compressed};
 use crate::collections::slice_ext::permutation::Permutation;
 use crate::collections::vec_ext::inc_dec::IncDec;
 
@@ -24,6 +24,9 @@ fn test_compress() {
     let b = vec![7, 4, 5];
     assert_eq!(
         compress([&a, &b]),
-        (vec![3, 4, 5, 7], [vec![0, 2, 3], vec![3, 1, 2]])
+        Compressed {
+            order: vec![3, 4, 5, 7],
+            arrs: [vec![0, 2, 3], vec![3, 1, 2]]
+        }
     );
 }

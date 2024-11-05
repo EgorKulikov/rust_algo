@@ -13,9 +13,14 @@ use crate::numbers::num_traits::bit_ops::Bits;
 use crate::numbers::num_traits::ord::MinMax;
 use std::fmt::Display;
 
+pub struct CostAndFlow<C> {
+    pub cost: C,
+    pub flow: C,
+}
+
 pub trait MinCostFlow<C> {
-    fn min_cost_flow(&mut self, source: usize, sink: usize) -> (C, C);
-    fn min_cost_max_flow(&mut self, source: usize, sink: usize) -> (C, C);
+    fn min_cost_flow(&mut self, source: usize, sink: usize) -> CostAndFlow<C>;
+    fn min_cost_max_flow(&mut self, source: usize, sink: usize) -> CostAndFlow<C>;
 }
 
 fn min_cost_flow_impl<C, Id, P: Clone + Default>(
@@ -23,7 +28,7 @@ fn min_cost_flow_impl<C, Id, P: Clone + Default>(
     source: usize,
     sink: usize,
     take_positive_cycles: bool,
-) -> (C, C)
+) -> CostAndFlow<C>
 where
     C: Ring + Ord + Copy + MinMax + Bits + Display,
     Id: EdgeId,
@@ -175,7 +180,10 @@ where
         min_cost += x.flow(&graph) * x.weight();
         or_graph.push_flow(or_graph[from][self_edge_id].push_flow(x.flow(&graph)));
     }
-    (min_cost, max_flow)
+    CostAndFlow {
+        cost: min_cost,
+        flow: max_flow,
+    }
 }
 
 impl<C, Id, P: Clone + Default> MinCostFlow<C> for Graph<WeightedFlowEdgeRaw<C, C, Id, P>>
@@ -183,11 +191,11 @@ where
     C: Ring + Ord + Copy + MinMax + Bits + Display,
     Id: EdgeId,
 {
-    fn min_cost_flow(&mut self, source: usize, sink: usize) -> (C, C) {
+    fn min_cost_flow(&mut self, source: usize, sink: usize) -> CostAndFlow<C> {
         min_cost_flow_impl(self, source, sink, false)
     }
 
-    fn min_cost_max_flow(&mut self, source: usize, sink: usize) -> (C, C) {
+    fn min_cost_max_flow(&mut self, source: usize, sink: usize) -> CostAndFlow<C> {
         min_cost_flow_impl(self, source, sink, true)
     }
 }
