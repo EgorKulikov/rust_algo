@@ -1,4 +1,5 @@
 pub mod angle;
+pub mod base;
 pub mod geometry_utils;
 pub mod line;
 pub mod point;

@@ -1,28 +1,14 @@
+use crate::collections::iter_ext::find_count::IterFindCount;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
-use crate::numbers::num_traits::algebra::{Field, One, Zero};
+use crate::numbers::num_traits::algebra::{One, Zero};
 use crate::numbers::num_traits::invertible::Invertible;
 use std::cmp::Ordering;
 use std::ops::{
     Add, AddAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
 };
 
-pub trait RealTrait: Ord + Field {
-    const PI: Self;
-
-    fn abs(&self) -> Self;
-    fn sqrt(&self) -> Self;
-    fn sin(&self) -> Self;
-    fn cos(&self) -> Self;
-    fn tan(&self) -> Self;
-    fn hypot(x: Self, y: Self) -> Self;
-    fn atan2(y: Self, x: Self) -> Self;
-
-    fn epsilon() -> Self;
-    fn set_epsilon(eps: Self);
-}
-
-#[derive(Copy, Clone, PartialOrd, PartialEq, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct Real(pub f64);
 
 impl Real {
@@ -35,11 +21,61 @@ impl Real {
     pub fn floor(&self) -> i64 {
         self.0.floor() as i64
     }
+    pub fn with_precision(&self, precision: usize) -> String {
+        let res = format!("{:.*}", precision, self.0);
+        if res.starts_with('-') && res.chars().count_eq(&'0') == precision + 1 {
+            res[1..].to_string()
+        } else {
+            res
+        }
+    }
+}
+
+#[allow(clippy::non_canonical_partial_ord_impl)]
+impl PartialOrd for Real {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        if self == other {
+            Some(Ordering::Equal)
+        } else if self.0 < other.0 {
+            Some(Ordering::Less)
+        } else {
+            Some(Ordering::Greater)
+        }
+    }
+}
+
+impl PartialOrd<f64> for Real {
+    fn partial_cmp(&self, other: &f64) -> Option<Ordering> {
+        self.partial_cmp(&Real(*other))
+    }
+}
+
+impl PartialOrd<Real> for f64 {
+    fn partial_cmp(&self, other: &Real) -> Option<Ordering> {
+        Real(*self).partial_cmp(other)
+    }
+}
+
+impl PartialEq<f64> for Real {
+    fn eq(&self, other: &f64) -> bool {
+        self.eq(&Real(*other))
+    }
+}
+
+impl PartialEq<Real> for f64 {
+    fn eq(&self, other: &Real) -> bool {
+        Real(*self).eq(other)
+    }
+}
+
+impl PartialEq for Real {
+    fn eq(&self, other: &Self) -> bool {
+        (self.0 - other.0).abs() < Real::epsilon().0
+    }
 }
 
 impl Eq for Real {}
 
-#[allow(clippy::derive_ord_xor_partial_ord)]
 impl Ord for Real {
     fn cmp(&self, other: &Self) -> Ordering {
         self.partial_cmp(other).unwrap()
@@ -220,44 +256,44 @@ impl One for Real {
 
 static mut EPSILON: Real = Real(1e-9);
 
-impl RealTrait for Real {
-    const PI: Self = Self(std::f64::consts::PI);
+impl Real {
+    pub const PI: Self = Self(std::f64::consts::PI);
 
-    fn abs(&self) -> Self {
+    pub fn abs(&self) -> Self {
         Self(self.0.abs())
     }
 
-    fn sqrt(&self) -> Self {
+    pub fn sqrt(&self) -> Self {
         Self(self.0.sqrt())
     }
 
-    fn sin(&self) -> Self {
+    pub fn sin(&self) -> Self {
         Self(self.0.sin())
     }
 
-    fn cos(&self) -> Self {
+    pub fn cos(&self) -> Self {
         Self(self.0.cos())
     }
 
-    fn tan(&self) -> Self {
+    pub fn tan(&self) -> Self {
         Self(self.0.tan())
     }
 
-    fn hypot(x: Self, y: Self) -> Self {
+    pub fn hypot(x: Self, y: Self) -> Self {
         Self(f64::hypot(x.0, y.0))
     }
 
-    fn atan2(y: Self, x: Self) -> Self {
+    pub fn atan2(y: Self, x: Self) -> Self {
         Self(f64::atan2(y.0, x.0))
     }
 
-    fn epsilon() -> Self {
+    pub fn epsilon() -> Self {
         unsafe { EPSILON }
     }
 
-    fn set_epsilon(eps: Self) {
+    pub fn set_epsilon(eps: impl Into<Self>) {
         unsafe {
-            EPSILON = eps;
+            EPSILON = eps.into();
         }
     }
 }
@@ -301,7 +337,14 @@ impl Readable for Real {
 
 impl Writable for Real {
     fn write(&self, output: &mut Output) {
-        self.0.to_string().write(output);
+        match output.get_precision() {
+            Some(precision) => {
+                self.with_precision(precision).write(output);
+            }
+            None => {
+                self.0.to_string().write(output);
+            }
+        }
     }
 }
 
@@ -324,11 +367,23 @@ pub trait IntoReal {
     fn into_real(self) -> Real;
 }
 
+impl IntoReal for Real {
+    fn into_real(self) -> Real {
+        self
+    }
+}
+
 macro_rules! into_real {
     ($($t: ident)+) => {$(
         impl IntoReal for $t {
             fn into_real(self) -> Real {
                 Real(self as f64)
+            }
+        }
+
+        impl From<$t> for Real {
+            fn from(x: $t) -> Self {
+                Real(x as f64)
             }
         }
     )+};

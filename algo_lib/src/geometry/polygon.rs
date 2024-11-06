@@ -1,6 +1,7 @@
 use crate::collections::iter_ext::cur_next::cur_next;
+use crate::geometry::base::Base;
 use crate::geometry::point::Point;
-use crate::numbers::num_traits::algebra::{Field, Ring};
+use crate::numbers::num_traits::algebra::Field;
 
 pub struct Polygon<T> {
     pub points: Vec<Point<T>>,
@@ -12,13 +13,13 @@ impl<T> Polygon<T> {
     }
 }
 
-impl<T: Field + Copy> Polygon<T> {
+impl<T: Field + Base> Polygon<T> {
     pub fn area(&self) -> T {
         self.double_area() / (T::one() + T::one())
     }
 }
 
-impl<T: Ring + Copy> Polygon<T> {
+impl<T: Base> Polygon<T> {
     pub fn double_area(&self) -> T {
         let mut ans = T::zero();
         for (i, j) in cur_next(self.points.len()) {
@@ -33,7 +34,7 @@ pub trait ConvexHull<T> {
     fn convex_hull(self) -> Polygon<T>;
 }
 
-impl<T: Ring + Copy + PartialOrd> ConvexHull<T> for &mut [Point<T>] {
+impl<T: Base + PartialOrd> ConvexHull<T> for &mut [Point<T>] {
     fn convex_hull(self) -> Polygon<T> {
         self.sort_by(|a, b| a.partial_cmp(b).unwrap());
         let p1 = self[0];

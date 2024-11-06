@@ -7,6 +7,7 @@ pub trait StringSearch {
     fn str_contains(&self, pattern: &Self) -> bool {
         self.index_of(pattern).is_some()
     }
+    fn all_matches(&self, pattern: &Self) -> Vec<usize>;
 }
 
 impl<S: Slicelike + ?Sized> StringSearch for S
@@ -20,5 +21,17 @@ where
             .into_iter()
             .skip(pattern.len())
             .position(|x| x >= pattern.len())
+    }
+
+    fn all_matches(&self, pattern: &Self) -> Vec<usize> {
+        pattern
+            .chain(self)
+            .z_algorithm()
+            .into_iter()
+            .skip(pattern.len())
+            .enumerate()
+            .filter(|&(_, x)| x >= pattern.len())
+            .map(|(i, _)| i)
+            .collect()
     }
 }

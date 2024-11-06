@@ -1,21 +1,39 @@
+use crate::geometry::base::Base;
 use crate::geometry::point::Point;
-use crate::numbers::num_traits::algebra::{Field, Ring};
-use crate::numbers::real::RealTrait;
+use crate::numbers::num_traits::algebra::Field;
+use crate::numbers::real::{IntoReal, Real};
+use std::any::{Any, TypeId};
 
-#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct Line<T> {
+#[derive(Copy, Clone, Ord, PartialOrd, Hash)]
+#[allow(clippy::derived_hash_with_manual_eq)]
+pub struct Line<T: Base> {
     pub a: T,
     pub b: T,
     pub c: T,
 }
 
-impl<T> Line<T> {
+impl<T: Base> Line<T> {
     pub fn new(a: T, b: T, c: T) -> Self {
-        Self { a, b, c }
+        if a.type_id() == TypeId::of::<Real>() {
+            let a = *(&a as &dyn Any).downcast_ref::<Real>().unwrap();
+            let b = *(&b as &dyn Any).downcast_ref::<Real>().unwrap();
+            let c = *(&c as &dyn Any).downcast_ref::<Real>().unwrap();
+            let h = Real::hypot(a, b);
+            let a = a / h;
+            let b = b / h;
+            let c = c / h;
+            Self {
+                a: *(&a as &dyn Any).downcast_ref::<T>().unwrap(),
+                b: *(&b as &dyn Any).downcast_ref::<T>().unwrap(),
+                c: *(&c as &dyn Any).downcast_ref::<T>().unwrap(),
+            }
+        } else {
+            Self { a, b, c }
+        }
     }
 }
 
-impl<T: Ring + Copy> Line<T> {
+impl<T: Base> Line<T> {
     pub fn value(&self, p: Point<T>) -> T {
         self.a * p.x + self.b * p.y + self.c
     }
@@ -25,15 +43,9 @@ impl<T: Ring + Copy> Line<T> {
     }
 
     pub fn perpendicular(&self, p: Point<T>) -> Line<T> {
-        Line::new(
-            T::zero() - self.b,
-            self.a,
-            T::zero() + self.b * p.x - self.a * p.y,
-        )
+        Line::new(-self.b, self.a, self.b * p.x - self.a * p.y)
     }
-}
 
-impl<T: Ring + Copy> Line<T> {
     pub fn is_parallel(&self, other: Line<T>) -> bool {
         self.a * other.b == self.b * other.a
     }
@@ -43,7 +55,15 @@ impl<T: Ring + Copy> Line<T> {
     }
 }
 
-impl<T: Field + Copy> Line<T> {
+impl<T: Base> Eq for Line<T> {}
+
+impl<T: Base> PartialEq for Line<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.a * other.b == self.b * other.a && self.b * other.c == self.c * other.b
+    }
+}
+
+impl<T: Field + Base> Line<T> {
     pub fn intersect(&self, other: Line<T>) -> Point<T> {
         let det = self.a * other.b - other.a * self.b;
         let x = (self.b * other.c - other.b * self.c) / det;
@@ -57,42 +77,14 @@ impl<T: Field + Copy> Line<T> {
     }
 }
 
-impl<T: Ring + Copy + PartialEq> Line<T> {
-    pub fn contains(&self, p: Point<T>) -> bool {
-        self.value(p) == T::zero()
+impl<T: Field + Base + IntoReal> Line<T> {
+    pub fn dist_point(&self, p: Point<T>) -> Real {
+        self.square_dist_point(p).into_real().sqrt()
     }
 }
 
-impl<T: RealTrait + Copy> Line<T> {
-    pub fn new_real(a: T, b: T, c: T) -> Self {
-        let h = T::hypot(a, b);
-        Self {
-            a: a / h,
-            b: b / h,
-            c: c / h,
-        }
-    }
-
-    pub fn dist_point(&self, p: Point<T>) -> T {
-        self.square_dist_point(p).sqrt()
-    }
-
-    pub fn contains_real(&self, p: Point<T>) -> bool {
-        self.dist_point(p) < T::epsilon()
-    }
-
-    pub fn is_parallel_real(&self, other: Line<T>) -> bool {
-        (self.a * other.b - self.b * other.a).abs() < T::epsilon()
-    }
-
-    pub fn is_perpendicular_real(&self, other: Line<T>) -> bool {
-        (self.a * other.a + self.b * other.b).abs() < T::epsilon()
-    }
-
-    pub fn canonize(&mut self) {
-        let h = T::hypot(self.a, self.b);
-        self.a /= h;
-        self.b /= h;
-        self.c /= h;
+impl<T: Base + PartialEq> Line<T> {
+    pub fn contains(&self, p: Point<T>) -> bool {
+        self.value(p) == T::zero()
     }
 }

@@ -40,6 +40,7 @@ pub struct Output<'s> {
     at: usize,
     auto_flush: bool,
     bool_output: BoolOutput,
+    precision: Option<usize>,
 }
 
 impl<'s> Output<'s> {
@@ -52,6 +53,7 @@ impl<'s> Output<'s> {
             at: 0,
             auto_flush: false,
             bool_output: BoolOutput::YesNoCaps,
+            precision: None,
         }
     }
 
@@ -62,6 +64,7 @@ impl<'s> Output<'s> {
             at: 0,
             auto_flush: true,
             bool_output: BoolOutput::YesNoCaps,
+            precision: None,
         }
     }
 
@@ -128,6 +131,12 @@ impl<'s> Output<'s> {
 
     pub fn set_bool_output(&mut self, bool_output: BoolOutput) {
         self.bool_output = bool_output;
+    }
+    pub fn set_precision(&mut self, precision: Option<usize>) {
+        self.precision = precision;
+    }
+    pub fn get_precision(&self) -> Option<usize> {
+        self.precision
     }
 }
 

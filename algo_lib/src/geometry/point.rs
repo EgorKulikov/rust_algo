@@ -1,9 +1,10 @@
+use crate::geometry::base::Base;
 use crate::geometry::geometry_utils::canonize_angle;
 use crate::geometry::line::Line;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
-use crate::numbers::num_traits::algebra::{Ring, Zero};
-use crate::numbers::real::RealTrait;
+use crate::numbers::num_traits::algebra::Zero;
+use crate::numbers::real::{IntoReal, Real};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 #[derive(Copy, Clone, Hash, Ord, PartialOrd, Eq, PartialEq)]
@@ -24,7 +25,7 @@ impl<T: Zero> Point<T> {
     }
 }
 
-impl<T: Ring + Copy> Point<T> {
+impl<T: Base> Point<T> {
     pub fn square_dist_point(&self, p: Self) -> T {
         let delta = *self - p;
         delta * delta
@@ -37,24 +38,22 @@ impl<T: Ring + Copy> Point<T> {
     }
 }
 
-impl<T: RealTrait + Copy> Point<T> {
-    pub fn from_polar(r: T, alpha: T) -> Self {
+impl<T: Base + IntoReal> Point<T> {
+    pub fn dist_point(&self, p: Self) -> Real {
+        self.square_dist_point(p).into_real().sqrt()
+    }
+}
+
+impl Point<Real> {
+    pub fn from_polar(r: Real, alpha: Real) -> Self {
         Self::new(r * alpha.cos(), r * alpha.sin())
     }
 
-    pub fn dist_point(&self, p: Self) -> T {
-        self.square_dist_point(p).sqrt()
+    pub fn angle(&self) -> Real {
+        Real::atan2(self.y, self.x)
     }
 
-    pub fn same(&self, p: Self) -> bool {
-        (self.x - p.x).abs() < T::epsilon() && (self.y - p.y).abs() < T::epsilon()
-    }
-
-    pub fn angle(&self) -> T {
-        T::atan2(self.y, self.x)
-    }
-
-    pub fn angle_to(&self, p: Self) -> T {
+    pub fn angle_to(&self, p: Self) -> Real {
         canonize_angle(p.angle() - self.angle()).abs()
     }
 }

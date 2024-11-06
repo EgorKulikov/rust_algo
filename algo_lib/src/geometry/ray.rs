@@ -1,7 +1,8 @@
+use crate::geometry::base::Base;
 use crate::geometry::line::Line;
 use crate::geometry::point::Point;
-use crate::numbers::num_traits::algebra::{Field, Ring};
-use crate::numbers::real::RealTrait;
+use crate::numbers::num_traits::algebra::{Field, One};
+use crate::numbers::real::{IntoReal, Real};
 
 pub struct Ray<T> {
     pub origin: Point<T>,
@@ -14,13 +15,13 @@ impl<T> Ray<T> {
     }
 }
 
-impl<T: Ring + Copy> Ray<T> {
+impl<T: Base> Ray<T> {
     pub fn line(&self) -> Line<T> {
         self.origin.line(self.direction)
     }
 }
 
-impl<T: Ring + Ord + Copy> Ray<T> {
+impl<T: Base + Ord> Ray<T> {
     pub fn contains(&self, p: Point<T>) -> bool {
         if p == self.origin {
             return true;
@@ -43,7 +44,7 @@ impl<T: Ring + Ord + Copy> Ray<T> {
     }
 }
 
-impl<T: Field + Copy + Ord> Ray<T> {
+impl<T: Field + Base + Ord> Ray<T> {
     pub fn intersect_ray(&self, other: Self) -> Option<Point<T>> {
         let l1 = self.line();
         let l2 = other.line();
@@ -70,16 +71,18 @@ impl<T: Field + Copy + Ord> Ray<T> {
     }
 }
 
-impl<T: RealTrait + Copy> Ray<T> {
-    pub fn angle(&self) -> T {
+impl<T: Field + Base + Ord + IntoReal> Ray<T> {
+    pub fn dist_point(&self, p: Point<T>) -> Real {
+        self.square_dist_point(p).into_real().sqrt()
+    }
+}
+
+impl Ray<Real> {
+    pub fn angle(&self) -> Real {
         (self.direction - self.origin).angle()
     }
 
-    pub fn from_angle(origin: Point<T>, angle: T) -> Self {
-        Self::new(origin, origin + Point::from_polar(T::one(), angle))
-    }
-
-    pub fn dist_point(&self, p: Point<T>) -> T {
-        self.square_dist_point(p).sqrt()
+    pub fn from_angle(origin: Point<Real>, angle: Real) -> Self {
+        Self::new(origin, origin + Point::from_polar(Real::one(), angle))
     }
 }

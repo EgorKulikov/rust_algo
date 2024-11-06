@@ -35,7 +35,11 @@ thread_local! {
 impl FxHasher {
     #[inline]
     fn add_to_hash(&mut self, i: usize) {
-        self.hash = self.hash.rotate_left(5).bitxor(i).wrapping_mul(K.get());
+        self.hash = self
+            .hash
+            .rotate_left(5)
+            .bitxor(i)
+            .wrapping_mul(K.with(|k| k.get()));
     }
 }
 
