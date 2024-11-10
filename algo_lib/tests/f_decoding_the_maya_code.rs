@@ -3,7 +3,7 @@
 use algo_lib::collections::default_map::default_hash_map::DefaultHashMap;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::graph::dfs_order::{DFSOrder, DFSOrderTrait};
-use algo_lib::graph::graph::Graph;
+use algo_lib::graph::Graph;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::recursive_function::{Callable2, RecursiveFunction2};
@@ -103,144 +103,148 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
 }
 
 mod tester {
-#![allow(unused_variables)]
-#![allow(unused_mut)]
-#![allow(dead_code)]
-#![allow(unused_imports)]
+    #![allow(unused_variables)]
+    #![allow(unused_mut)]
+    #![allow(dead_code)]
+    #![allow(unused_imports)]
 
-use crate::{run, TASK_TYPE};
-use algo_lib::collections::vec_ext::inc_dec::IncDec;
-use algo_lib::io::input::Input;
-use algo_lib::io::output::Output;
-use algo_lib::misc::random::random;
-use algo_lib::misc::recursive_function::{Callable, RecursiveFunction};
-use algo_lib::string::str::{Str, StrReader};
-use tester::classic::default_checker;
-use tester::interactive::std_interactor;
-use tester::test_set::GeneratedTestSet;
-use tester::Tester;
+    use crate::{run, TASK_TYPE};
+    use algo_lib::collections::vec_ext::inc_dec::IncDec;
+    use algo_lib::io::input::Input;
+    use algo_lib::io::output::Output;
+    use algo_lib::misc::random::random;
+    use algo_lib::misc::recursive_function::{Callable, RecursiveFunction};
+    use algo_lib::string::str::{Str, StrReader};
+    use tester::classic::default_checker;
+    use tester::interactive::std_interactor;
+    use tester::test_set::GeneratedTestSet;
+    use tester::Tester;
 
-const PRINT_LIMIT: usize = 1000;
+    const PRINT_LIMIT: usize = 1000;
 
-fn interact(mut sol_input: Input, mut sol_output: Output, mut input: Input) -> Result<(), String> {
-    Ok(())
-}
-
-fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
-    Ok(())
-}
-
-struct StressTest;
-
-impl GeneratedTestSet for StressTest {
-    type TestId = usize;
-
-    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
-        1..
+    fn interact(
+        mut sol_input: Input,
+        mut sol_output: Output,
+        mut input: Input,
+    ) -> Result<(), String> {
+        Ok(())
     }
 
-    fn input(&self, test: &Self::TestId, out: &mut Output) {
-        let n = random().next_bounds(1, 3);
-        let q = 1;
-        out.print_line((n, q));
-        for _ in 0..n {
-            let len = random().next_bounds(1, 3);
-            for _ in 0..len {
-                out.print(random().next_bounds(b'A', b'B'));
-            }
-            out.print_line(());
-        }
-        for i in 2..=n {
-            out.print_line((random().next_bounds(1, i - 1), i));
-        }
-        for _ in 0..q {
-            let len = random().next_bounds(1, 10);
-            out.print((random().next_bounds(1, n), ()));
-            for _ in 0..len {
-                out.print(random().next_bounds(b'A', b'B'));
-            }
-            out.print_line(());
-        }
+    fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
+        Ok(())
     }
 
-    fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-        let n = input.read_size();
-        let q = input.read_size();
-        let s = input.read_str_vec(n);
-        let edges = input.read_size_pair_vec(n - 1).dec();
-        let queries = input.read_vec::<(usize, Str)>(q);
+    struct StressTest;
 
-        for (id, t) in queries {
-            let id = id - 1;
-            let mut ans = 0;
-            let mut rec = RecursiveFunction::new(|rec, vert: usize| {
-                for i in 0..=t.len().saturating_sub(s[vert].len()) {
-                    if t[i..].starts_with(&s[vert]) {
-                        ans += 1;
-                    }
+    impl GeneratedTestSet for StressTest {
+        type TestId = usize;
+
+        fn tests(&self) -> impl Iterator<Item = Self::TestId> {
+            1..
+        }
+
+        fn input(&self, test: &Self::TestId, out: &mut Output) {
+            let n = random().next_bounds(1, 3);
+            let q = 1;
+            out.print_line((n, q));
+            for _ in 0..n {
+                let len = random().next_bounds(1, 3);
+                for _ in 0..len {
+                    out.print(random().next_bounds(b'A', b'B'));
                 }
-                for &(u, v) in &edges {
-                    if u == vert {
-                        rec.call(v);
-                    }
+                out.print_line(());
+            }
+            for i in 2..=n {
+                out.print_line((random().next_bounds(1, i - 1), i));
+            }
+            for _ in 0..q {
+                let len = random().next_bounds(1, 10);
+                out.print((random().next_bounds(1, n), ()));
+                for _ in 0..len {
+                    out.print(random().next_bounds(b'A', b'B'));
                 }
-            });
-            rec.call(id);
-            out.print_line(ans);
+                out.print_line(());
+            }
         }
 
-        true
+        fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
+            let n = input.read_size();
+            let q = input.read_size();
+            let s = input.read_str_vec(n);
+            let edges = input.read_size_pair_vec(n - 1).dec();
+            let queries = input.read_vec::<(usize, Str)>(q);
+
+            for (id, t) in queries {
+                let id = id - 1;
+                let mut ans = 0;
+                let mut rec = RecursiveFunction::new(|rec, vert: usize| {
+                    for i in 0..=t.len().saturating_sub(s[vert].len()) {
+                        if t[i..].starts_with(&s[vert]) {
+                            ans += 1;
+                        }
+                    }
+                    for &(u, v) in &edges {
+                        if u == vert {
+                            rec.call(v);
+                        }
+                    }
+                });
+                rec.call(id);
+                out.print_line(ans);
+            }
+
+            true
+        }
     }
-}
 
-struct MaxTest;
+    struct MaxTest;
 
-impl GeneratedTestSet for MaxTest {
-    type TestId = usize;
+    impl GeneratedTestSet for MaxTest {
+        type TestId = usize;
 
-    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
-        1..=1
+        fn tests(&self) -> impl Iterator<Item = Self::TestId> {
+            1..=1
+        }
+
+        fn input(&self, test: &Self::TestId, out: &mut Output) {
+            out.print_line((100000, 1));
+            for i in 0..100000 {
+                out.print_line('A');
+            }
+            for i in 1..100000 {
+                out.print_line((i, i + 1));
+            }
+            out.print("1 ");
+            for _ in 0..1000000 {
+                out.print("A");
+            }
+            out.print_line("");
+        }
+
+        fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
+            out.print_line(100_000i64 * 1_000_000);
+            true
+        }
     }
 
-    fn input(&self, test: &Self::TestId, out: &mut Output) {
-        out.print_line((100000, 1));
-        for i in 0..100000 {
-            out.print_line('A');
-        }
-        for i in 1..100000 {
-            out.print_line((i, i + 1));
-        }
-        out.print("1 ");
-        for _ in 0..1000000 {
-            out.print("A");
-        }
-        out.print_line("");
+    pub(crate) fn run_tests() -> bool {
+        let path = "./f_decoding_the_maya_code";
+        let tl = 3000;
+        let tester = match TASK_TYPE {
+            crate::TaskType::Interactive => {
+                Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)
+                // Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, interact)
+            }
+            crate::TaskType::Classic => {
+                Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker)
+                // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
+            }
+        };
+        let passed = tester.test_samples();
+        // tester.test_generated("Max test", true, MaxTest);
+        // tester.test_generated("Stress test", false, StressTest);
+        passed
     }
-
-    fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-        out.print_line(100_000i64 * 1_000_000);
-        true
-    }
-}
-
-pub(crate) fn run_tests() -> bool {
-    let path = "./f_decoding_the_maya_code";
-    let tl = 3000;
-    let tester = match TASK_TYPE {
-        crate::TaskType::Interactive => {
-            Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)
-            // Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, interact)
-        }
-        crate::TaskType::Classic => {
-            Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker)
-            // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
-        }
-    };
-    let passed = tester.test_samples();
-    // tester.test_generated("Max test", true, MaxTest);
-    // tester.test_generated("Stress test", false, StressTest);
-    passed
-}
 }
 #[test]
 fn f_decoding_the_maya_code() {

@@ -1,6 +1,6 @@
 use crate::collections::md_arr::arr2d::Arr2d;
 use crate::graph::edges::edge_trait::BidirectionalEdgeTrait;
-use crate::graph::graph::Graph;
+use crate::graph::Graph;
 use crate::misc::owned_cell::OwnedCell;
 use crate::numbers::num_traits::bit_ops::Bits;
 

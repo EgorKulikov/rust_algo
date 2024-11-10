@@ -3,10 +3,10 @@
 use algo_lib::collections::bit_set::BitSet;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::graph::edges::edge_trait::EdgeTrait;
-use algo_lib::graph::graph::Graph;
 use algo_lib::graph::strongly_connected_components::{
     StronglyConnectedComponents, StronglyConnectedComponentsTrait,
 };
+use algo_lib::graph::Graph;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::extensions::do_with::DoWith;

@@ -195,8 +195,8 @@ impl<T: One> ToRational for T {
     }
 }
 
-impl<T: IntoReal> Rational<T> {
-    pub fn real(self) -> Real {
+impl<T: IntoReal> IntoReal for Rational<T> {
+    fn into_real(self) -> Real {
         self.num.into_real() / self.den.into_real()
     }
 }

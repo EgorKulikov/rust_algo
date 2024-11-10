@@ -1,6 +1,6 @@
 use crate::collections::indexed_heap::IndexedHeap;
 use crate::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
-use crate::graph::graph::Graph;
+use crate::graph::Graph;
 use crate::numbers::num_traits::algebra::SemiRing;
 
 pub trait Distances<W: SemiRing + Ord + Copy> {

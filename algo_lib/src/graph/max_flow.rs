@@ -1,7 +1,7 @@
 use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
 use crate::graph::flow_graph::FlowGraph;
-use crate::graph::graph::Graph;
+use crate::graph::Graph;
 use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
 use crate::numbers::num_traits::algebra::AdditionMonoidWithSub;
 use crate::numbers::num_traits::ord::MinMax;

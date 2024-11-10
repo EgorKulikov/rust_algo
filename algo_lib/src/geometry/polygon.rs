@@ -1,6 +1,6 @@
 use crate::collections::iter_ext::cur_next::cur_next;
-use crate::geometry::base::Base;
 use crate::geometry::point::Point;
+use crate::geometry::Base;
 use crate::numbers::num_traits::algebra::Field;
 
 pub struct Polygon<T> {

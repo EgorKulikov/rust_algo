@@ -1,7 +1,7 @@
 use crate::collections::bit_set::BitSet;
 use crate::collections::min_max::MinimMaxim;
 use crate::graph::edges::edge_trait::EdgeTrait;
-use crate::graph::graph::Graph;
+use crate::graph::Graph;
 use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
 
 pub trait CutPointSearch {

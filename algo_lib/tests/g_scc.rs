@@ -1,9 +1,9 @@
 //{"name":"G - SCC","group":"AtCoder - AtCoder Library Practice Contest","url":"https://atcoder.jp/contests/practice2/tasks/practice2_g","interactive":false,"timeLimit":5000,"tests":[{"input":"6 7\n1 4\n5 2\n3 0\n5 5\n4 1\n0 3\n4 2\n","output":"4\n1 5\n2 4 1\n1 2\n2 3 0\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"GSCC"}}}
 
-use algo_lib::graph::graph::Graph;
 use algo_lib::graph::strongly_connected_components::{
     StronglyConnectedComponents, StronglyConnectedComponentsTrait,
 };
+use algo_lib::graph::Graph;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::{TaskType, TestType};

@@ -1,6 +1,6 @@
-use crate::geometry::base::Base;
 use crate::geometry::line::Line;
 use crate::geometry::point::Point;
+use crate::geometry::Base;
 use crate::numbers::num_traits::algebra::Field;
 use crate::numbers::real::{IntoReal, Real};
 
@@ -27,19 +27,16 @@ impl<T: Base> Segment<T> {
 }
 
 impl<T: Base + Ord> Segment<T> {
+    fn contains_if_on_line(&self, p: Point<T>) -> bool {
+        self.p1.min(self.p2) <= p && p <= self.p1.max(self.p2)
+    }
+
     pub fn contains(&self, p: Point<T>) -> bool {
         if self.p1 == self.p2 {
             return self.p1 == p;
         }
         let line = self.line();
-        if !line.contains(p) {
-            return false;
-        }
-        let x1 = self.p1.x.min(self.p2.x);
-        let x2 = self.p1.x.max(self.p2.x);
-        let y1 = self.p1.y.min(self.p2.y);
-        let y2 = self.p1.y.max(self.p2.y);
-        x1 <= p.x && p.x <= x2 && y1 <= p.y && p.y <= y2
+        line.contains(p) && self.contains_if_on_line(p)
     }
 }
 
@@ -52,43 +49,42 @@ pub enum SegmentIntersectionResult<T> {
 impl<T: Field + Base + PartialEq + Ord> Segment<T> {
     pub fn intersect_segment(&self, s: Self) -> SegmentIntersectionResult<T> {
         if self.p1 == self.p2 {
-            if s.contains(self.p1) {
-                return SegmentIntersectionResult::Point(self.p1);
-            }
-            return SegmentIntersectionResult::None;
+            return if s.contains(self.p1) {
+                SegmentIntersectionResult::Point(self.p1)
+            } else {
+                SegmentIntersectionResult::None
+            };
         }
         if s.p1 == s.p2 {
-            if self.contains(s.p1) {
-                return SegmentIntersectionResult::Point(s.p1);
-            }
-            return SegmentIntersectionResult::None;
+            return if self.contains(s.p1) {
+                SegmentIntersectionResult::Point(s.p1)
+            } else {
+                SegmentIntersectionResult::None
+            };
         }
         let l1 = self.line();
         let l2 = s.line();
         if l1.is_parallel(l2) {
-            if l1 == l2 {
+            return if l1 == l2 {
                 let p11 = self.p1.min(self.p2);
                 let p12 = self.p1.max(self.p2);
                 let p21 = s.p1.min(s.p2);
                 let p22 = s.p1.max(s.p2);
-                if p12 < p21 || p22 < p11 {
-                    return SegmentIntersectionResult::None;
+                let p1 = p11.max(p21);
+                let p2 = p12.min(p22);
+                match p1.cmp(&p2) {
+                    std::cmp::Ordering::Less => {
+                        SegmentIntersectionResult::Segment(Segment::new(p1, p2))
+                    }
+                    std::cmp::Ordering::Equal => SegmentIntersectionResult::Point(p1),
+                    std::cmp::Ordering::Greater => SegmentIntersectionResult::None,
                 }
-                if p12 == p21 {
-                    return SegmentIntersectionResult::Point(p12);
-                }
-                if p22 == p11 {
-                    return SegmentIntersectionResult::Point(p22);
-                }
-                return SegmentIntersectionResult::Segment(Segment::new(
-                    p11.max(p21),
-                    p12.min(p22),
-                ));
-            }
-            return SegmentIntersectionResult::None;
+            } else {
+                SegmentIntersectionResult::None
+            };
         }
         let p = l1.intersect(l2);
-        if self.contains(p) && s.contains(p) {
+        if self.contains_if_on_line(p) && s.contains_if_on_line(p) {
             SegmentIntersectionResult::Point(p)
         } else {
             SegmentIntersectionResult::None

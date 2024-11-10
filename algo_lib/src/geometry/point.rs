@@ -1,6 +1,6 @@
-use crate::geometry::base::Base;
 use crate::geometry::geometry_utils::canonize_angle;
 use crate::geometry::line::Line;
+use crate::geometry::Base;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use crate::numbers::num_traits::algebra::Zero;
@@ -36,6 +36,10 @@ impl<T: Base> Point<T> {
         let b = p.x - self.x;
         Line::new(a, b, T::zero() - a * self.x - b * self.y)
     }
+
+    pub(crate) fn value_square(&self) -> T {
+        *self * *self
+    }
 }
 
 impl<T: Base + IntoReal> Point<T> {
@@ -55,6 +59,10 @@ impl Point<Real> {
 
     pub fn angle_to(&self, p: Self) -> Real {
         canonize_angle(p.angle() - self.angle()).abs()
+    }
+
+    pub fn value(&self) -> Real {
+        Real::hypot(self.x, self.y)
     }
 }
 
@@ -143,5 +151,11 @@ impl<T: Readable> Readable for Point<T> {
         let x = input.read();
         let y = input.read();
         Self::new(x, y)
+    }
+}
+
+impl<T: IntoReal> Point<T> {
+    pub fn into_real_point(self) -> Point<Real> {
+        Point::new(self.x.into_real(), self.y.into_real())
     }
 }

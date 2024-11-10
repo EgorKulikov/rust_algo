@@ -1,5 +1,5 @@
 use crate::graph::edges::edge_trait::BidirectionalEdgeTrait;
-use crate::graph::graph::Graph;
+use crate::graph::Graph;
 use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
 
 pub struct HLDecomposition {

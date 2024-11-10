@@ -1,6 +1,6 @@
-use crate::geometry::base::Base;
 use crate::geometry::line::Line;
 use crate::geometry::point::Point;
+use crate::geometry::Base;
 use crate::numbers::num_traits::algebra::{Field, One};
 use crate::numbers::real::{IntoReal, Real};
 

@@ -7,7 +7,7 @@ use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
 use crate::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
 use crate::graph::edges::weighted_flow_edge::WeightedFlowEdgeRaw;
 use crate::graph::flow_graph::FlowGraph;
-use crate::graph::graph::Graph;
+use crate::graph::Graph;
 use crate::numbers::num_traits::algebra::Ring;
 use crate::numbers::num_traits::bit_ops::Bits;
 use crate::numbers::num_traits::ord::MinMax;

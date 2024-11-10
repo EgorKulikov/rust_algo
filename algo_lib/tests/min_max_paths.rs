@@ -3,8 +3,8 @@
 use algo_lib::collections::min_max::MinimMaxim;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::graph::edges::edge_trait::EdgeTrait;
-use algo_lib::graph::graph::Graph;
 use algo_lib::graph::lca::LCATrait;
+use algo_lib::graph::Graph;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::recursive_function::{Callable2, RecursiveFunction2};
@@ -156,122 +156,126 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
 }
 
 mod tester {
-#![allow(unused_variables)]
-#![allow(unused_mut)]
-#![allow(dead_code)]
+    #![allow(unused_variables)]
+    #![allow(unused_mut)]
+    #![allow(dead_code)]
 
-use crate::{run, TASK_TYPE};
-use algo_lib::collections::dsu::DSU;
-use algo_lib::collections::min_max::MinimMaxim;
-use algo_lib::collections::vec_ext::inc_dec::IncDec;
-use algo_lib::graph::distances::Distances;
-use algo_lib::graph::edges::bi_weighted_edge::BiWeightedEdge;
-use algo_lib::graph::edges::edge_trait::EdgeTrait;
-use algo_lib::graph::graph::Graph;
-use algo_lib::io::input::Input;
-use algo_lib::io::output::Output;
-use algo_lib::misc::random::random;
-use algo_lib::misc::recursive_function::{Callable4, RecursiveFunction4};
-use tester::classic::default_checker;
-use tester::interactive::std_interactor;
-use tester::test_set::GeneratedTestSet;
-use tester::Tester;
+    use crate::{run, TASK_TYPE};
+    use algo_lib::collections::dsu::DSU;
+    use algo_lib::collections::min_max::MinimMaxim;
+    use algo_lib::collections::vec_ext::inc_dec::IncDec;
+    use algo_lib::graph::distances::Distances;
+    use algo_lib::graph::edges::bi_weighted_edge::BiWeightedEdge;
+    use algo_lib::graph::edges::edge_trait::EdgeTrait;
+    use algo_lib::graph::Graph;
+    use algo_lib::io::input::Input;
+    use algo_lib::io::output::Output;
+    use algo_lib::misc::random::random;
+    use algo_lib::misc::recursive_function::{Callable4, RecursiveFunction4};
+    use tester::classic::default_checker;
+    use tester::interactive::std_interactor;
+    use tester::test_set::GeneratedTestSet;
+    use tester::Tester;
 
-const PRINT_LIMIT: usize = 1000;
+    const PRINT_LIMIT: usize = 1000;
 
-fn interact(mut sol_input: Input, mut sol_output: Output, mut input: Input) -> Result<(), String> {
-    Ok(())
-}
-
-fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
-    Ok(())
-}
-
-struct StressTest;
-
-impl GeneratedTestSet for StressTest {
-    type TestId = usize;
-
-    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
-        1..
+    fn interact(
+        mut sol_input: Input,
+        mut sol_output: Output,
+        mut input: Input,
+    ) -> Result<(), String> {
+        Ok(())
     }
 
-    fn input(&self, test: &Self::TestId, out: &mut Output) {
-        let n = random().next_bounds(2, 4);
-        let s = random().next_bounds(1, n);
-        out.print_line(1);
-        out.print_line((n, s));
-        let mut dsu = DSU::new(n);
-        for _ in 1..n {
-            loop {
-                let u = random().next(n);
-                let v = random().next(n);
-                if dsu.join(u, v) {
-                    out.print_line((u + 1, v + 1));
-                    break;
+    fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
+        Ok(())
+    }
+
+    struct StressTest;
+
+    impl GeneratedTestSet for StressTest {
+        type TestId = usize;
+
+        fn tests(&self) -> impl Iterator<Item = Self::TestId> {
+            1..
+        }
+
+        fn input(&self, test: &Self::TestId, out: &mut Output) {
+            let n = random().next_bounds(2, 4);
+            let s = random().next_bounds(1, n);
+            out.print_line(1);
+            out.print_line((n, s));
+            let mut dsu = DSU::new(n);
+            for _ in 1..n {
+                loop {
+                    let u = random().next(n);
+                    let v = random().next(n);
+                    if dsu.join(u, v) {
+                        out.print_line((u + 1, v + 1));
+                        break;
+                    }
                 }
             }
         }
-    }
 
-    fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-        input.read_size();
-        let n = input.read_size();
-        let s = input.read_size() - 1;
-        let edges = input.read_size_pair_vec(n - 1).dec();
+        fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
+            input.read_size();
+            let n = input.read_size();
+            let s = input.read_size() - 1;
+            let edges = input.read_size_pair_vec(n - 1).dec();
 
-        let graph = Graph::from_biedges(n, &edges);
-        let mut moves = Graph::new(n);
-        for i in 0..n {
-            let mut dfs = RecursiveFunction4::new(
-                |f, vert: usize, prev: usize, mut min: usize, mut max: usize| {
-                    min.minim(vert + 1);
-                    max.maxim(vert + 1);
-                    moves.add_edge(BiWeightedEdge::new(i, vert, min * max));
-                    for e in &graph[vert] {
-                        if e.to() == prev {
-                            continue;
+            let graph = Graph::from_biedges(n, &edges);
+            let mut moves = Graph::new(n);
+            for i in 0..n {
+                let mut dfs = RecursiveFunction4::new(
+                    |f, vert: usize, prev: usize, mut min: usize, mut max: usize| {
+                        min.minim(vert + 1);
+                        max.maxim(vert + 1);
+                        moves.add_edge(BiWeightedEdge::new(i, vert, min * max));
+                        for e in &graph[vert] {
+                            if e.to() == prev {
+                                continue;
+                            }
+                            f.call(e.to(), vert, min, max);
                         }
-                        f.call(e.to(), vert, min, max);
-                    }
-                },
-            );
-            dfs.call(i, i, i + 1, i + 1);
+                    },
+                );
+                dfs.call(i, i, i + 1, i + 1);
+            }
+            out.print_line_iter(moves.distances_from(s).into_iter().map(|x| x.unwrap().0));
+            true
         }
-        out.print_line_iter(moves.distances_from(s).into_iter().map(|x| x.unwrap().0));
-        true
     }
-}
 
-pub(crate) fn run_tests() -> bool {
-    let path = "./min_max_paths";
-    let time_limit = 7000;
-    let tester = match TASK_TYPE {
-        crate::TaskType::Interactive => {
-            Tester::new_interactive(
-                time_limit,
-                PRINT_LIMIT,
-                path.to_string(),
-                run,
-                std_interactor,
-            )
-            //Tester::new_interactive(time_limit, PRINT_LIMIT, path.to_string(), run, interact)
-        }
-        crate::TaskType::Classic => {
-            Tester::new_classic(
-                time_limit,
-                PRINT_LIMIT,
-                path.to_string(),
-                run,
-                default_checker,
-            )
-            //Tester::new_classic(time_limit, PRINT_LIMIT, path.to_string(), run, check)
-        }
-    };
-    let passed = tester.test_samples();
-    tester.test_generated("Stress test", false, StressTest);
-    passed
-}
+    pub(crate) fn run_tests() -> bool {
+        let path = "./min_max_paths";
+        let time_limit = 7000;
+        let tester = match TASK_TYPE {
+            crate::TaskType::Interactive => {
+                Tester::new_interactive(
+                    time_limit,
+                    PRINT_LIMIT,
+                    path.to_string(),
+                    run,
+                    std_interactor,
+                )
+                //Tester::new_interactive(time_limit, PRINT_LIMIT, path.to_string(), run, interact)
+            }
+            crate::TaskType::Classic => {
+                Tester::new_classic(
+                    time_limit,
+                    PRINT_LIMIT,
+                    path.to_string(),
+                    run,
+                    default_checker,
+                )
+                //Tester::new_classic(time_limit, PRINT_LIMIT, path.to_string(), run, check)
+            }
+        };
+        let passed = tester.test_samples();
+        tester.test_generated("Stress test", false, StressTest);
+        passed
+    }
 }
 #[test]
 fn min_max_paths() {

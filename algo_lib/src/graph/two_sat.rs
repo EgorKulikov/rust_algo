@@ -1,8 +1,8 @@
 use crate::graph::edges::edge::Edge;
-use crate::graph::graph::Graph;
 use crate::graph::strongly_connected_components::{
     StronglyConnectedComponents, StronglyConnectedComponentsTrait,
 };
+use crate::graph::Graph;
 use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
 
 pub struct TwoSat {

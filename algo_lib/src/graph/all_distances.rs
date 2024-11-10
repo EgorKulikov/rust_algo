@@ -1,7 +1,7 @@
 use crate::collections::md_arr::arr2d::Arr2d;
 use crate::collections::min_max::MinimMaxim;
 use crate::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
-use crate::graph::graph::Graph;
+use crate::graph::Graph;
 use crate::numbers::num_traits::algebra::SemiRing;
 use std::ops::Add;
 

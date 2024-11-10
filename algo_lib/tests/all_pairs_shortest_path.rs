@@ -3,7 +3,7 @@
 use algo_lib::graph::all_distances::AllDistances;
 use algo_lib::graph::all_distances::Distance;
 use algo_lib::graph::edges::weighted_edge::WeightedEdge;
-use algo_lib::graph::graph::Graph;
+use algo_lib::graph::Graph;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::extensions::do_with::DoWith;

@@ -1,6 +1,6 @@
 use crate::collections::bit_set::BitSet;
 use crate::graph::edges::bi_edge_trait::BiEdgeTrait;
-use crate::graph::graph::Graph;
+use crate::graph::Graph;
 use crate::misc::recursive_function::{Callable, Callable2, RecursiveFunction, RecursiveFunction2};
 
 pub trait Decompose<F: FnMut(usize, &BitSet)> {

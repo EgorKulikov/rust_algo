@@ -1,5 +1,5 @@
 use crate::graph::edges::edge_trait::BidirectionalEdgeTrait;
-use crate::graph::graph::Graph;
+use crate::graph::Graph;
 
 pub struct DFSOrder {
     pub position: Vec<usize>,

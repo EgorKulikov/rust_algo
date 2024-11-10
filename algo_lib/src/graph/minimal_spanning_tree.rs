@@ -1,7 +1,7 @@
 use crate::collections::dsu::DSU;
 use crate::graph::edges::edge_trait::BidirectionalEdgeTrait;
 use crate::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
-use crate::graph::graph::Graph;
+use crate::graph::Graph;
 
 pub trait MinimalSpanningTree<W: Ord + Copy, E: WeightedEdgeTrait<W>> {
     fn minimal_spanning_tree(&self) -> Graph<E>;

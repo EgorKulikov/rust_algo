@@ -1,5 +1,5 @@
 use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
-use crate::graph::graph::Graph;
+use crate::graph::Graph;
 use crate::numbers::num_traits::algebra::AdditionMonoidWithSub;
 
 pub trait FlowGraph<C: AdditionMonoidWithSub + PartialOrd + Copy, E: FlowEdgeTrait<C>> {

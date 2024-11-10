@@ -1,5 +1,5 @@
 use crate::graph::edges::edge_trait::EdgeTrait;
-use crate::graph::graph::Graph;
+use crate::graph::Graph;
 use std::collections::VecDeque;
 
 pub trait TopologicalSort {
