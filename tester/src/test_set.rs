@@ -32,7 +32,7 @@ impl SampleTests {
 #[cfg(not(feature = "test"))]
 impl SampleTests {
     fn test_path(&self) -> String {
-        format!("{}/tests", self.task_folder)
+        format!("tasks/{}/tests", self.task_folder)
     }
 }
 
@@ -72,7 +72,7 @@ impl TestSet for SampleTests {
         #[cfg(feature = "test")]
         let file = format!("tests/{}/{}.in", self.task_folder, test);
         #[cfg(not(feature = "test"))]
-        let file = format!("{}/tests/{}.in", self.task_folder, test);
+        let file = format!("tasks/{}/tests/{}.in", self.task_folder, test);
         std::fs::read(file).unwrap()
     }
 
@@ -80,7 +80,7 @@ impl TestSet for SampleTests {
         #[cfg(feature = "test")]
         let file = format!("tests/{}/{}.out", self.task_folder, test);
         #[cfg(not(feature = "test"))]
-        let file = format!("{}/tests/{}.out", self.task_folder, test);
+        let file = format!("tasks/{}/tests/{}.out", self.task_folder, test);
         std::fs::read(file).ok()
     }
 
@@ -91,7 +91,7 @@ impl TestSet for SampleTests {
     fn save_output(&self, test: &Self::TestId, output: &[u8]) {
         #[cfg(not(feature = "test"))]
         {
-            let file = format!("{}/tests/{}.ans", self.task_folder, test);
+            let file = format!("tasks/{}/tests/{}.ans", self.task_folder, test);
             std::fs::write(file, output).unwrap();
         }
         #[cfg(feature = "test")]
@@ -104,12 +104,12 @@ impl TestSet for SampleTests {
         #[cfg(not(feature = "test"))]
         {
             let mut expected = String::new();
-            File::open(format!("{}/tests/{}.out", self.task_folder, test))
+            File::open(format!("tasks/{}/tests/{}.out", self.task_folder, test))
                 .unwrap()
                 .read_to_string(&mut expected)
                 .unwrap();
             let mut actual = String::new();
-            File::open(format!("{}/tests/{}.ans", self.task_folder, test))
+            File::open(format!("tasks/{}/tests/{}.ans", self.task_folder, test))
                 .unwrap()
                 .read_to_string(&mut actual)
                 .unwrap();

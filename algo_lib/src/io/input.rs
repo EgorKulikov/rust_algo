@@ -1,5 +1,6 @@
 use crate::collections::vec_ext::default::default_vec;
 use std::io::Read;
+use std::mem::MaybeUninit;
 
 pub struct Input<'s> {
     input: &'s mut (dyn Read + Send),
@@ -159,6 +160,19 @@ impl<T: Readable> Readable for Vec<T> {
     fn read(input: &mut Input) -> Self {
         let size = input.read();
         input.read_vec(size)
+    }
+}
+
+impl<T: Readable, const SIZE: usize> Readable for [T; SIZE] {
+    fn read(input: &mut Input) -> Self {
+        unsafe {
+            let mut res = MaybeUninit::<[T; SIZE]>::uninit();
+            for i in 0..SIZE {
+                let ptr: *mut T = (*res.as_mut_ptr()).as_mut_ptr();
+                ptr.add(i).write(input.read::<T>());
+            }
+            res.assume_init()
+        }
     }
 }
 

@@ -290,9 +290,17 @@ where
     }
 }
 
-impl<T: IntegerRing + Ord + Copy + AsIndex, V: Value<T>> AsIndex for ModInt<T, V> {
+impl<T: IntegerRing + Ord + Copy + AsIndex + Wideable, V: Value<T>> AsIndex for ModInt<T, V>
+where
+    T::W: AsIndex + IntegerRing + Ord,
+{
     fn from_index(idx: usize) -> Self {
-        Self::new(T::from_index(idx))
+        let t = T::W::from_index(idx);
+        if t >= T::W::from(V::val()) {
+            Self::new_from_wide(t)
+        } else {
+            unsafe { Self::unchecked_new(T::downcast(t)) }
+        }
     }
 
     fn to_index(self) -> usize {

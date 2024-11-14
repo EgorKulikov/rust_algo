@@ -1,9 +1,9 @@
 use crate::collections::indexed_heap::IndexedHeap;
 use crate::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
 use crate::graph::Graph;
-use crate::numbers::num_traits::algebra::SemiRing;
+use crate::numbers::num_traits::algebra::AdditionMonoid;
 
-pub trait Distances<W: SemiRing + Ord + Copy> {
+pub trait Distances<W: AdditionMonoid + Ord + Copy> {
     fn distances_from(&self, source: usize) -> Vec<Option<(W, usize, usize)>>;
 
     fn distance(&self, source: usize, mut destination: usize) -> Option<(W, Vec<(usize, usize)>)> {
@@ -21,7 +21,7 @@ pub trait Distances<W: SemiRing + Ord + Copy> {
     }
 }
 
-impl<W: SemiRing + Ord + Copy, E: WeightedEdgeTrait<W>> Distances<W> for Graph<E> {
+impl<W: AdditionMonoid + Ord + Copy, E: WeightedEdgeTrait<W>> Distances<W> for Graph<E> {
     fn distances_from(&self, source: usize) -> Vec<Option<(W, usize, usize)>> {
         let n = self.vertex_count();
         let mut res = vec![None; n];

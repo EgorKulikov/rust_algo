@@ -20,6 +20,10 @@ impl<T: Hash + Eq> Id<T> {
         self.next
     }
 
+    pub fn advance(&mut self, by: usize) {
+        self.next += by;
+    }
+
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }

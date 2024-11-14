@@ -49,7 +49,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         dir = span;
     }
     while t > 0. {
-        let rotate = (2. * Real::PI - dir).min(t);
+        let rotate = t.min(2. * Real::PI - dir);
         t -= rotate;
         let rotate = span.min(t);
         t -= rotate;
