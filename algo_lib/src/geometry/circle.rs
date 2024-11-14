@@ -3,6 +3,7 @@ use crate::geometry::point::Point;
 use crate::geometry::Base;
 use crate::numbers::real::Real;
 
+#[derive(Copy, Clone)]
 pub struct Circle<T> {
     pub center: Point<T>,
     pub radius: T,

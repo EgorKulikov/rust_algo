@@ -4,6 +4,7 @@ use crate::geometry::Base;
 use crate::numbers::num_traits::algebra::{Field, One};
 use crate::numbers::real::{IntoReal, Real};
 
+#[derive(Copy, Clone)]
 pub struct Ray<T> {
     pub origin: Point<T>,
     pub direction: Point<T>,
@@ -69,11 +70,24 @@ impl<T: Field + Base + Ord> Ray<T> {
             self.origin.square_dist_point(p)
         }
     }
+
+    pub fn square_dist_ray(&self, r: Ray<T>) -> T {
+        if self.intersect_ray(r).is_some() {
+            T::zero()
+        } else {
+            let d1 = self.square_dist_point(r.origin);
+            let d2 = r.square_dist_point(self.origin);
+            d1.min(d2)
+        }
+    }
 }
 
 impl<T: Field + Base + Ord + IntoReal> Ray<T> {
     pub fn dist_point(&self, p: Point<T>) -> Real {
         self.square_dist_point(p).into_real().sqrt()
+    }
+    pub fn dist_ray(&self, r: Ray<T>) -> Real {
+        self.square_dist_ray(r).into_real().sqrt()
     }
 }
 
