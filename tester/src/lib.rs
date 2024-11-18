@@ -130,14 +130,15 @@ impl Tester {
                     );
                     print::end_test(outcome, true);
                     for i in (0..1000).rev() {
-                        let in_file = format!("{}/tests/.failed_{:03}.in", self.task_folder, i);
+                        let in_file =
+                            format!("tasks/{}/tests/.failed_{:03}.in", self.task_folder, i);
                         if Path::new(&in_file).exists() {
                             continue;
                         }
                         File::create(in_file).unwrap().write_all(&input).unwrap();
                         if let Some(expected) = expected {
                             File::create(format!(
-                                "{}/tests/.failed_{:03}.out",
+                                "tasks/{}/tests/.failed_{:03}.out",
                                 self.task_folder, i
                             ))
                             .unwrap()

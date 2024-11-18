@@ -1,4 +1,3 @@
-use crate::geometry::geometry_utils::canonize_angle;
 use crate::geometry::line::Line;
 use crate::geometry::Base;
 use crate::io::input::{Input, Readable};
@@ -58,7 +57,7 @@ impl Point<Real> {
     }
 
     pub fn angle_to(&self, p: Self) -> Real {
-        canonize_angle(p.angle() - self.angle()).abs()
+        (p - *self).angle()
     }
 
     pub fn value(&self) -> Real {

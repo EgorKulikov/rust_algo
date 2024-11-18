@@ -21,39 +21,47 @@ pub trait BitOps:
     + One
     + PartialEq
 {
+    #[inline]
     fn bit(at: usize) -> Self {
         Self::one() << at
     }
 
+    #[inline]
     fn is_set(&self, at: usize) -> bool {
         (*self >> at & Self::one()) == Self::one()
     }
 
+    #[inline]
     fn set_bit(&mut self, at: usize) {
         *self |= Self::bit(at)
     }
 
+    #[inline]
     fn unset_bit(&mut self, at: usize) {
         *self &= !Self::bit(at)
     }
 
     #[must_use]
+    #[inline]
     fn with_bit(mut self, at: usize) -> Self {
         self.set_bit(at);
         self
     }
 
     #[must_use]
+    #[inline]
     fn without_bit(mut self, at: usize) -> Self {
         self.unset_bit(at);
         self
     }
 
+    #[inline]
     fn flip_bit(&mut self, at: usize) {
         *self ^= Self::bit(at)
     }
 
     #[must_use]
+    #[inline]
     fn flipped_bit(mut self, at: usize) -> Self {
         self.flip_bit(at);
         self
