@@ -26,11 +26,13 @@ impl<M: BaseModInt> PrimeFFT<M> {
             root_power += root_power;
         }
         let mut i = M::one() + M::one();
+        let rem = (M::module() - M::T::one()) / root_power;
         loop {
-            if i.power(exp) != M::one() && i.power(root_power) == M::one() {
+            let j = i.power(rem);
+            if j.power(exp) != M::one() && j.power(root_power) == M::one() {
                 break Self {
-                    root: i,
-                    reverse_root: i.inv().unwrap(),
+                    root: j,
+                    reverse_root: j.inv().unwrap(),
                     root_power,
                     aa: Vec::new(),
                     bb: Vec::new(),

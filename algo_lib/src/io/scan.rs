@@ -86,11 +86,12 @@ macro_rules! scan {
 #[macro_export]
 macro_rules! str_scan {
     ($input: expr, $s: expr, $($v:ident: $t: ty),*) => {
-        $crate::str_scan!($input, $s, '@', $($v: $t),*);
+        str_scan!($input, $s, '@', $($v: $t),*);
     };
     ($input: expr, $s: expr, $sp: expr, $($v:ident: $t: ty),*) => {
         let mut bytes = $input.as_slice();
         let mut input = Input::new(&mut bytes);
-        $crate::scan!(&mut input, $s, $sp, $($v: $t),*);
+        $crate
+          ::scan!(&mut input, $s, $sp, $($v: $t),*);
     };
 }

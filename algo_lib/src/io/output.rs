@@ -132,8 +132,11 @@ impl<'s> Output<'s> {
     pub fn set_bool_output(&mut self, bool_output: BoolOutput) {
         self.bool_output = bool_output;
     }
-    pub fn set_precision(&mut self, precision: Option<usize>) {
-        self.precision = precision;
+    pub fn set_precision(&mut self, precision: usize) {
+        self.precision = Some(precision);
+    }
+    pub fn reset_precision(&mut self) {
+        self.precision = None;
     }
     pub fn get_precision(&self) -> Option<usize> {
         self.precision
