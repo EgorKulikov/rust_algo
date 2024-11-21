@@ -1,7 +1,7 @@
 use std::iter::{Chain, Enumerate, Filter, Map, Rev, Skip, StepBy, Sum, Take, Zip};
 
 pub trait Iters: IntoIterator + Sized {
-    fn iter_ter_enumerate(self) -> Enumerate<Self::IntoIter> {
+    fn iter_enumerate(self) -> Enumerate<Self::IntoIter> {
         self.into_iter().enumerate()
     }
     fn iter_rev(self) -> Rev<Self::IntoIter>
