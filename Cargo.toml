@@ -4,6 +4,7 @@ members = [
     "algo_lib",
     "main",
     "tester",
+    "run",
 ]
 
 [profile.release]
