@@ -1,5 +1,6 @@
 use crate::collections::iter_ext::collect::IterCollect;
 use crate::collections::slice_ext::bounds::Bounds;
+use crate::collections::slice_ext::indices::Indices;
 use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use std::cell::Cell;
 
@@ -74,7 +75,7 @@ impl DSU {
     pub fn parts(&self) -> Vec<Vec<usize>> {
         let roots = self.iter().collect_vec();
         let mut res = vec![Vec::new(); roots.len()];
-        for i in 0..self.id.len() {
+        for i in self.id.indices() {
             res[roots.as_slice().bin_search(&self.get(i)).unwrap()].push(i);
         }
         res

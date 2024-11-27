@@ -1,3 +1,4 @@
+use crate::collections::iter_ext::iter_copied::ItersCopied;
 use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::numbers::num_traits::bit_ops::BitOps;
 use std::ops::{BitAndAssign, BitOrAssign, Index, ShlAssign, ShrAssign};
@@ -69,8 +70,8 @@ impl BitSet {
 
     pub fn is_superset(&self, other: &Self) -> bool {
         assert_eq!(self.len, other.len);
-        for i in 0..self.data.len() {
-            if self.data[i] & other.data[i] != other.data[i] {
+        for (we, them) in self.data.copy_zip(&other.data) {
+            if (we & them) != them {
                 return false;
             }
         }
@@ -173,10 +174,10 @@ impl ShlAssign<usize> for BitSet {
         let small_shift = rhs & 63;
         if small_shift != 0 {
             let mut carry = 0;
-            for i in 0..self.data.len() {
-                let new_carry = self.data[i] >> (64 - small_shift);
-                self.data[i] <<= small_shift;
-                self.data[i] |= carry;
+            for data in self.data.iter_mut() {
+                let new_carry = (*data) >> (64 - small_shift);
+                *data <<= small_shift;
+                *data |= carry;
                 carry = new_carry;
             }
         }
@@ -197,10 +198,10 @@ impl ShrAssign<usize> for BitSet {
         let small_shift = rhs & 63;
         if small_shift != 0 {
             let mut carry = 0;
-            for i in (0..self.data.len()).rev() {
-                let new_carry = self.data[i] << (64 - small_shift);
-                self.data[i] >>= small_shift;
-                self.data[i] |= carry;
+            for data in self.data.iter_mut().rev() {
+                let new_carry = (*data) << (64 - small_shift);
+                *data >>= small_shift;
+                *data |= carry;
                 carry = new_carry;
             }
         }

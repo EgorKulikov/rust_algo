@@ -1,5 +1,6 @@
 use crate::collections::min_max::MinimMaxim;
 use crate::collections::slice_ext::bounds::Bounds;
+use crate::collections::slice_ext::indices::Indices;
 use crate::numbers::num_traits::algebra::AdditionMonoidWithSub;
 use std::cmp::Ordering;
 
@@ -83,7 +84,8 @@ impl<T: AdditionMonoidWithSub + Copy, E: PartialOrd + Copy> PersistentFenwickTre
     }
 
     pub fn iter(&self, epoch: E) -> impl Iterator<Item = T> + '_ {
-        (0..self.value.len())
+        self.value
+            .indices()
             // edition 2021
             .map(move |i| self.get(i, i + 1, epoch))
     }

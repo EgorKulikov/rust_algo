@@ -1,11 +1,15 @@
 use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use std::mem;
 
-#[derive(Default)]
 enum Opt<T> {
-    #[default]
     None,
     Some(u32, T),
+}
+
+impl<T> Default for Opt<T> {
+    fn default() -> Self {
+        Opt::None
+    }
 }
 
 impl<T> Opt<T> {
