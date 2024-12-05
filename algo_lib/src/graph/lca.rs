@@ -2,7 +2,6 @@ use crate::collections::md_arr::arr2d::Arr2d;
 use crate::graph::edges::edge_trait::BidirectionalEdgeTrait;
 use crate::graph::Graph;
 use crate::misc::owned_cell::OwnedCell;
-use crate::numbers::num_traits::bit_ops::Bits;
 
 pub struct LCA {
     position: Vec<u32>,
@@ -31,7 +30,7 @@ impl LCA {
         } else {
             let from = self.position[first].min(self.position[second]) as usize;
             let to = self.position[first].max(self.position[second]) as usize;
-            let lv = (u32::bits() - ((to - from) as u32).leading_zeros() - 1) as usize;
+            let lv = (32 - ((to - from) as u32).leading_zeros() - 1) as usize;
             get_min(
                 &self.level,
                 self.lca_arr[(lv, from)],
@@ -81,7 +80,7 @@ impl LCA {
             }
         }
         let vertex_count = self.position.len();
-        let len = (u32::bits() - (vertex_count as u32).leading_zeros()) as usize;
+        let len = (32 - (vertex_count as u32).leading_zeros()) as usize;
         let mut predecessors = Arr2d::new(len, vertex_count, -1);
         for i in 0..vertex_count {
             predecessors[(0, i)] = match self.parent(i) {
@@ -160,7 +159,7 @@ impl<E: BidirectionalEdgeTrait> LCATrait for Graph<E> {
             }
         }
         let mut lca_arr = Arr2d::new(
-            (u32::bits() - ((2 * vertex_count - 1) as u32).leading_zeros()) as usize,
+            (32 - ((2 * vertex_count - 1) as u32).leading_zeros()) as usize,
             2 * vertex_count - 1,
             0,
         );

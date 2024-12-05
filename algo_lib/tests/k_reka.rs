@@ -1,9 +1,8 @@
 //{"name":"K. Река","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/K","interactive":false,"timeLimit":3000,"tests":[{"input":"4 0\n3 5 5 4\n5\n1 1\n2 1\n1 3\n2 2\n1 3\n","output":"75\n105\n73\n101\n83\n113\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"KReka"}}}
 
-use algo_lib::collections::treap::{Payload, Treap};
+use algo_lib::collections::treap::{Payload, Pushable, Treap};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
-use algo_lib::misc::extensions::replace_with::ReplaceWith;
 use algo_lib::misc::test_type::{TaskType, TestType};
 
 type PreCalc = ();
@@ -24,23 +23,29 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     }
 
     impl Payload for Node {
-        fn reset_delta(&mut self) {}
+        const NEED_UPDATE: bool = true;
 
         fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
             self.sum_sq =
                 self.len * self.len + left.map_or(0, |l| l.sum_sq) + right.map_or(0, |r| r.sum_sq);
         }
+    }
 
-        fn push_delta(&mut self, _delta: &Self) {}
+    impl Pushable<usize> for Node {
+        fn push(&mut self, delta: usize) {
+            self.sum_sq -= self.len * self.len;
+            self.len += delta;
+            self.sum_sq += self.len * self.len;
+        }
     }
 
     let n = input.read_size();
     input.read_size();
     let a = input.read_size_vec(n);
 
-    let mut treap = Treap::new();
+    let mut treap = Treap::sized();
     for a in a {
-        treap.add(Node::new(a));
+        treap.add_back(Node::new(a));
     }
 
     out.print_line(treap.payload().map(|p| p.sum_sq));
@@ -53,41 +58,25 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         match e {
             1 => {
                 let size = treap.size();
+                let view = treap.by_index(id..=id);
+                let len = view.payload().unwrap().len;
+                view.detach();
                 if id == 0 {
-                    treap.by_index(0..2).replace_with(|root| {
-                        let (mut left, mut right) = root.split_at(1);
-                        Treap::single(Node::new(
-                            left.payload().unwrap().len + right.payload().unwrap().len,
-                        ))
-                    });
+                    treap.by_index(..1).push(len);
                 } else if id == size - 1 {
-                    treap.by_index(size - 2..).replace_with(|root| {
-                        let (mut left, mut right) = root.split_at(1);
-                        Treap::single(Node::new(
-                            left.payload().unwrap().len + right.payload().unwrap().len,
-                        ))
-                    });
+                    treap.by_index(size - 2..).push(len);
                 } else {
-                    treap.by_index(id - 1..id + 2).replace_with(|root| {
-                        let (mut left, mid_right) = root.split_at(1);
-                        let (mut mid, mut right) = mid_right.split_at(1);
-                        let len = mid.payload().unwrap().len;
-                        let left_len = left.payload().unwrap().len;
-                        let right_len = right.payload().unwrap().len;
-                        Treap::merge(
-                            Treap::single(Node::new(left_len + len / 2)),
-                            Treap::single(Node::new(len - len / 2 + right_len)),
-                        )
-                    });
+                    treap.by_index(id - 1..id).push(len / 2);
+                    treap.by_index(id..id + 1).push(len - len / 2);
                 }
             }
-            2 => treap.by_index(id..=id).replace_with(|mut root| {
-                let len = root.payload().unwrap().len;
-                Treap::merge(
-                    Treap::single(Node::new(len / 2)),
-                    Treap::single(Node::new(len - len / 2)),
-                )
-            }),
+            2 => {
+                let view = treap.by_index(id..=id);
+                let len = view.payload().unwrap().len;
+                view.detach();
+                view.add_back(Node::new(len / 2));
+                view.add_back(Node::new(len - len / 2));
+            }
             _ => unreachable!(),
         }
         out.print_line(treap.payload().map(|p| p.sum_sq));

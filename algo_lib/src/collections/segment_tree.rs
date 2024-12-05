@@ -1,15 +1,15 @@
 use crate::collections::bounds::clamp;
 use crate::misc::direction::Direction;
-use crate::numbers::num_traits::algebra::{One, Zero};
 use crate::when;
 use std::marker::PhantomData;
-use std::ops::{Add, MulAssign, RangeBounds};
+use std::ops::RangeBounds;
 
+#[allow(unused_variables)]
 pub trait SegmentTreeNode {
     fn new(left: usize, right: usize) -> Self;
-    fn join(&mut self, left_val: &Self, right_val: &Self);
-    fn accumulate(&mut self, value: &Self);
-    fn reset_delta(&mut self);
+    fn join(&mut self, left_val: &Self, right_val: &Self) {}
+    fn accumulate(&mut self, value: &Self) {}
+    fn reset_delta(&mut self) {}
 }
 
 pub trait Pushable<T>: SegmentTreeNode {
@@ -60,29 +60,6 @@ impl<T: SegmentTreeNode + Clone> QueryResult<T, ()> for T {
                 res
             },
         }
-    }
-}
-
-impl<
-        Key: Add<Output = Key> + MulAssign<Delta> + Zero + Copy,
-        Delta: MulAssign<Delta> + One + Copy,
-    > SegmentTreeNode for (Key, Delta)
-{
-    fn new(_left: usize, _right: usize) -> Self {
-        (Key::zero(), Delta::one())
-    }
-
-    fn join(&mut self, left_val: &Self, right_val: &Self) {
-        self.0 = left_val.0 + right_val.0;
-    }
-
-    fn accumulate(&mut self, value: &Self) {
-        self.0 *= value.1;
-        self.1 *= value.1;
-    }
-
-    fn reset_delta(&mut self) {
-        self.1 = Delta::one();
     }
 }
 

@@ -1,16 +1,14 @@
 use crate::collections::treap::{Payload, PayloadWithKey, Pushable, Treap};
-use crate::misc::extensions::replace_with::ReplaceWith;
-use crate::misc::extensions::with::With;
 use std::iter::repeat;
 use std::ops::{Bound, RangeBounds};
 
-struct MapPayload<T> {
+struct MapPayload<T: Unpin> {
     key: T,
     self_size: i32,
     total_size: i32,
 }
 
-impl<T> MapPayload<T> {
+impl<T: Unpin> MapPayload<T> {
     fn new(key: T) -> Self {
         Self {
             key,
@@ -20,28 +18,24 @@ impl<T> MapPayload<T> {
     }
 }
 
-impl<T> Payload for MapPayload<T> {
-    #[inline]
-    fn reset_delta(&mut self) {}
+impl<T: Unpin> Payload for MapPayload<T> {
+    const NEED_UPDATE: bool = true;
 
     #[inline]
     fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
         self.total_size =
             self.self_size + left.map_or(0, |l| l.total_size) + right.map_or(0, |r| r.total_size);
     }
-
-    #[inline]
-    fn push_delta(&mut self, _delta: &Self) {}
 }
 
-impl<T> Pushable<i32> for MapPayload<T> {
+impl<T: Unpin> Pushable<i32> for MapPayload<T> {
     fn push(&mut self, delta: i32) {
         self.self_size += delta;
         self.total_size += delta;
     }
 }
 
-impl<T: Ord> PayloadWithKey for MapPayload<T> {
+impl<T: Ord + Unpin> PayloadWithKey for MapPayload<T> {
     type Key = T;
 
     fn key(&self) -> &Self::Key {
@@ -49,46 +43,40 @@ impl<T: Ord> PayloadWithKey for MapPayload<T> {
     }
 }
 
-pub struct MultiTreapSet<T> {
+pub struct MultiTreapSet<T: Unpin> {
     root: Treap<MapPayload<T>>,
 }
 
-impl<T: Ord> MultiTreapSet<T> {
+impl<T: Ord + Unpin> MultiTreapSet<T> {
     pub fn new() -> Self {
         Self { root: Treap::new() }
     }
 
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&mut self) -> usize {
         self.root.payload().map_or(0, |p| p.total_size as usize)
     }
 
     pub fn insert(&mut self, key: T) {
-        self.root.range(&key..=&key).replace_with(|mut node| {
-            if node.payload().is_some() {
-                node.push(1);
-                node
-            } else {
-                Treap::single(MapPayload::new(key))
-            }
-        });
+        let view = self.root.range(&key..=&key);
+        if view.payload().is_some() {
+            view.push(1);
+        } else {
+            view.add_back(MapPayload::new(key));
+        }
     }
 
     pub fn remove(&mut self, key: &T) -> bool {
-        let mut res = true;
-        self.root.range(&key..=&key).replace_with(|mut node| {
-            if node.payload().is_some() {
-                node.push(-1);
-                if node.payload().unwrap().self_size == 0 {
-                    Treap::new()
-                } else {
-                    node
-                }
-            } else {
-                res = false;
-                node
+        let node = self.root.range(&key..=&key);
+        if node.payload().is_some() {
+            node.push(-1);
+            if node.payload().unwrap().self_size == 0 {
+                node.detach();
             }
-        });
-        res
+            true
+        } else {
+            false
+        }
     }
 
     pub fn index(&mut self, key: &T) -> Option<usize> {
@@ -99,13 +87,15 @@ impl<T: Ord> MultiTreapSet<T> {
     pub fn lower_bound(&mut self, key: &T) -> usize {
         self.root
             .range(..key)
-            .with(|node| node.payload().map_or(0, |p| p.total_size) as usize)
+            .payload()
+            .map_or(0, |p| p.total_size as usize)
     }
 
     pub fn upper_bound(&mut self, key: &T) -> usize {
         self.root
             .range(..=key)
-            .with(|node| node.payload().map_or(0, |p| p.total_size) as usize)
+            .payload()
+            .map_or(0, |p| p.total_size as usize)
     }
 
     pub fn keys(&mut self) -> impl Iterator<Item = &T> {
@@ -138,12 +128,12 @@ impl<T: Ord> MultiTreapSet<T> {
         self.root.last().map(Self::node_to_key)
     }
 
-    pub fn lower(&mut self, key: &T) -> Option<&T> {
-        self.root.lower(key).map(Self::node_to_key)
+    pub fn prev(&mut self, key: &T) -> Option<&T> {
+        self.root.prev(key).map(Self::node_to_key)
     }
 
-    pub fn higher(&mut self, key: &T) -> Option<&T> {
-        self.root.higher(key).map(Self::node_to_key)
+    pub fn next(&mut self, key: &T) -> Option<&T> {
+        self.root.next(key).map(Self::node_to_key)
     }
 
     pub fn floor(&mut self, key: &T) -> Option<&T> {
@@ -154,8 +144,7 @@ impl<T: Ord> MultiTreapSet<T> {
         self.root.ceil(key).map(Self::node_to_key)
     }
 
-    #[allow(clippy::wrong_self_convention)]
-    pub fn is_empty(&mut self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.root.is_empty()
     }
 
@@ -164,9 +153,7 @@ impl<T: Ord> MultiTreapSet<T> {
     }
 
     pub fn get(&mut self, key: &T) -> usize {
-        self.root.get(key).map_or(0, |node| {
-            node.payload().as_ref().unwrap().self_size as usize
-        })
+        self.root.get(key).map_or(0, |node| node.self_size as usize)
     }
 
     pub fn contains(&mut self, key: &T) -> bool {
@@ -210,7 +197,7 @@ impl<T: Ord> MultiTreapSet<T> {
     }
 }
 
-impl<T: Ord> Default for MultiTreapSet<T> {
+impl<T: Ord + Unpin> Default for MultiTreapSet<T> {
     fn default() -> Self {
         Self::new()
     }

@@ -1,17 +1,100 @@
 use crate::misc::direction::Direction;
 use crate::misc::extensions::replace_with::ReplaceWith;
-use crate::misc::extensions::with::With;
 use crate::misc::random::random;
-use crate::misc::recursive_function::{Callable, RecursiveFunction};
-use std::cmp::Ordering;
 use std::collections::Bound;
+use std::marker::PhantomPinned;
 use std::mem::{swap, MaybeUninit};
 use std::ops::{Deref, DerefMut, RangeBounds};
+use std::pin::Pin;
 
-pub trait Payload {
-    fn reset_delta(&mut self);
-    fn update(&mut self, left: Option<&Self>, right: Option<&Self>);
-    fn push_delta(&mut self, delta: &Self);
+pub trait Size: Payload {
+    const ONE: Self;
+    fn size(&self) -> usize;
+}
+
+impl Payload for () {}
+
+impl Size for () {
+    const ONE: Self = ();
+    #[inline]
+    fn size(&self) -> usize {
+        unimplemented!()
+    }
+}
+
+impl Payload for u32 {
+    const NEED_UPDATE: bool = true;
+
+    fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
+        *self = 1 + left.unwrap_or(&0) + right.unwrap_or(&0);
+    }
+}
+
+impl Size for u32 {
+    const ONE: Self = 1;
+    #[inline]
+    fn size(&self) -> usize {
+        *self as usize
+    }
+}
+
+pub trait Reverse: Default + Unpin {
+    fn need_reverse(&self) -> bool;
+    fn reset_reverse(&mut self);
+    fn flip(&mut self);
+}
+
+impl Reverse for () {
+    #[inline]
+    fn need_reverse(&self) -> bool {
+        false
+    }
+
+    #[inline]
+    fn flip(&mut self) {
+        unimplemented!()
+    }
+
+    #[inline]
+    fn reset_reverse(&mut self) {
+        unimplemented!()
+    }
+}
+
+impl Reverse for bool {
+    #[inline]
+    fn need_reverse(&self) -> bool {
+        *self
+    }
+
+    #[inline]
+    fn reset_reverse(&mut self) {
+        *self = false;
+    }
+
+    #[inline]
+    fn flip(&mut self) {
+        *self ^= true;
+    }
+}
+
+#[allow(unused_variables)]
+pub trait Payload: Unpin {
+    const NEED_UPDATE: bool = false;
+    const NEED_PUSH_DOWN: bool = false;
+    fn reset_delta(&mut self) {
+        unimplemented!()
+    }
+    fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
+        unimplemented!()
+    }
+    fn push_delta(&mut self, delta: &Self) {
+        unimplemented!()
+    }
+
+    fn need_push_down(&self) -> bool {
+        unimplemented!()
+    }
 }
 
 pub trait PayloadWithKey: Payload {
@@ -30,20 +113,18 @@ impl<P: Payload> Pushable<&P> for P {
     }
 }
 
-pub struct PurePayload<T>(pub T);
-
-impl<T> Payload for PurePayload<T> {
+impl<P: Payload> Pushable<P> for P {
     #[inline]
-    fn reset_delta(&mut self) {}
-
-    #[inline]
-    fn update(&mut self, _left: Option<&Self>, _right: Option<&Self>) {}
-
-    #[inline]
-    fn push_delta(&mut self, _delta: &Self) {}
+    fn push(&mut self, delta: P) {
+        *self = delta;
+    }
 }
 
-impl<T: Ord> PayloadWithKey for PurePayload<T> {
+pub struct PurePayload<T>(pub T);
+
+impl<T: Unpin> Payload for PurePayload<T> {}
+
+impl<T: Ord + Unpin> PayloadWithKey for PurePayload<T> {
     type Key = T;
 
     #[inline]
@@ -52,20 +133,19 @@ impl<T: Ord> PayloadWithKey for PurePayload<T> {
     }
 }
 
-impl<T> Pushable<T> for PurePayload<T> {
-    #[inline]
+impl<T: Ord + Unpin> Pushable<T> for PurePayload<T> {
     fn push(&mut self, delta: T) {
         self.0 = delta;
     }
 }
 
-pub struct Iter<'a, P> {
-    stack: Vec<*mut TreapNode<P>>,
+pub struct Iter<'a, P, S, R> {
+    stack: Vec<*mut TreapNode<P, S, R>>,
     _marker: std::marker::PhantomData<&'a P>,
 }
 
-impl<'a, P: Payload> Iter<'a, P> {
-    fn new(root: &'a mut OptionTreapNode<P>) -> Self {
+impl<'a, P: Payload, S: Size, R: Reverse> Iter<'a, P, S, R> {
+    fn new(root: &'a mut OptionTreapNode<P, S, R>) -> Self {
         let mut res = Self {
             stack: Vec::new(),
             _marker: std::marker::PhantomData,
@@ -74,60 +154,78 @@ impl<'a, P: Payload> Iter<'a, P> {
         res
     }
 
-    fn add_left(&mut self, mut node: &'a mut OptionTreapNode<P>) {
-        while let Some(n) = node.0.as_deref_mut() {
+    fn add_left(&mut self, mut node: &mut OptionTreapNode<P, S, R>) {
+        while let Some(n) = node.0.as_mut() {
             n.push_down();
             self.stack.push(n);
-            node = &mut n.left;
+            node = &mut n.as_mut().this().left;
         }
     }
 }
 
-impl<'a, P: Payload> Iterator for Iter<'a, P> {
+impl<'a, P: Payload, S: Size + 'a, R: Reverse + 'a> Iterator for Iter<'a, P, S, R> {
     type Item = &'a P;
 
     fn next(&mut self) -> Option<Self::Item> {
         let node = unsafe { &mut *self.stack.pop()? };
-        self.add_left(&mut node.right);
+        self.add_left(&mut node.as_mut().this().right);
         Some(&node.payload)
     }
 }
 
 #[allow(private_interfaces)]
-pub enum Treap<P> {
+pub enum Treap<P, S = (), R = ()> {
     Whole {
-        root: OptionTreapNode<P>,
+        root: OptionTreapNode<P, S, R>,
     },
     Split {
-        left: OptionTreapNode<P>,
-        mid: Box<Treap<P>>,
-        right: OptionTreapNode<P>,
+        left: OptionTreapNode<P, S, R>,
+        mid: Box<Treap<P, S, R>>,
+        right: OptionTreapNode<P, S, R>,
     },
 }
 
-impl<P> Treap<P> {
+impl<P: Payload> Treap<P> {
     pub fn new() -> Self {
         Treap::Whole {
             root: OptionTreapNode::NONE,
         }
     }
+}
 
-    pub fn single(p: P) -> Self {
+impl<P: Payload> Treap<P, u32> {
+    pub fn sized() -> Self {
         Treap::Whole {
-            root: OptionTreapNode::new(TreapNode::new(p)),
+            root: OptionTreapNode::NONE,
         }
     }
 }
 
-impl<P> Default for Treap<P> {
-    fn default() -> Self {
-        Self::new()
+impl<P: Payload> Treap<P, u32, bool> {
+    pub fn reversible() -> Self {
+        Treap::Whole {
+            root: OptionTreapNode::NONE,
+        }
     }
 }
 
-impl<P: Payload> Treap<P> {
+impl<P: Payload, S: Size, R: Reverse> Default for Treap<P, S, R> {
+    fn default() -> Self {
+        Treap::Whole {
+            root: OptionTreapNode::NONE,
+        }
+    }
+}
+
+impl<P: Payload, S: Size, R: Reverse> Treap<P, S, R> {
+    fn single(p: P) -> Self {
+        Treap::Whole {
+            root: OptionTreapNode::new(TreapNode::new(p)),
+        }
+    }
+
     #[inline]
-    fn into_node(mut self) -> OptionTreapNode<P> {
+    fn into_node(mut self) -> OptionTreapNode<P, S, R> {
         self.rebuild();
         match self {
             Treap::Whole { root } => root,
@@ -136,22 +234,14 @@ impl<P: Payload> Treap<P> {
     }
 
     #[inline]
-    unsafe fn as_node(&mut self) -> &mut OptionTreapNode<P> {
+    unsafe fn as_node(&mut self) -> &mut OptionTreapNode<P, S, R> {
         match self {
             Treap::Whole { root } => root,
             _ => unreachable!(),
         }
     }
 
-    #[inline]
-    unsafe fn as_mid(&mut self) -> &mut Treap<P> {
-        match self {
-            Treap::Split { mid, .. } => mid,
-            _ => unreachable!(),
-        }
-    }
-
-    fn rebuild(&mut self) -> &mut OptionTreapNode<P> {
+    fn rebuild(&mut self) -> &mut OptionTreapNode<P, S, R> {
         self.replace_with(|self_| {
             if let Treap::Split { left, mid, right } = self_ {
                 Treap::Whole {
@@ -168,10 +258,28 @@ impl<P: Payload> Treap<P> {
     }
 
     fn do_split(
+        mut self,
+        f: impl FnOnce(OptionTreapNode<P, S, R>) -> (OptionTreapNode<P, S, R>, OptionTreapNode<P, S, R>),
+    ) -> (Self, Self) {
+        let mut right = MaybeUninit::uninit();
+        self.replace_with(|self_| {
+            let root = self_.into_node();
+            let (left, right_) = f(root);
+            right.write(Treap::Whole { root: right_ });
+            Treap::Whole { root: left }
+        });
+        (self, unsafe { right.assume_init() })
+    }
+
+    fn do_split_three(
         &mut self,
         f: impl FnOnce(
-            OptionTreapNode<P>,
-        ) -> (OptionTreapNode<P>, OptionTreapNode<P>, OptionTreapNode<P>),
+            OptionTreapNode<P, S, R>,
+        ) -> (
+            OptionTreapNode<P, S, R>,
+            OptionTreapNode<P, S, R>,
+            OptionTreapNode<P, S, R>,
+        ),
     ) -> &mut Self {
         self.replace_with(|self_| {
             let root = self_.into_node();
@@ -182,66 +290,58 @@ impl<P: Payload> Treap<P> {
                 right,
             }
         });
-        unsafe { self.as_mid() }
+        self.as_mid()
     }
 
-    pub fn reverse(&mut self) {
-        self.rebuild().reverse();
+    fn as_mid(&mut self) -> &mut Self {
+        match self {
+            Treap::Split { mid, .. } => mid,
+            _ => unreachable!(),
+        }
     }
 
-    pub fn size(&mut self) -> usize {
-        self.rebuild().size()
-    }
-
-    #[allow(clippy::wrong_self_convention)]
-    pub fn is_empty(&mut self) -> bool {
-        self.size() != 0
-    }
-
-    pub fn by_index(&mut self, bounds: impl RangeBounds<usize>) -> &mut Self {
-        self.do_split(|root| {
-            let size = root.size();
-            let start = match bounds.start_bound() {
-                Bound::Included(&s) => s,
-                Bound::Excluded(&s) => s + 1,
-                Bound::Unbounded => 0,
-            };
-            let end = match bounds.end_bound() {
-                Bound::Included(&e) => e + 1,
-                Bound::Excluded(&e) => e,
-                Bound::Unbounded => size,
-            };
-            let (left, mid_right) = root.split_at(start);
-            let (mid, right) = mid_right.split_at(end.max(start) - start);
-            (left, mid, right)
-        })
-    }
-
-    pub fn get_at(&mut self, at: usize) -> &mut Self {
-        self.replace_with(|self_| {
-            let root = self_.into_node();
-            let (left, mid, right) = root.split_at_single(at);
-            Self::Split {
-                left,
-                mid: Box::new(Self::Whole { root: mid }),
-                right,
+    pub fn push_front(&mut self, mut other: Self) -> &mut Self {
+        self.replace_with(|mut root| {
+            root.rebuild();
+            other.rebuild();
+            let root = root.into_node();
+            Treap::Whole {
+                root: OptionTreapNode::merge(other.into_node(), root),
             }
         });
-        unsafe { self.as_mid() }
+        self
     }
 
-    pub fn split_at_single(self, at: usize) -> (Self, Self, Self) {
-        let (left, mid, right) = self.into_node().split_at_single(at);
-        (
-            Treap::Whole { root: left },
-            Treap::Whole { root: mid },
-            Treap::Whole { root: right },
-        )
+    pub fn push_back(&mut self, mut other: Self) -> &mut Self {
+        self.replace_with(|mut root| {
+            root.rebuild();
+            other.rebuild();
+            let root = root.into_node();
+            Treap::Whole {
+                root: OptionTreapNode::merge(root, other.into_node()),
+            }
+        });
+        self
+    }
+
+    pub fn detach(&mut self) -> Self {
+        match self {
+            Treap::Whole { root } => {
+                let mut res = OptionTreapNode::NONE;
+                swap(&mut res, root);
+                Treap::Whole { root: res }
+            }
+            Treap::Split { mid, .. } => {
+                let mut res = Self::default();
+                swap(&mut res, mid);
+                res
+            }
+        }
     }
 
     pub fn binary_search(
         &mut self,
-        f: impl FnMut(&P, Option<(&P, usize)>, Option<(&P, usize)>) -> Option<Direction>,
+        f: impl FnMut(&P, Option<&P>, Option<&P>) -> Option<Direction>,
     ) {
         self.rebuild().binary_search(f);
     }
@@ -251,16 +351,6 @@ impl<P: Payload> Treap<P> {
         P: Pushable<D>,
     {
         self.rebuild().push(delta);
-    }
-
-    pub fn split_at(mut self, at: usize) -> (Self, Self) {
-        let mut right_res = MaybeUninit::uninit();
-        self.rebuild().replace_with(|root| {
-            let (left, right) = root.split_at(at);
-            right_res.write(Treap::Whole { root: right });
-            left
-        });
-        (self, unsafe { right_res.assume_init() })
     }
 
     pub fn merge(left: Self, right: Self) -> Self {
@@ -290,24 +380,12 @@ impl<P: Payload> Treap<P> {
         }
     }
 
-    pub fn iter(&mut self) -> Iter<P> {
+    pub fn iter<'a>(&'a mut self) -> Iter<'a, P, S, R>
+    where
+        R: 'a,
+        S: 'a,
+    {
         Iter::new(self.rebuild())
-    }
-
-    pub fn into_vec(self) -> Vec<P> {
-        self.into_node().with(|root| {
-            let mut res = Vec::with_capacity(root.size());
-            let mut rec = RecursiveFunction::new(|rec, node: OptionTreapNode<P>| {
-                if let Some(node) = node.0 {
-                    let node = *node;
-                    rec.call(node.left);
-                    res.push(node.payload);
-                    rec.call(node.right);
-                }
-            });
-            rec.call(root);
-            res
-        })
     }
 
     pub fn first(&mut self) -> Option<&P> {
@@ -322,14 +400,99 @@ impl<P: Payload> Treap<P> {
         self.rebuild().payload()
     }
 
-    pub fn add(&mut self, payload: P) {
-        self.replace_with(|root| Self::merge(root, Self::single(payload)));
+    pub fn add_back(&mut self, payload: P) -> NodeRef<P, S, R> {
+        let mut res = None;
+        self.replace_with(|root| unsafe {
+            let mut new_node = Self::single(payload);
+            res = Some(new_node.as_node().as_mut().unwrap().inner.as_mut().this() as *mut _);
+            Self::merge(root, new_node)
+        });
+        NodeRef(res.unwrap())
+    }
+
+    pub fn add_front(&mut self, payload: P) -> NodeRef<P, S, R> {
+        let mut res = None;
+        self.replace_with(|root| unsafe {
+            let mut new_node = Self::single(payload);
+            res = Some(new_node.as_node().as_mut().unwrap().inner.as_mut().this() as *mut _);
+            Self::merge(new_node, root)
+        });
+        NodeRef(res.unwrap())
+    }
+
+    pub fn is_empty(&self) -> bool {
+        match self {
+            Treap::Whole { root } => root.is_none(),
+            Treap::Split { left, mid, right } => {
+                left.is_none() && right.is_none() && mid.is_empty()
+            }
+        }
+    }
+
+    pub fn raise(&mut self, node_ref: &NodeRef<P, S, R>) -> &mut Self {
+        self.do_split_three(|node| node.raise(node_ref.0))
     }
 }
 
-impl<P: PayloadWithKey> Treap<P> {
+pub struct NodeRef<P, S, R>(*mut TreapNodeInner<P, S, R>);
+
+impl<P: Payload, R: Reverse> Treap<P, u32, R> {
+    pub fn index_ref(&mut self, node_ref: &NodeRef<P, u32, R>) -> usize {
+        self.raise(node_ref);
+        match self {
+            Treap::Whole { .. } => unreachable!(),
+            Treap::Split { left, .. } => left.size(),
+        }
+    }
+
+    pub fn size(&self) -> usize {
+        match self {
+            Treap::Whole { root } => root.size(),
+            Treap::Split { left, mid, right } => left.size() + mid.size() + right.size(),
+        }
+    }
+
+    pub fn split_at(self, at: usize) -> (Self, Self) {
+        self.do_split(|root| root.split_at(at))
+    }
+
+    pub fn binary_search_size(&mut self, f: impl FnMut(usize, usize) -> Option<Direction>) {
+        self.rebuild().binary_search_size(f);
+    }
+
+    pub fn by_index(&mut self, bounds: impl RangeBounds<usize>) -> &mut Self {
+        self.do_split_three(|root| {
+            let size = root.size();
+            let start = match bounds.start_bound() {
+                Bound::Included(&s) => s,
+                Bound::Excluded(&s) => s + 1,
+                Bound::Unbounded => 0,
+            };
+            let end = match bounds.end_bound() {
+                Bound::Included(&e) => e + 1,
+                Bound::Excluded(&e) => e,
+                Bound::Unbounded => size,
+            };
+            let (left, mid_right) = root.split_at(start);
+            let (mid, right) = mid_right.split_at(end.max(start) - start);
+            (left, mid, right)
+        })
+    }
+
+    pub fn get_at(&mut self, at: usize) -> &mut Self {
+        self.by_index(at..=at)
+    }
+}
+
+impl<P: Payload, S: Size> Treap<P, S, bool> {
+    pub fn reverse(&mut self) {
+        self.rebuild().reverse();
+    }
+}
+
+impl<P: PayloadWithKey, S: Size, R: Reverse> Treap<P, S, R> {
     pub fn range<'s: 'r, 'r>(&'s mut self, bounds: impl RangeBounds<&'r P::Key>) -> &mut Self {
-        self.do_split(|root| {
+        self.do_split_three(|root| {
             let (left, mid_right) = match bounds.start_bound() {
                 Bound::Included(key) => root.split(key),
                 Bound::Excluded(key) => root.split_inclusive(key),
@@ -349,7 +512,7 @@ impl<P: PayloadWithKey> Treap<P> {
         let mut res = None;
         mid.replace_with(|mid| {
             if let Some(mid) = mid.into_node().0 {
-                res = Some(mid.payload);
+                res = Some(mid.into_payload());
             }
             Treap::Whole {
                 root: OptionTreapNode::new(TreapNode::new(p)),
@@ -363,7 +526,7 @@ impl<P: PayloadWithKey> Treap<P> {
         let mut res = None;
         mid.replace_with(|mid| {
             if let Some(mid) = mid.into_node().0 {
-                res = Some(mid.payload);
+                res = Some(mid.into_payload());
             }
             Treap::Whole {
                 root: OptionTreapNode::NONE,
@@ -372,40 +535,16 @@ impl<P: PayloadWithKey> Treap<P> {
         res
     }
 
-    pub fn split(mut self, key: &P::Key) -> (Self, Self) {
-        let mut right_res = MaybeUninit::uninit();
-        self.rebuild().replace_with(|root| {
-            let (left, right) = root.split(key);
-            right_res.write(Treap::Whole { root: right });
-            left
-        });
-        (self, unsafe { right_res.assume_init() })
+    pub fn split(self, key: &P::Key) -> (Self, Self) {
+        self.do_split(|root| root.split(key))
     }
 
-    pub fn get(&mut self, key: &P::Key) -> Option<&mut Self> {
-        self.replace_with(|self_| {
-            let mut root = self_.into_node();
-            match root.split_single(key) {
-                Ok((left, mid, right)) => Self::Split {
-                    left,
-                    mid: Box::new(Self::Whole { root: mid }),
-                    right,
-                },
-                Err(_) => Self::Whole { root },
-            }
-        });
-        match self {
-            Treap::Whole { .. } => None,
-            Treap::Split { mid, .. } => Some(mid),
-        }
+    pub fn split_inclusive(self, key: &P::Key) -> (Self, Self) {
+        self.do_split(|root| root.split_inclusive(key))
     }
 
-    pub fn index(&mut self, key: &P::Key) -> Option<usize> {
-        self.get(key);
-        match self {
-            Treap::Whole { .. } => None,
-            Treap::Split { left, .. } => Some(left.size()),
-        }
+    pub fn get(&mut self, key: &P::Key) -> Option<&P> {
+        self.range(key..=key).payload()
     }
 
     pub fn floor(&mut self, key: &P::Key) -> Option<&P> {
@@ -416,28 +555,69 @@ impl<P: PayloadWithKey> Treap<P> {
         self.range(key..).first()
     }
 
-    pub fn lower(&mut self, key: &P::Key) -> Option<&P> {
+    pub fn prev(&mut self, key: &P::Key) -> Option<&P> {
         self.range(..key).last()
     }
 
-    pub fn higher(&mut self, key: &P::Key) -> Option<&P> {
+    pub fn next(&mut self, key: &P::Key) -> Option<&P> {
         self.range((Bound::Excluded(key), Bound::Unbounded)).first()
     }
 }
 
-struct TreapNode<P> {
-    priority: u64,
-    size: u32,
-    reversed: bool,
-    payload: P,
-    left: OptionTreapNode<P>,
-    right: OptionTreapNode<P>,
+impl<P: PayloadWithKey, R: Reverse> Treap<P, u32, R> {
+    pub fn index(&mut self, key: &P::Key) -> Option<usize> {
+        match self.range(key..=key) {
+            Treap::Split { left, mid, .. } => mid.payload().map(|_| left.size()),
+            _ => unreachable!(),
+        }
+    }
 }
 
-struct OptionTreapNode<P>(Option<Box<TreapNode<P>>>);
+struct TreapNodeInner<P, S, R> {
+    priority: u64,
+    size: S,
+    reversed: R,
+    payload: P,
+    left: OptionTreapNode<P, S, R>,
+    right: OptionTreapNode<P, S, R>,
+    parent: Option<*mut TreapNodeInner<P, S, R>>,
+    _phantom_pinned: PhantomPinned,
+}
 
-impl<P> Deref for OptionTreapNode<P> {
-    type Target = Option<Box<TreapNode<P>>>;
+impl<P, S, R> TreapNodeInner<P, S, R> {
+    fn this(self: Pin<&mut Self>) -> &mut Self {
+        unsafe { self.get_unchecked_mut() }
+    }
+
+    fn into_payload(self: Pin<Box<Self>>) -> P {
+        unsafe { Pin::into_inner_unchecked(self).payload }
+    }
+}
+
+struct TreapNode<P, S, R> {
+    inner: Pin<Box<TreapNodeInner<P, S, R>>>,
+}
+
+impl<P, S, R> Deref for TreapNode<P, S, R> {
+    type Target = Pin<Box<TreapNodeInner<P, S, R>>>;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+impl<P, S, R> DerefMut for TreapNode<P, S, R> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.inner
+    }
+}
+
+struct OptionTreapNode<P, S, R>(Option<TreapNode<P, S, R>>);
+
+impl<P, S, R> Deref for OptionTreapNode<P, S, R> {
+    type Target = Option<TreapNode<P, S, R>>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -445,74 +625,141 @@ impl<P> Deref for OptionTreapNode<P> {
     }
 }
 
-impl<P> DerefMut for OptionTreapNode<P> {
+impl<P, S, R> DerefMut for OptionTreapNode<P, S, R> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
-impl<P> TreapNode<P> {
+impl<P: Payload, S: Size, R: Reverse> TreapNode<P, S, R> {
     #[inline]
     fn new(payload: P) -> Self {
         Self {
-            priority: random().gen(),
-            size: 1,
-            reversed: false,
-            payload,
-            left: OptionTreapNode::NONE,
-            right: OptionTreapNode::NONE,
+            inner: Box::pin(TreapNodeInner {
+                priority: random().gen(),
+                size: S::ONE,
+                reversed: R::default(),
+                payload,
+                left: OptionTreapNode::NONE,
+                right: OptionTreapNode::NONE,
+                parent: None,
+                _phantom_pinned: PhantomPinned,
+            }),
         }
     }
 
-    #[inline]
-    fn payload_and_size(&self) -> (&P, usize) {
-        (&self.payload, self.size as usize)
+    fn into_payload(self) -> P {
+        assert!(self.parent.is_none());
+        assert!(self.left.is_none());
+        assert!(self.right.is_none());
+        self.inner.into_payload()
     }
-}
 
-impl<P: Payload> TreapNode<P> {
     #[inline]
     fn update(&mut self) {
-        self.size = (1 + self.left.size() + self.right.size()) as u32;
-        self.payload
-            .update(self.left.payload(), self.right.payload());
+        let this = self.as_mut().this();
+        if S::NEED_UPDATE {
+            this.size
+                .update(this.left.size_opt(), this.right.size_opt());
+        }
+        if P::NEED_UPDATE {
+            this.payload
+                .update(this.left.payload(), this.right.payload());
+        }
     }
 
     #[inline]
     fn push_down(&mut self) {
-        self.left.push(&self.payload);
-        self.right.push(&self.payload);
-        self.payload.reset_delta();
-        if self.reversed {
-            self.left.reverse();
-            self.right.reverse();
-            self.reversed = false;
+        let this = self.as_mut().this();
+        if P::NEED_PUSH_DOWN && this.payload.need_push_down() {
+            this.left.push(&this.payload);
+            this.right.push(&this.payload);
+            this.payload.reset_delta();
         }
+        if this.reversed.need_reverse() {
+            this.left.reverse();
+            this.right.reverse();
+            this.reversed.reset_reverse();
+        }
+    }
+
+    fn detach_left(&mut self) -> OptionTreapNode<P, S, R> {
+        self.push_down();
+        let this = self.as_mut().this();
+        let mut left = OptionTreapNode(this.left.take());
+        self.update();
+        left.detach();
+        left
+    }
+
+    fn detach_right(&mut self) -> OptionTreapNode<P, S, R> {
+        self.push_down();
+        let this = self.as_mut().this();
+        let mut right = OptionTreapNode(this.right.take());
+        self.update();
+        right.detach();
+        right
+    }
+
+    fn attach_left(&mut self, mut left: OptionTreapNode<P, S, R>) {
+        self.push_down();
+        if let Some(left) = left.as_mut() {
+            left.as_mut().this().parent = Some(self.as_inner_ptr());
+        }
+        let this = self.as_mut().this();
+        this.left = left;
+        self.update();
+    }
+
+    fn attach_right(&mut self, mut right: OptionTreapNode<P, S, R>) {
+        self.push_down();
+        if let Some(right) = right.as_mut() {
+            right.as_mut().this().parent = Some(self.as_inner_ptr());
+        }
+        let this = self.as_mut().this();
+        this.right = right;
+        self.update();
+    }
+
+    #[inline]
+    fn as_inner_ptr(&mut self) -> *mut TreapNodeInner<P, S, R> {
+        self.as_mut().this()
     }
 }
 
-impl<P> OptionTreapNode<P> {
+impl<P: Payload, S: Size, R: Reverse> OptionTreapNode<P, S, R> {
     const NONE: Self = Self(None);
 
     #[inline]
-    fn new(node: TreapNode<P>) -> Self {
-        Self(Some(Box::new(node)))
+    fn new(node: TreapNode<P, S, R>) -> Self {
+        Self(Some(node))
     }
 
     #[inline]
-    fn size(&self) -> usize {
-        self.0.as_ref().map_or(0, |node| node.size as usize)
+    fn detach(&mut self) {
+        if let Some(node) = self.0.as_mut() {
+            node.as_mut().this().parent = None;
+        }
+    }
+
+    #[inline]
+    fn size_opt(&self) -> Option<&S> {
+        self.as_ref().map(|node| &node.size)
     }
 
     #[inline]
     fn payload(&self) -> Option<&P> {
-        self.0.as_ref().map(|node| &node.payload)
+        self.as_ref().map(|node| &node.payload)
     }
 
     #[inline]
     fn payload_mut(&mut self) -> Option<&mut P> {
-        self.0.as_mut().map(|node| &mut node.payload)
+        self.as_mut().map(|node| unsafe {
+            Pin::into_inner(Pin::map_unchecked_mut(node.as_mut(), |node| {
+                &mut node.payload
+            }))
+        })
     }
 
     #[inline]
@@ -521,170 +768,53 @@ impl<P> OptionTreapNode<P> {
         P: Pushable<D>,
     {
         if let Some(p) = self.payload_mut() {
-            p.push(delta)
+            p.push(delta);
         }
     }
 
     #[inline]
     fn reverse(&mut self) {
         if let Some(node) = self.0.as_mut() {
-            swap(&mut node.left, &mut node.right);
-            node.reversed ^= true;
+            let this = node.as_mut().this();
+            swap(&mut this.left, &mut this.right);
+            this.reversed.flip();
         }
     }
 }
 
-impl<P: Payload> OptionTreapNode<P> {
-    fn merge(left: Self, right: Self) -> Self {
-        match (left.0, right.0) {
-            (None, right) => Self(right),
-            (left, None) => Self(left),
-            (Some(mut left), Some(mut right)) => {
-                if left.priority > right.priority {
-                    left.push_down();
-                    left.right = Self::merge(left.right, Self(Some(right)));
-                    left.update();
-                    Self(Some(left))
-                } else {
-                    right.push_down();
-                    right.left = Self::merge(Self(Some(left)), right.left);
-                    right.update();
-                    Self(Some(right))
-                }
-            }
-        }
+impl<P: Payload, R: Reverse> OptionTreapNode<P, u32, R> {
+    #[inline]
+    fn size(&self) -> usize {
+        self.as_ref().map(|node| node.size.size()).unwrap_or(0)
     }
+}
 
-    fn split_first(self) -> (Self, Self) {
-        if let Some(mut node) = self.0 {
-            node.push_down();
-            if node.left.is_none() {
-                let mut right = Self::NONE;
-                swap(&mut node.right, &mut right);
-                node.update();
-                (Self(Some(node)), right)
-            } else {
-                let (left, right) = node.left.split_first();
-                node.left = right;
-                node.update();
-                (left, Self(Some(node)))
-            }
-        } else {
-            (Self::NONE, Self::NONE)
-        }
-    }
-
-    fn split_last(self) -> (Self, Self) {
-        if let Some(mut node) = self.0 {
-            node.push_down();
-            if node.right.is_none() {
-                let mut left = Self::NONE;
-                swap(&mut node.left, &mut left);
-                node.update();
-                (left, Self(Some(node)))
-            } else {
-                let (left, right) = node.right.split_last();
-                node.right = left;
-                node.update();
-                (Self(Some(node)), right)
-            }
-        } else {
-            (Self::NONE, Self::NONE)
-        }
-    }
-
-    fn split_at_single(self, at: usize) -> (Self, Self, Self) {
-        if self.is_none() {
-            return (Self::NONE, Self::NONE, Self::NONE);
-        }
-        let size = self.size();
-        if at >= size {
-            return (self, Self::NONE, Self::NONE);
-        }
-        if at == 0 {
-            let (mid, right) = self.split_first();
-            (Self::NONE, mid, right)
-        } else if at + 1 == size {
-            let (left, mid) = self.split_last();
-            (left, mid, Self::NONE)
-        } else if let Some(mut node) = self.0 {
-            node.push_down();
-            let left_size = node.left.size();
-            match at.cmp(&left_size) {
-                Ordering::Less => {
-                    let (left, mid, right) = node.left.split_at_single(at);
-                    node.left = right;
-                    node.update();
-                    (left, mid, Self(Some(node)))
-                }
-                Ordering::Equal => {
-                    let mut left = Self::NONE;
-                    swap(&mut node.left, &mut left);
-                    let mut right = Self::NONE;
-                    swap(&mut node.right, &mut right);
-                    node.update();
-                    (left, Self(Some(node)), right)
-                }
-                Ordering::Greater => {
-                    let (left, mid, right) = node.right.split_at_single(at - left_size - 1);
-                    node.right = left;
-                    node.update();
-                    (Self(Some(node)), mid, right)
-                }
-            }
-        } else {
-            unreachable!();
-        }
-    }
-
-    fn split_at(self, at: usize) -> (Self, Self) {
-        if at == 0 {
-            (Self::NONE, self)
-        } else if at >= self.size() {
-            (self, Self::NONE)
-        } else if at == 1 {
-            self.split_first()
-        } else if at + 1 == self.size() {
-            self.split_last()
-        } else {
-            let mut node = self.0.unwrap();
-            node.push_down();
-            let left_size = node.left.size();
+impl<P: Payload, R: Reverse> OptionTreapNode<P, u32, R> {
+    fn split_at(self, mut at: usize) -> (Self, Self) {
+        self.split_by_size(|left_size, _| {
             if at <= left_size {
-                let (left, right) = node.left.split_at(at);
-                node.left = right;
-                node.update();
-                (left, Self(Some(node)))
+                Direction::Left
             } else {
-                let (left, right) = node.right.split_at(at - left_size - 1);
-                node.right = left;
-                node.update();
-                (Self(Some(node)), right)
+                at -= left_size + 1;
+                Direction::Right
             }
-        }
+        })
     }
 
-    fn split_by<F: FnMut(&P, Option<(&P, usize)>, Option<(&P, usize)>) -> Direction>(
-        self,
-        mut f: F,
-    ) -> (Self, Self) {
+    fn split_by_size<F: FnMut(usize, usize) -> Direction>(self, mut f: F) -> (Self, Self) {
         if let Some(mut node) = self.0 {
             node.push_down();
-            let direction = f(
-                &node.payload,
-                node.left.as_ref().map(|left| left.payload_and_size()),
-                node.right.as_ref().map(|right| right.payload_and_size()),
-            );
+            let direction = f(node.left.size(), node.right.size());
             match direction {
                 Direction::Left => {
-                    let (left, right) = node.left.split_by(f);
-                    node.left = right;
+                    let (left, right) = node.detach_left().split_by_size(f);
+                    node.attach_left(right);
                     node.update();
                     (left, Self(Some(node)))
                 }
                 Direction::Right => {
-                    let (left, right) = node.right.split_by(f);
-                    node.right = left;
+                    let (left, right) = node.detach_right().split_by_size(f);
+                    node.attach_right(left);
                     node.update();
                     (Self(Some(node)), right)
                 }
@@ -694,36 +824,44 @@ impl<P: Payload> OptionTreapNode<P> {
         }
     }
 
-    fn binary_search<
-        F: FnMut(&P, Option<(&P, usize)>, Option<(&P, usize)>) -> Option<Direction>,
-    >(
-        &mut self,
-        mut f: F,
-    ) {
+    fn binary_search_size<F: FnMut(usize, usize) -> Option<Direction>>(&mut self, mut f: F) {
         if let Some(node) = self.deref_mut() {
             node.push_down();
-            let direction = f(
-                &node.payload,
-                node.left.as_ref().map(|left| left.payload_and_size()),
-                node.right.as_ref().map(|right| right.payload_and_size()),
-            );
+            let direction = f(node.left.size(), node.right.size());
             match direction {
-                Some(Direction::Left) => node.left.binary_search(f),
-                Some(Direction::Right) => node.right.binary_search(f),
+                Some(Direction::Left) => node.as_mut().this().left.binary_search_size(f),
+                Some(Direction::Right) => node.as_mut().this().right.binary_search_size(f),
                 None => {}
+            }
+        }
+    }
+}
+
+impl<P: Payload, S: Size, R: Reverse> OptionTreapNode<P, S, R> {
+    fn merge(left: Self, right: Self) -> Self {
+        match (left.0, right.0) {
+            (None, right) => Self(right),
+            (left, None) => Self(left),
+            (Some(mut left), Some(mut right)) => {
+                if left.priority > right.priority {
+                    let left_right = left.detach_right();
+                    left.attach_right(Self::merge(left_right, Self(Some(right))));
+                    Self(Some(left))
+                } else {
+                    let right_left = right.detach_left();
+                    right.attach_left(Self::merge(Self(Some(left)), right_left));
+                    Self(Some(right))
+                }
             }
         }
     }
 
     fn first(&mut self) -> &mut Self {
         if let Some(node) = self.as_ref() {
-            if node.left.0.is_some() {
-                if let Some(node) = self.deref_mut() {
-                    node.push_down();
-                    node.left.first()
-                } else {
-                    unreachable!()
-                }
+            if node.left.is_some() {
+                let node = self.as_mut().unwrap();
+                node.push_down();
+                node.as_mut().this().left.first()
             } else {
                 self
             }
@@ -734,13 +872,10 @@ impl<P: Payload> OptionTreapNode<P> {
 
     fn last(&mut self) -> &mut Self {
         if let Some(node) = self.as_ref() {
-            if node.right.0.is_some() {
-                if let Some(node) = self.deref_mut() {
-                    node.push_down();
-                    node.right.last()
-                } else {
-                    unreachable!()
-                }
+            if node.right.is_some() {
+                let node = self.as_mut().unwrap();
+                node.push_down();
+                node.as_mut().this().right.last()
             } else {
                 self
             }
@@ -748,45 +883,104 @@ impl<P: Payload> OptionTreapNode<P> {
             self
         }
     }
-}
 
-impl<P: PayloadWithKey> OptionTreapNode<P> {
-    fn split_single(&mut self, key: &P::Key) -> Result<(Self, Self, Self), ()> {
-        if let Some(node) = self.0.as_mut() {
+    fn split_by<F: FnMut(&P, Option<&P>, Option<&P>) -> Direction>(self, mut f: F) -> (Self, Self) {
+        if let Some(mut node) = self.0 {
             node.push_down();
-            match node.payload.key().cmp(key) {
-                Ordering::Less => {
-                    let (left, mid, right) = node.right.split_single(key)?;
-                    node.right = left;
+            let direction = f(&node.payload, node.left.payload(), node.right.payload());
+            match direction {
+                Direction::Left => {
+                    let (left, right) = node.detach_left().split_by(f);
+                    node.attach_left(right);
                     node.update();
-                    let mut left = Self::NONE;
-                    swap(self, &mut left);
-                    Ok((left, mid, right))
+                    (left, Self(Some(node)))
                 }
-                Ordering::Equal => {
-                    let mut left = Self::NONE;
-                    swap(&mut node.left, &mut left);
-                    let mut right = Self::NONE;
-                    swap(&mut node.right, &mut right);
+                Direction::Right => {
+                    let (left, right) = node.detach_right().split_by(f);
+                    node.attach_right(left);
                     node.update();
-                    let mut mid = Self::NONE;
-                    swap(self, &mut mid);
-                    Ok((left, mid, right))
-                }
-                Ordering::Greater => {
-                    let (left, mid, right) = node.left.split_single(key)?;
-                    node.left = right;
-                    node.update();
-                    let mut right = Self::NONE;
-                    swap(self, &mut right);
-                    Ok((left, mid, right))
+                    (Self(Some(node)), right)
                 }
             }
         } else {
-            Err(())
+            (Self::NONE, Self::NONE)
         }
     }
 
+    fn binary_search<F: FnMut(&P, Option<&P>, Option<&P>) -> Option<Direction>>(
+        &mut self,
+        mut f: F,
+    ) {
+        if let Some(node) = self.deref_mut() {
+            node.push_down();
+            let direction = f(&node.payload, node.left.payload(), node.right.payload());
+            match direction {
+                Some(Direction::Left) => node.as_mut().this().left.binary_search(f),
+                Some(Direction::Right) => node.as_mut().this().right.binary_search(f),
+                None => {}
+            }
+        }
+    }
+
+    fn push_from_up(
+        node_ptr: *mut TreapNodeInner<P, S, R>,
+        directions: &mut Vec<Direction>,
+    ) -> *mut TreapNodeInner<P, S, R> {
+        let node = unsafe { &mut *node_ptr };
+        match node.parent {
+            None => node_ptr,
+            Some(parent_ptr) => {
+                let parent = unsafe { &mut *parent_ptr };
+                let mut found = false;
+                if let Some(left) = parent.left.as_mut() {
+                    if left.as_inner_ptr() == node_ptr {
+                        directions.push(Direction::Left);
+                        found = true;
+                    }
+                }
+                if let Some(right) = parent.right.as_mut() {
+                    if right.as_inner_ptr() == node_ptr {
+                        directions.push(Direction::Right);
+                        found = true;
+                    }
+                }
+                assert!(found);
+                Self::push_from_up(parent, directions)
+            }
+        }
+    }
+
+    fn raise(mut self, node: *mut TreapNodeInner<P, S, R>) -> (Self, Self, Self) {
+        let mut directions = Vec::new();
+        let expected_ptr = Self::push_from_up(node, &mut directions);
+        assert_eq!(expected_ptr, self.as_mut().unwrap().as_inner_ptr());
+        self.split_by_dir(directions)
+    }
+
+    fn split_by_dir(mut self, mut directions: Vec<Direction>) -> (Self, Self, Self) {
+        let node = self.as_mut().unwrap();
+        if let Some(dir) = directions.pop() {
+            match dir {
+                Direction::Left => {
+                    let (left, mid, right) = node.detach_left().split_by_dir(directions);
+                    node.attach_left(right);
+                    (left, mid, self)
+                }
+                Direction::Right => {
+                    let (left, mid, right) = node.detach_right().split_by_dir(directions);
+                    node.attach_right(left);
+                    (self, mid, right)
+                }
+            }
+        } else {
+            let left = node.detach_left();
+            let right = node.detach_right();
+            (left, self, right)
+        }
+    }
+}
+
+impl<P: PayloadWithKey, S: Size, R: Reverse> OptionTreapNode<P, S, R> {
     fn split(self, key: &P::Key) -> (Self, Self) {
         self.split_by(|payload, _left, _right| {
             if payload.key() < key {

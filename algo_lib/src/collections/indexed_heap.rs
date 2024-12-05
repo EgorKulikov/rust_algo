@@ -6,6 +6,7 @@ enum Opt<T> {
     Some(u32, T),
 }
 
+#[allow(clippy::derivable_impls)]
 impl<T> Default for Opt<T> {
     fn default() -> Self {
         Opt::None

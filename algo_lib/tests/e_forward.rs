@@ -11,16 +11,17 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let n = input.read_size();
     let m = input.read_size();
 
-    let mut treap = Treap::new();
+    let mut treap = Treap::sized();
     for i in 1..=n {
-        treap.add(PurePayload(i));
+        treap.add_back(PurePayload(i));
     }
     for _ in 0..m {
         let l = input.read_size() - 1;
         let r = input.read_size();
-        let (left, mid_right) = treap.split_at(l);
-        let (mid, right) = mid_right.split_at(r - l);
-        treap = Treap::merge(mid, Treap::merge(left, right));
+        let left = treap.by_index(..l).detach();
+        let mid = treap.by_index(..r - l).detach();
+        treap.push_front(left);
+        treap.push_front(mid);
     }
     out.print_line(treap.iter().map(|x| x.0).collect::<Vec<_>>());
 }
@@ -58,74 +59,77 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
 }
 
 mod tester {
-#![allow(unused_variables)]
-#![allow(unused_mut)]
-#![allow(dead_code)]
+    #![allow(unused_variables)]
+    #![allow(unused_mut)]
+    #![allow(dead_code)]
 
-use crate::{run, TASK_TYPE};
-use algo_lib::io::input::Input;
-use algo_lib::io::output::Output;
-use tester::classic::default_checker;
-use tester::interactive::std_interactor;
-use tester::test_set::GeneratedTestSet;
-use tester::Tester;
+    use crate::{run, TASK_TYPE};
+    use algo_lib::io::input::Input;
+    use algo_lib::io::output::Output;
+    use tester::classic::default_checker;
+    use tester::interactive::std_interactor;
+    use tester::test_set::GeneratedTestSet;
+    use tester::Tester;
 
-const PRINT_LIMIT: usize = 1000;
+    const PRINT_LIMIT: usize = 1000;
 
-fn interact(mut sol_input: Input, mut sol_output: Output, mut input: Input) -> Result<(), String> {
-    Ok(())
-}
-
-fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
-    Ok(())
-}
-
-struct StressTest;
-
-impl GeneratedTestSet for StressTest {
-    type TestId = usize;
-
-    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
-        1..
+    fn interact(
+        mut sol_input: Input,
+        mut sol_output: Output,
+        mut input: Input,
+    ) -> Result<(), String> {
+        Ok(())
     }
 
-    fn input(&self, test: &Self::TestId, out: &mut Output) {
+    fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
+        Ok(())
     }
 
-    fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-        false
-    }
-}
+    struct StressTest;
 
-pub(crate) fn run_tests() -> bool {
-    let path = "./e_forward";
-    let time_limit = 3000;
-    let tester = match TASK_TYPE {
-        crate::TaskType::Interactive => {
-            Tester::new_interactive(
-                time_limit,
-                PRINT_LIMIT,
-                path.to_string(),
-                run,
-                std_interactor,
-            )
-            //Tester::new_interactive(time_limit, PRINT_LIMIT, path.to_string(), run, interact)
+    impl GeneratedTestSet for StressTest {
+        type TestId = usize;
+
+        fn tests(&self) -> impl Iterator<Item = Self::TestId> {
+            1..
         }
-        crate::TaskType::Classic => {
-            Tester::new_classic(
-                time_limit,
-                PRINT_LIMIT,
-                path.to_string(),
-                run,
-                default_checker,
-            )
-            //Tester::new_classic(time_limit, PRINT_LIMIT, path.to_string(), run, check)
+
+        fn input(&self, test: &Self::TestId, out: &mut Output) {}
+
+        fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
+            false
         }
-    };
-    let passed = tester.test_samples();
-    // tester.test_generated("Stress test", false, StressTest);
-    passed
-}
+    }
+
+    pub(crate) fn run_tests() -> bool {
+        let path = "./e_forward";
+        let time_limit = 3000;
+        let tester = match TASK_TYPE {
+            crate::TaskType::Interactive => {
+                Tester::new_interactive(
+                    time_limit,
+                    PRINT_LIMIT,
+                    path.to_string(),
+                    run,
+                    std_interactor,
+                )
+                //Tester::new_interactive(time_limit, PRINT_LIMIT, path.to_string(), run, interact)
+            }
+            crate::TaskType::Classic => {
+                Tester::new_classic(
+                    time_limit,
+                    PRINT_LIMIT,
+                    path.to_string(),
+                    run,
+                    default_checker,
+                )
+                //Tester::new_classic(time_limit, PRINT_LIMIT, path.to_string(), run, check)
+            }
+        };
+        let passed = tester.test_samples();
+        // tester.test_generated("Stress test", false, StressTest);
+        passed
+    }
 }
 #[test]
 fn e_forward() {

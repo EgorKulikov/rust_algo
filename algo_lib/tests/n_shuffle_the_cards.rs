@@ -11,9 +11,9 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let n = input.read_size();
     let m = input.read_size();
 
-    let mut treap = Treap::new();
+    let mut treap = Treap::reversible();
     for i in 1..=n {
-        treap.add(PurePayload(i));
+        treap.add_back(PurePayload(i));
     }
 
     for _ in 0..m {
@@ -21,13 +21,13 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         let b = input.read_size();
         let c = input.read_size();
 
-        let (a_cards, deck) = treap.split_at(a);
-        let (mut b_cards, deck) = deck.split_at(b);
-        let deck = Treap::merge(a_cards, deck);
-        let (c_cards, deck) = deck.split_at(c);
+        let a_cards = treap.by_index(..a).detach();
+        let mut b_cards = treap.by_index(..b).detach();
         b_cards.reverse();
-        let deck = Treap::merge(b_cards, deck);
-        treap = Treap::merge(c_cards, deck);
+        treap.push_front(a_cards);
+        let c_cards = treap.by_index(..c).detach();
+        treap.push_front(b_cards);
+        treap.push_front(c_cards);
     }
     out.print_line_iter(treap.iter().map(|payload| payload.0));
 }
@@ -65,74 +65,77 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
 }
 
 mod tester {
-#![allow(unused_variables)]
-#![allow(unused_mut)]
-#![allow(dead_code)]
+    #![allow(unused_variables)]
+    #![allow(unused_mut)]
+    #![allow(dead_code)]
 
-use crate::{run, TASK_TYPE};
-use algo_lib::io::input::Input;
-use algo_lib::io::output::Output;
-use tester::classic::default_checker;
-use tester::interactive::std_interactor;
-use tester::test_set::GeneratedTestSet;
-use tester::Tester;
+    use crate::{run, TASK_TYPE};
+    use algo_lib::io::input::Input;
+    use algo_lib::io::output::Output;
+    use tester::classic::default_checker;
+    use tester::interactive::std_interactor;
+    use tester::test_set::GeneratedTestSet;
+    use tester::Tester;
 
-const PRINT_LIMIT: usize = 1000;
+    const PRINT_LIMIT: usize = 1000;
 
-fn interact(mut sol_input: Input, mut sol_output: Output, mut input: Input) -> Result<(), String> {
-    Ok(())
-}
-
-fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
-    Ok(())
-}
-
-struct StressTest;
-
-impl GeneratedTestSet for StressTest {
-    type TestId = usize;
-
-    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
-        1..
+    fn interact(
+        mut sol_input: Input,
+        mut sol_output: Output,
+        mut input: Input,
+    ) -> Result<(), String> {
+        Ok(())
     }
 
-    fn input(&self, test: &Self::TestId, out: &mut Output) {
+    fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
+        Ok(())
     }
 
-    fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-        false
-    }
-}
+    struct StressTest;
 
-pub(crate) fn run_tests() -> bool {
-    let path = "./n_shuffle_the_cards";
-    let time_limit = 1500;
-    let tester = match TASK_TYPE {
-        crate::TaskType::Interactive => {
-            Tester::new_interactive(
-                time_limit,
-                PRINT_LIMIT,
-                path.to_string(),
-                run,
-                std_interactor,
-            )
-            //Tester::new_interactive(time_limit, PRINT_LIMIT, path.to_string(), run, interact)
+    impl GeneratedTestSet for StressTest {
+        type TestId = usize;
+
+        fn tests(&self) -> impl Iterator<Item = Self::TestId> {
+            1..
         }
-        crate::TaskType::Classic => {
-            Tester::new_classic(
-                time_limit,
-                PRINT_LIMIT,
-                path.to_string(),
-                run,
-                default_checker,
-            )
-            //Tester::new_classic(time_limit, PRINT_LIMIT, path.to_string(), run, check)
+
+        fn input(&self, test: &Self::TestId, out: &mut Output) {}
+
+        fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
+            false
         }
-    };
-    let passed = tester.test_samples();
-    // tester.test_generated("Stress test", false, StressTest);
-    passed
-}
+    }
+
+    pub(crate) fn run_tests() -> bool {
+        let path = "./n_shuffle_the_cards";
+        let time_limit = 1500;
+        let tester = match TASK_TYPE {
+            crate::TaskType::Interactive => {
+                Tester::new_interactive(
+                    time_limit,
+                    PRINT_LIMIT,
+                    path.to_string(),
+                    run,
+                    std_interactor,
+                )
+                //Tester::new_interactive(time_limit, PRINT_LIMIT, path.to_string(), run, interact)
+            }
+            crate::TaskType::Classic => {
+                Tester::new_classic(
+                    time_limit,
+                    PRINT_LIMIT,
+                    path.to_string(),
+                    run,
+                    default_checker,
+                )
+                //Tester::new_classic(time_limit, PRINT_LIMIT, path.to_string(), run, check)
+            }
+        };
+        let passed = tester.test_samples();
+        // tester.test_generated("Stress test", false, StressTest);
+        passed
+    }
 }
 #[test]
 fn n_shuffle_the_cards() {

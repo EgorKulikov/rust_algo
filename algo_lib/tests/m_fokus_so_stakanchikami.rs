@@ -16,12 +16,12 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
 
     let mut not_seen = BitSet::new(n);
     not_seen.fill(true);
-    let mut treap = Treap::new();
+    let mut treap = Treap::sized();
     for _ in 0..n {
-        treap.add(PurePayload(None));
+        treap.add_back(PurePayload(None));
     }
     for &(y, x) in &swaps {
-        let (left, mut mid, right) = treap.split_at_single(x);
+        let mid = treap.by_index(x..=x);
         match mid.payload().unwrap().0 {
             Some(id) => {
                 if id != y {
@@ -35,15 +35,15 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                     return;
                 }
                 not_seen.unset(y);
-                mid = Treap::single(PurePayload(Some(y)));
+                mid.push(Some(y));
             }
         }
-        treap = Treap::merge_three(mid, left, right);
+        let mid = mid.detach();
+        treap.push_front(mid);
     }
     for (_, x) in swaps.into_iter().rev() {
-        let (left, mid_right) = treap.split_at(1);
-        let (mid, right) = mid_right.split_at(x);
-        treap = Treap::merge_three(mid, left, right);
+        let mid = treap.by_index(1..=x).detach();
+        treap.push_front(mid);
     }
     let mut iter = not_seen.iter();
     out.print_line_iter(

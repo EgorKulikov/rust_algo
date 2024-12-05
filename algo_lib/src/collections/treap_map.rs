@@ -1,5 +1,4 @@
 use crate::collections::treap::{Payload, PayloadWithKey, Treap};
-use crate::misc::extensions::with::With;
 use std::ops::{Bound, Deref, DerefMut, RangeBounds};
 
 struct MapPayload<T, V> {
@@ -13,18 +12,9 @@ impl<T, V> MapPayload<T, V> {
     }
 }
 
-impl<T, V> Payload for MapPayload<T, V> {
-    #[inline]
-    fn reset_delta(&mut self) {}
+impl<T: Unpin, V: Unpin> Payload for MapPayload<T, V> {}
 
-    #[inline]
-    fn update(&mut self, _left: Option<&Self>, _right: Option<&Self>) {}
-
-    #[inline]
-    fn push_delta(&mut self, _delta: &Self) {}
-}
-
-impl<T: Ord, V> PayloadWithKey for MapPayload<T, V> {
+impl<T: Ord + Unpin, V: Unpin> PayloadWithKey for MapPayload<T, V> {
     type Key = T;
 
     fn key(&self) -> &Self::Key {
@@ -33,23 +23,26 @@ impl<T: Ord, V> PayloadWithKey for MapPayload<T, V> {
 }
 
 pub struct TreapMap<T, V> {
-    root: Treap<MapPayload<T, V>>,
+    root: Treap<MapPayload<T, V>, u32>,
 }
 
-impl<T: Ord, V> TreapMap<T, V> {
+impl<T: Ord + Unpin, V: Unpin> TreapMap<T, V> {
     pub fn new() -> Self {
-        Self { root: Treap::new() }
+        Self {
+            root: Treap::sized(),
+        }
     }
 
     pub unsafe fn from_sorted(iter: impl Iterator<Item = (T, V)>) -> Self {
         let mut res = Self::new();
         for (t, v) in iter {
-            res.root = Treap::merge(res.root, Treap::single(MapPayload::new(t, v)));
+            res.root.add_back(MapPayload::new(t, v));
         }
         res
     }
 
-    pub fn len(&mut self) -> usize {
+    #[allow(clippy::len_without_is_empty)]
+    pub fn len(&self) -> usize {
         self.root.size()
     }
 
@@ -68,11 +61,11 @@ impl<T: Ord, V> TreapMap<T, V> {
     }
 
     pub fn lower_bound(&mut self, key: &T) -> usize {
-        self.root.range(..key).with(|node| node.size())
+        self.root.range(..key).size()
     }
 
     pub fn upper_bound(&mut self, key: &T) -> usize {
-        self.root.range(..=key).with(|node| node.size())
+        self.root.range(..=key).size()
     }
 
     pub fn get_at(&mut self, at: usize) -> Option<(&T, &V)> {
@@ -106,12 +99,12 @@ impl<T: Ord, V> TreapMap<T, V> {
         self.root.last().map(Self::node_to_pair)
     }
 
-    pub fn lower(&mut self, key: &T) -> Option<(&T, &V)> {
-        self.root.lower(key).map(Self::node_to_pair)
+    pub fn prev(&mut self, key: &T) -> Option<(&T, &V)> {
+        self.root.prev(key).map(Self::node_to_pair)
     }
 
-    pub fn higher(&mut self, key: &T) -> Option<(&T, &V)> {
-        self.root.higher(key).map(Self::node_to_pair)
+    pub fn next(&mut self, key: &T) -> Option<(&T, &V)> {
+        self.root.next(key).map(Self::node_to_pair)
     }
 
     pub fn floor(&mut self, key: &T) -> Option<(&T, &V)> {
@@ -122,19 +115,16 @@ impl<T: Ord, V> TreapMap<T, V> {
         self.root.ceil(key).map(Self::node_to_pair)
     }
 
-    #[allow(clippy::wrong_self_convention)]
-    pub fn is_empty(&mut self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.root.is_empty()
     }
 
     pub fn clear(&mut self) {
-        self.root = Treap::new()
+        self.root = Treap::sized()
     }
 
     pub fn get(&mut self, key: &T) -> Option<&V> {
-        self.root
-            .get(key)
-            .map(|node| &node.payload().as_ref().unwrap().value)
+        self.root.get(key).map(|payload| &payload.value)
     }
 
     pub fn contains(&mut self, key: &T) -> bool {
@@ -164,16 +154,16 @@ impl<T: Ord, V> TreapMap<T, V> {
     }
 }
 
-impl<T: Ord, V> Default for TreapMap<T, V> {
+impl<T: Ord + Unpin, V: Unpin> Default for TreapMap<T, V> {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[derive(Default)]
-pub struct TreapSet<T: Ord>(TreapMap<T, ()>);
+pub struct TreapSet<T: Ord + Unpin>(TreapMap<T, ()>);
 
-impl<T: Ord> TreapSet<T> {
+impl<T: Ord + Unpin> TreapSet<T> {
     pub fn new() -> Self {
         Self(TreapMap::new())
     }
@@ -214,11 +204,11 @@ impl<T: Ord> TreapSet<T> {
     }
 
     pub fn lower(&mut self, key: &T) -> Option<&T> {
-        self.0.lower(key).map(Self::map_to_key)
+        self.0.prev(key).map(Self::map_to_key)
     }
 
     pub fn higher(&mut self, key: &T) -> Option<&T> {
-        self.0.higher(key).map(Self::map_to_key)
+        self.0.next(key).map(Self::map_to_key)
     }
 
     pub fn floor(&mut self, key: &T) -> Option<&T> {
@@ -234,7 +224,7 @@ impl<T: Ord> TreapSet<T> {
     }
 }
 
-impl<T: Ord> Deref for TreapSet<T> {
+impl<T: Ord + Unpin> Deref for TreapSet<T> {
     type Target = TreapMap<T, ()>;
 
     fn deref(&self) -> &Self::Target {
@@ -242,7 +232,7 @@ impl<T: Ord> Deref for TreapSet<T> {
     }
 }
 
-impl<T: Ord> DerefMut for TreapSet<T> {
+impl<T: Ord + Unpin> DerefMut for TreapSet<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }

@@ -24,4 +24,5 @@ pub mod sliding_window;
 mod test;
 pub mod treap;
 pub mod treap_map;
+pub mod tree;
 pub mod vec_ext;

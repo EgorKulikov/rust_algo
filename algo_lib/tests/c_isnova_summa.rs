@@ -14,13 +14,11 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     }
 
     impl Payload for Node {
-        fn reset_delta(&mut self) {}
+        const NEED_UPDATE: bool = true;
 
         fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
             self.sum = self.value + left.map_or(0, |l| l.sum) + right.map_or(0, |r| r.sum);
         }
-
-        fn push_delta(&mut self, _delta: &Self) {}
     }
 
     impl PayloadWithKey for Node {
