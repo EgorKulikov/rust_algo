@@ -24,7 +24,7 @@ impl<T: Clone> Arr3d<T> {
 }
 
 impl<T> Arr3d<T> {
-    pub fn generate<F>(d1: usize, d2: usize, d3: usize, mut gen: F) -> Self
+    pub fn gen<F>(d1: usize, d2: usize, d3: usize, mut gen: F) -> Self
     where
         F: FnMut(usize, usize, usize) -> T,
     {
@@ -118,7 +118,7 @@ pub trait Arr3dRead {
 
 impl Arr3dRead for Input<'_> {
     fn read_3d_table<T: Readable>(&mut self, d1: usize, d2: usize, d3: usize) -> Arr3d<T> {
-        Arr3d::generate(d1, d2, d3, |_, _, _| self.read())
+        Arr3d::gen(d1, d2, d3, |_, _, _| self.read())
     }
 }
 

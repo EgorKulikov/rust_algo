@@ -78,8 +78,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let q = input.read_size();
     let a = input.read_size_vec(n);
 
-    let mut st =
-        SegmentTree::from_generator(n, |i| if a[i] == 0 { Node::zero() } else { Node::one() });
+    let mut st = SegmentTree::gen(n, |i| if a[i] == 0 { Node::zero() } else { Node::one() });
     for _ in 0..q {
         let t = input.read_int();
         let l = input.read_size() - 1;

@@ -1,4 +1,5 @@
-use crate::collections::treap::{Payload, PayloadWithKey, Treap};
+use crate::collections::treap::payload::{OrdPayload, Payload};
+use crate::collections::treap::Treap;
 use std::ops::{Bound, Deref, DerefMut, RangeBounds};
 
 struct MapPayload<T, V> {
@@ -14,7 +15,7 @@ impl<T, V> MapPayload<T, V> {
 
 impl<T: Unpin, V: Unpin> Payload for MapPayload<T, V> {}
 
-impl<T: Ord + Unpin, V: Unpin> PayloadWithKey for MapPayload<T, V> {
+impl<T: Ord + Unpin, V: Unpin> OrdPayload for MapPayload<T, V> {
     type Key = T;
 
     fn key(&self) -> &Self::Key {
@@ -120,7 +121,7 @@ impl<T: Ord + Unpin, V: Unpin> TreapMap<T, V> {
     }
 
     pub fn clear(&mut self) {
-        self.root = Treap::sized()
+        self.root.detach();
     }
 
     pub fn get(&mut self, key: &T) -> Option<&V> {

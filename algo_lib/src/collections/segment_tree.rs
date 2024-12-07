@@ -71,16 +71,16 @@ pub struct SegmentTree<Node> {
 
 impl<Node: SegmentTreeNode> SegmentTree<Node> {
     pub fn new(n: usize) -> Self {
-        Self::from_generator(n, |left| Node::new(left, left + 1))
+        Self::gen(n, |left| Node::new(left, left + 1))
     }
 
     pub fn from_array(arr: Vec<Node>) -> Self {
         let n = arr.len();
         let mut iter = arr.into_iter();
-        Self::from_generator(n, |_| iter.next().unwrap())
+        Self::gen(n, |_| iter.next().unwrap())
     }
 
-    pub fn from_generator<F>(n: usize, gen: F) -> Self
+    pub fn gen<F>(n: usize, gen: F) -> Self
     where
         F: FnMut(usize) -> Node,
     {

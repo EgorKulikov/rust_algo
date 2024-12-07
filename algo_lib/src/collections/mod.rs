@@ -11,11 +11,11 @@ pub mod fenwick;
 pub mod fx_hash_map;
 pub mod id;
 pub mod indexed_heap;
+pub mod isize;
 pub mod iter_ext;
 pub mod md_arr;
 pub mod min_max;
 pub mod multi_set;
-pub mod multi_treap_set;
 pub mod persistent_fenwick;
 pub mod segment_tree;
 pub mod slice_ext;
@@ -23,5 +23,4 @@ pub mod sliding_window;
 #[cfg(test)]
 mod test;
 pub mod treap;
-pub mod treap_map;
 pub mod vec_ext;

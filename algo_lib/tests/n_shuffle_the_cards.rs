@@ -1,6 +1,7 @@
 //{"name":"N. Shuffle the Cards","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/N","interactive":false,"timeLimit":1500,"tests":[{"input":"10 2\n6 2 2\n5 3 6\n","output":"1 2 8 7 3 9 6 5 4 10\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"NShuffleTheCards"}}}
 
-use algo_lib::collections::treap::{PurePayload, Treap};
+use algo_lib::collections::treap::pure_payload::PurePayload;
+use algo_lib::collections::treap::Treap;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::{TaskType, TestType};
@@ -21,11 +22,11 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         let b = input.read_size();
         let c = input.read_size();
 
-        let a_cards = treap.by_index(..a).detach();
-        let mut b_cards = treap.by_index(..b).detach();
+        let a_cards = treap.range_index(..a).detach();
+        let mut b_cards = treap.range_index(..b).detach();
         b_cards.reverse();
         treap.push_front(a_cards);
-        let c_cards = treap.by_index(..c).detach();
+        let c_cards = treap.range_index(..c).detach();
         treap.push_front(b_cards);
         treap.push_front(c_cards);
     }

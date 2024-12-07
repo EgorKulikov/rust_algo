@@ -1,6 +1,7 @@
 //{"name":"K. Река","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/K","interactive":false,"timeLimit":3000,"tests":[{"input":"4 0\n3 5 5 4\n5\n1 1\n2 1\n1 3\n2 2\n1 3\n","output":"75\n105\n73\n101\n83\n113\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"KReka"}}}
 
-use algo_lib::collections::treap::{Payload, Pushable, Treap};
+use algo_lib::collections::treap::payload::{Payload, Pushable};
+use algo_lib::collections::treap::Treap;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::{TaskType, TestType};
@@ -58,20 +59,20 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         match e {
             1 => {
                 let size = treap.size();
-                let view = treap.by_index(id..=id);
+                let view = treap.range_index(id..=id);
                 let len = view.payload().unwrap().len;
                 view.detach();
                 if id == 0 {
-                    treap.by_index(..1).push(len);
+                    treap.range_index(..1).push(len);
                 } else if id == size - 1 {
-                    treap.by_index(size - 2..).push(len);
+                    treap.range_index(size - 2..).push(len);
                 } else {
-                    treap.by_index(id - 1..id).push(len / 2);
-                    treap.by_index(id..id + 1).push(len - len / 2);
+                    treap.range_index(id - 1..id).push(len / 2);
+                    treap.range_index(id..id + 1).push(len - len / 2);
                 }
             }
             2 => {
-                let view = treap.by_index(id..=id);
+                let view = treap.range_index(id..=id);
                 let len = view.payload().unwrap().len;
                 view.detach();
                 view.add_back(Node::new(len / 2));

@@ -1,6 +1,7 @@
 //{"name":"G. Forward! v2","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/G","interactive":false,"timeLimit":2000,"tests":[{"input":"5 2\n4 5\n2 3\n","output":"5 2\n1 1\n4 1\n2 0\n3 0\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"GForwardV2"}}}
 
-use algo_lib::collections::treap::{Payload, Treap};
+use algo_lib::collections::treap::payload::Payload;
+use algo_lib::collections::treap::Treap;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::{TaskType, TestType};
@@ -51,7 +52,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     for _ in 0..m {
         let l = input.read_size() - 1;
         let r = input.read_size();
-        let mut mid = treap.by_index(l..r).detach();
+        let mut mid = treap.range_index(l..r).detach();
         mid.push(&Node {
             id: 0,
             value: 0,

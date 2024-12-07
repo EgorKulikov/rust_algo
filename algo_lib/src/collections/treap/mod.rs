@@ -1,151 +1,27 @@
+pub mod multi_payload;
+pub mod multi_treap_set;
+pub mod payload;
+pub mod pure_payload;
+pub mod treap_map;
+
+use crate::collections::treap::payload::{OrdPayload, Payload, Pushable, Reverse, Size};
 use crate::misc::direction::Direction;
 use crate::misc::extensions::replace_with::ReplaceWith;
 use crate::misc::random::random;
 use std::collections::Bound;
 use std::marker::PhantomPinned;
+use std::mem;
 use std::mem::{swap, MaybeUninit};
 use std::ops::{Deref, DerefMut, RangeBounds};
 use std::pin::Pin;
 
-pub trait Size: Payload {
-    const ONE: Self;
-    fn size(&self) -> usize;
-}
-
-impl Payload for () {}
-
-impl Size for () {
-    const ONE: Self = ();
-    #[inline]
-    fn size(&self) -> usize {
-        unimplemented!()
-    }
-}
-
-impl Payload for u32 {
-    const NEED_UPDATE: bool = true;
-
-    fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
-        *self = 1 + left.unwrap_or(&0) + right.unwrap_or(&0);
-    }
-}
-
-impl Size for u32 {
-    const ONE: Self = 1;
-    #[inline]
-    fn size(&self) -> usize {
-        *self as usize
-    }
-}
-
-pub trait Reverse: Default + Unpin {
-    fn need_reverse(&self) -> bool;
-    fn reset_reverse(&mut self);
-    fn flip(&mut self);
-}
-
-impl Reverse for () {
-    #[inline]
-    fn need_reverse(&self) -> bool {
-        false
-    }
-
-    #[inline]
-    fn flip(&mut self) {
-        unimplemented!()
-    }
-
-    #[inline]
-    fn reset_reverse(&mut self) {
-        unimplemented!()
-    }
-}
-
-impl Reverse for bool {
-    #[inline]
-    fn need_reverse(&self) -> bool {
-        *self
-    }
-
-    #[inline]
-    fn reset_reverse(&mut self) {
-        *self = false;
-    }
-
-    #[inline]
-    fn flip(&mut self) {
-        *self ^= true;
-    }
-}
-
-#[allow(unused_variables)]
-pub trait Payload: Unpin {
-    const NEED_UPDATE: bool = false;
-    const NEED_PUSH_DOWN: bool = false;
-    fn reset_delta(&mut self) {
-        unimplemented!()
-    }
-    fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
-        unimplemented!()
-    }
-    fn push_delta(&mut self, delta: &Self) {
-        unimplemented!()
-    }
-
-    fn need_push_down(&self) -> bool {
-        unimplemented!()
-    }
-}
-
-pub trait PayloadWithKey: Payload {
-    type Key: Ord;
-    fn key(&self) -> &Self::Key;
-}
-
-pub trait Pushable<Delta>: Payload {
-    fn push(&mut self, delta: Delta);
-}
-
-impl<P: Payload> Pushable<&P> for P {
-    #[inline]
-    fn push(&mut self, delta: &P) {
-        self.push_delta(delta);
-    }
-}
-
-impl<P: Payload> Pushable<P> for P {
-    #[inline]
-    fn push(&mut self, delta: P) {
-        *self = delta;
-    }
-}
-
-pub struct PurePayload<T>(pub T);
-
-impl<T: Unpin> Payload for PurePayload<T> {}
-
-impl<T: Ord + Unpin> PayloadWithKey for PurePayload<T> {
-    type Key = T;
-
-    #[inline]
-    fn key(&self) -> &Self::Key {
-        &self.0
-    }
-}
-
-impl<T: Ord + Unpin> Pushable<T> for PurePayload<T> {
-    fn push(&mut self, delta: T) {
-        self.0 = delta;
-    }
-}
-
 pub struct Iter<'a, P, S, R> {
-    stack: Vec<*mut TreapNode<P, S, R>>,
+    stack: Vec<*mut Node<P, S, R>>,
     _marker: std::marker::PhantomData<&'a P>,
 }
 
-impl<'a, P: Payload, S: Size, R: Reverse> Iter<'a, P, S, R> {
-    fn new(root: &'a mut OptionTreapNode<P, S, R>) -> Self {
+impl<'a, P: Payload + Unpin, S: Size, R: Reverse> Iter<'a, P, S, R> {
+    fn new(root: &'a mut OptionNode<P, S, R>) -> Self {
         let mut res = Self {
             stack: Vec::new(),
             _marker: std::marker::PhantomData,
@@ -154,21 +30,21 @@ impl<'a, P: Payload, S: Size, R: Reverse> Iter<'a, P, S, R> {
         res
     }
 
-    fn add_left(&mut self, mut node: &mut OptionTreapNode<P, S, R>) {
+    fn add_left(&mut self, mut node: &mut OptionNode<P, S, R>) {
         while let Some(n) = node.0.as_mut() {
             n.push_down();
             self.stack.push(n);
-            node = &mut n.as_mut().this().left;
+            node = &mut n.inner().left;
         }
     }
 }
 
-impl<'a, P: Payload, S: Size + 'a, R: Reverse + 'a> Iterator for Iter<'a, P, S, R> {
+impl<'a, P: Payload + Unpin, S: Size + 'a, R: Reverse + 'a> Iterator for Iter<'a, P, S, R> {
     type Item = &'a P;
 
     fn next(&mut self) -> Option<Self::Item> {
         let node = unsafe { &mut *self.stack.pop()? };
-        self.add_left(&mut node.as_mut().this().right);
+        self.add_left(&mut node.inner().right);
         Some(&node.payload)
     }
 }
@@ -176,56 +52,74 @@ impl<'a, P: Payload, S: Size + 'a, R: Reverse + 'a> Iterator for Iter<'a, P, S, 
 #[allow(private_interfaces)]
 pub enum Treap<P, S = (), R = ()> {
     Whole {
-        root: OptionTreapNode<P, S, R>,
+        root: OptionNode<P, S, R>,
     },
     Split {
-        left: OptionTreapNode<P, S, R>,
+        left: OptionNode<P, S, R>,
         mid: Box<Treap<P, S, R>>,
-        right: OptionTreapNode<P, S, R>,
+        right: OptionNode<P, S, R>,
     },
 }
 
-impl<P: Payload> Treap<P> {
+impl<P: Payload + Unpin> Treap<P> {
     pub fn new() -> Self {
         Treap::Whole {
-            root: OptionTreapNode::NONE,
+            root: OptionNode::NONE,
         }
+    }
+
+    pub fn gen(n: usize, f: impl Fn(usize) -> P) -> Self {
+        Self::gen_impl(n, f)
     }
 }
 
-impl<P: Payload> Treap<P, u32> {
+impl<P: Payload + Unpin> Treap<P, u32> {
     pub fn sized() -> Self {
         Treap::Whole {
-            root: OptionTreapNode::NONE,
+            root: OptionNode::NONE,
         }
+    }
+
+    pub fn gen_sized(n: usize, f: impl Fn(usize) -> P) -> Self {
+        Self::gen_impl(n, f)
     }
 }
 
-impl<P: Payload> Treap<P, u32, bool> {
+impl<P: Payload + Unpin> Treap<P, u32, bool> {
     pub fn reversible() -> Self {
         Treap::Whole {
-            root: OptionTreapNode::NONE,
+            root: OptionNode::NONE,
         }
+    }
+
+    pub fn gen_reversible(n: usize, f: impl Fn(usize) -> P) -> Self {
+        Self::gen_impl(n, f)
     }
 }
 
-impl<P: Payload, S: Size, R: Reverse> Default for Treap<P, S, R> {
+impl<P: Payload + Unpin, S: Size, R: Reverse> Default for Treap<P, S, R> {
     fn default() -> Self {
         Treap::Whole {
-            root: OptionTreapNode::NONE,
+            root: OptionNode::NONE,
         }
     }
 }
 
-impl<P: Payload, S: Size, R: Reverse> Treap<P, S, R> {
+impl<P: Payload + Unpin, S: Size, R: Reverse> Treap<P, S, R> {
     fn single(p: P) -> Self {
         Treap::Whole {
-            root: OptionTreapNode::new(TreapNode::new(p)),
+            root: OptionNode::new(Node::new(p)),
+        }
+    }
+
+    fn gen_impl(n: usize, f: impl Fn(usize) -> P) -> Self {
+        Treap::Whole {
+            root: OptionNode::gen(n, f),
         }
     }
 
     #[inline]
-    fn into_node(mut self) -> OptionTreapNode<P, S, R> {
+    fn into_node(mut self) -> OptionNode<P, S, R> {
         self.rebuild();
         match self {
             Treap::Whole { root } => root,
@@ -234,21 +128,18 @@ impl<P: Payload, S: Size, R: Reverse> Treap<P, S, R> {
     }
 
     #[inline]
-    unsafe fn as_node(&mut self) -> &mut OptionTreapNode<P, S, R> {
+    unsafe fn as_node(&mut self) -> &mut OptionNode<P, S, R> {
         match self {
             Treap::Whole { root } => root,
             _ => unreachable!(),
         }
     }
 
-    fn rebuild(&mut self) -> &mut OptionTreapNode<P, S, R> {
+    fn rebuild(&mut self) -> &mut OptionNode<P, S, R> {
         self.replace_with(|self_| {
             if let Treap::Split { left, mid, right } = self_ {
                 Treap::Whole {
-                    root: OptionTreapNode::merge(
-                        left,
-                        OptionTreapNode::merge(mid.into_node(), right),
-                    ),
+                    root: OptionNode::merge(left, OptionNode::merge(mid.into_node(), right)),
                 }
             } else {
                 self_
@@ -259,7 +150,7 @@ impl<P: Payload, S: Size, R: Reverse> Treap<P, S, R> {
 
     fn do_split(
         mut self,
-        f: impl FnOnce(OptionTreapNode<P, S, R>) -> (OptionTreapNode<P, S, R>, OptionTreapNode<P, S, R>),
+        f: impl FnOnce(OptionNode<P, S, R>) -> (OptionNode<P, S, R>, OptionNode<P, S, R>),
     ) -> (Self, Self) {
         let mut right = MaybeUninit::uninit();
         self.replace_with(|self_| {
@@ -274,11 +165,11 @@ impl<P: Payload, S: Size, R: Reverse> Treap<P, S, R> {
     fn do_split_three(
         &mut self,
         f: impl FnOnce(
-            OptionTreapNode<P, S, R>,
+            OptionNode<P, S, R>,
         ) -> (
-            OptionTreapNode<P, S, R>,
-            OptionTreapNode<P, S, R>,
-            OptionTreapNode<P, S, R>,
+            OptionNode<P, S, R>,
+            OptionNode<P, S, R>,
+            OptionNode<P, S, R>,
         ),
     ) -> &mut Self {
         self.replace_with(|self_| {
@@ -300,26 +191,16 @@ impl<P: Payload, S: Size, R: Reverse> Treap<P, S, R> {
         }
     }
 
-    pub fn push_front(&mut self, mut other: Self) -> &mut Self {
-        self.replace_with(|mut root| {
-            root.rebuild();
-            other.rebuild();
-            let root = root.into_node();
-            Treap::Whole {
-                root: OptionTreapNode::merge(other.into_node(), root),
-            }
+    pub fn push_front(&mut self, other: Self) -> &mut Self {
+        self.replace_with(|root| Treap::Whole {
+            root: OptionNode::merge(other.into_node(), root.into_node()),
         });
         self
     }
 
-    pub fn push_back(&mut self, mut other: Self) -> &mut Self {
-        self.replace_with(|mut root| {
-            root.rebuild();
-            other.rebuild();
-            let root = root.into_node();
-            Treap::Whole {
-                root: OptionTreapNode::merge(root, other.into_node()),
-            }
+    pub fn push_back(&mut self, other: Self) -> &mut Self {
+        self.replace_with(|root| Treap::Whole {
+            root: OptionNode::merge(root.into_node(), other.into_node()),
         });
         self
     }
@@ -327,7 +208,7 @@ impl<P: Payload, S: Size, R: Reverse> Treap<P, S, R> {
     pub fn detach(&mut self) -> Self {
         match self {
             Treap::Whole { root } => {
-                let mut res = OptionTreapNode::NONE;
+                let mut res = OptionNode::NONE;
                 swap(&mut res, root);
                 Treap::Whole { root: res }
             }
@@ -358,7 +239,7 @@ impl<P: Payload, S: Size, R: Reverse> Treap<P, S, R> {
             Treap::Whole { root: left_root } => Treap::Split {
                 left: left_root,
                 mid: Box::new(right),
-                right: OptionTreapNode::NONE,
+                right: OptionNode::NONE,
             },
             Treap::Split {
                 left,
@@ -367,7 +248,7 @@ impl<P: Payload, S: Size, R: Reverse> Treap<P, S, R> {
             } => Treap::Split {
                 left,
                 mid,
-                right: OptionTreapNode::merge(left_right, right.into_node()),
+                right: OptionNode::merge(left_right, right.into_node()),
             },
         }
     }
@@ -404,7 +285,7 @@ impl<P: Payload, S: Size, R: Reverse> Treap<P, S, R> {
         let mut res = None;
         self.replace_with(|root| unsafe {
             let mut new_node = Self::single(payload);
-            res = Some(new_node.as_node().as_mut().unwrap().inner.as_mut().this() as *mut _);
+            res = Some(new_node.as_node().as_mut().unwrap().inner() as *mut _);
             Self::merge(root, new_node)
         });
         NodeRef(res.unwrap())
@@ -414,10 +295,16 @@ impl<P: Payload, S: Size, R: Reverse> Treap<P, S, R> {
         let mut res = None;
         self.replace_with(|root| unsafe {
             let mut new_node = Self::single(payload);
-            res = Some(new_node.as_node().as_mut().unwrap().inner.as_mut().this() as *mut _);
+            res = Some(new_node.as_node().as_mut().unwrap().inner() as *mut _);
             Self::merge(new_node, root)
         });
         NodeRef(res.unwrap())
+    }
+
+    pub fn refs(&mut self) -> Vec<NodeRef<P, S, R>> {
+        let mut res = Vec::new();
+        self.rebuild().refs(&mut res);
+        res
     }
 
     pub fn is_empty(&self) -> bool {
@@ -434,9 +321,7 @@ impl<P: Payload, S: Size, R: Reverse> Treap<P, S, R> {
     }
 }
 
-pub struct NodeRef<P, S, R>(*mut TreapNodeInner<P, S, R>);
-
-impl<P: Payload, R: Reverse> Treap<P, u32, R> {
+impl<P: Payload + Unpin, R: Reverse> Treap<P, u32, R> {
     pub fn index_ref(&mut self, node_ref: &NodeRef<P, u32, R>) -> usize {
         self.raise(node_ref);
         match self {
@@ -460,7 +345,7 @@ impl<P: Payload, R: Reverse> Treap<P, u32, R> {
         self.rebuild().binary_search_size(f);
     }
 
-    pub fn by_index(&mut self, bounds: impl RangeBounds<usize>) -> &mut Self {
+    pub fn range_index(&mut self, bounds: impl RangeBounds<usize>) -> &mut Self {
         self.do_split_three(|root| {
             let size = root.size();
             let start = match bounds.start_bound() {
@@ -473,6 +358,7 @@ impl<P: Payload, R: Reverse> Treap<P, u32, R> {
                 Bound::Excluded(&e) => e,
                 Bound::Unbounded => size,
             };
+            assert!(start <= end);
             let (left, mid_right) = root.split_at(start);
             let (mid, right) = mid_right.split_at(end.max(start) - start);
             (left, mid, right)
@@ -480,28 +366,28 @@ impl<P: Payload, R: Reverse> Treap<P, u32, R> {
     }
 
     pub fn get_at(&mut self, at: usize) -> &mut Self {
-        self.by_index(at..=at)
+        self.range_index(at..=at)
     }
 }
 
-impl<P: Payload, S: Size> Treap<P, S, bool> {
+impl<P: Payload + Unpin, S: Size> Treap<P, S, bool> {
     pub fn reverse(&mut self) {
         self.rebuild().reverse();
     }
 }
 
-impl<P: PayloadWithKey, S: Size, R: Reverse> Treap<P, S, R> {
+impl<P: OrdPayload + Unpin, S: Size, R: Reverse> Treap<P, S, R> {
     pub fn range<'s: 'r, 'r>(&'s mut self, bounds: impl RangeBounds<&'r P::Key>) -> &mut Self {
         self.do_split_three(|root| {
             let (left, mid_right) = match bounds.start_bound() {
                 Bound::Included(key) => root.split(key),
                 Bound::Excluded(key) => root.split_inclusive(key),
-                Bound::Unbounded => (OptionTreapNode::NONE, root),
+                Bound::Unbounded => (OptionNode::NONE, root),
             };
             let (mid, right) = match bounds.end_bound() {
                 Bound::Included(key) => mid_right.split_inclusive(key),
                 Bound::Excluded(key) => mid_right.split(key),
-                Bound::Unbounded => (mid_right, OptionTreapNode::NONE),
+                Bound::Unbounded => (mid_right, OptionNode::NONE),
             };
             (left, mid, right)
         })
@@ -515,7 +401,7 @@ impl<P: PayloadWithKey, S: Size, R: Reverse> Treap<P, S, R> {
                 res = Some(mid.into_payload());
             }
             Treap::Whole {
-                root: OptionTreapNode::new(TreapNode::new(p)),
+                root: OptionNode::new(Node::new(p)),
             }
         });
         res
@@ -529,7 +415,7 @@ impl<P: PayloadWithKey, S: Size, R: Reverse> Treap<P, S, R> {
                 res = Some(mid.into_payload());
             }
             Treap::Whole {
-                root: OptionTreapNode::NONE,
+                root: OptionNode::NONE,
             }
         });
         res
@@ -562,9 +448,17 @@ impl<P: PayloadWithKey, S: Size, R: Reverse> Treap<P, S, R> {
     pub fn next(&mut self, key: &P::Key) -> Option<&P> {
         self.range((Bound::Excluded(key), Bound::Unbounded)).first()
     }
+
+    pub fn union(a: Self, b: Self) -> Self {
+        let a = a.into_node();
+        let b = b.into_node();
+        Self::Whole {
+            root: OptionNode::union(a, b),
+        }
+    }
 }
 
-impl<P: PayloadWithKey, R: Reverse> Treap<P, u32, R> {
+impl<P: OrdPayload + Unpin, R: Reverse> Treap<P, u32, R> {
     pub fn index(&mut self, key: &P::Key) -> Option<usize> {
         match self.range(key..=key) {
             Treap::Split { left, mid, .. } => mid.payload().map(|_| left.size()),
@@ -573,82 +467,63 @@ impl<P: PayloadWithKey, R: Reverse> Treap<P, u32, R> {
     }
 }
 
-struct TreapNodeInner<P, S, R> {
+pub struct NodeRef<P, S, R>(*mut NodeInner<P, S, R>);
+
+struct NodeInner<P, S, R> {
     priority: u64,
     size: S,
     reversed: R,
     payload: P,
-    left: OptionTreapNode<P, S, R>,
-    right: OptionTreapNode<P, S, R>,
-    parent: Option<*mut TreapNodeInner<P, S, R>>,
+    left: OptionNode<P, S, R>,
+    right: OptionNode<P, S, R>,
+    parent: Option<*mut NodeInner<P, S, R>>,
     _phantom_pinned: PhantomPinned,
 }
 
-impl<P, S, R> TreapNodeInner<P, S, R> {
-    fn this(self: Pin<&mut Self>) -> &mut Self {
-        unsafe { self.get_unchecked_mut() }
-    }
-
+impl<P, S, R> NodeInner<P, S, R> {
     fn into_payload(self: Pin<Box<Self>>) -> P {
         unsafe { Pin::into_inner_unchecked(self).payload }
     }
 }
 
-struct TreapNode<P, S, R> {
-    inner: Pin<Box<TreapNodeInner<P, S, R>>>,
+struct Node<P, S, R> {
+    inner: Pin<Box<NodeInner<P, S, R>>>,
 }
 
-impl<P, S, R> Deref for TreapNode<P, S, R> {
-    type Target = Pin<Box<TreapNodeInner<P, S, R>>>;
+impl<P, S, R> Deref for Node<P, S, R> {
+    type Target = Pin<Box<NodeInner<P, S, R>>>;
 
-    #[inline]
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         &self.inner
     }
 }
 
-impl<P, S, R> DerefMut for TreapNode<P, S, R> {
-    #[inline]
+impl<P, S, R> DerefMut for Node<P, S, R> {
+    #[inline(always)]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.inner
     }
 }
 
-struct OptionTreapNode<P, S, R>(Option<TreapNode<P, S, R>>);
-
-impl<P, S, R> Deref for OptionTreapNode<P, S, R> {
-    type Target = Option<TreapNode<P, S, R>>;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<P, S, R> DerefMut for OptionTreapNode<P, S, R> {
-    #[inline]
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl<P: Payload, S: Size, R: Reverse> TreapNode<P, S, R> {
-    #[inline]
+impl<P: Payload + Unpin, S: Size, R: Reverse> Node<P, S, R> {
+    #[inline(always)]
     fn new(payload: P) -> Self {
         Self {
-            inner: Box::pin(TreapNodeInner {
+            inner: Box::pin(NodeInner {
                 priority: random().gen(),
                 size: S::ONE,
                 reversed: R::default(),
                 payload,
-                left: OptionTreapNode::NONE,
-                right: OptionTreapNode::NONE,
+                left: OptionNode::NONE,
+                right: OptionNode::NONE,
                 parent: None,
                 _phantom_pinned: PhantomPinned,
             }),
         }
     }
 
+    #[inline(always)]
     fn into_payload(self) -> P {
         assert!(self.parent.is_none());
         assert!(self.left.is_none());
@@ -656,9 +531,14 @@ impl<P: Payload, S: Size, R: Reverse> TreapNode<P, S, R> {
         self.inner.into_payload()
     }
 
-    #[inline]
+    #[inline(always)]
+    fn inner(&mut self) -> &mut NodeInner<P, S, R> {
+        unsafe { self.inner.as_mut().get_unchecked_mut() }
+    }
+
+    #[inline(always)]
     fn update(&mut self) {
-        let this = self.as_mut().this();
+        let this = self.inner();
         if S::NEED_UPDATE {
             this.size
                 .update(this.left.size_opt(), this.right.size_opt());
@@ -669,91 +549,165 @@ impl<P: Payload, S: Size, R: Reverse> TreapNode<P, S, R> {
         }
     }
 
-    #[inline]
+    #[inline(always)]
+    fn update_leaf(&mut self) {
+        let this = self.inner();
+        if S::NEED_UPDATE {
+            this.size = S::ONE;
+        }
+        if P::NEED_UPDATE {
+            this.payload.update(None, None);
+        }
+    }
+
+    #[inline(always)]
     fn push_down(&mut self) {
-        let this = self.as_mut().this();
-        if P::NEED_PUSH_DOWN && this.payload.need_push_down() {
+        if P::NEED_PUSH_DOWN && self.payload.need_push_down() {
+            let this = self.inner();
             this.left.push(&this.payload);
             this.right.push(&this.payload);
             this.payload.reset_delta();
         }
-        if this.reversed.need_reverse() {
+        if self.reversed.need_reverse() {
+            let this = self.inner();
             this.left.reverse();
             this.right.reverse();
             this.reversed.reset_reverse();
         }
     }
 
-    fn detach_left(&mut self) -> OptionTreapNode<P, S, R> {
+    #[inline(always)]
+    fn detach_left(&mut self) -> OptionNode<P, S, R> {
         self.push_down();
-        let this = self.as_mut().this();
-        let mut left = OptionTreapNode(this.left.take());
-        self.update();
+        let this = self.inner();
+        let mut left = mem::replace(&mut this.left, OptionNode::NONE);
         left.detach();
         left
     }
 
-    fn detach_right(&mut self) -> OptionTreapNode<P, S, R> {
+    #[inline(always)]
+    fn detach_right(&mut self) -> OptionNode<P, S, R> {
         self.push_down();
-        let this = self.as_mut().this();
-        let mut right = OptionTreapNode(this.right.take());
-        self.update();
+        let this = self.inner();
+        let mut right = mem::replace(&mut this.right, OptionNode::NONE);
         right.detach();
         right
     }
 
-    fn attach_left(&mut self, mut left: OptionTreapNode<P, S, R>) {
-        self.push_down();
+    #[inline(always)]
+    fn attach_left(&mut self, mut left: OptionNode<P, S, R>) {
         if let Some(left) = left.as_mut() {
-            left.as_mut().this().parent = Some(self.as_inner_ptr());
+            left.inner().parent = Some(self.as_inner_ptr());
         }
-        let this = self.as_mut().this();
+        let this = self.inner();
         this.left = left;
         self.update();
     }
 
-    fn attach_right(&mut self, mut right: OptionTreapNode<P, S, R>) {
-        self.push_down();
+    #[inline(always)]
+    fn attach_right(&mut self, mut right: OptionNode<P, S, R>) {
         if let Some(right) = right.as_mut() {
-            right.as_mut().this().parent = Some(self.as_inner_ptr());
+            right.inner().parent = Some(self.as_inner_ptr());
         }
-        let this = self.as_mut().this();
+        let this = self.inner();
         this.right = right;
         self.update();
     }
 
-    #[inline]
-    fn as_inner_ptr(&mut self) -> *mut TreapNodeInner<P, S, R> {
-        self.as_mut().this()
+    #[inline(always)]
+    fn as_inner_ptr(&mut self) -> *mut NodeInner<P, S, R> {
+        self.inner()
     }
 }
 
-impl<P: Payload, S: Size, R: Reverse> OptionTreapNode<P, S, R> {
+struct OptionNode<P, S, R>(Option<Node<P, S, R>>);
+
+impl<P, S, R> Deref for OptionNode<P, S, R> {
+    type Target = Option<Node<P, S, R>>;
+
+    #[inline(always)]
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<P, S, R> DerefMut for OptionNode<P, S, R> {
+    #[inline(always)]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl<P: Payload + Unpin, S: Size, R: Reverse> OptionNode<P, S, R> {
     const NONE: Self = Self(None);
 
-    #[inline]
-    fn new(node: TreapNode<P, S, R>) -> Self {
+    #[inline(always)]
+    fn new(node: Node<P, S, R>) -> Self {
         Self(Some(node))
     }
 
-    #[inline]
-    fn detach(&mut self) {
-        if let Some(node) = self.0.as_mut() {
-            node.as_mut().this().parent = None;
+    fn gen(n: usize, f: impl FnMut(usize) -> P) -> Self {
+        let mut res = Self::build(f, 0, n).0;
+        res.heapify();
+        res
+    }
+
+    fn build<F: FnMut(usize) -> P>(mut f: F, from: usize, to: usize) -> (Self, F) {
+        if from == to {
+            (OptionNode::NONE, f)
+        } else {
+            let mid = random().next_bounds(from, to - 1);
+            let mut node = Node::new(f(mid));
+            let (left, f) = Self::build(f, from, mid);
+            let (right, f) = Self::build(f, mid + 1, to);
+            node.attach_left(left);
+            node.attach_right(right);
+            (OptionNode::new(node), f)
         }
     }
 
-    #[inline]
+    fn heapify(&mut self) {
+        if let Some(node) = self.as_mut() {
+            let this = node.inner();
+            this.left.heapify();
+            this.right.heapify();
+            let mut priority = this.priority;
+            if let Some(left) = this.left.as_mut() {
+                if left.priority > priority {
+                    let was_priority = priority;
+                    priority = left.priority;
+                    left.inner().priority = was_priority;
+                }
+            }
+            if let Some(right) = this.right.as_mut() {
+                if right.priority > priority {
+                    let was_priority = priority;
+                    priority = right.priority;
+                    right.inner().priority = was_priority;
+                }
+            }
+            this.priority = priority;
+        }
+    }
+
+    #[inline(always)]
+    fn detach(&mut self) {
+        if let Some(node) = self.0.as_mut() {
+            node.inner().parent = None;
+        }
+    }
+
+    #[inline(always)]
     fn size_opt(&self) -> Option<&S> {
         self.as_ref().map(|node| &node.size)
     }
 
-    #[inline]
+    #[inline(always)]
     fn payload(&self) -> Option<&P> {
         self.as_ref().map(|node| &node.payload)
     }
 
-    #[inline]
+    #[inline(always)]
     fn payload_mut(&mut self) -> Option<&mut P> {
         self.as_mut().map(|node| unsafe {
             Pin::into_inner(Pin::map_unchecked_mut(node.as_mut(), |node| {
@@ -762,7 +716,7 @@ impl<P: Payload, S: Size, R: Reverse> OptionTreapNode<P, S, R> {
         })
     }
 
-    #[inline]
+    #[inline(always)]
     fn push<D>(&mut self, delta: D)
     where
         P: Pushable<D>,
@@ -772,72 +726,24 @@ impl<P: Payload, S: Size, R: Reverse> OptionTreapNode<P, S, R> {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     fn reverse(&mut self) {
         if let Some(node) = self.0.as_mut() {
-            let this = node.as_mut().this();
+            let this = node.inner();
             swap(&mut this.left, &mut this.right);
             this.reversed.flip();
         }
     }
-}
 
-impl<P: Payload, R: Reverse> OptionTreapNode<P, u32, R> {
-    #[inline]
-    fn size(&self) -> usize {
-        self.as_ref().map(|node| node.size.size()).unwrap_or(0)
-    }
-}
-
-impl<P: Payload, R: Reverse> OptionTreapNode<P, u32, R> {
-    fn split_at(self, mut at: usize) -> (Self, Self) {
-        self.split_by_size(|left_size, _| {
-            if at <= left_size {
-                Direction::Left
-            } else {
-                at -= left_size + 1;
-                Direction::Right
-            }
-        })
-    }
-
-    fn split_by_size<F: FnMut(usize, usize) -> Direction>(self, mut f: F) -> (Self, Self) {
-        if let Some(mut node) = self.0 {
-            node.push_down();
-            let direction = f(node.left.size(), node.right.size());
-            match direction {
-                Direction::Left => {
-                    let (left, right) = node.detach_left().split_by_size(f);
-                    node.attach_left(right);
-                    node.update();
-                    (left, Self(Some(node)))
-                }
-                Direction::Right => {
-                    let (left, right) = node.detach_right().split_by_size(f);
-                    node.attach_right(left);
-                    node.update();
-                    (Self(Some(node)), right)
-                }
-            }
-        } else {
-            (Self::NONE, Self::NONE)
+    fn refs(&mut self, res: &mut Vec<NodeRef<P, S, R>>) {
+        if let Some(node) = self.0.as_mut() {
+            let this = node.inner();
+            this.left.refs(res);
+            res.push(NodeRef(this as *mut _));
+            this.right.refs(res);
         }
     }
 
-    fn binary_search_size<F: FnMut(usize, usize) -> Option<Direction>>(&mut self, mut f: F) {
-        if let Some(node) = self.deref_mut() {
-            node.push_down();
-            let direction = f(node.left.size(), node.right.size());
-            match direction {
-                Some(Direction::Left) => node.as_mut().this().left.binary_search_size(f),
-                Some(Direction::Right) => node.as_mut().this().right.binary_search_size(f),
-                None => {}
-            }
-        }
-    }
-}
-
-impl<P: Payload, S: Size, R: Reverse> OptionTreapNode<P, S, R> {
     fn merge(left: Self, right: Self) -> Self {
         match (left.0, right.0) {
             (None, right) => Self(right),
@@ -861,7 +767,7 @@ impl<P: Payload, S: Size, R: Reverse> OptionTreapNode<P, S, R> {
             if node.left.is_some() {
                 let node = self.as_mut().unwrap();
                 node.push_down();
-                node.as_mut().this().left.first()
+                node.inner().left.first()
             } else {
                 self
             }
@@ -875,7 +781,7 @@ impl<P: Payload, S: Size, R: Reverse> OptionTreapNode<P, S, R> {
             if node.right.is_some() {
                 let node = self.as_mut().unwrap();
                 node.push_down();
-                node.as_mut().this().right.last()
+                node.inner().right.last()
             } else {
                 self
             }
@@ -886,19 +792,16 @@ impl<P: Payload, S: Size, R: Reverse> OptionTreapNode<P, S, R> {
 
     fn split_by<F: FnMut(&P, Option<&P>, Option<&P>) -> Direction>(self, mut f: F) -> (Self, Self) {
         if let Some(mut node) = self.0 {
-            node.push_down();
             let direction = f(&node.payload, node.left.payload(), node.right.payload());
             match direction {
                 Direction::Left => {
                     let (left, right) = node.detach_left().split_by(f);
                     node.attach_left(right);
-                    node.update();
                     (left, Self(Some(node)))
                 }
                 Direction::Right => {
                     let (left, right) = node.detach_right().split_by(f);
                     node.attach_right(left);
-                    node.update();
                     (Self(Some(node)), right)
                 }
             }
@@ -915,17 +818,17 @@ impl<P: Payload, S: Size, R: Reverse> OptionTreapNode<P, S, R> {
             node.push_down();
             let direction = f(&node.payload, node.left.payload(), node.right.payload());
             match direction {
-                Some(Direction::Left) => node.as_mut().this().left.binary_search(f),
-                Some(Direction::Right) => node.as_mut().this().right.binary_search(f),
+                Some(Direction::Left) => node.inner().left.binary_search(f),
+                Some(Direction::Right) => node.inner().right.binary_search(f),
                 None => {}
             }
         }
     }
 
     fn push_from_up(
-        node_ptr: *mut TreapNodeInner<P, S, R>,
+        node_ptr: *mut NodeInner<P, S, R>,
         directions: &mut Vec<Direction>,
-    ) -> *mut TreapNodeInner<P, S, R> {
+    ) -> *mut NodeInner<P, S, R> {
         let node = unsafe { &mut *node_ptr };
         match node.parent {
             None => node_ptr,
@@ -950,7 +853,7 @@ impl<P: Payload, S: Size, R: Reverse> OptionTreapNode<P, S, R> {
         }
     }
 
-    fn raise(mut self, node: *mut TreapNodeInner<P, S, R>) -> (Self, Self, Self) {
+    fn raise(mut self, node: *mut NodeInner<P, S, R>) -> (Self, Self, Self) {
         let mut directions = Vec::new();
         let expected_ptr = Self::push_from_up(node, &mut directions);
         assert_eq!(expected_ptr, self.as_mut().unwrap().as_inner_ptr());
@@ -975,12 +878,66 @@ impl<P: Payload, S: Size, R: Reverse> OptionTreapNode<P, S, R> {
         } else {
             let left = node.detach_left();
             let right = node.detach_right();
+            node.update_leaf();
             (left, self, right)
         }
     }
 }
 
-impl<P: PayloadWithKey, S: Size, R: Reverse> OptionTreapNode<P, S, R> {
+impl<P: Payload + Unpin, R: Reverse> OptionNode<P, u32, R> {
+    #[inline(always)]
+    fn size(&self) -> usize {
+        match self.as_ref() {
+            None => 0,
+            Some(node) => node.size as usize,
+        }
+    }
+
+    fn split_at(self, mut at: usize) -> (Self, Self) {
+        self.split_by_size(|left_size, _| {
+            if at <= left_size {
+                Direction::Left
+            } else {
+                at -= left_size + 1;
+                Direction::Right
+            }
+        })
+    }
+
+    fn split_by_size<F: FnMut(usize, usize) -> Direction>(self, mut f: F) -> (Self, Self) {
+        if let Some(mut node) = self.0 {
+            let direction = f(node.left.size(), node.right.size());
+            match direction {
+                Direction::Left => {
+                    let (left, right) = node.detach_left().split_by_size(f);
+                    node.attach_left(right);
+                    (left, Self(Some(node)))
+                }
+                Direction::Right => {
+                    let (left, right) = node.detach_right().split_by_size(f);
+                    node.attach_right(left);
+                    (Self(Some(node)), right)
+                }
+            }
+        } else {
+            (Self::NONE, Self::NONE)
+        }
+    }
+
+    fn binary_search_size<F: FnMut(usize, usize) -> Option<Direction>>(&mut self, mut f: F) {
+        if let Some(node) = self.deref_mut() {
+            node.push_down();
+            let direction = f(node.left.size(), node.right.size());
+            match direction {
+                Some(Direction::Left) => node.inner().left.binary_search_size(f),
+                Some(Direction::Right) => node.inner().right.binary_search_size(f),
+                None => {}
+            }
+        }
+    }
+}
+
+impl<P: OrdPayload + Unpin, S: Size, R: Reverse> OptionNode<P, S, R> {
     fn split(self, key: &P::Key) -> (Self, Self) {
         self.split_by(|payload, _left, _right| {
             if payload.key() < key {
@@ -999,5 +956,32 @@ impl<P: PayloadWithKey, S: Size, R: Reverse> OptionTreapNode<P, S, R> {
                 Direction::Left
             }
         })
+    }
+
+    fn union(a: Self, b: Self) -> Self {
+        match (a.0, b.0) {
+            (None, b) => Self(b),
+            (a, None) => Self(a),
+            (Some(mut a), Some(mut b)) => {
+                if a.priority < b.priority {
+                    swap(&mut a, &mut b);
+                }
+                let (b_left, b_right) = Self(Some(b)).split(a.payload.key());
+                let (same, b_right) = b_right.split(a.payload.key());
+                let (left, right) = if let Some(same) = same.0 {
+                    let left = a.detach_left();
+                    let right = a.detach_right();
+                    a = Node::new(P::union(a.into_payload(), same.into_payload()));
+                    (left, right)
+                } else {
+                    (a.detach_left(), a.detach_right())
+                };
+                let left = Self::union(left, b_left);
+                let right = Self::union(right, b_right);
+                a.attach_left(left);
+                a.attach_right(right);
+                Self(Some(a))
+            }
+        }
     }
 }

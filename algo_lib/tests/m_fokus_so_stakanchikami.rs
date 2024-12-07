@@ -1,7 +1,8 @@
 //{"name":"M. Фокус со стаканчиками","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/M","interactive":false,"timeLimit":3000,"tests":[{"input":"2 1\n2 1\n","output":"2 1\n"},{"input":"3 2\n1 2\n1 1\n","output":"2 1 3\n"},{"input":"3 3\n1 3\n2 3\n1 3\n","output":"-1\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"MFokusSoStakanchikami"}}}
 
 use algo_lib::collections::bit_set::BitSet;
-use algo_lib::collections::treap::{PurePayload, Treap};
+use algo_lib::collections::treap::pure_payload::PurePayload;
+use algo_lib::collections::treap::Treap;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
@@ -21,7 +22,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         treap.add_back(PurePayload(None));
     }
     for &(y, x) in &swaps {
-        let mid = treap.by_index(x..=x);
+        let mid = treap.range_index(x..=x);
         match mid.payload().unwrap().0 {
             Some(id) => {
                 if id != y {
@@ -42,7 +43,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         treap.push_front(mid);
     }
     for (_, x) in swaps.into_iter().rev() {
-        let mid = treap.by_index(1..=x).detach();
+        let mid = treap.range_index(1..=x).detach();
         treap.push_front(mid);
     }
     let mut iter = not_seen.iter();

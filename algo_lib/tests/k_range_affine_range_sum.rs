@@ -59,7 +59,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let q = input.read_size();
     let a = input.read_vec::<Mod>(n);
 
-    let mut st = SegmentTree::from_generator(n, |i| Node::new(a[i]));
+    let mut st = SegmentTree::gen(n, |i| Node::new(a[i]));
     for _ in 0..q {
         match input.read::<usize>() {
             0 => {

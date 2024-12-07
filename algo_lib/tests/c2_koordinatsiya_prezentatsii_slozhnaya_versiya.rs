@@ -52,7 +52,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         let cur = pos[b[i]];
         vals[cur].insert(i);
     }
-    let mut st = SegmentTree::from_generator(n, |i| Node {
+    let mut st = SegmentTree::gen(n, |i| Node {
         left: vals[i].iter().copied().next().unwrap(),
         right: vals[i].iter().copied().next().unwrap(),
         sorted: true,

@@ -1,6 +1,7 @@
 //{"name":"E. Forward!","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/E","interactive":false,"timeLimit":3000,"tests":[{"input":"6 3\n2 4\n3 5\n2 2\n","output":"1 4 5 2 3 6\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"EForward"}}}
 
-use algo_lib::collections::treap::{PurePayload, Treap};
+use algo_lib::collections::treap::pure_payload::PurePayload;
+use algo_lib::collections::treap::Treap;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::{TaskType, TestType};
@@ -18,8 +19,8 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     for _ in 0..m {
         let l = input.read_size() - 1;
         let r = input.read_size();
-        let left = treap.by_index(..l).detach();
-        let mid = treap.by_index(..r - l).detach();
+        let left = treap.range_index(..l).detach();
+        let mid = treap.range_index(..r - l).detach();
         treap.push_front(left);
         treap.push_front(mid);
     }

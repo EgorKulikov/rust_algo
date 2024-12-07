@@ -11,30 +11,34 @@ impl<T: Zero + One + Clone> Matrix<T> {
     }
 
     pub fn ident(n: usize) -> Self {
-        Self(Arr2d::generate(n, n, |i, j| {
-            if i == j {
-                T::one()
-            } else {
-                T::zero()
-            }
-        }))
+        Self(Arr2d::gen(
+            n,
+            n,
+            |i, j| {
+                if i == j {
+                    T::one()
+                } else {
+                    T::zero()
+                }
+            },
+        ))
     }
 }
 
 impl<T: Copy> Matrix<T> {
     pub fn column(arr: &[T]) -> Self {
-        Self(Arr2d::generate(arr.len(), 1, |i, _| arr[i]))
+        Self(Arr2d::gen(arr.len(), 1, |i, _| arr[i]))
     }
 
     pub fn row(arr: &[T]) -> Self {
-        Self(Arr2d::generate(1, arr.len(), |_, i| arr[i]))
+        Self(Arr2d::gen(1, arr.len(), |_, i| arr[i]))
     }
 
     pub fn new(arr: &[&[T]]) -> Self {
         for a in arr {
             assert_eq!(a.len(), arr[0].len());
         }
-        Self(Arr2d::generate(arr.len(), arr[0].len(), |i, j| arr[i][j]))
+        Self(Arr2d::gen(arr.len(), arr[0].len(), |i, j| arr[i][j]))
     }
 }
 

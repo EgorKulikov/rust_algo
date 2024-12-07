@@ -1,6 +1,7 @@
 //{"name":"C. И снова сумма...","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/C","interactive":false,"timeLimit":3000,"tests":[{"input":"6\n+ 1\n+ 3\n+ 3\n? 2 4\n+ 1\n? 2 4\n","output":"3\n7\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"CISnovaSumma"}}}
 
-use algo_lib::collections::treap::{Payload, PayloadWithKey, Treap};
+use algo_lib::collections::treap::payload::{OrdPayload, Payload};
+use algo_lib::collections::treap::Treap;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::{TaskType, TestType};
@@ -21,7 +22,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         }
     }
 
-    impl PayloadWithKey for Node {
+    impl OrdPayload for Node {
         type Key = i64;
         fn key(&self) -> &Self::Key {
             &self.value

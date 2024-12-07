@@ -1,50 +1,10 @@
-use crate::collections::treap::{Payload, PayloadWithKey, Pushable, Treap};
+use crate::collections::treap::multi_payload::MultiPayload;
+use crate::collections::treap::Treap;
 use std::iter::repeat;
 use std::ops::{Bound, RangeBounds};
 
-struct MapPayload<T: Unpin> {
-    key: T,
-    self_size: i32,
-    total_size: i32,
-}
-
-impl<T: Unpin> MapPayload<T> {
-    fn new(key: T) -> Self {
-        Self {
-            key,
-            self_size: 1,
-            total_size: 1,
-        }
-    }
-}
-
-impl<T: Unpin> Payload for MapPayload<T> {
-    const NEED_UPDATE: bool = true;
-
-    #[inline]
-    fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
-        self.total_size =
-            self.self_size + left.map_or(0, |l| l.total_size) + right.map_or(0, |r| r.total_size);
-    }
-}
-
-impl<T: Unpin> Pushable<i32> for MapPayload<T> {
-    fn push(&mut self, delta: i32) {
-        self.self_size += delta;
-        self.total_size += delta;
-    }
-}
-
-impl<T: Ord + Unpin> PayloadWithKey for MapPayload<T> {
-    type Key = T;
-
-    fn key(&self) -> &Self::Key {
-        &self.key
-    }
-}
-
 pub struct MultiTreapSet<T: Unpin> {
-    root: Treap<MapPayload<T>>,
+    root: Treap<MultiPayload<T>>,
 }
 
 impl<T: Ord + Unpin> MultiTreapSet<T> {
@@ -54,7 +14,7 @@ impl<T: Ord + Unpin> MultiTreapSet<T> {
 
     #[allow(clippy::len_without_is_empty)]
     pub fn len(&mut self) -> usize {
-        self.root.payload().map_or(0, |p| p.total_size as usize)
+        self.root.payload().map_or(0, |p| p.total_size)
     }
 
     pub fn insert(&mut self, key: T) {
@@ -62,7 +22,7 @@ impl<T: Ord + Unpin> MultiTreapSet<T> {
         if view.payload().is_some() {
             view.push(1);
         } else {
-            view.add_back(MapPayload::new(key));
+            view.add_back(MultiPayload::new(key, ()));
         }
     }
 
@@ -85,17 +45,14 @@ impl<T: Ord + Unpin> MultiTreapSet<T> {
     }
 
     pub fn lower_bound(&mut self, key: &T) -> usize {
-        self.root
-            .range(..key)
-            .payload()
-            .map_or(0, |p| p.total_size as usize)
+        self.root.range(..key).payload().map_or(0, |p| p.total_size)
     }
 
     pub fn upper_bound(&mut self, key: &T) -> usize {
         self.root
             .range(..=key)
             .payload()
-            .map_or(0, |p| p.total_size as usize)
+            .map_or(0, |p| p.total_size)
     }
 
     pub fn keys(&mut self) -> impl Iterator<Item = &T> {
@@ -153,7 +110,7 @@ impl<T: Ord + Unpin> MultiTreapSet<T> {
     }
 
     pub fn get(&mut self, key: &T) -> usize {
-        self.root.get(key).map_or(0, |node| node.self_size as usize)
+        self.root.get(key).map_or(0, |node| node.self_size)
     }
 
     pub fn contains(&mut self, key: &T) -> bool {
@@ -164,35 +121,29 @@ impl<T: Ord + Unpin> MultiTreapSet<T> {
         self.root
             .range((Bound::Excluded(key), Bound::Unbounded))
             .payload()
-            .map_or(0, |p| p.total_size as usize)
+            .map_or(0, |p| p.total_size)
     }
 
     pub fn more_or_eq(&mut self, key: &T) -> usize {
-        self.root
-            .range(key..)
-            .payload()
-            .map_or(0, |p| p.total_size as usize)
+        self.root.range(key..).payload().map_or(0, |p| p.total_size)
     }
 
     pub fn less(&mut self, key: &T) -> usize {
-        self.root
-            .range(..key)
-            .payload()
-            .map_or(0, |p| p.total_size as usize)
+        self.root.range(..key).payload().map_or(0, |p| p.total_size)
     }
 
     pub fn less_or_eq(&mut self, key: &T) -> usize {
         self.root
             .range(..=key)
             .payload()
-            .map_or(0, |p| p.total_size as usize)
+            .map_or(0, |p| p.total_size)
     }
 
-    fn node_to_pair(node: &MapPayload<T>) -> (&T, usize) {
-        (&node.key, node.total_size as usize)
+    fn node_to_pair(node: &MultiPayload<T>) -> (&T, usize) {
+        (&node.key, node.total_size)
     }
 
-    fn node_to_key(node: &MapPayload<T>) -> &T {
+    fn node_to_key(node: &MultiPayload<T>) -> &T {
         &node.key
     }
 }

@@ -1,6 +1,6 @@
 //{"name":"A. Next","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/A","interactive":false,"timeLimit":1000,"tests":[{"input":"6\n+ 1\n+ 3\n+ 3\n? 2\n+ 1\n? 4\n","output":"3\n4\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"ANext"}}}
 
-use algo_lib::collections::treap_map::TreapSet;
+use algo_lib::collections::treap::treap_map::TreapSet;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::{TaskType, TestType};

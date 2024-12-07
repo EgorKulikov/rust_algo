@@ -24,7 +24,7 @@ impl<T: Clone> Arr2d<T> {
 }
 
 impl<T> Arr2d<T> {
-    pub fn generate<F>(d1: usize, d2: usize, mut gen: F) -> Self
+    pub fn gen<F>(d1: usize, d2: usize, mut gen: F) -> Self
     where
         F: FnMut(usize, usize) -> T,
     {
@@ -145,7 +145,7 @@ impl<T: Clone> Arr2d<T> {
     }
 
     pub fn transpose(&self) -> Self {
-        Self::generate(self.d2, self.d1, |i, j| self[(j, i)].clone())
+        Self::gen(self.d2, self.d1, |i, j| self[(j, i)].clone())
     }
 }
 
@@ -239,7 +239,7 @@ pub trait Arr2dRead {
 
 impl Arr2dRead for Input<'_> {
     fn read_table<T: Readable>(&mut self, d1: usize, d2: usize) -> Arr2d<T> {
-        Arr2d::generate(d1, d2, |_, _| self.read())
+        Arr2d::gen(d1, d2, |_, _| self.read())
     }
 
     fn read_int_table(&mut self, d1: usize, d2: usize) -> Arr2d<i32> {
