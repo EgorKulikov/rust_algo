@@ -1,7 +1,7 @@
 //{"name":"N. Shuffle the Cards","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/N","interactive":false,"timeLimit":1500,"tests":[{"input":"10 2\n6 2 2\n5 3 6\n","output":"1 2 8 7 3 9 6 5 4 10\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"NShuffleTheCards"}}}
 
 use algo_lib::collections::treap::pure_payload::PurePayload;
-use algo_lib::collections::treap::Treap;
+use algo_lib::collections::treap::Tree;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::{TaskType, TestType};
@@ -12,7 +12,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let n = input.read_size();
     let m = input.read_size();
 
-    let mut treap = Treap::reversible();
+    let mut treap = Tree::new();
     for i in 1..=n {
         treap.add_back(PurePayload(i));
     }

@@ -1,7 +1,7 @@
 use crate::collections::iter_ext::iter_copied::ItersCopied;
 use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::numbers::num_traits::bit_ops::BitOps;
-use std::ops::{BitAndAssign, BitOrAssign, Index, ShlAssign, ShrAssign};
+use std::ops::{BitAndAssign, BitOrAssign, BitXorAssign, Index, ShlAssign, ShrAssign};
 
 const TRUE: bool = true;
 const FALSE: bool = false;
@@ -162,6 +162,15 @@ impl BitAndAssign<&BitSet> for BitSet {
         assert_eq!(self.len, rhs.len);
         for (i, &j) in self.data.iter_mut().zip(rhs.data.iter()) {
             *i &= j;
+        }
+    }
+}
+
+impl BitXorAssign<&BitSet> for BitSet {
+    fn bitxor_assign(&mut self, rhs: &BitSet) {
+        assert_eq!(self.len, rhs.len);
+        for (i, &j) in self.data.iter_mut().zip(rhs.data.iter()) {
+            *i ^= j;
         }
     }
 }

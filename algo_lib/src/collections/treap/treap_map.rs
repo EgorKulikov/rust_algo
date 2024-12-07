@@ -1,5 +1,5 @@
 use crate::collections::treap::payload::{OrdPayload, Payload};
-use crate::collections::treap::Treap;
+use crate::collections::treap::Tree;
 use std::ops::{Bound, Deref, DerefMut, RangeBounds};
 
 struct MapPayload<T, V> {
@@ -24,14 +24,12 @@ impl<T: Ord + Unpin, V: Unpin> OrdPayload for MapPayload<T, V> {
 }
 
 pub struct TreapMap<T, V> {
-    root: Treap<MapPayload<T, V>, u32>,
+    root: Tree<MapPayload<T, V>>,
 }
 
 impl<T: Ord + Unpin, V: Unpin> TreapMap<T, V> {
     pub fn new() -> Self {
-        Self {
-            root: Treap::sized(),
-        }
+        Self { root: Tree::new() }
     }
 
     pub unsafe fn from_sorted(iter: impl Iterator<Item = (T, V)>) -> Self {

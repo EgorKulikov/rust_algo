@@ -1,7 +1,7 @@
 //{"name":"K. Река","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/K","interactive":false,"timeLimit":3000,"tests":[{"input":"4 0\n3 5 5 4\n5\n1 1\n2 1\n1 3\n2 2\n1 3\n","output":"75\n105\n73\n101\n83\n113\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"KReka"}}}
 
 use algo_lib::collections::treap::payload::{Payload, Pushable};
-use algo_lib::collections::treap::Treap;
+use algo_lib::collections::treap::Tree;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::{TaskType, TestType};
@@ -44,7 +44,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     input.read_size();
     let a = input.read_size_vec(n);
 
-    let mut treap = Treap::sized();
+    let mut treap = Tree::new();
     for a in a {
         treap.add_back(Node::new(a));
     }

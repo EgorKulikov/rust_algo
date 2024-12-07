@@ -1,15 +1,15 @@
 use crate::collections::treap::multi_payload::MultiPayload;
-use crate::collections::treap::Treap;
+use crate::collections::treap::Tree;
 use std::iter::repeat;
 use std::ops::{Bound, RangeBounds};
 
 pub struct MultiTreapSet<T: Unpin> {
-    root: Treap<MultiPayload<T>>,
+    root: Tree<MultiPayload<T>>,
 }
 
 impl<T: Ord + Unpin> MultiTreapSet<T> {
     pub fn new() -> Self {
-        Self { root: Treap::new() }
+        Self { root: Tree::new() }
     }
 
     #[allow(clippy::len_without_is_empty)]
@@ -106,7 +106,7 @@ impl<T: Ord + Unpin> MultiTreapSet<T> {
     }
 
     pub fn clear(&mut self) {
-        self.root = Treap::new()
+        self.root.detach();
     }
 
     pub fn get(&mut self, key: &T) -> usize {

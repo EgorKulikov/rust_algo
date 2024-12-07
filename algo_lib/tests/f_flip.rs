@@ -1,7 +1,7 @@
 //{"name":"F. Flip","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/F","interactive":false,"timeLimit":2000,"tests":[{"input":"10 7\n5 3 2 3 12 6 7 5 10 12\n2 4 9\n1 4 6\n2 1 8\n1 1 8\n1 8 9\n2 1 7\n2 3 6\n","output":"3\n2\n2\n2\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"FFlip"}}}
 
 use algo_lib::collections::treap::payload::Payload;
-use algo_lib::collections::treap::Treap;
+use algo_lib::collections::treap::Tree;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::{TaskType, TestType};
@@ -41,7 +41,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let m = input.read_size();
     let a = input.read_int_vec(n);
 
-    let mut treap = Treap::reversible();
+    let mut treap = Tree::new();
     for a in a {
         treap.add_back(Node::new(a));
     }

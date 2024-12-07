@@ -1,40 +1,55 @@
-//{"name":"A. Next","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/A","interactive":false,"timeLimit":1000,"tests":[{"input":"6\n+ 1\n+ 3\n+ 3\n? 2\n+ 1\n? 4\n","output":"3\n4\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"ANext"}}}
+//{"name":"J. Another","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/J","interactive":false,"timeLimit":3000,"tests":[{"input":"6 6\n1 2 3 4 5 6\n2 4\n1 1 2 4 5\n2 4\n2 1\n1 1 3 4 6\n2 1\n","output":"5 6 -1\n5 3 1\n2 6 -1\n2 6 4\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"JAnother"}}}
 
-use algo_lib::collections::treap::treap_map::TreapSet;
+use algo_lib::collections::slice_ext::permutation::Permutation;
+use algo_lib::collections::treap::pure_payload::PurePayload;
+use algo_lib::collections::treap::Tree;
+use algo_lib::collections::vec_ext::gen::VecGen;
+use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::TaskType;
-
 use algo_lib::misc::test_type::TestType;
+use std::iter::repeat;
 
 type PreCalc = ();
 
 fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut PreCalc) {
     let n = input.read_size();
+    let q = input.read_size();
+    let p = input.read_size_vec(n).dec();
 
-    let mut set = TreapSet::new();
+    let mut treap = Tree::new();
+    let nodes = Vec::gen(n, |i, _| treap.add_back(PurePayload(p[i])));
+    let pp = p.inv();
 
-    let mut delta = None;
-    for _ in 0..n {
-        match input.read_char() {
-            b'+' => {
-                let i = input.read_long();
-                if let Some(delta) = delta {
-                    set.insert((i + delta + 1000000000) % 1000000000);
-                } else {
-                    set.insert(i);
-                }
-                delta = None;
+    for _ in 0..q {
+        let command = input.read_size();
+        match command {
+            1 => {
+                let l1 = input.read_size() - 1;
+                let r1 = input.read_size();
+                let l2 = input.read_size() - 1;
+                let r2 = input.read_size();
+                let right = treap.range_index(l2..r2).detach();
+                let pos_left = treap.range_index(l1..r1);
+                let left = pos_left.detach();
+                pos_left.push_back(right);
+                treap
+                    .range_index(..l2 - (r1 - l1) + (r2 - l2))
+                    .push_back(left);
             }
-            b'?' => {
-                let i = input.read_long();
-                let res = set.ceil(&i);
-                if let Some(&i) = res {
-                    delta = Some(i);
-                } else {
-                    delta = Some(-1);
-                }
-                out.print_line(res);
+            2 => {
+                let x = input.read_size() - 1;
+                let pos = treap.index_ref(&nodes[pp[x]]);
+                out.print_line_iter(
+                    treap
+                        .range_index(pos + 1..)
+                        .iter()
+                        .map(|node| Some(node.0 + 1))
+                        .take(3)
+                        .chain(repeat(None))
+                        .take(3),
+                );
             }
             _ => unreachable!(),
         }
@@ -77,10 +92,8 @@ mod tester {
 #![allow(unused_imports)]
 
 use crate::{run, TASK_TYPE};
-use algo_lib::collections::slice_ext::bounds::Bounds;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
-use algo_lib::misc::random::random;
 use tester::classic::default_checker;
 use tester::interactive::std_interactor;
 use tester::test_set::GeneratedTestSet;
@@ -106,49 +119,10 @@ impl GeneratedTestSet for StressTest {
     }
 
     fn input(&self, test: &Self::TestId, out: &mut Output) {
-        let n = 3;
-        out.print_line(n);
-        for _ in 0..n {
-            if random().next(2) == 0 {
-                out.print_line(('+', random().next(1000000001)));
-            } else {
-                out.print_line(('?', random().next(1000000001)));
-            }
-        }
     }
 
     fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-        let n = input.read_size();
-
-        let mut set = Vec::new();
-        let mut delta = None;
-        for _ in 0..n {
-            match input.read_char() {
-                b'+' => {
-                    let i = input.read_long();
-                    if let Some(delta) = delta {
-                        set.push((i + delta + 1000000000) % 1000000000);
-                    } else {
-                        set.push(i);
-                    }
-                    delta = None;
-                }
-                b'?' => {
-                    let i = input.read_long();
-                    set.sort();
-                    set.dedup();
-                    let res = set.get(set.lower_bound(&i));
-                    if let Some(&i) = res {
-                        delta = Some(i);
-                    } else {
-                        delta = Some(-1);
-                    }
-                    out.print_line(res);
-                }
-                _ => unreachable!(),
-            }
-        }
-        true
+        false
     }
 }
 
@@ -161,7 +135,8 @@ impl GeneratedTestSet for MaxTest {
         1..=1
     }
 
-    fn input(&self, test: &Self::TestId, out: &mut Output) {}
+    fn input(&self, test: &Self::TestId, out: &mut Output) {
+    }
 
     fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
         false
@@ -169,8 +144,8 @@ impl GeneratedTestSet for MaxTest {
 }
 
 pub(crate) fn run_tests() -> bool {
-    let path = "./a_next";
-    let tl = 1000;
+    let path = "./j_another";
+    let tl = 3000;
     let tester = match TASK_TYPE {
         crate::TaskType::Interactive => {
             Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)
@@ -188,6 +163,6 @@ pub(crate) fn run_tests() -> bool {
 }
 }
 #[test]
-fn a_next() {
+fn j_another() {
     assert!(tester::run_tests());
 }

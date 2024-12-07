@@ -1,44 +1,66 @@
-//{"name":"A. Next","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/A","interactive":false,"timeLimit":1000,"tests":[{"input":"6\n+ 1\n+ 3\n+ 3\n? 2\n+ 1\n? 4\n","output":"3\n4\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"ANext"}}}
+//{"name":"M. Cup Trick","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/M","interactive":false,"timeLimit":3000,"tests":[{"input":"2 1\n2 1\n","output":"2 1\n"},{"input":"3 2\n1 2\n1 1\n","output":"2 1 3\n"},{"input":"3 3\n1 3\n2 3\n1 3\n","output":"-1\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"MCupTrick"}}}
 
-use algo_lib::collections::treap::treap_map::TreapSet;
+use algo_lib::collections::bit_set::BitSet;
+use algo_lib::collections::treap::pure_payload::PurePayload;
+use algo_lib::collections::treap::Tree;
+// use algo_lib::collections::tree::Tree;
+use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::TaskType;
 
 use algo_lib::misc::test_type::TestType;
+use algo_lib::misc::time_tracker::TimeTracker;
 
 type PreCalc = ();
 
 fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut PreCalc) {
+    let mut timer = TimeTracker::new();
     let n = input.read_size();
+    let m = input.read_size();
+    let swaps = input.read_size_pair_vec(m).dec();
 
-    let mut set = TreapSet::new();
-
-    let mut delta = None;
-    for _ in 0..n {
-        match input.read_char() {
-            b'+' => {
-                let i = input.read_long();
-                if let Some(delta) = delta {
-                    set.insert((i + delta + 1000000000) % 1000000000);
-                } else {
-                    set.insert(i);
+    timer.milestone("read");
+    let mut not_seen = BitSet::new(n);
+    not_seen.fill(true);
+    let mut treap = Tree::gen(n, |i| PurePayload((None, i)));
+    // let mut treap = Treap::gen_sized(n, |i| PurePayload((None, i)));
+    timer.milestone("init");
+    for &(y, x) in &swaps {
+        let node = treap.range_index(x..=x);
+        match node.payload().unwrap().0 {
+            (Some(id), _) => {
+                if id != y {
+                    out.print_line(-1);
+                    return;
                 }
-                delta = None;
             }
-            b'?' => {
-                let i = input.read_long();
-                let res = set.ceil(&i);
-                if let Some(&i) = res {
-                    delta = Some(i);
-                } else {
-                    delta = Some(-1);
+            (None, id) => {
+                if !not_seen[y] {
+                    out.print_line(-1);
+                    return;
                 }
-                out.print_line(res);
+                not_seen.unset(y);
+                node.push((Some(y), id));
             }
-            _ => unreachable!(),
+        }
+        let mid = node.detach();
+        treap.push_front(mid);
+    }
+    timer.milestone("solve");
+    let mut iter = not_seen.iter();
+    let mut ans = vec![None; n];
+    for &PurePayload((id, index)) in treap.iter() {
+        ans[index] = id;
+    }
+    for i in 0..n {
+        if ans[i].is_none() {
+            ans[i] = Some(iter.next().unwrap());
         }
     }
+    timer.milestone("ans");
+    out.print_line_iter(ans.into_iter().map(|x| x.unwrap() + 1));
+    timer.milestone("print");
 }
 
 pub static TEST_TYPE: TestType = TestType::Single;
@@ -77,7 +99,6 @@ mod tester {
 #![allow(unused_imports)]
 
 use crate::{run, TASK_TYPE};
-use algo_lib::collections::slice_ext::bounds::Bounds;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::random::random;
@@ -105,50 +126,10 @@ impl GeneratedTestSet for StressTest {
         1..
     }
 
-    fn input(&self, test: &Self::TestId, out: &mut Output) {
-        let n = 3;
-        out.print_line(n);
-        for _ in 0..n {
-            if random().next(2) == 0 {
-                out.print_line(('+', random().next(1000000001)));
-            } else {
-                out.print_line(('?', random().next(1000000001)));
-            }
-        }
-    }
+    fn input(&self, test: &Self::TestId, out: &mut Output) {}
 
     fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-        let n = input.read_size();
-
-        let mut set = Vec::new();
-        let mut delta = None;
-        for _ in 0..n {
-            match input.read_char() {
-                b'+' => {
-                    let i = input.read_long();
-                    if let Some(delta) = delta {
-                        set.push((i + delta + 1000000000) % 1000000000);
-                    } else {
-                        set.push(i);
-                    }
-                    delta = None;
-                }
-                b'?' => {
-                    let i = input.read_long();
-                    set.sort();
-                    set.dedup();
-                    let res = set.get(set.lower_bound(&i));
-                    if let Some(&i) = res {
-                        delta = Some(i);
-                    } else {
-                        delta = Some(-1);
-                    }
-                    out.print_line(res);
-                }
-                _ => unreachable!(),
-            }
-        }
-        true
+        false
     }
 }
 
@@ -161,7 +142,12 @@ impl GeneratedTestSet for MaxTest {
         1..=1
     }
 
-    fn input(&self, test: &Self::TestId, out: &mut Output) {}
+    fn input(&self, test: &Self::TestId, out: &mut Output) {
+        out.print_line((1000000, 1000000));
+        for i in 1..=1000000 {
+            out.print_line((i, random().next_bounds(i, 1000000)));
+        }
+    }
 
     fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
         false
@@ -169,8 +155,8 @@ impl GeneratedTestSet for MaxTest {
 }
 
 pub(crate) fn run_tests() -> bool {
-    let path = "./a_next";
-    let tl = 1000;
+    let path = "./m_cup_trick";
+    let tl = 3000;
     let tester = match TASK_TYPE {
         crate::TaskType::Interactive => {
             Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)
@@ -182,12 +168,12 @@ pub(crate) fn run_tests() -> bool {
         }
     };
     let passed = tester.test_samples();
-    // tester.test_generated("Max test", true, MaxTest);
+    tester.test_generated("Max test", true, MaxTest);
     // tester.test_generated("Stress test", false, StressTest);
     passed
 }
 }
 #[test]
-fn a_next() {
+fn m_cup_trick() {
     assert!(tester::run_tests());
 }

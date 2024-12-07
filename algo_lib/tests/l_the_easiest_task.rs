@@ -1,8 +1,12 @@
-//{"name":"A. Next","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/A","interactive":false,"timeLimit":1000,"tests":[{"input":"6\n+ 1\n+ 3\n+ 3\n? 2\n+ 1\n? 4\n","output":"3\n4\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"ANext"}}}
+//{"name":"L. The easiest task","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/L","interactive":false,"timeLimit":2000,"tests":[{"input":"3 2\n3 1 2 3\n3 1 2 4\n0\n1 2 2\n2 3 3\n","output":"1 1\n3 1 2 2\n2 3 4\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"LTheEasiestTask"}}}
 
-use algo_lib::collections::treap::treap_map::TreapSet;
+use algo_lib::collections::default_map::default_tree_map::DefaultTreeMap;
+use algo_lib::collections::treap::multi_payload::MultiPayload;
+use algo_lib::collections::treap::Tree;
+use algo_lib::collections::vec_ext::gen::VecGen;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
+use algo_lib::misc::extensions::replace_with::ReplaceWith;
 use algo_lib::misc::test_type::TaskType;
 
 use algo_lib::misc::test_type::TestType;
@@ -11,33 +15,38 @@ type PreCalc = ();
 
 fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut PreCalc) {
     let n = input.read_size();
-
-    let mut set = TreapSet::new();
-
-    let mut delta = None;
-    for _ in 0..n {
-        match input.read_char() {
-            b'+' => {
-                let i = input.read_long();
-                if let Some(delta) = delta {
-                    set.insert((i + delta + 1000000000) % 1000000000);
-                } else {
-                    set.insert(i);
-                }
-                delta = None;
-            }
-            b'?' => {
-                let i = input.read_long();
-                let res = set.ceil(&i);
-                if let Some(&i) = res {
-                    delta = Some(i);
-                } else {
-                    delta = Some(-1);
-                }
-                out.print_line(res);
-            }
-            _ => unreachable!(),
+    let q = input.read_size();
+    let mut treaps = Vec::gen(n, |_, _| {
+        let k = input.read_size();
+        let s = input.read_size_vec(k);
+        let mut map = DefaultTreeMap::<_, usize>::new();
+        for i in s {
+            map[i] += 1;
         }
+        let mut treap = Tree::new();
+        for (k, v) in map {
+            treap.add_back(MultiPayload::new_with_size(k, (), v));
+        }
+        treap
+    });
+
+    for _ in 0..q {
+        let x = input.read_size() - 1;
+        let y = input.read_size() - 1;
+        let k = input.read_size();
+
+        let part = treaps[x].range(&k..).detach();
+        treaps[y].replace_with(|t| Tree::union(t, part));
+    }
+
+    for mut treap in treaps {
+        let mut cur = Vec::new();
+        for node in treap.iter() {
+            let key = node.key;
+            let value = node.self_size;
+            cur.resize(cur.len() + value, key);
+        }
+        out.print_line((cur.len(), cur));
     }
 }
 
@@ -77,10 +86,8 @@ mod tester {
 #![allow(unused_imports)]
 
 use crate::{run, TASK_TYPE};
-use algo_lib::collections::slice_ext::bounds::Bounds;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
-use algo_lib::misc::random::random;
 use tester::classic::default_checker;
 use tester::interactive::std_interactor;
 use tester::test_set::GeneratedTestSet;
@@ -106,49 +113,10 @@ impl GeneratedTestSet for StressTest {
     }
 
     fn input(&self, test: &Self::TestId, out: &mut Output) {
-        let n = 3;
-        out.print_line(n);
-        for _ in 0..n {
-            if random().next(2) == 0 {
-                out.print_line(('+', random().next(1000000001)));
-            } else {
-                out.print_line(('?', random().next(1000000001)));
-            }
-        }
     }
 
     fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-        let n = input.read_size();
-
-        let mut set = Vec::new();
-        let mut delta = None;
-        for _ in 0..n {
-            match input.read_char() {
-                b'+' => {
-                    let i = input.read_long();
-                    if let Some(delta) = delta {
-                        set.push((i + delta + 1000000000) % 1000000000);
-                    } else {
-                        set.push(i);
-                    }
-                    delta = None;
-                }
-                b'?' => {
-                    let i = input.read_long();
-                    set.sort();
-                    set.dedup();
-                    let res = set.get(set.lower_bound(&i));
-                    if let Some(&i) = res {
-                        delta = Some(i);
-                    } else {
-                        delta = Some(-1);
-                    }
-                    out.print_line(res);
-                }
-                _ => unreachable!(),
-            }
-        }
-        true
+        false
     }
 }
 
@@ -161,7 +129,8 @@ impl GeneratedTestSet for MaxTest {
         1..=1
     }
 
-    fn input(&self, test: &Self::TestId, out: &mut Output) {}
+    fn input(&self, test: &Self::TestId, out: &mut Output) {
+    }
 
     fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
         false
@@ -169,8 +138,8 @@ impl GeneratedTestSet for MaxTest {
 }
 
 pub(crate) fn run_tests() -> bool {
-    let path = "./a_next";
-    let tl = 1000;
+    let path = "./l_the_easiest_task";
+    let tl = 2000;
     let tester = match TASK_TYPE {
         crate::TaskType::Interactive => {
             Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)
@@ -188,6 +157,6 @@ pub(crate) fn run_tests() -> bool {
 }
 }
 #[test]
-fn a_next() {
+fn l_the_easiest_task() {
     assert!(tester::run_tests());
 }
