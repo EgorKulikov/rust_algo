@@ -12,6 +12,7 @@ use std::collections::Bound;
 use std::marker::{PhantomData, PhantomPinned};
 use std::mem::{forget, replace, swap, take, MaybeUninit};
 use std::ops::{Deref, DerefMut, RangeBounds};
+use std::ptr::NonNull;
 
 struct Content<P> {
     payload: P,
@@ -134,7 +135,7 @@ impl<P: Payload> Node<P> {
         assert_eq!(self.left.size, 0);
         if left.size != 0 {
             self.left = left;
-            self.left.deref_mut().parent = NodeLink { link: self };
+            self.left.deref_mut().parent = NodeLink::new_ref(self);
         }
         self.update();
     }
@@ -143,7 +144,7 @@ impl<P: Payload> Node<P> {
         assert_eq!(self.right.size, 0);
         if right.size != 0 {
             self.right = right;
-            self.right.deref_mut().parent = NodeLink { link: self };
+            self.right.deref_mut().parent = NodeLink::new_ref(self);
         }
         self.update();
     }
@@ -177,7 +178,7 @@ impl<P: Payload> Node<P> {
         if from == to {
             (NodeLink::default(), f)
         } else {
-            let mid = random().next_bounds(from, to - 1);
+            let mid = random().gen_range(from..to);
             let mut node = Node::new(f(mid));
             let (left, f) = Self::build(f, from, mid);
             let (right, f) = Self::build(f, mid + 1, to);
@@ -197,7 +198,7 @@ impl<P: Payload> Node<P> {
     fn refs(&mut self, res: &mut Vec<NodeId<P>>) {
         if self.size != 0 {
             self.left.refs(res);
-            res.push(NodeId(NodeLink { link: self }));
+            res.push(NodeId(NodeLink::new_ref(self)));
             self.right.refs(res);
         }
     }
@@ -277,17 +278,23 @@ impl<P> DerefMut for Node<P> {
 pub struct NodeId<P>(NodeLink<Node<P>>);
 
 struct NodeLink<P> {
-    link: *mut P,
+    link: NonNull<P>,
 }
 
 impl<P> NodeLink<Node<P>> {
     fn new(node: Node<P>) -> Self {
         let mut pinned = Box::pin(node);
         let res = NodeLink {
-            link: unsafe { pinned.as_mut().get_unchecked_mut() },
+            link: unsafe { NonNull::from(pinned.as_mut().get_unchecked_mut()) },
         };
         forget(pinned);
         res
+    }
+
+    fn new_ref(node: &Node<P>) -> Self {
+        NodeLink {
+            link: NonNull::from(node),
+        }
     }
 
     fn into_payload(mut self) -> P {
@@ -484,20 +491,22 @@ impl<P> Deref for NodeLink<P> {
     type Target = P;
 
     fn deref(&self) -> &Self::Target {
-        unsafe { &*self.link }
+        unsafe { self.link.as_ref() }
     }
 }
 
 impl<P> DerefMut for NodeLink<P> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        unsafe { &mut *self.link }
+        unsafe { self.link.as_mut() }
     }
 }
 
 impl<P> Default for NodeLink<Node<P>> {
     fn default() -> Self {
         NodeLink {
-            link: &Node::NULL_NODE as *const Node<P> as *mut Node<P>,
+            link: unsafe {
+                NonNull::new_unchecked(&Node::NULL_NODE as *const Node<P> as *mut Node<P>)
+            },
         }
     }
 }

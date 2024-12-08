@@ -1,7 +1,8 @@
 use crate::collections::slice_ext::indices::Indices;
 use crate::numbers::num_traits::algebra::IntegerSemiRingWithSub;
+use crate::numbers::num_traits::ord::MinMax;
 use crate::numbers::num_traits::primitive::Primitive;
-use std::ops::Rem;
+use std::ops::{RangeBounds, Rem};
 use std::time::SystemTime;
 
 const NN: usize = 312;
@@ -32,7 +33,7 @@ impl Random {
         res
     }
 
-    pub fn gen(&mut self) -> u64 {
+    fn gen_impl(&mut self) -> u64 {
         if self.index == NN {
             for i in 0..(NN - MM) {
                 let x = (self.mt[i] & UM) | (self.mt[i + 1] & LM);
@@ -55,18 +56,50 @@ impl Random {
         x
     }
 
-    pub fn next<T: Rem<Output = T> + Primitive<u64>>(&mut self, n: T) -> T
+    pub fn gen<T>(&mut self) -> T
     where
         u64: Primitive<T>,
     {
-        (self.gen() % n.to()).to()
+        self.gen_impl().to()
     }
 
-    pub fn next_bounds<T: IntegerSemiRingWithSub + Primitive<u64>>(&mut self, f: T, t: T) -> T
+    pub fn gen_u128(&mut self) -> u128 {
+        (self.gen_impl() as u128) << 64 | self.gen_impl() as u128
+    }
+
+    pub fn gen_i128(&mut self) -> i128 {
+        self.gen_u128() as i128
+    }
+
+    pub fn gen_bound<T: Rem<Output = T> + Primitive<u64>>(&mut self, n: T) -> T
     where
         u64: Primitive<T>,
     {
-        f + self.next(t - f + T::one())
+        (self.gen_impl() % n.to()).to()
+    }
+
+    pub fn gen_range<T: IntegerSemiRingWithSub + Primitive<u64> + MinMax>(
+        &mut self,
+        range: impl RangeBounds<T>,
+    ) -> T
+    where
+        u64: Primitive<T>,
+    {
+        let f = match range.start_bound() {
+            std::ops::Bound::Included(&s) => s,
+            std::ops::Bound::Excluded(&s) => s + T::one(),
+            std::ops::Bound::Unbounded => T::min_val(),
+        };
+        let t = match range.end_bound() {
+            std::ops::Bound::Included(&e) => e,
+            std::ops::Bound::Excluded(&e) => e - T::one(),
+            std::ops::Bound::Unbounded => T::max_val(),
+        };
+        if f == T::min_val() && t == T::max_val() {
+            self.gen()
+        } else {
+            f + self.gen_bound(t - f + T::one())
+        }
     }
 }
 
@@ -90,7 +123,7 @@ pub trait Shuffle {
 impl<T> Shuffle for [T] {
     fn shuffle(&mut self) {
         for i in self.indices() {
-            let at = random().next(i + 1);
+            let at = random().gen_bound(i + 1);
             self.swap(i, at);
         }
     }

@@ -86,107 +86,111 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
 }
 
 mod tester {
-#![allow(unused_variables)]
-#![allow(unused_mut)]
-#![allow(dead_code)]
-#![allow(unused_imports)]
+    #![allow(unused_variables)]
+    #![allow(unused_mut)]
+    #![allow(dead_code)]
+    #![allow(unused_imports)]
 
-use crate::{run, TASK_TYPE};
-use algo_lib::io::input::Input;
-use algo_lib::io::output::Output;
-use algo_lib::misc::random::random;
-use tester::classic::default_checker;
-use tester::interactive::std_interactor;
-use tester::test_set::GeneratedTestSet;
-use tester::Tester;
+    use crate::{run, TASK_TYPE};
+    use algo_lib::io::input::Input;
+    use algo_lib::io::output::Output;
+    use algo_lib::misc::random::random;
+    use tester::classic::default_checker;
+    use tester::interactive::std_interactor;
+    use tester::test_set::GeneratedTestSet;
+    use tester::Tester;
 
-const PRINT_LIMIT: usize = 1000;
+    const PRINT_LIMIT: usize = 1000;
 
-fn interact(mut sol_input: Input, mut sol_output: Output, mut input: Input) -> Result<(), String> {
-    Ok(())
-}
-
-fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
-    Ok(())
-}
-
-struct StressTest;
-
-impl GeneratedTestSet for StressTest {
-    type TestId = usize;
-
-    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
-        1..
+    fn interact(
+        mut sol_input: Input,
+        mut sol_output: Output,
+        mut input: Input,
+    ) -> Result<(), String> {
+        Ok(())
     }
 
-    fn input(&self, test: &Self::TestId, out: &mut Output) {
-        let n = random().next_bounds(1, 5);
-        let mut a = Vec::with_capacity(n);
-        for _ in 0..n {
-            a.push(random().next_bounds(-5, 5));
+    fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
+        Ok(())
+    }
+
+    struct StressTest;
+
+    impl GeneratedTestSet for StressTest {
+        type TestId = usize;
+
+        fn tests(&self) -> impl Iterator<Item = Self::TestId> {
+            1..
         }
-        out.print_line(n);
-        out.print_line(a);
-    }
 
-    fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-        let n = input.read();
-        let a = input.read_int_vec(n);
-        let mut ans = 0;
-        for i in 0..n {
-            for j in 0..n {
-                if i == j {
-                    continue;
-                }
-                for k in 0..n {
-                    if i == k || j == k {
+        fn input(&self, test: &Self::TestId, out: &mut Output) {
+            let n = random().gen_range(1..=5);
+            let mut a = Vec::with_capacity(n);
+            for _ in 0..n {
+                a.push(random().gen_range(-5..=5));
+            }
+            out.print_line(n);
+            out.print_line(a);
+        }
+
+        fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
+            let n = input.read();
+            let a = input.read_int_vec(n);
+            let mut ans = 0;
+            for i in 0..n {
+                for j in 0..n {
+                    if i == j {
                         continue;
                     }
-                    if a[i] + a[j] == a[k] {
-                        ans += 1;
+                    for k in 0..n {
+                        if i == k || j == k {
+                            continue;
+                        }
+                        if a[i] + a[j] == a[k] {
+                            ans += 1;
+                        }
                     }
                 }
             }
+            out.print_line(ans);
+            true
         }
-        out.print_line(ans);
-        true
-    }
-}
-
-struct MaxTest;
-
-impl GeneratedTestSet for MaxTest {
-    type TestId = usize;
-
-    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
-        1..=1
     }
 
-    fn input(&self, test: &Self::TestId, out: &mut Output) {}
+    struct MaxTest;
 
-    fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-        false
+    impl GeneratedTestSet for MaxTest {
+        type TestId = usize;
+
+        fn tests(&self) -> impl Iterator<Item = Self::TestId> {
+            1..=1
+        }
+
+        fn input(&self, test: &Self::TestId, out: &mut Output) {}
+
+        fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
+            false
+        }
     }
-}
 
-pub(crate) fn run_tests() -> bool {
-    let path = "./a_bproblem";
-    let tl = 4000;
-    let tester = match TASK_TYPE {
-        crate::TaskType::Interactive => {
-            Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)
-            // Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, interact)
-        }
-        crate::TaskType::Classic => {
-            Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker)
-            // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
-        }
-    };
-    let passed = tester.test_samples();
-    // tester.test_generated("Max test", true, MaxTest);
-    tester.test_generated("Stress test", false, StressTest);
-    passed
-}
+    pub(crate) fn run_tests() -> bool {
+        let path = "./a_bproblem";
+        let tl = 4000;
+        let tester = match TASK_TYPE {
+            crate::TaskType::Interactive => {
+                Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)
+                // Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, interact)
+            }
+            crate::TaskType::Classic => {
+                Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker)
+                // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
+            }
+        };
+        let passed = tester.test_samples();
+        // tester.test_generated("Max test", true, MaxTest);
+        tester.test_generated("Stress test", false, StressTest);
+        passed
+    }
 }
 #[test]
 fn a_bproblem() {

@@ -152,162 +152,166 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
 }
 
 mod tester {
-#![allow(unused_variables)]
-#![allow(unused_mut)]
-#![allow(dead_code)]
+    #![allow(unused_variables)]
+    #![allow(unused_mut)]
+    #![allow(dead_code)]
 
-use crate::{run, TASK_TYPE};
-use algo_lib::collections::iter_ext::find_count::IterFindCount;
-use algo_lib::collections::min_max::MinimMaxim;
-use algo_lib::collections::vec_ext::inc_dec::IncDec;
-use algo_lib::io::input::Input;
-use algo_lib::io::output::Output;
-use algo_lib::misc::random::random;
-use algo_lib::numbers::num_traits::bit_ops::BitOps;
-use algo_lib::string::str::{Str, StrReader};
-use tester::interactive::std_interactor;
-use tester::test_set::GeneratedTestSet;
-use tester::Tester;
+    use crate::{run, TASK_TYPE};
+    use algo_lib::collections::iter_ext::find_count::IterFindCount;
+    use algo_lib::collections::min_max::MinimMaxim;
+    use algo_lib::collections::vec_ext::inc_dec::IncDec;
+    use algo_lib::io::input::Input;
+    use algo_lib::io::output::Output;
+    use algo_lib::misc::random::random;
+    use algo_lib::numbers::num_traits::bit_ops::BitOps;
+    use algo_lib::string::str::{Str, StrReader};
+    use tester::interactive::std_interactor;
+    use tester::test_set::GeneratedTestSet;
+    use tester::Tester;
 
-const PRINT_LIMIT: usize = 1000;
+    const PRINT_LIMIT: usize = 1000;
 
-fn interact(mut sol_input: Input, mut sol_output: Output, mut input: Input) -> Result<(), String> {
-    Ok(())
-}
-
-fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
-    let n = input.read_size();
-    let m = input.read_size();
-    let edges = input.read_size_pair_vec(m).dec();
-    let score = |mask: Str<'static>| -> Vec<i32> {
-        let mut res = Vec::with_capacity(m);
-        for &(u, v) in edges.iter().rev() {
-            if mask[u] == mask[v] {
-                res.push(0);
-            } else {
-                res.push(1);
-            }
-        }
-        res
-    };
-    let mut output = output.read_str();
-    if output.len() != 2 * n || output.iter().count_eq(&b'1') != n {
-        return Err("Invalid output".to_string());
-    }
-    if let Some(mut expected) = expected {
-        let expected = expected.read_str();
-        let expected_score = score(expected);
-        let output_score = score(output);
-        if output_score < expected_score {
-            return Err("Output is worse than expected".to_string());
-        }
-        if output_score > expected_score {
-            return Err("Output is better than expected".to_string());
-        }
-    }
-    Ok(())
-}
-
-struct StressTest;
-
-impl GeneratedTestSet for StressTest {
-    type TestId = usize;
-
-    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
-        1..
+    fn interact(
+        mut sol_input: Input,
+        mut sol_output: Output,
+        mut input: Input,
+    ) -> Result<(), String> {
+        Ok(())
     }
 
-    fn input(&self, test: &Self::TestId, out: &mut Output) {
-        let n = random().next_bounds(1, 3);
-        let m = random().next_bounds(1, 6);
-        out.print_line((n, m));
-        for _ in 0..m {
-            loop {
-                let first = random().next_bounds(1, 2 * n);
-                let second = random().next_bounds(1, 2 * n);
-                if first != second {
-                    out.print_line((first, second));
-                    break;
-                }
-            }
-        }
-    }
-
-    fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
+    fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
         let n = input.read_size();
         let m = input.read_size();
         let edges = input.read_size_pair_vec(m).dec();
-        let mut best_score = None;
-        for i in usize::iter_all(2 * n) {
-            if i.count_ones() != n as u32 {
-                continue;
-            }
-            let mut score = 0;
-            for j in 0..m {
-                let (u, v) = edges[j];
-                if i.is_set(u) == i.is_set(v) {
-                    score += 1 << j;
+        let score = |mask: Str<'static>| -> Vec<i32> {
+            let mut res = Vec::with_capacity(m);
+            for &(u, v) in edges.iter().rev() {
+                if mask[u] == mask[v] {
+                    res.push(0);
+                } else {
+                    res.push(1);
                 }
             }
-            best_score.minim((score, i));
+            res
+        };
+        let mut output = output.read_str();
+        if output.len() != 2 * n || output.iter().count_eq(&b'1') != n {
+            return Err("Invalid output".to_string());
         }
-        let mut at = best_score.unwrap().1;
-        for i in 0..2 * n {
-            out.print(at.is_set(i) as usize);
+        if let Some(mut expected) = expected {
+            let expected = expected.read_str();
+            let expected_score = score(expected);
+            let output_score = score(output);
+            if output_score < expected_score {
+                return Err("Output is worse than expected".to_string());
+            }
+            if output_score > expected_score {
+                return Err("Output is better than expected".to_string());
+            }
         }
-        out.print_line(());
-        true
-    }
-}
-
-struct MaxTest;
-
-impl GeneratedTestSet for MaxTest {
-    type TestId = usize;
-
-    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
-        1..=1
+        Ok(())
     }
 
-    fn input(&self, test: &Self::TestId, out: &mut Output) {
-        let n = 5000;
-        let m = 1000000;
-        out.print_line((n, m));
-        for _ in 0..m {
-            loop {
-                let first = random().next_bounds(1, 2 * n);
-                let second = random().next_bounds(1, 2 * n);
-                if first != second {
-                    out.print_line((first, second));
-                    break;
+    struct StressTest;
+
+    impl GeneratedTestSet for StressTest {
+        type TestId = usize;
+
+        fn tests(&self) -> impl Iterator<Item = Self::TestId> {
+            1..
+        }
+
+        fn input(&self, test: &Self::TestId, out: &mut Output) {
+            let n = random().gen_range(1..=3);
+            let m = random().gen_range(1..=6);
+            out.print_line((n, m));
+            for _ in 0..m {
+                loop {
+                    let first = random().gen_range(1..=2 * n);
+                    let second = random().gen_range(1..=2 * n);
+                    if first != second {
+                        out.print_line((first, second));
+                        break;
+                    }
                 }
             }
         }
+
+        fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
+            let n = input.read_size();
+            let m = input.read_size();
+            let edges = input.read_size_pair_vec(m).dec();
+            let mut best_score = None;
+            for i in usize::iter_all(2 * n) {
+                if i.count_ones() != n as u32 {
+                    continue;
+                }
+                let mut score = 0;
+                for j in 0..m {
+                    let (u, v) = edges[j];
+                    if i.is_set(u) == i.is_set(v) {
+                        score += 1 << j;
+                    }
+                }
+                best_score.minim((score, i));
+            }
+            let mut at = best_score.unwrap().1;
+            for i in 0..2 * n {
+                out.print(at.is_set(i) as usize);
+            }
+            out.print_line(());
+            true
+        }
     }
 
-    fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-        false
-    }
-}
+    struct MaxTest;
 
-pub(crate) fn run_tests() -> bool {
-    let path = "./ucucp_11_o";
-    let tl = 3000;
-    let tester = match TASK_TYPE {
-        crate::TaskType::Interactive => {
-            Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)
-            //Tester::new_interactive(time_limit, PRINT_LIMIT, path.to_string(), run, interact)
+    impl GeneratedTestSet for MaxTest {
+        type TestId = usize;
+
+        fn tests(&self) -> impl Iterator<Item = Self::TestId> {
+            1..=1
         }
-        crate::TaskType::Classic => {
-            // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker)
-            Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
+
+        fn input(&self, test: &Self::TestId, out: &mut Output) {
+            let n = 5000;
+            let m = 1000000;
+            out.print_line((n, m));
+            for _ in 0..m {
+                loop {
+                    let first = random().gen_range(1..=2 * n);
+                    let second = random().gen_range(1..=2 * n);
+                    if first != second {
+                        out.print_line((first, second));
+                        break;
+                    }
+                }
+            }
         }
-    };
-    let passed = tester.test_samples();
-    // tester.test_generated("Max test", true, MaxTest);
-    // tester.test_generated("Stress test", false, StressTest);
-    passed
-}
+
+        fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
+            false
+        }
+    }
+
+    pub(crate) fn run_tests() -> bool {
+        let path = "./ucucp_11_o";
+        let tl = 3000;
+        let tester = match TASK_TYPE {
+            crate::TaskType::Interactive => {
+                Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)
+                //Tester::new_interactive(time_limit, PRINT_LIMIT, path.to_string(), run, interact)
+            }
+            crate::TaskType::Classic => {
+                // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker)
+                Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
+            }
+        };
+        let passed = tester.test_samples();
+        // tester.test_generated("Max test", true, MaxTest);
+        // tester.test_generated("Stress test", false, StressTest);
+        passed
+    }
 }
 #[test]
 fn ucucp_11_o() {

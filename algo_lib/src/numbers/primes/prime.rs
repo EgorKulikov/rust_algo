@@ -24,7 +24,7 @@ pub fn is_prime(n: impl Primitive<i64>) -> bool {
     dynamic_value!(IsPrimeModule: i64 = n);
     type Mod = ModInt<i64, IsPrimeModule>;
     for _ in 0..20 {
-        let a = Mod::new(random().next(n as u64) as i64);
+        let a = Mod::new(random().gen_bound(n as u64) as i64);
         if a == Mod::zero() {
             continue;
         }
@@ -107,8 +107,8 @@ pub fn find_divisor(n: i64) -> i64 {
             loop {
                 let res = brent(
                     n,
-                    random().next_bounds(2, n as u64 - 1) as i64,
-                    random().next_bounds(1, n as u64 - 1) as i64,
+                    random().gen_range(2..n),
+                    random().gen_range(1..n),
                 );
                 if res != n {
                     return res;

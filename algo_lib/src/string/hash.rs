@@ -29,9 +29,9 @@ impl HashBase {
             return;
         }
         HM::set_val(next_prime(
-            random().next_bounds(10i64.pow(18), 2 * 10i64.pow(18)),
+            random().gen_range(10i64.pow(18)..=2 * 10i64.pow(18)),
         ));
-        let multiplier = HashMod::new(random().next_bounds(4 * 10i64.pow(17), 5 * 10i64.pow(17)));
+        let multiplier = HashMod::new(random().gen_range(4 * 10i64.pow(17)..=5 * 10i64.pow(17)));
         let inv_multiplier = multiplier.inv().unwrap();
         HashBaseContainer::set_val(Self {
             multiplier,

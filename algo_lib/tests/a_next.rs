@@ -71,121 +71,125 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
 }
 
 mod tester {
-#![allow(unused_variables)]
-#![allow(unused_mut)]
-#![allow(dead_code)]
-#![allow(unused_imports)]
+    #![allow(unused_variables)]
+    #![allow(unused_mut)]
+    #![allow(dead_code)]
+    #![allow(unused_imports)]
 
-use crate::{run, TASK_TYPE};
-use algo_lib::collections::slice_ext::bounds::Bounds;
-use algo_lib::io::input::Input;
-use algo_lib::io::output::Output;
-use algo_lib::misc::random::random;
-use tester::classic::default_checker;
-use tester::interactive::std_interactor;
-use tester::test_set::GeneratedTestSet;
-use tester::Tester;
+    use crate::{run, TASK_TYPE};
+    use algo_lib::collections::slice_ext::bounds::Bounds;
+    use algo_lib::io::input::Input;
+    use algo_lib::io::output::Output;
+    use algo_lib::misc::random::random;
+    use tester::classic::default_checker;
+    use tester::interactive::std_interactor;
+    use tester::test_set::GeneratedTestSet;
+    use tester::Tester;
 
-const PRINT_LIMIT: usize = 1000;
+    const PRINT_LIMIT: usize = 1000;
 
-fn interact(mut sol_input: Input, mut sol_output: Output, mut input: Input) -> Result<(), String> {
-    Ok(())
-}
-
-fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
-    Ok(())
-}
-
-struct StressTest;
-
-impl GeneratedTestSet for StressTest {
-    type TestId = usize;
-
-    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
-        1..
+    fn interact(
+        mut sol_input: Input,
+        mut sol_output: Output,
+        mut input: Input,
+    ) -> Result<(), String> {
+        Ok(())
     }
 
-    fn input(&self, test: &Self::TestId, out: &mut Output) {
-        let n = 3;
-        out.print_line(n);
-        for _ in 0..n {
-            if random().next(2) == 0 {
-                out.print_line(('+', random().next(1000000001)));
-            } else {
-                out.print_line(('?', random().next(1000000001)));
+    fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
+        Ok(())
+    }
+
+    struct StressTest;
+
+    impl GeneratedTestSet for StressTest {
+        type TestId = usize;
+
+        fn tests(&self) -> impl Iterator<Item = Self::TestId> {
+            1..
+        }
+
+        fn input(&self, test: &Self::TestId, out: &mut Output) {
+            let n = 3;
+            out.print_line(n);
+            for _ in 0..n {
+                if random().gen_bound(2) == 0 {
+                    out.print_line(('+', random().gen_bound(1000000001)));
+                } else {
+                    out.print_line(('?', random().gen_bound(1000000001)));
+                }
             }
         }
-    }
 
-    fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-        let n = input.read_size();
+        fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
+            let n = input.read_size();
 
-        let mut set = Vec::new();
-        let mut delta = None;
-        for _ in 0..n {
-            match input.read_char() {
-                b'+' => {
-                    let i = input.read_long();
-                    if let Some(delta) = delta {
-                        set.push((i + delta + 1000000000) % 1000000000);
-                    } else {
-                        set.push(i);
+            let mut set = Vec::new();
+            let mut delta = None;
+            for _ in 0..n {
+                match input.read_char() {
+                    b'+' => {
+                        let i = input.read_long();
+                        if let Some(delta) = delta {
+                            set.push((i + delta + 1000000000) % 1000000000);
+                        } else {
+                            set.push(i);
+                        }
+                        delta = None;
                     }
-                    delta = None;
-                }
-                b'?' => {
-                    let i = input.read_long();
-                    set.sort();
-                    set.dedup();
-                    let res = set.get(set.lower_bound(&i));
-                    if let Some(&i) = res {
-                        delta = Some(i);
-                    } else {
-                        delta = Some(-1);
+                    b'?' => {
+                        let i = input.read_long();
+                        set.sort();
+                        set.dedup();
+                        let res = set.get(set.lower_bound(&i));
+                        if let Some(&i) = res {
+                            delta = Some(i);
+                        } else {
+                            delta = Some(-1);
+                        }
+                        out.print_line(res);
                     }
-                    out.print_line(res);
+                    _ => unreachable!(),
                 }
-                _ => unreachable!(),
             }
+            true
         }
-        true
-    }
-}
-
-struct MaxTest;
-
-impl GeneratedTestSet for MaxTest {
-    type TestId = usize;
-
-    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
-        1..=1
     }
 
-    fn input(&self, test: &Self::TestId, out: &mut Output) {}
+    struct MaxTest;
 
-    fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-        false
+    impl GeneratedTestSet for MaxTest {
+        type TestId = usize;
+
+        fn tests(&self) -> impl Iterator<Item = Self::TestId> {
+            1..=1
+        }
+
+        fn input(&self, test: &Self::TestId, out: &mut Output) {}
+
+        fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
+            false
+        }
     }
-}
 
-pub(crate) fn run_tests() -> bool {
-    let path = "./a_next";
-    let tl = 1000;
-    let tester = match TASK_TYPE {
-        crate::TaskType::Interactive => {
-            Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)
-            // Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, interact)
-        }
-        crate::TaskType::Classic => {
-            Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker)
-            // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
-        }
-    };
-    let passed = tester.test_samples();
-    // tester.test_generated("Max test", true, MaxTest);
-    // tester.test_generated("Stress test", false, StressTest);
-    passed
-}
+    pub(crate) fn run_tests() -> bool {
+        let path = "./a_next";
+        let tl = 1000;
+        let tester = match TASK_TYPE {
+            crate::TaskType::Interactive => {
+                Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)
+                // Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, interact)
+            }
+            crate::TaskType::Classic => {
+                Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker)
+                // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
+            }
+        };
+        let passed = tester.test_samples();
+        // tester.test_generated("Max test", true, MaxTest);
+        // tester.test_generated("Stress test", false, StressTest);
+        passed
+    }
 }
 #[test]
 fn a_next() {

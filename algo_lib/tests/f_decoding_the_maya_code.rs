@@ -144,24 +144,24 @@ mod tester {
         }
 
         fn input(&self, test: &Self::TestId, out: &mut Output) {
-            let n = random().next_bounds(1, 3);
+            let n = random().gen_range(1..=3);
             let q = 1;
             out.print_line((n, q));
             for _ in 0..n {
-                let len = random().next_bounds(1, 3);
+                let len = random().gen_range(1..=3);
                 for _ in 0..len {
-                    out.print(random().next_bounds(b'A', b'B'));
+                    out.print(random().gen_range(b'A'..=b'B'));
                 }
                 out.print_line(());
             }
             for i in 2..=n {
-                out.print_line((random().next_bounds(1, i - 1), i));
+                out.print_line((random().gen_range(1..i), i));
             }
             for _ in 0..q {
-                let len = random().next_bounds(1, 10);
-                out.print((random().next_bounds(1, n), ()));
+                let len = random().gen_range(1..=10);
+                out.print((random().gen_range(1..=n), ()));
                 for _ in 0..len {
-                    out.print(random().next_bounds(b'A', b'B'));
+                    out.print(random().gen_range(b'A'..=b'B'));
                 }
                 out.print_line(());
             }

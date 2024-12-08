@@ -201,15 +201,15 @@ mod tester {
         }
 
         fn input(&self, test: &Self::TestId, out: &mut Output) {
-            let n = random().next_bounds(2, 4);
-            let s = random().next_bounds(1, n);
+            let n = random().gen_range(2..=4);
+            let s = random().gen_range(1..=n);
             out.print_line(1);
             out.print_line((n, s));
             let mut dsu = DSU::new(n);
             for _ in 1..n {
                 loop {
-                    let u = random().next(n);
-                    let v = random().next(n);
+                    let u = random().gen_bound(n);
+                    let v = random().gen_bound(n);
                     if dsu.join(u, v) {
                         out.print_line((u + 1, v + 1));
                         break;

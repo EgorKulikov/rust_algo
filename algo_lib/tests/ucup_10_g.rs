@@ -325,12 +325,12 @@ mod tester {
             out.print_line(1);
             let n = 4;
             let m = 4;
-            out.print_line((n, m, random().next_bounds(1, m)));
+            out.print_line((n, m, random().gen_range(1..=m)));
             let mut occupied = Arr2d::new(5, 5, false);
             for _ in 0..n + m {
                 loop {
-                    let x = random().next_bounds(1, 5);
-                    let y = random().next_bounds(1, 5);
+                    let x = random().gen_range(1..=5);
+                    let y = random().gen_range(1..=5);
                     if !occupied[(x - 1, y - 1)] {
                         occupied[(x - 1, y - 1)] = true;
                         out.print_line((x, y));
