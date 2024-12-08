@@ -291,19 +291,10 @@ impl<P> NodeLink<Node<P>> {
     }
 
     fn into_payload(mut self) -> P {
-        replace(
-            self.deref_mut(),
-            Node {
-                priority: 0,
-                size: 0,
-                reversed: false,
-                content: None,
-                _phantom_pinned: PhantomPinned,
-            },
-        )
-        .content
-        .unwrap()
-        .payload
+        assert_eq!(self.left.size, 0);
+        assert_eq!(self.right.size, 0);
+        assert_eq!(self.parent.size, 0);
+        self.content.take().unwrap().payload
     }
 }
 
@@ -365,6 +356,7 @@ impl<P: Payload> NodeLink<Node<P>> {
     }
 
     fn raise(self, link: &NodeLink<Node<P>>) -> (Self, Self, Self) {
+        assert!(link.content.is_some());
         let mut directions = Vec::new();
         let expected_parent = link.push_from_up(&mut directions);
         assert!(expected_parent == self);
@@ -522,6 +514,12 @@ pub enum Tree<P> {
     },
 }
 
+impl<P: Payload> Default for Tree<P> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<P: Payload> Tree<P> {
     pub fn new() -> Self {
         Tree::Whole {
@@ -532,15 +530,7 @@ impl<P: Payload> Tree<P> {
     pub fn gen(n: usize, f: impl Fn(usize) -> P) -> Self {
         Self::gen_impl(n, f)
     }
-}
 
-impl<P: Payload> Default for Tree<P> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<P: Payload> Tree<P> {
     fn single(p: P) -> Self {
         Tree::Whole { root: Node::new(p) }
     }
@@ -551,7 +541,6 @@ impl<P: Payload> Tree<P> {
         }
     }
 
-    #[inline]
     fn into_node(mut self) -> NodeLink<Node<P>> {
         self.rebuild();
         match self {
@@ -560,7 +549,6 @@ impl<P: Payload> Tree<P> {
         }
     }
 
-    #[inline]
     fn as_node(&mut self) -> &mut NodeLink<Node<P>> {
         match self {
             Tree::Whole { root } => root,
@@ -731,6 +719,10 @@ impl<P: Payload> Tree<P> {
 
     pub fn raise(&mut self, node_ref: &NodeId<P>) -> &mut Self {
         self.do_split_three(|node| node.raise(&node_ref.0))
+    }
+
+    pub fn into_payload(self) -> P {
+        self.into_node().into_payload()
     }
 
     pub fn index_ref(&mut self, node_ref: &NodeId<P>) -> usize {
