@@ -536,7 +536,7 @@ impl<P: Payload> Tree<P> {
         }
     }
 
-    pub fn gen(n: usize, f: impl Fn(usize) -> P) -> Self {
+    pub fn gen(n: usize, f: impl FnMut(usize) -> P) -> Self {
         Self::gen_impl(n, f)
     }
 
@@ -544,7 +544,7 @@ impl<P: Payload> Tree<P> {
         Tree::Whole { root: Node::new(p) }
     }
 
-    fn gen_impl(n: usize, f: impl Fn(usize) -> P) -> Self {
+    fn gen_impl(n: usize, f: impl FnMut(usize) -> P) -> Self {
         Tree::Whole {
             root: Node::gen(n, f),
         }

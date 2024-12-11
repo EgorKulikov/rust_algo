@@ -71,6 +71,10 @@ impl Random {
         self.gen_u128() as i128
     }
 
+    pub fn gen_bool(&mut self) -> bool {
+        (self.gen_impl() & 1) == 1
+    }
+
     pub fn gen_bound<T: Rem<Output = T> + Primitive<u64>>(&mut self, n: T) -> T
     where
         u64: Primitive<T>,

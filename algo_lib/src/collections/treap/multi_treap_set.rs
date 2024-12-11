@@ -3,13 +3,22 @@ use crate::collections::treap::Tree;
 use std::iter::repeat;
 use std::ops::{Bound, RangeBounds};
 
-pub struct MultiTreapSet<T: Unpin> {
+pub struct MultiTreapSet<T> {
     root: Tree<MultiPayload<T>>,
 }
 
-impl<T: Ord + Unpin> MultiTreapSet<T> {
+impl<T: Ord> MultiTreapSet<T> {
     pub fn new() -> Self {
         Self { root: Tree::new() }
+    }
+
+    pub unsafe fn gen(n: usize, mut f: impl FnMut(usize) -> (T, usize)) -> Self {
+        Self {
+            root: Tree::gen(n, |i| {
+                let (key, qty) = f(i);
+                MultiPayload::new_with_size(key, (), qty)
+            }),
+        }
     }
 
     #[allow(clippy::len_without_is_empty)]
@@ -148,7 +157,7 @@ impl<T: Ord + Unpin> MultiTreapSet<T> {
     }
 }
 
-impl<T: Ord + Unpin> Default for MultiTreapSet<T> {
+impl<T: Ord> Default for MultiTreapSet<T> {
     fn default() -> Self {
         Self::new()
     }

@@ -1,13 +1,13 @@
 use crate::collections::treap::payload::{OrdPayload, Payload, Pushable};
 
-pub struct MultiPayload<T: Unpin, V: Unpin = ()> {
+pub struct MultiPayload<T, V = ()> {
     pub key: T,
     pub value: V,
     pub self_size: usize,
     pub total_size: usize,
 }
 
-impl<T: Unpin, V: Unpin> MultiPayload<T, V> {
+impl<T, V> MultiPayload<T, V> {
     pub fn new(key: T, value: V) -> Self {
         Self {
             key,
@@ -27,7 +27,7 @@ impl<T: Unpin, V: Unpin> MultiPayload<T, V> {
     }
 }
 
-impl<T: Unpin, V: Unpin> Payload for MultiPayload<T, V> {
+impl<T, V> Payload for MultiPayload<T, V> {
     const NEED_UPDATE: bool = true;
 
     #[inline]
@@ -37,14 +37,14 @@ impl<T: Unpin, V: Unpin> Payload for MultiPayload<T, V> {
     }
 }
 
-impl<T: Unpin, V: Unpin> Pushable<isize> for MultiPayload<T, V> {
+impl<T, V> Pushable<isize> for MultiPayload<T, V> {
     fn push(&mut self, delta: isize) {
         self.self_size = (self.self_size as isize + delta) as usize;
         self.total_size = (self.total_size as isize + delta) as usize;
     }
 }
 
-impl<T: Ord + Unpin, V: Eq + Unpin> OrdPayload for MultiPayload<T, V> {
+impl<T: Ord, V: Eq> OrdPayload for MultiPayload<T, V> {
     type Key = T;
 
     fn key(&self) -> &Self::Key {

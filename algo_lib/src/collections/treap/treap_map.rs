@@ -13,9 +13,9 @@ impl<T, V> MapPayload<T, V> {
     }
 }
 
-impl<T: Unpin, V: Unpin> Payload for MapPayload<T, V> {}
+impl<T, V> Payload for MapPayload<T, V> {}
 
-impl<T: Ord + Unpin, V: Unpin> OrdPayload for MapPayload<T, V> {
+impl<T: Ord, V> OrdPayload for MapPayload<T, V> {
     type Key = T;
 
     fn key(&self) -> &Self::Key {
@@ -27,17 +27,18 @@ pub struct TreapMap<T, V> {
     root: Tree<MapPayload<T, V>>,
 }
 
-impl<T: Ord + Unpin, V: Unpin> TreapMap<T, V> {
+impl<T: Ord, V> TreapMap<T, V> {
     pub fn new() -> Self {
         Self { root: Tree::new() }
     }
 
-    pub unsafe fn from_sorted(iter: impl Iterator<Item = (T, V)>) -> Self {
-        let mut res = Self::new();
-        for (t, v) in iter {
-            res.root.add_back(MapPayload::new(t, v));
+    pub unsafe fn gen(n: usize, mut f: impl FnMut(usize) -> (T, V)) -> Self {
+        Self {
+            root: Tree::gen(n, |i| {
+                let (key, value) = f(i);
+                MapPayload::new(key, value)
+            }),
         }
-        res
     }
 
     #[allow(clippy::len_without_is_empty)]
@@ -153,22 +154,22 @@ impl<T: Ord + Unpin, V: Unpin> TreapMap<T, V> {
     }
 }
 
-impl<T: Ord + Unpin, V: Unpin> Default for TreapMap<T, V> {
+impl<T: Ord, V> Default for TreapMap<T, V> {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[derive(Default)]
-pub struct TreapSet<T: Ord + Unpin>(TreapMap<T, ()>);
+pub struct TreapSet<T: Ord>(TreapMap<T, ()>);
 
-impl<T: Ord + Unpin> TreapSet<T> {
+impl<T: Ord> TreapSet<T> {
     pub fn new() -> Self {
         Self(TreapMap::new())
     }
 
-    pub unsafe fn from_sorted(iter: impl Iterator<Item = T>) -> Self {
-        Self(TreapMap::from_sorted(iter.map(|t| (t, ()))))
+    pub unsafe fn gen(n: usize, mut f: impl FnMut(usize) -> T) -> Self {
+        Self(TreapMap::gen(n, |i| (f(i), ())))
     }
 
     pub fn insert(&mut self, key: T) -> bool {
@@ -223,7 +224,7 @@ impl<T: Ord + Unpin> TreapSet<T> {
     }
 }
 
-impl<T: Ord + Unpin> Deref for TreapSet<T> {
+impl<T: Ord> Deref for TreapSet<T> {
     type Target = TreapMap<T, ()>;
 
     fn deref(&self) -> &Self::Target {
@@ -231,7 +232,7 @@ impl<T: Ord + Unpin> Deref for TreapSet<T> {
     }
 }
 
-impl<T: Ord + Unpin> DerefMut for TreapSet<T> {
+impl<T: Ord> DerefMut for TreapSet<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
