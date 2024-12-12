@@ -16,6 +16,7 @@ pub mod iter_ext;
 pub mod md_arr;
 pub mod min_max;
 pub mod multi_set;
+pub mod order;
 pub mod persistent_fenwick;
 pub mod segment_tree;
 pub mod slice_ext;
