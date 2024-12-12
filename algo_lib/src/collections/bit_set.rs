@@ -180,6 +180,10 @@ impl ShlAssign<usize> for BitSet {
         if rhs == 0 {
             return;
         }
+        if rhs >= self.len {
+            self.fill(false);
+            return;
+        }
         let small_shift = rhs & 63;
         if small_shift != 0 {
             let mut carry = 0;
@@ -202,6 +206,10 @@ impl ShlAssign<usize> for BitSet {
 impl ShrAssign<usize> for BitSet {
     fn shr_assign(&mut self, rhs: usize) {
         if rhs == 0 {
+            return;
+        }
+        if rhs >= self.len {
+            self.fill(false);
             return;
         }
         let small_shift = rhs & 63;

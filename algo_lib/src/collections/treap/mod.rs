@@ -14,7 +14,7 @@ use std::mem::{forget, replace, swap, take, MaybeUninit};
 use std::ops::{Deref, DerefMut, RangeBounds};
 use std::ptr::NonNull;
 
-struct Content<P> {
+pub struct Content<P> {
     payload: P,
     parent: NodeLink<Node<P>>,
     left: NodeLink<Node<P>>,
@@ -48,7 +48,7 @@ impl<P: Payload> Content<P> {
     }
 }
 
-struct Node<P> {
+pub struct Node<P> {
     priority: u64,
     size: u32,
     reversed: bool,
@@ -277,7 +277,7 @@ impl<P> DerefMut for Node<P> {
 
 pub struct NodeId<P>(NodeLink<Node<P>>);
 
-struct NodeLink<P> {
+pub struct NodeLink<P> {
     link: NonNull<P>,
 }
 
@@ -511,7 +511,6 @@ impl<P> Default for NodeLink<Node<P>> {
     }
 }
 
-#[allow(private_interfaces)]
 pub enum Tree<P> {
     Whole {
         root: NodeLink<Node<P>>,
