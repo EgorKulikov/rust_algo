@@ -90,17 +90,22 @@ impl<T: PartialOrd> IndexedHeap<T> {
     }
 
     pub fn add_or_adjust(&mut self, el: usize, val: T) {
-        match self.pos[el] {
+        match &self.pos[el] {
             Opt::None => {
                 self.pos[el] = Opt::Some(self.heap.len() as u32, val);
                 self.heap.push(el as u32);
+                self.sift_up(self.pos[el].index());
             }
-            Opt::Some(..) => {
+            Opt::Some(_, v) => {
+                let less = *v < val;
                 self.pos[el].set_val(val);
+                if less {
+                    self.sift_down(self.pos[el].index());
+                } else {
+                    self.sift_up(self.pos[el].index());
+                }
             }
         }
-        self.sift_up(self.pos[el].index());
-        self.sift_down(self.pos[el].index());
     }
 
     pub fn add_or_relax(&mut self, el: usize, val: T) {
