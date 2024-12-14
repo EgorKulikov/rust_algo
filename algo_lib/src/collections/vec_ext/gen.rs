@@ -1,6 +1,10 @@
 pub trait VecGen<T> {
     fn gen(n: usize, f: impl FnMut(usize, &Self) -> T) -> Vec<T>;
     fn gen_append(&mut self, n: usize, f: impl FnMut(usize, &Self) -> T);
+
+    fn gen_back(n: usize, f: impl FnMut(usize, &Self) -> T) -> Vec<T>
+    where
+        T: Default + Clone;
 }
 
 impl<T> VecGen<T> for Vec<T> {
@@ -15,5 +19,16 @@ impl<T> VecGen<T> for Vec<T> {
         for i in 0..n {
             self.push(f(i, self));
         }
+    }
+
+    fn gen_back(n: usize, mut f: impl FnMut(usize, &Self) -> T) -> Vec<T>
+    where
+        T: Default + Clone,
+    {
+        let mut vec = vec![T::default(); n];
+        for i in (0..n).rev() {
+            vec[i] = f(i, &vec);
+        }
+        vec
     }
 }
