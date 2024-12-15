@@ -17,6 +17,7 @@ pub mod prime_fft;
 pub mod primes;
 pub mod rational;
 pub mod real;
+pub mod series;
 pub mod signed_big_int;
 #[cfg(test)]
 mod test;
