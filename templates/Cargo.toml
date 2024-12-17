@@ -9,3 +9,7 @@ tester = { path = "../../tester" }
 
 [build-dependencies]
 rust_competitive_helper_util = { path = "../../../rust-competitive-helper/rust-competitive-helper-util" }
+
+[features]
+local = []
+default = ["local"]

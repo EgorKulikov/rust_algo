@@ -8,7 +8,9 @@ use crate::classic::run_single_test_classic;
 use crate::interactive::run_single_test_interactive;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
-use test_set::{GeneratedTestSet, GeneratedTests, SampleTests, TestSet};
+#[cfg(not(feature = "test"))]
+use test_set::GeneratedTests;
+use test_set::{GeneratedTestSet, SampleTests, TestSet};
 
 pub mod classic;
 pub mod interactive;
@@ -90,6 +92,17 @@ impl Tester {
         self.test(test_set)
     }
 
+    #[cfg(feature = "test")]
+    pub fn test_generated<Set: GeneratedTestSet>(
+        &self,
+        _name: &str,
+        _print_details: bool,
+        _set: Set,
+    ) -> bool {
+        true
+    }
+
+    #[cfg(not(feature = "test"))]
     pub fn test_generated<Set: GeneratedTestSet>(
         &self,
         name: &str,

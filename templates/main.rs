@@ -6,10 +6,23 @@ use algo_lib::misc::test_type::TaskType;
 
 $SOLVE
 
+
 //START MAIN
+#[cfg(feature = "local")]
 mod tester;
 
+#[cfg(feature = "local")]
 fn main() {
     tester::run_tests();
 }
+
+#[cfg(not(feature = "local"))]
+fn main() {
+$INPUT
+$OUTPUT
+    run(input, output);
+}
+
+#[cfg(test)]
+mod tester;
 //END MAIN

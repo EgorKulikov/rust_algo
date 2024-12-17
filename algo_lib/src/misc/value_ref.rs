@@ -53,6 +53,6 @@ macro_rules! value_ref {
     };
     ($name: ident $val_name: ident: $t: ty = $init_val: expr) => {
         value_ref!($name $val_name: $t);
-        $name::set_val($init_val);
+        <$name as $crate::misc::value_ref::ValueRef<$t>>::set_val($init_val);
     }
 }

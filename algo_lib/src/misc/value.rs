@@ -59,11 +59,11 @@ macro_rules! dynamic_value {
     ($name: ident: $t: ty = $val: expr) => {
         dynamic_value!($name: $t);
 
-        $name::set_val($val);
+        <$name as $crate::misc::value::DynamicValue<$t>>::set_val($val);
     };
     ($name: ident: $t: ty = $val: expr, $val_static: ident) => {
         dynamic_value!($name: $t, $val_static);
 
-        $name::set_val($val);
+        <$name as $crate::misc::value::DynamicValue<$t>>::set_val($val);
     };
 }

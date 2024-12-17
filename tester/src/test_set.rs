@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use std::fmt::Display;
@@ -136,6 +137,7 @@ pub trait GeneratedTestSet {
     fn output(&self, test: &Self::TestId, input: &mut Input, output: &mut Output) -> bool;
 }
 
+#[allow(dead_code)]
 pub(crate) struct GeneratedTests<TestSet: GeneratedTestSet> {
     pub(crate) name: String,
     pub(crate) print_details: bool,
