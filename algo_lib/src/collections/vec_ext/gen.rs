@@ -16,8 +16,9 @@ impl<T> VecGen<T> for Vec<T> {
 
     fn gen_append(&mut self, n: usize, mut f: impl FnMut(usize, &Self) -> T) {
         self.reserve(n);
+        let len = self.len();
         for i in 0..n {
-            self.push(f(i, self));
+            self.push(f(len + i, self));
         }
     }
 
