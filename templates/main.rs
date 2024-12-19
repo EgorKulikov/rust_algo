@@ -22,7 +22,4 @@ $INPUT
 $OUTPUT
     run(input, output);
 }
-
-#[cfg(test)]
-mod tester;
 //END MAIN

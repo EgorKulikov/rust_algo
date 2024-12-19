@@ -19,18 +19,13 @@ pub trait BaseModInt: Field + Copy {
 
     fn from(v: Self::T) -> Self;
     fn module() -> Self::T;
+    fn value(&self) -> Self::T;
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Default)]
 pub struct ModInt<T, V: Value<T>> {
     n: T,
     phantom: PhantomData<V>,
-}
-
-impl<T: Copy, V: Value<T>> ModInt<T, V> {
-    pub fn val(&self) -> T {
-        self.n
-    }
 }
 
 impl<T: Ring + Ord + Copy, V: Value<T>> ModInt<T, V> {
@@ -54,6 +49,10 @@ impl<T: Ring + Ord + Copy, V: Value<T>> ModInt<T, V> {
 impl<T: IntegerRing + Ord + Copy, V: Value<T>> ModInt<T, V> {
     pub fn new(n: T) -> Self {
         unsafe { Self::unchecked_new(Self::maybe_subtract_mod(n % (V::val()) + V::val())) }
+    }
+
+    pub fn val(&self) -> T {
+        self.n
     }
 }
 
@@ -108,8 +107,8 @@ where
     type Output = Self;
 
     fn inv(&self) -> Option<Self> {
-        let (g, x, _) = extended_gcd(self.n, V::val());
-        if g != T::one() {
+        let (g, x, _) = extended_gcd(T::W::from(self.n), T::W::from(V::val()));
+        if g != T::W::one() {
             None
         } else {
             Some(Self::new_from_wide(x))
@@ -130,6 +129,10 @@ where
 
     fn module() -> T {
         V::val()
+    }
+
+    fn value(&self) -> T {
+        self.n
     }
 }
 

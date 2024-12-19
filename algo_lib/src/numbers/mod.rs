@@ -1,3 +1,4 @@
+pub mod convolution;
 pub mod fwht;
 pub mod gauss;
 pub mod gcd;

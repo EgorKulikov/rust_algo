@@ -1,14 +1,15 @@
 use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::numbers::mod_int::BaseModInt;
 use crate::numbers::num_traits::algebra::{IntegerRing, One, Zero};
+use crate::numbers::num_traits::wideable::Wideable;
 use crate::numbers::number_ext::Power;
 
 pub struct PrimeFFT<M: BaseModInt> {
     root: M,
     reverse_root: M,
     root_power: M::T,
-    aa: Vec<M>,
-    bb: Vec<M>,
+    aa: Vec<M::W>,
+    bb: Vec<M::W>,
 }
 
 impl<M: BaseModInt> Default for PrimeFFT<M> {
@@ -83,16 +84,21 @@ impl<M: BaseModInt> PrimeFFT<M> {
         }
         if self.aa.len() < size {
             let was_len = self.aa.len();
-            self.aa[..was_len.min(a.len())].copy_from_slice(&a[..was_len.min(a.len())]);
-            self.aa[was_len.min(a.len())..].legacy_fill(M::zero());
-            self.aa.extend_from_slice(&a[was_len.min(a.len())..]);
+            copy_from_slice(
+                &mut self.aa[..was_len.min(a.len())],
+                &a[..was_len.min(a.len())],
+            );
+            self.aa[was_len.min(a.len())..].legacy_fill(M::W::zero());
             self.aa.reserve(size - self.aa.len());
+            for a in &a[was_len.min(a.len())..] {
+                self.aa.push(M::W::from(a.value()));
+            }
             for _ in self.aa.len()..size {
-                self.aa.push(M::zero());
+                self.aa.push(M::W::zero());
             }
         } else {
-            self.aa[..a.len()].copy_from_slice(a);
-            self.aa[a.len()..size].legacy_fill(M::zero());
+            copy_from_slice(&mut self.aa[..a.len()], a);
+            self.aa[a.len()..size].legacy_fill(M::W::zero());
         }
         Self::fft(
             &mut self.aa[..size],
@@ -104,20 +110,27 @@ impl<M: BaseModInt> PrimeFFT<M> {
         if a == b {
             for i in self.aa[..size].iter_mut() {
                 *i *= *i;
+                *i %= M::W::from(M::module());
             }
         } else {
             if self.bb.len() < size {
                 let was_len = self.bb.len();
-                self.bb[..was_len.min(b.len())].copy_from_slice(&b[..was_len.min(b.len())]);
-                self.bb[was_len.min(b.len())..].legacy_fill(M::zero());
-                self.bb.extend_from_slice(&b[was_len.min(b.len())..]);
+                copy_from_slice(
+                    &mut self.bb[..was_len.min(b.len())],
+                    &b[..was_len.min(b.len())],
+                );
+                self.bb[was_len.min(b.len())..].legacy_fill(M::W::zero());
+                self.bb.reserve(size - self.bb.len());
+                for b in &b[was_len.min(b.len())..] {
+                    self.bb.push(M::W::from(b.value()));
+                }
                 self.bb.reserve(size - self.bb.len());
                 for _ in self.bb.len()..size {
-                    self.bb.push(M::zero());
+                    self.bb.push(M::W::zero());
                 }
             } else {
-                self.bb[..b.len()].copy_from_slice(b);
-                self.bb[b.len()..size].legacy_fill(M::zero());
+                copy_from_slice(&mut self.bb[..b.len()], b);
+                self.bb[b.len()..size].legacy_fill(M::W::zero());
             }
             Self::fft(
                 &mut self.bb[..size],
@@ -128,6 +141,7 @@ impl<M: BaseModInt> PrimeFFT<M> {
             );
             for (i, j) in self.aa[..size].iter_mut().zip(self.bb[..size].iter()) {
                 *i *= *j;
+                *i %= M::W::from(M::module());
             }
         }
         Self::fft(
@@ -137,7 +151,9 @@ impl<M: BaseModInt> PrimeFFT<M> {
             self.root_power,
             size_t,
         );
-        res.copy_from_slice(&self.aa[..res_len]);
+        for (i, j) in res.iter_mut().take(res_len).zip(self.aa.iter()) {
+            *i = M::from(M::T::downcast(*j % M::W::from(M::module())));
+        }
     }
 
     pub fn multiply(&mut self, a: &[M], b: &[M]) -> Vec<M> {
@@ -180,10 +196,7 @@ impl<M: BaseModInt> PrimeFFT<M> {
 
     const BORDER_LEN: usize = 100;
 
-    fn fft(a: &mut [M], invert: bool, root: M, root_power: M::T, size_t: M::T)
-    where
-        M::T: Copy,
-    {
+    fn fft(a: &mut [M::W], invert: bool, root: M, root_power: M::T, size_t: M::T) {
         let mut j = 0usize;
         for i in 1..a.len() {
             let mut bit = a.len() >> 1;
@@ -199,6 +212,7 @@ impl<M: BaseModInt> PrimeFFT<M> {
 
         let mut len = 2;
         let mut len_t = M::T::one() + M::T::one();
+        let module = M::W::from(M::module());
         while len <= a.len() {
             let mut w_len = root;
             let mut i = len_t;
@@ -211,7 +225,7 @@ impl<M: BaseModInt> PrimeFFT<M> {
                 let mut w = M::one();
                 for j in 0..half {
                     let u = a[i + j];
-                    let v = a[i + j + half] * w;
+                    let v = a[i + j + half] % module * M::W::from(w.value()) % module;
                     a[i + j] = u + v;
                     a[i + j + half] = u - v;
                     w *= w_len;
@@ -220,11 +234,24 @@ impl<M: BaseModInt> PrimeFFT<M> {
             len <<= 1;
             len_t += len_t;
         }
+        for i in a.iter_mut() {
+            *i %= module;
+        }
         if invert {
             let inv_size = M::from(size_t).inv().unwrap();
             for i in a {
-                *i *= inv_size;
+                *i *= M::W::from(inv_size.value());
+                *i %= module;
             }
         }
+    }
+}
+
+fn copy_from_slice<M: BaseModInt>(a: &mut [M::W], b: &[M])
+where
+    M::W: Copy,
+{
+    for (i, j) in a.iter_mut().zip(b.iter()) {
+        *i = M::W::from(j.value());
     }
 }
