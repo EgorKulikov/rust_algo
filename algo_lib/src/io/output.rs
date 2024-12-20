@@ -41,6 +41,7 @@ pub struct Output<'s> {
     auto_flush: bool,
     bool_output: BoolOutput,
     precision: Option<usize>,
+    separator: u8,
 }
 
 impl<'s> Output<'s> {
@@ -54,6 +55,7 @@ impl<'s> Output<'s> {
             auto_flush: false,
             bool_output: BoolOutput::YesNoCaps,
             precision: None,
+            separator: b' ',
         }
     }
 
@@ -65,6 +67,7 @@ impl<'s> Output<'s> {
             auto_flush: true,
             bool_output: BoolOutput::YesNoCaps,
             precision: None,
+            separator: b' ',
         }
     }
 
@@ -111,7 +114,7 @@ impl<'s> Output<'s> {
             if first {
                 first = false;
             } else {
-                self.put(b' ');
+                self.put(self.separator);
             }
             e.write(self);
         }
@@ -140,6 +143,12 @@ impl<'s> Output<'s> {
     }
     pub fn get_precision(&self) -> Option<usize> {
         self.precision
+    }
+    pub fn separator(&self) -> u8 {
+        self.separator
+    }
+    pub fn set_separator(&mut self, separator: u8) {
+        self.separator = separator;
     }
 }
 
@@ -241,7 +250,7 @@ macro_rules! tuple_writable {
             fn write(&self, out: &mut Output) {
                 self.0.write(out);
                 $(
-                out.put(b' ');
+                out.put(out.separator);
                 self.$id.write(out);
                 )*
             }

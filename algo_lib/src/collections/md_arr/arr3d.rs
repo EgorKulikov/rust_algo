@@ -102,7 +102,7 @@ impl<T: Writable> Writable for Arr3d<T> {
                 }
                 for k in 0..self.d3 {
                     if k != 0 {
-                        output.put(b' ');
+                        output.put(output.separator());
                     }
                     self.data[at].write(output);
                     at += 1;

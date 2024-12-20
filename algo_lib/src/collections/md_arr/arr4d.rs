@@ -112,7 +112,7 @@ impl<T: Writable> Writable for Arr4d<T> {
                     }
                     for l in 0..self.d4 {
                         if l != 0 {
-                            output.put(b' ');
+                            output.put(output.separator());
                         }
                         self.data[at].write(output);
                         at += 1;

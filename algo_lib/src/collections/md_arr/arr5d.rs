@@ -129,7 +129,7 @@ impl<T: Writable> Writable for Arr5d<T> {
                         }
                         for m in 0..self.d5 {
                             if m != 0 {
-                                output.put(b' ');
+                                output.put(output.separator());
                             }
                             self.data[at].write(output);
                             at += 1;
