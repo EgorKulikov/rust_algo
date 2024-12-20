@@ -114,6 +114,18 @@ where
     {
         self.copy_iter().position(predicate)
     }
+    fn copy_find(&'a self, val: T) -> Option<usize>
+    where
+        T: PartialEq,
+    {
+        self.copy_iter().position(|x| x == val)
+    }
+    fn copy_count(&'a self, val: T) -> usize
+    where
+        T: PartialEq,
+    {
+        self.copy_iter().filter(|&x| x == val).count()
+    }
 }
 
 impl<'a, U: 'a, T: 'a + Copy> ItersCopied<'a, T> for U where &'a U: IntoIterator<Item = &'a T> {}

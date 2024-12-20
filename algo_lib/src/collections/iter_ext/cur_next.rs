@@ -11,11 +11,11 @@ pub fn prev_cur_next(n: usize) -> impl Iterator<Item = (usize, usize, usize)> {
 
 #[macro_export]
 macro_rules! zip {
-    ( @closure $p:pat => $tup:expr ) => {
+    (@closure $p:pat => $tup:expr) => {
         |$p| $tup
     };
 
-    ( @closure $p:pat => ( $($tup:tt)* ) , $_iter:expr $( , $tail:expr )* ) => {
+    (@closure $p:pat => ( $($tup:tt)* ) , $_iter:expr $( , $tail:expr )*) => {
         zip!(@closure ($p, b) => ( $($tup)*, b ) $( , $tail )*)
     };
 

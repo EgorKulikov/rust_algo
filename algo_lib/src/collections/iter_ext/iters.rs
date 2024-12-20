@@ -22,10 +22,7 @@ pub trait Iters: IntoIterator + Sized {
     ) -> Chain<Self::IntoIter, V::IntoIter> {
         self.into_iter().chain(chained)
     }
-    fn iter_zip<V: IntoIterator<Item = Self::Item>>(
-        self,
-        other: V,
-    ) -> Zip<Self::IntoIter, V::IntoIter> {
+    fn iter_zip<V: IntoIterator>(self, other: V) -> Zip<Self::IntoIter, V::IntoIter> {
         self.into_iter().zip(other)
     }
     fn iter_max(self) -> Self::Item
@@ -95,6 +92,18 @@ pub trait Iters: IntoIterator + Sized {
         P: FnMut(Self::Item) -> bool,
     {
         self.into_iter().position(predicate)
+    }
+    fn iter_find(self, val: Self::Item) -> Option<usize>
+    where
+        Self::Item: PartialEq,
+    {
+        self.into_iter().position(|x| x == val)
+    }
+    fn iter_count(self, val: Self::Item) -> usize
+    where
+        Self::Item: PartialEq,
+    {
+        self.into_iter().filter(|x| *x == val).count()
     }
 }
 
