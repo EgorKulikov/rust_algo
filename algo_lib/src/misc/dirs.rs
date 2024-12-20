@@ -93,3 +93,20 @@ const_value_ref!(
 );
 
 pub type D8 = Directions<D8Dirs>;
+
+pub fn border(n: usize, m: usize) -> Vec<(usize, usize)> {
+    let mut ans = Vec::new();
+    for i in 0..n {
+        ans.push((i, 0));
+        if m != 1 {
+            ans.push((i, m - 1));
+        }
+    }
+    for i in 1..m - 1 {
+        ans.push((0, i));
+        if n != 1 {
+            ans.push((n - 1, i));
+        }
+    }
+    ans
+}
