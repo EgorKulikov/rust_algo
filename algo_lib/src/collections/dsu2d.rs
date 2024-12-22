@@ -39,12 +39,12 @@ impl DSU2d {
         self.inner.iter().map(move |i| (i / cols, i % cols))
     }
 
-    pub fn join(&mut self, r1: usize, c1: usize, r2: usize, c2: usize) -> bool {
-        self.inner.join(r1 * self.cols + c1, r2 * self.cols + c2)
+    pub fn union(&mut self, r1: usize, c1: usize, r2: usize, c2: usize) -> bool {
+        self.inner.union(r1 * self.cols + c1, r2 * self.cols + c2)
     }
 
-    pub fn get(&self, row: usize, col: usize) -> (usize, usize) {
-        let res = self.inner.get(row * self.cols + col);
+    pub fn find(&self, row: usize, col: usize) -> (usize, usize) {
+        let res = self.inner.find(row * self.cols + col);
         (res / self.cols, res % self.cols)
     }
 

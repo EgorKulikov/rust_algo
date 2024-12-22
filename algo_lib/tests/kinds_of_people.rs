@@ -21,7 +21,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         for j in 0..c {
             for (x, y) in D4::iter(i, j, r, c) {
                 if map[(i, j)] == map[(x, y)] {
-                    dsu.join(i, j, x, y);
+                    dsu.union(i, j, x, y);
                 }
             }
         }
@@ -33,11 +33,13 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         let c1 = input.read_size() - 1;
         let r2 = input.read_size() - 1;
         let c2 = input.read_size() - 1;
-        out.print_line(match (dsu.get(r1, c1) == dsu.get(r2, c2), map[(r1, c1)]) {
-            (true, b'0') => "binary",
-            (true, b'1') => "decimal",
-            _ => "neither",
-        });
+        out.print_line(
+            match (dsu.find(r1, c1) == dsu.find(r2, c2), map[(r1, c1)]) {
+                (true, b'0') => "binary",
+                (true, b'1') => "decimal",
+                _ => "neither",
+            },
+        );
     }
 }
 

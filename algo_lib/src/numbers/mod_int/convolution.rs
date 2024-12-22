@@ -2,28 +2,29 @@ use crate::collections::iter_ext::collect::IterCollect;
 use crate::collections::vec_ext::gen::VecGen;
 use crate::misc::value::Value;
 use crate::numbers::gcd::remainder;
-use crate::numbers::mod_int::{BaseModInt, ModInt};
-use crate::numbers::prime_fft::PrimeFFT;
+use crate::numbers::mod_int::prime_fft::PrimeFFT;
+use crate::numbers::mod_int::BaseModInt;
+use crate::numbers::mod_int::ModInt;
 use crate::value;
 
-pub fn convolution<T: BaseModInt<T = i32>>(a: &[T], b: &[T]) -> Vec<T> {
-    value!(Module1: i32 = 998244353);
-    value!(Module2: i32 = 985661441);
-    value!(Module3: i32 = 975175681);
-    type Mod1 = ModInt<i32, Module1>;
-    type Mod2 = ModInt<i32, Module2>;
-    type Mod3 = ModInt<i32, Module3>;
+pub fn convolution(a: &[u32], b: &[u32]) -> Vec<i128> {
+    value!(Module1: u32 = 998244353);
+    value!(Module2: u32 = 985661441);
+    value!(Module3: u32 = 975175681);
+    type Mod1 = ModInt<Module1>;
+    type Mod2 = ModInt<Module2>;
+    type Mod3 = ModInt<Module3>;
     let c1 = PrimeFFT::<Mod1>::new().multiply(
-        &a.iter().map(|&x| Mod1::new(x.value())).collect_vec(),
-        &b.iter().map(|&x| Mod1::new(x.value())).collect_vec(),
+        &a.iter().map(|&x| Mod1::new(x)).collect_vec(),
+        &b.iter().map(|&x| Mod1::new(x)).collect_vec(),
     );
     let c2 = PrimeFFT::<Mod2>::new().multiply(
-        &a.iter().map(|&x| Mod2::new(x.value())).collect_vec(),
-        &b.iter().map(|&x| Mod2::new(x.value())).collect_vec(),
+        &a.iter().map(|&x| Mod2::new(x)).collect_vec(),
+        &b.iter().map(|&x| Mod2::new(x)).collect_vec(),
     );
     let c3 = PrimeFFT::<Mod3>::new().multiply(
-        &a.iter().map(|&x| Mod3::new(x.value())).collect_vec(),
-        &b.iter().map(|&x| Mod3::new(x.value())).collect_vec(),
+        &a.iter().map(|&x| Mod3::new(x)).collect_vec(),
+        &b.iter().map(|&x| Mod3::new(x)).collect_vec(),
     );
     let mod12 = (Module1::val() as i64 * Module2::val() as i64) as i128;
     let mod123 = mod12 * Module3::val() as i128;
@@ -42,6 +43,6 @@ pub fn convolution<T: BaseModInt<T = i32>>(a: &[T], b: &[T]) -> Vec<T> {
         if x123 < 0 {
             x123 += mod123;
         }
-        T::from((x123 % T::module() as i128) as i32)
+        x123
     })
 }

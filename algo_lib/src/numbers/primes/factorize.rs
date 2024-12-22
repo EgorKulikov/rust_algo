@@ -8,13 +8,13 @@ use crate::numbers::primes::sieve::divisor_table;
 use std::cmp::Ordering;
 
 pub trait Factorize {
-    fn prime_divisors(self) -> Vec<(i64, usize)>;
-    fn divisors(self) -> Vec<i64>;
+    fn prime_divisors(self) -> Vec<(u64, usize)>;
+    fn divisors(self) -> Vec<u64>;
     fn max_power(self, p: Self) -> usize;
 }
 
-impl<T: Primitive<i64>> Factorize for T {
-    fn prime_divisors(self) -> Vec<(i64, usize)> {
+impl<T: Primitive<u64>> Factorize for T {
+    fn prime_divisors(self) -> Vec<(u64, usize)> {
         let n = self.to();
         assert!(n >= 1);
         if n == 1 {
@@ -64,10 +64,10 @@ impl<T: Primitive<i64>> Factorize for T {
         res
     }
 
-    fn divisors(self) -> Vec<i64> {
+    fn divisors(self) -> Vec<u64> {
         let pd = self.prime_divisors();
         let mut res = Vec::new();
-        let mut rec = RecursiveFunction2::new(|f, mut d: i64, step: usize| {
+        let mut rec = RecursiveFunction2::new(|f, mut d: u64, step: usize| {
             if step == pd.len() {
                 res.push(d);
             } else {

@@ -5,7 +5,7 @@ use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::TaskType;
 
 use algo_lib::misc::test_type::TestType;
-use algo_lib::numbers::number_ext::Digits;
+use algo_lib::numbers::number_ext::sum_digs;
 
 type PreCalc = ();
 
@@ -16,7 +16,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     }
 
     for i in 11.. {
-        if n.sum_digs() == (i * n).sum_digs() {
+        if sum_digs(n) == sum_digs(i * n) {
             out.print_line(i);
             return;
         }

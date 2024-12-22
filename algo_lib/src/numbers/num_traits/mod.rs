@@ -7,4 +7,3 @@ pub mod op_to_assign;
 pub mod ord;
 pub mod primitive;
 pub mod sign;
-pub mod wideable;

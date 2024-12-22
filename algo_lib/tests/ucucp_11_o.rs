@@ -26,12 +26,12 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let mut present = (0..2 * n).collect::<HashSet<_>>();
     for i in (0..m).rev() {
         let (mut u, mut v) = edges[i];
-        if dsu.get(u) == dsu.get(v) {
+        if dsu.find(u) == dsu.find(v) {
             continue;
         }
         let mut sw = col[u] == col[v];
-        u = dsu.get(u);
-        v = dsu.get(v);
+        u = dsu.find(u);
+        v = dsu.find(v);
         if sets[u].len() < sets[v].len() {
             swap(&mut u, &mut v);
         }
@@ -82,7 +82,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         let mut sv = Vec::new();
         swap(&mut sv, &mut sets[v]);
         sets[u].extend(sv);
-        dsu.join(u, v);
+        dsu.union(u, v);
         present.remove(&v);
     }
     let present = present.into_iter().collect::<Vec<_>>();

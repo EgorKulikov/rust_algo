@@ -15,10 +15,10 @@ type PreCalc = ();
 
 fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut PreCalc) {
     let n = input.read_size();
-    let m = input.read_int();
+    let m = input.read_unsigned();
 
-    dynamic_value!(ModVal: i32 = m);
-    type Mod = ModInt<i32, ModVal>;
+    dynamic_value!(ModVal: u32 = m);
+    type Mod = ModInt<ModVal>;
     let mut ans = Vec::with_capacity(n + 1);
     let mut mem = Memoization2d::new(
         n + 2,

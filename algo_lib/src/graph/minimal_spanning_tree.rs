@@ -23,7 +23,7 @@ impl<W: Ord + Copy, E: WeightedEdgeTrait<W> + BidirectionalEdgeTrait> MinimalSpa
         let mut res = Graph::new(self.vertex_count());
         let mut dsu = DSU::new(self.vertex_count());
         for (i, e) in edges {
-            if dsu.join(i, e.to()) {
+            if dsu.union(i, e.to()) {
                 res.add_edge((i, e));
             }
         }

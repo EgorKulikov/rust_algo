@@ -63,7 +63,7 @@ mod mod_int {
     fn dbg_format_more() {
         assert_eq!(format!("{:?}", Mod::new(1)), "1");
         assert_eq!(format!("{:?}", Mod::new(3)), "3");
-        assert_eq!(format!("{:?}", Mod::new(-5)), "-5");
+        assert_eq!(format!("{:?}", Mod::new_signed(-5)), "-5");
     }
 
     #[test]

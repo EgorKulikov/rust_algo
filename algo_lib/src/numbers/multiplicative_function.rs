@@ -2,14 +2,14 @@ use crate::numbers::number_ext::Power;
 use crate::numbers::primes::factorize::Factorize;
 use crate::numbers::primes::sieve::divisor_table;
 
-pub struct MulitplicativeFunction(Box<dyn Fn(i64, usize, i64) -> i64>);
+pub struct MulitplicativeFunction(Box<dyn Fn(u64, usize, u64) -> i64>);
 
 impl MulitplicativeFunction {
-    pub fn new(f: impl Fn(i64, usize, i64) -> i64 + 'static) -> Self {
+    pub fn new(f: impl Fn(u64, usize, u64) -> i64 + 'static) -> Self {
         Self(Box::new(f))
     }
 
-    pub fn call(&self, arg: i64) -> i64 {
+    pub fn call(&self, arg: u64) -> i64 {
         let mut res = 1;
         let d = arg.prime_divisors();
         for (p, q) in d {
@@ -35,7 +35,7 @@ impl MulitplicativeFunction {
                 j /= d;
                 exp += 1;
             }
-            res.push(res[j] * self.0(d as i64, exp, (i / j) as i64));
+            res.push(res[j] * self.0(d as u64, exp, (i / j) as u64));
         }
         res
     }
@@ -45,11 +45,11 @@ impl MulitplicativeFunction {
     }
 
     pub fn divisor_sum() -> Self {
-        Self::new(|p, _, pow| (pow * p - 1) / (p - 1))
+        Self::new(|p, _, pow| ((pow * p - 1) / (p - 1)) as i64)
     }
 
     pub fn phi() -> Self {
-        Self::new(|p, _, pow| pow / p * (p - 1))
+        Self::new(|p, _, pow| (pow / p * (p - 1)) as i64)
     }
 
     pub fn mobius() -> Self {

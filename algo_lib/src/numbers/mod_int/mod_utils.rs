@@ -1,11 +1,10 @@
-use crate::numbers::mod_int::BaseModInt;
+use crate::numbers::mod_int::{BaseModInt, ModIntF};
+use crate::numbers::num_traits::algebra::IntegerMultiplicationMonoid;
 use crate::numbers::num_traits::as_index::AsIndex;
 use crate::numbers::num_utils::{factorial, factorials};
+use std::marker::PhantomData;
 
-pub fn inverses<M: BaseModInt>(len: usize) -> Vec<M>
-where
-    M::T: AsIndex,
-{
+pub fn inverses<T: AsIndex + IntegerMultiplicationMonoid, M: BaseModInt<T>>(len: usize) -> Vec<M> {
     let mut res = Vec::new();
     if len > 0 {
         res.push(M::zero());
@@ -16,16 +15,15 @@ where
     while res.len() < len {
         res.push(
             res[M::module().to_index() % res.len()]
-                * (M::from(M::module() / (M::T::from_index(res.len()))).neg()),
+                * (-M::from(M::module() / (T::from_index(res.len())))),
         );
     }
     res
 }
 
-pub fn inverse_factorials<M: BaseModInt>(len: usize) -> Vec<M>
-where
-    M::T: AsIndex,
-{
+pub fn inverse_factorials<T: AsIndex + IntegerMultiplicationMonoid, M: BaseModInt<T>>(
+    len: usize,
+) -> Vec<M> {
     let mut res = inverses(len);
     if len > 0 {
         res[0] = M::one();
@@ -37,22 +35,18 @@ where
     res
 }
 
-pub struct Combinations<M: BaseModInt>
-where
-    M::T: AsIndex,
-{
+pub struct Combinations<M: BaseModInt<T> = ModIntF, T: AsIndex = u32> {
     fact: Vec<M>,
     inv_fact: Vec<M>,
+    phantom_data: PhantomData<T>,
 }
 
-impl<M: BaseModInt + AsIndex> Combinations<M>
-where
-    M::T: AsIndex,
-{
+impl<T: AsIndex + IntegerMultiplicationMonoid, M: BaseModInt<T> + AsIndex> Combinations<M, T> {
     pub fn new(len: usize) -> Self {
         Self {
             fact: factorials(len),
             inv_fact: inverse_factorials(len),
+            phantom_data: PhantomData,
         }
     }
 
@@ -81,7 +75,7 @@ where
     }
 }
 
-pub fn combinations<M: BaseModInt + AsIndex>(n: usize, mut k: usize) -> M {
+pub fn combinations<T, M: BaseModInt<T> + AsIndex>(n: usize, mut k: usize) -> M {
     if k > n {
         return M::zero();
     }

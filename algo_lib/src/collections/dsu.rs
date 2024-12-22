@@ -6,22 +6,20 @@ use std::cell::Cell;
 
 #[derive(Clone)]
 pub struct DSU {
-    id: Vec<Cell<u32>>,
-    size: Vec<u32>,
+    id: Vec<Cell<i32>>,
     count: usize,
 }
 
 impl DSU {
     pub fn new(n: usize) -> Self {
         Self {
-            id: (0..n).map(|i| Cell::new(i as u32)).collect_vec(),
-            size: vec![1; n],
+            id: vec![Cell::new(-1); n],
             count: n,
         }
     }
 
     pub fn size(&self, i: usize) -> usize {
-        self.size[self.get(i)] as usize
+        (-self.id[self.find(i)].get()) as usize
     }
 
     #[allow(clippy::len_without_is_empty)]
@@ -30,53 +28,49 @@ impl DSU {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = usize> + '_ {
-        self.id.iter().enumerate().filter_map(|(i, id)| {
-            if (i as u32) == id.get() {
-                Some(i)
-            } else {
-                None
-            }
-        })
+        self.id
+            .iter()
+            .enumerate()
+            .filter_map(|(i, id)| if -1 == id.get() { Some(i) } else { None })
     }
 
     pub fn set_count(&self) -> usize {
         self.count
     }
 
-    pub fn join(&mut self, mut a: usize, mut b: usize) -> bool {
-        a = self.get(a);
-        b = self.get(b);
+    pub fn union(&mut self, mut a: usize, mut b: usize) -> bool {
+        a = self.find(a);
+        b = self.find(b);
         if a == b {
             false
         } else {
-            self.size[a] += self.size[b];
-            self.id[b].replace(a as u32);
+            self.id[a].replace(self.id[a].get() + self.id[b].get());
+            self.id[b].replace(a as i32);
             self.count -= 1;
             true
         }
     }
 
-    pub fn get(&self, i: usize) -> usize {
-        if self.id[i].get() != i as u32 {
-            let res = self.get(self.id[i].get() as usize);
-            self.id[i].replace(res as u32);
+    pub fn find(&self, i: usize) -> usize {
+        if self.id[i].get() >= 0 {
+            let res = self.find(self.id[i].get() as usize);
+            self.id[i].replace(res as i32);
+            res
+        } else {
+            i
         }
-        self.id[i].get() as usize
     }
 
     pub fn clear(&mut self) {
         self.count = self.id.len();
-        self.size.legacy_fill(1);
-        self.id.iter().enumerate().for_each(|(i, id)| {
-            id.replace(i as u32);
-        });
+        self.id.legacy_fill(Cell::new(-1));
     }
 
     pub fn parts(&self) -> Vec<Vec<usize>> {
         let roots = self.iter().collect_vec();
         let mut res = vec![Vec::new(); roots.len()];
         for i in self.id.indices() {
-            res[roots.as_slice().bin_search(&self.get(i)).unwrap()].push(i);
+            res[roots.as_slice().bin_search(&self.find(i)).unwrap()].push(i);
         }
         res
     }

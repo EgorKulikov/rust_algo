@@ -1,16 +1,16 @@
+use crate::numbers::mod_int::mod_utils::inverse_factorials;
 use crate::numbers::mod_int::BaseModInt;
-use crate::numbers::mod_utils::inverse_factorials;
+use crate::numbers::num_traits::algebra::IntegerMultiplicationMonoid;
 use crate::numbers::num_traits::as_index::AsIndex;
+use std::marker::PhantomData;
 
-pub struct Interpolation<Mod: BaseModInt + AsIndex> {
+pub struct Interpolation<T, Mod: BaseModInt<T> + AsIndex> {
     values: Vec<Mod>,
     coef: Vec<Mod>,
+    phantom_data: PhantomData<T>,
 }
 
-impl<Mod: BaseModInt + AsIndex> Interpolation<Mod>
-where
-    Mod::T: AsIndex,
-{
+impl<T: AsIndex + IntegerMultiplicationMonoid, Mod: BaseModInt<T> + AsIndex> Interpolation<T, Mod> {
     pub fn new(values: Vec<Mod>) -> Self {
         let n = values.len();
         Self::with_inverse_factorials(values, inverse_factorials(n).as_slice())
@@ -30,7 +30,11 @@ where
                     },
             );
         }
-        Self { values, coef }
+        Self {
+            values,
+            coef,
+            phantom_data: PhantomData,
+        }
     }
 
     pub fn calculate(&self, x: Mod) -> Mod {

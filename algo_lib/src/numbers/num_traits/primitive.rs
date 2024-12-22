@@ -1,5 +1,6 @@
 pub trait Primitive<T>: Copy {
     fn to(self) -> T;
+    fn from(t: T) -> Self;
 }
 
 macro_rules! primitive_one {
@@ -7,6 +8,9 @@ macro_rules! primitive_one {
         impl Primitive<$u> for $t {
             fn to(self) -> $u {
                 self as $u
+            }
+            fn from(t: $u) -> Self {
+                t as $t
             }
         }
     )+};

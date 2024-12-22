@@ -21,10 +21,10 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         let b = input.read_size();
         match op {
             b'?' => {
-                out.print_line(dsu.get(a) == dsu.get(b));
+                out.print_line(dsu.find(a) == dsu.find(b));
             }
             b'=' => {
-                dsu.join(a, b);
+                dsu.union(a, b);
             }
             _ => unreachable!(),
         }

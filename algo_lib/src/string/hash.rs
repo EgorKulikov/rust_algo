@@ -1,7 +1,7 @@
 use crate::misc::random::random;
 use crate::misc::value::DynamicValue;
 use crate::misc::value_ref::ValueRef;
-use crate::numbers::mod_int::ModInt;
+use crate::numbers::mod_int::ModInt64;
 use crate::numbers::num_traits::algebra::{One, Zero};
 use crate::numbers::num_traits::invertible::Invertible;
 use crate::numbers::num_traits::primitive::Primitive;
@@ -11,8 +11,8 @@ use std::cmp::Ordering;
 use std::collections::Bound;
 use std::ops::RangeBounds;
 
-dynamic_value!(HM: i64);
-type HashMod = ModInt<i64, HM>;
+dynamic_value!(HM: u64);
+type HashMod = ModInt64<HM>;
 
 value_ref!(HashBaseContainer HBCS: HashBase);
 
@@ -29,9 +29,9 @@ impl HashBase {
             return;
         }
         HM::set_val(next_prime(
-            random().gen_range(10i64.pow(18)..=2 * 10i64.pow(18)),
+            random().gen_range(10u64.pow(18)..=2 * 10u64.pow(18)),
         ));
-        let multiplier = HashMod::new(random().gen_range(4 * 10i64.pow(17)..=5 * 10i64.pow(17)));
+        let multiplier = HashMod::new(random().gen_range(4 * 10u64.pow(17)..=5 * 10u64.pow(17)));
         let inv_multiplier = multiplier.inv().unwrap();
         HashBaseContainer::set_val(Self {
             multiplier,
@@ -60,7 +60,7 @@ impl HashBase {
 #[allow(clippy::len_without_is_empty)]
 pub trait StringHash {
     fn len(&self) -> usize;
-    fn hash<R: RangeBounds<usize>>(&self, r: R) -> i64;
+    fn hash<R: RangeBounds<usize>>(&self, r: R) -> u64;
     fn sub_hash<R: RangeBounds<usize>>(&self, r: R) -> SubstrigHash<Self> {
         SubstrigHash::new(self, r)
     }
@@ -72,7 +72,7 @@ pub struct SimpleHash {
 }
 
 impl SimpleHash {
-    pub fn new(str: &[impl Primitive<i64>]) -> Self {
+    pub fn new(str: &[impl Primitive<u64>]) -> Self {
         HashBaseContainer::val_mut().ensure_capacity(str.len() + 1);
         let mut hash = Vec::with_capacity(str.len() + 1);
         hash.push(HashMod::zero());
@@ -87,7 +87,7 @@ impl SimpleHash {
         Self { hash }
     }
 
-    pub fn push(&mut self, c: impl Primitive<i64>) {
+    pub fn push(&mut self, c: impl Primitive<u64>) {
         HashBaseContainer::val_mut().ensure_capacity(self.hash.len() + 1);
         self.hash.push(
             *self.hash.last().unwrap()
@@ -101,7 +101,7 @@ impl StringHash for SimpleHash {
         self.hash.len() - 1
     }
 
-    fn hash<R: RangeBounds<usize>>(&self, r: R) -> i64 {
+    fn hash<R: RangeBounds<usize>>(&self, r: R) -> u64 {
         let (from, to) = convert_bounds(r, self.len());
         let res = (self.hash[to] - self.hash[from]) * HashBaseContainer::val().inv_power[from];
         res.val()
@@ -127,7 +127,7 @@ impl<'s, BaseHash: StringHash + ?Sized> StringHash for SubstrigHash<'s, BaseHash
         self.to - self.from
     }
 
-    fn hash<R: RangeBounds<usize>>(&self, r: R) -> i64 {
+    fn hash<R: RangeBounds<usize>>(&self, r: R) -> u64 {
         let (from, to) = convert_bounds(r, self.len());
         self.base.hash(from + self.from..to + self.from)
     }
@@ -168,7 +168,7 @@ impl<'s, Hash1: StringHash + ?Sized, Hash2: StringHash + ?Sized> StringHash
         self.base1.len() + self.base2.len()
     }
 
-    fn hash<R: RangeBounds<usize>>(&self, r: R) -> i64 {
+    fn hash<R: RangeBounds<usize>>(&self, r: R) -> u64 {
         let (from, to) = convert_bounds(r, self.len());
         when! {
             to <= self.base1.len() => self.base1.hash(from..to),
@@ -185,11 +185,11 @@ impl<'s, Hash1: StringHash + ?Sized, Hash2: StringHash + ?Sized> StringHash
 }
 
 pub trait Hashable {
-    fn str_hash(&self) -> i64;
+    fn str_hash(&self) -> u64;
 }
 
-impl<T: Primitive<i64>> Hashable for [T] {
-    fn str_hash(&self) -> i64 {
+impl<T: Primitive<u64>> Hashable for [T] {
+    fn str_hash(&self) -> u64 {
         HashBaseContainer::val_mut().ensure_capacity(self.len() + 1);
         let mut res = HashMod::zero();
         let multiplier = HashBaseContainer::val().multiplier;

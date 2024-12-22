@@ -6,17 +6,17 @@ use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::TaskType;
 
 use algo_lib::misc::test_type::TestType;
+use algo_lib::numbers::mod_int::mod_utils::Combinations;
+use algo_lib::numbers::mod_int::prime_fft::PrimeFFT;
 use algo_lib::numbers::mod_int::ModIntF;
-use algo_lib::numbers::mod_utils::Combinations;
 use algo_lib::numbers::num_traits::algebra::{One, Zero};
-use algo_lib::numbers::prime_fft::PrimeFFT;
 
 type PreCalc = ();
 
 fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut PreCalc) {
     let n = input.read_size();
     let m = input.read_size();
-    let a = input.read_int_vec(n * m).sorted();
+    let a = input.read_unsigned_vec(n * m).sorted();
 
     type Mod = ModIntF;
     let c = Combinations::<Mod>::new(n * m + 1);
@@ -27,7 +27,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                 continue;
             }
             v[i * m + j * n - i * j] += if (i + j) % 2 == 0 {
-                Mod::new(-1)
+                Mod::zero() - Mod::one()
             } else {
                 Mod::one()
             } * c.c(n, i)
@@ -83,81 +83,83 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
 }
 
 mod tester {
-#![allow(unused_variables)]
-#![allow(unused_mut)]
-#![allow(dead_code)]
-#![allow(unused_imports)]
+    #![allow(unused_variables)]
+    #![allow(unused_mut)]
+    #![allow(dead_code)]
+    #![allow(unused_imports)]
 
-use crate::{run, TASK_TYPE};
-use algo_lib::io::input::Input;
-use algo_lib::io::output::Output;
-use tester::classic::default_checker;
-use tester::interactive::std_interactor;
-use tester::test_set::GeneratedTestSet;
-use tester::Tester;
+    use crate::{run, TASK_TYPE};
+    use algo_lib::io::input::Input;
+    use algo_lib::io::output::Output;
+    use tester::classic::default_checker;
+    use tester::interactive::std_interactor;
+    use tester::test_set::GeneratedTestSet;
+    use tester::Tester;
 
-const PRINT_LIMIT: usize = 1000;
+    const PRINT_LIMIT: usize = 1000;
 
-fn interact(mut sol_input: Input, mut sol_output: Output, mut input: Input) -> Result<(), String> {
-    Ok(())
-}
-
-fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
-    Ok(())
-}
-
-struct StressTest;
-
-impl GeneratedTestSet for StressTest {
-    type TestId = usize;
-
-    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
-        1..
+    fn interact(
+        mut sol_input: Input,
+        mut sol_output: Output,
+        mut input: Input,
+    ) -> Result<(), String> {
+        Ok(())
     }
 
-    fn input(&self, test: &Self::TestId, out: &mut Output) {
+    fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
+        Ok(())
     }
 
-    fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-        false
-    }
-}
+    struct StressTest;
 
-struct MaxTest;
+    impl GeneratedTestSet for StressTest {
+        type TestId = usize;
 
-impl GeneratedTestSet for MaxTest {
-    type TestId = usize;
-
-    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
-        1..=1
-    }
-
-    fn input(&self, test: &Self::TestId, out: &mut Output) {
-    }
-
-    fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-        false
-    }
-}
-
-pub(crate) fn run_tests() -> bool {
-    let path = "./i_bingo";
-    let tl = 1000;
-    let tester = match TASK_TYPE {
-        crate::TaskType::Interactive => {
-            Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)
-            // Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, interact)
+        fn tests(&self) -> impl Iterator<Item = Self::TestId> {
+            1..
         }
-        crate::TaskType::Classic => {
-            Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker)
-            // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
+
+        fn input(&self, test: &Self::TestId, out: &mut Output) {}
+
+        fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
+            false
         }
-    };
-    let passed = tester.test_samples();
-    // tester.test_generated("Max test", true, MaxTest);
-    // tester.test_generated("Stress test", false, StressTest);
-    passed
-}
+    }
+
+    struct MaxTest;
+
+    impl GeneratedTestSet for MaxTest {
+        type TestId = usize;
+
+        fn tests(&self) -> impl Iterator<Item = Self::TestId> {
+            1..=1
+        }
+
+        fn input(&self, test: &Self::TestId, out: &mut Output) {}
+
+        fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
+            false
+        }
+    }
+
+    pub(crate) fn run_tests() -> bool {
+        let path = "./i_bingo";
+        let tl = 1000;
+        let tester = match TASK_TYPE {
+            crate::TaskType::Interactive => {
+                Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)
+                // Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, interact)
+            }
+            crate::TaskType::Classic => {
+                Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker)
+                // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
+            }
+        };
+        let passed = tester.test_samples();
+        // tester.test_generated("Max test", true, MaxTest);
+        // tester.test_generated("Stress test", false, StressTest);
+        passed
+    }
 }
 #[test]
 fn i_bingo() {

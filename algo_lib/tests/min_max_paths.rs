@@ -94,11 +94,11 @@ mod test {
 
     #[test]
     fn test() {
-        let n = 2000i64;
+        let n = 2000u64;
         let m = n * 1000000000;
-        let p = primes::<i64>(n as usize + 1);
+        let p = primes::<u64>(n as usize + 1);
         let mut ans = None;
-        let mut rec = RecursiveFunction3::new(|rec, mut cur: i64, step: usize, max: usize| {
+        let mut rec = RecursiveFunction3::new(|rec, mut cur: u64, step: usize, max: usize| {
             if max == 0 {
                 let d = cur.divisors();
                 let mut q = 0;
@@ -210,7 +210,7 @@ mod tester {
                 loop {
                     let u = random().gen_bound(n);
                     let v = random().gen_bound(n);
-                    if dsu.join(u, v) {
+                    if dsu.union(u, v) {
                         out.print_line((u + 1, v + 1));
                         break;
                     }

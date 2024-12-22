@@ -93,7 +93,7 @@ impl<E: BidirectionalEdgeTrait> Graph<E> {
         let mut dsu = DSU::new(self.vertex_count());
         for i in 0..self.vertex_count() {
             for e in self[i].iter() {
-                if i <= e.to() && !dsu.join(i, e.to()) {
+                if i <= e.to() && !dsu.union(i, e.to()) {
                     return false;
                 }
             }
@@ -105,7 +105,7 @@ impl<E: BidirectionalEdgeTrait> Graph<E> {
         let mut dsu = DSU::new(self.vertex_count());
         for i in 0..self.vertex_count() {
             for e in self[i].iter() {
-                dsu.join(i, e.to());
+                dsu.union(i, e.to());
             }
         }
         dsu.set_count() == 1

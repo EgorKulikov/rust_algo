@@ -7,16 +7,16 @@ use algo_lib::misc::test_type::TaskType;
 
 use algo_lib::misc::test_type::TestType;
 use algo_lib::numbers::gcd::gcd;
-use algo_lib::numbers::mod_int::ModInt;
+use algo_lib::numbers::mod_int::ModInt64;
 
 type PreCalc = ();
 
 fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut PreCalc) {
-    let n = input.read_long();
+    let n = input.read_u64();
     let t = input.read_size();
 
-    dynamic_value!(Module: i64 = n);
-    type Mod = ModInt<i64, Module>;
+    dynamic_value!(Module: u64 = n);
+    type Mod = ModInt64<Module>;
     for _ in 0..t {
         let a = input.read::<Mod>();
         let op = input.read_char();

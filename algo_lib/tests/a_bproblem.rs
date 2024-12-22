@@ -6,11 +6,7 @@ use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::TaskType;
 
 use algo_lib::misc::test_type::TestType;
-use algo_lib::numbers::mod_int::ModInt;
-use algo_lib::numbers::num_traits::algebra::{One, Zero};
-use algo_lib::numbers::num_traits::as_index::AsIndex;
-use algo_lib::numbers::prime_fft::PrimeFFT;
-use algo_lib::value;
+use algo_lib::numbers::mod_int::convolution::convolution;
 
 type PreCalc = ();
 
@@ -18,23 +14,21 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let n = input.read_size();
     let a = input.read_int_vec(n);
 
-    value!(Module: i64 = 1000000000009175041);
-    type Mod = ModInt<i64, Module>;
-    let mut b = vec![Mod::zero(); 100_001];
+    const HALF: usize = 50_000;
+    let mut b = vec![0; HALF * 2 + 1];
     for x in a.copy_iter() {
-        b[(x + 50_000) as usize] += Mod::one();
+        b[(x + HALF as i32) as usize] += 1;
     }
-    let mut fft = PrimeFFT::new();
-    let mut c = fft.multiply(&b, &b);
+    let mut c = convolution(&b, &b);
     for x in a.copy_iter() {
-        c[(2 * x + 100_000) as usize] -= Mod::one();
+        c[(2 * x + 2 * HALF as i32) as usize] -= 1;
     }
-    let mut ans = Mod::zero();
+    let mut ans = 0;
     for x in a.copy_iter() {
-        ans += c[(x + 100_000) as usize];
+        ans += c[(x + 2 * HALF as i32) as usize];
     }
     let zeroes = a.copy_filter(|&x| x == 0).count();
-    ans -= Mod::from_index(zeroes) * Mod::from_index(n - 1) * Mod::new(2);
+    ans -= zeroes as i128 * (n - 1) as i128 * 2;
     out.print_line(ans);
 }
 

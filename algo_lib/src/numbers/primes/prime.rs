@@ -1,12 +1,12 @@
 use crate::misc::random::random;
 use crate::numbers::gcd::gcd;
-use crate::numbers::mod_int::ModInt;
+use crate::numbers::mod_int::ModInt64;
 use crate::numbers::num_traits::algebra::{One, Zero};
 use crate::numbers::num_traits::primitive::Primitive;
 use crate::numbers::number_ext::Power;
 use crate::{dynamic_value, when};
 
-pub fn is_prime(n: impl Primitive<i64>) -> bool {
+pub fn is_prime(n: impl Primitive<u64>) -> bool {
     let n = n.to();
     if n <= 1 {
         return false;
@@ -20,10 +20,10 @@ pub fn is_prime(n: impl Primitive<i64>) -> bool {
     if s == 0 {
         return n == 2;
     }
-    dynamic_value!(IsPrimeModule: i64 = n);
-    type Mod = ModInt<i64, IsPrimeModule>;
+    dynamic_value!(IsPrimeModule: u64 = n);
+    type Mod = ModInt64<IsPrimeModule>;
     for _ in 0..20 {
-        let a = Mod::new(random().gen_bound(n as u64) as i64);
+        let a = Mod::new(random().gen_bound(n));
         if a == Mod::zero() {
             continue;
         }
@@ -46,7 +46,7 @@ pub fn is_prime(n: impl Primitive<i64>) -> bool {
     true
 }
 
-pub fn next_prime(mut n: i64) -> i64 {
+pub fn next_prime(mut n: u64) -> u64 {
     if n <= 2 {
         return 2;
     }
@@ -57,9 +57,9 @@ pub fn next_prime(mut n: i64) -> i64 {
     n
 }
 
-fn brent(n: i64, x0: i64, c: i64) -> i64 {
-    dynamic_value!(ModVal: i64 = n);
-    type Mod = ModInt<i64, ModVal>;
+fn brent(n: u64, x0: u64, c: u64) -> u64 {
+    dynamic_value!(ModVal: u64 = n);
+    type Mod = ModInt64<ModVal>;
     let mut x = Mod::new(x0);
     let c = Mod::new(c);
     let mut g = 1;
@@ -97,7 +97,7 @@ fn brent(n: i64, x0: i64, c: i64) -> i64 {
     g
 }
 
-pub fn find_divisor(n: i64) -> i64 {
+pub fn find_divisor(n: u64) -> u64 {
     when! {
         n == 1 => 1,
         n % 2 == 0 => 2,

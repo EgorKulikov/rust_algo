@@ -22,48 +22,37 @@ impl<S: MultiplicationMonoid + Copy> Power for S {
     }
 }
 
-pub trait Digits<S> {
-    fn num_digs(&self) -> usize;
-    fn sum_digs(&self) -> Self;
-    fn digits(&self) -> impl Iterator<Item = S>;
+pub fn num_digs<S: IntegerSemiRing + AsIndex + Copy>(mut copy: S) -> usize {
+    let ten = S::from_index(10);
+    let mut res = 0;
+    while copy != S::zero() {
+        copy /= ten;
+        res += 1;
+    }
+    res
 }
 
-impl<S: IntegerSemiRing + AsIndex + Copy> Digits<S> for S {
-    fn num_digs(&self) -> usize {
-        let mut copy = *self;
-        let ten = S::from_index(10);
-        let mut res = 0;
-        while copy != S::zero() {
-            copy /= ten;
-            res += 1;
-        }
-        res
+pub fn sum_digs<S: IntegerSemiRing + AsIndex + Copy>(mut copy: S) -> S {
+    let ten = S::from_index(10);
+    let mut res = S::zero();
+    while copy != S::zero() {
+        res += copy % ten;
+        copy /= ten;
     }
+    res
+}
 
-    fn sum_digs(&self) -> S {
-        let mut copy = *self;
-        let ten = S::from_index(10);
-        let mut res = S::zero();
-        while copy != S::zero() {
-            res += copy % ten;
+pub fn digits<S: IntegerSemiRing + AsIndex + Copy>(mut copy: S) -> impl Iterator<Item = S> {
+    let ten = S::from_index(10);
+    std::iter::from_fn(move || {
+        if copy == S::zero() {
+            None
+        } else {
+            let res = copy % ten;
             copy /= ten;
+            Some(res)
         }
-        res
-    }
-
-    fn digits(&self) -> impl Iterator<Item = Self> {
-        let mut copy = *self;
-        let ten = S::from_index(10);
-        std::iter::from_fn(move || {
-            if copy == S::zero() {
-                None
-            } else {
-                let res = copy % ten;
-                copy /= ten;
-                Some(res)
-            }
-        })
-    }
+    })
 }
 
 pub trait Square {
