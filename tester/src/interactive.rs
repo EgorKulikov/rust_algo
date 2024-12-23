@@ -72,7 +72,7 @@ pub fn std_interactor(
     let mut input = Input::new(&mut stdin);
     while !input.is_exhausted() {
         let line = input.read_line();
-        if line == "###".into() {
+        if line.as_slice() == b"###" {
             break;
         }
         sol_output.print_line(line);

@@ -3,7 +3,7 @@ use crate::collections::slice_ext::splits::Split;
 
 const NULL: u32 = u32::MAX;
 
-pub trait Payload {
+pub trait ACPayload {
     fn add_single(&mut self, id: usize);
     fn add_node(&mut self, other: &Self);
 }
@@ -47,7 +47,7 @@ pub struct Iter<'s, P, S, const K: usize, const BASE: u8> {
     node: usize,
 }
 
-impl<'s, P: Default + Payload, S: AsRef<[u8]>, const K: usize, const BASE: u8> Iterator
+impl<'s, P: Default + ACPayload, S: AsRef<[u8]>, const K: usize, const BASE: u8> Iterator
     for Iter<'s, P, S, K, BASE>
 {
     type Item = &'s P;
@@ -68,7 +68,7 @@ impl<'s, P: Default + Payload, S: AsRef<[u8]>, const K: usize, const BASE: u8> I
     }
 }
 
-impl<P: Default + Payload, const K: usize, const BASE: u8> AhoCorasick<P, K, BASE> {
+impl<P: Default + ACPayload, const K: usize, const BASE: u8> AhoCorasick<P, K, BASE> {
     pub fn new(s: &[impl AsRef<[u8]>]) -> Self {
         let mut res = Self {
             nodes: vec![Node::default()],

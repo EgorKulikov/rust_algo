@@ -10,7 +10,7 @@ use algo_lib::misc::recursive_function::{Callable2, RecursiveFunction2};
 use algo_lib::misc::test_type::TaskType;
 
 use algo_lib::misc::test_type::TestType;
-use algo_lib::string::aho_corasick::{AhoCorasickUppercase, Payload};
+use algo_lib::string::aho_corasick::{ACPayload, AhoCorasickUppercase};
 use algo_lib::string::str::{Str, StrReader};
 
 type PreCalc = ();
@@ -52,7 +52,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     #[derive(Default, Debug)]
     struct Data(usize);
 
-    impl Payload for Data {
+    impl ACPayload for Data {
         fn add_single(&mut self, _id: usize) {
             self.0 += 1;
         }
