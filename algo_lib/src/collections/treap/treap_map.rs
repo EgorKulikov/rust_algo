@@ -91,6 +91,10 @@ impl<T: Ord, V> TreapMap<T, V> {
         self.root.range(r).iter().map(Self::node_to_pair)
     }
 
+    pub fn range_size<'a, 's: 'a>(&'s mut self, r: impl RangeBounds<&'a T>) -> usize {
+        self.root.range(r).size()
+    }
+
     pub fn first(&mut self) -> Option<(&T, &V)> {
         self.root.first().map(Self::node_to_pair)
     }
