@@ -1,12 +1,14 @@
 //{"name":"Genetics","group":"Kattis","url":"https://open.kattis.com/problems/genetics2","interactive":false,"timeLimit":2000,"tests":[{"input":"4 3 1\nACC\nCCA\nACA\nAAA\n","output":"3\n"},{"input":"4 4 3\nCATT\nCAAA\nATGA\nTCTA\n","output":"4\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"Genetics"}}}
 
 use algo_lib::collections::fx_hash_map::FxHashSet;
+use algo_lib::collections::iter_ext::iter_copied::ItersCopied;
+use algo_lib::collections::md_arr::arr2d::Arr2d;
 use algo_lib::collections::slice_ext::indices::Indices;
 use algo_lib::collections::vec_ext::gen::VecGen;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
-use algo_lib::misc::random::Shuffle;
+use algo_lib::misc::random::{random, Shuffle};
 use algo_lib::misc::test_type::TaskType;
 
 use algo_lib::misc::test_type::TestType;
@@ -36,11 +38,33 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         v
     });
 
+    let mult = Vec::gen(n, |_, _| random().gen_range(0..1000000000i64));
+    let sum = mult.copy_sum();
+    let dist = Arr2d::gen(m, 4, |i, j| {
+        let mut res = 0;
+        for a in 0..n {
+            let val = data[a][i >> 5] >> (2 * (i & 31)) & 3;
+            if val as usize != j {
+                res += mult[a];
+            }
+        }
+        res
+    });
+    let mut good = Vec::new();
+    for i in 0..n {
+        let mut cur = 0;
+        for j in 0..m {
+            cur += dist[j][data[i][j >> 5] as usize >> (2 * (j & 31)) & 3];
+        }
+        if cur == k as i64 * (sum - mult[i]) {
+            good.push(i);
+        }
+    }
+
     let mut even = 0i64;
     for i in 0..32 {
         even.set_bit(2 * i);
     }
-    let mut good = Vec::gen(n, |i, _| i);
     let mut checked = FxHashSet::default();
     let mut order = good.clone();
     order.shuffle();
