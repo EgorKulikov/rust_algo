@@ -84,7 +84,7 @@ mod tester {
     use crate::{run, TASK_TYPE};
     use algo_lib::io::input::Input;
     use algo_lib::io::output::Output;
-    use tester::classic::default_checker_eps;
+    use tester::classic::default_checker_eps_rel;
     use tester::interactive::std_interactor;
     use tester::test_set::GeneratedTestSet;
     use tester::Tester;
@@ -144,7 +144,13 @@ mod tester {
                 // Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, interact)
             }
             crate::TaskType::Classic => {
-                Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker_eps)
+                Tester::new_classic(
+                    tl,
+                    PRINT_LIMIT,
+                    path.to_string(),
+                    run,
+                    default_checker_eps_rel,
+                )
                 // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
             }
         };

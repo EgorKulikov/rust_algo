@@ -69,7 +69,7 @@ impl<V: ConstValueRef<[(isize, isize)]>> Iterator for DirectionsIter<V> {
 }
 
 const_value_ref!(
-    D4Dirs D4_DIRS_INNER: [(isize, isize); 4] as [(isize, isize)] = [
+    D4Dirs: [(isize, isize); 4] as [(isize, isize)] = [
         (0isize, 1isize),
         (1isize, 0isize),
         (0isize, -1isize),
@@ -80,7 +80,7 @@ const_value_ref!(
 pub type D4 = Directions<D4Dirs>;
 
 const_value_ref!(
-    D8Dirs D8_DIRS_INNER: [(isize, isize); 8] as [(isize, isize)] = [
+    D8Dirs: [(isize, isize); 8] as [(isize, isize)] = [
         (0isize, 1isize),
         (1isize, 1isize),
         (1isize, 0isize),

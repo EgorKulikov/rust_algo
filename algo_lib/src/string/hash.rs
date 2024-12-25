@@ -14,7 +14,7 @@ use std::ops::RangeBounds;
 dynamic_value!(HM: u64);
 type HashMod = ModInt64<HM>;
 
-value_ref!(HashBaseContainer HBCS: HashBase);
+value_ref!(HashBaseContainer: HashBase);
 
 pub struct HashBase {
     multiplier: HashMod,
@@ -25,7 +25,7 @@ pub struct HashBase {
 
 impl HashBase {
     pub fn init() {
-        if unsafe { HBCS.is_some() } {
+        if HashBaseContainer::is_init() {
             return;
         }
         HM::set_val(next_prime(

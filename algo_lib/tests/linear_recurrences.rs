@@ -18,7 +18,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let a = input.read_unsigned_vec(n + 1);
     let x = input.read_unsigned_vec(n);
 
-    dynamic_value!(Modulo: u32, MODULO);
+    dynamic_value!(Modulo: u32);
     let q = input.read_size();
     for _ in 0..q {
         let t = input.read_size();

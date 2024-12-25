@@ -3,6 +3,7 @@ use crate::test_set::TestSet;
 use crate::{process_error, Outcome, Tester};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
+use std::cell::Cell;
 
 pub(crate) fn run_single_test_classic<T: TestSet>(
     tester: &Tester,
@@ -109,7 +110,11 @@ pub fn default_checker(
     Ok(())
 }
 
-pub fn default_checker_eps(
+thread_local! {
+    pub static EPS: Cell<f64> = Cell::new(1e-9);
+}
+
+pub fn default_checker_eps_rel(
     _input: Input,
     expected: Option<Input>,
     mut actual: Input,
@@ -135,7 +140,53 @@ pub fn default_checker_eps(
                 if let Ok(expected_token) = expected_token.parse::<f64>() {
                     if let Ok(actual_token) = actual_token.parse::<f64>() {
                         let by = expected_token.abs().max(1.);
-                        if (expected_token - actual_token).abs() < 1e-9 * by {
+                        if (expected_token - actual_token).abs() < EPS.get() * by {
+                            failed = false;
+                        }
+                    }
+                }
+                if failed {
+                    return Err(format!(
+                        "Token #{} differs, expected {}, actual {}",
+                        token_num, expected_token, actual_token,
+                    ));
+                }
+            }
+        }
+        token_num += 1;
+        if actual_token.is_none() {
+            break;
+        }
+    }
+    Ok(())
+}
+
+pub fn default_checker_eps_abs(
+    _input: Input,
+    expected: Option<Input>,
+    mut actual: Input,
+) -> Result<(), String> {
+    if expected.is_none() {
+        return Ok(());
+    }
+    let mut expected = expected.unwrap();
+    let mut token_num = 0;
+    loop {
+        let expected_token = expected.next_token();
+        let actual_token = actual.next_token();
+        if expected_token != actual_token {
+            if expected_token.is_none() {
+                return Err(format!("Expected has only {} tokens", token_num));
+            } else if actual_token.is_none() {
+                return Err(format!("Actual has only {} tokens", token_num));
+            } else {
+                let expected_token = String::from_utf8(expected_token.unwrap()).unwrap();
+                let actual_token =
+                    String::from_utf8(actual_token.as_ref().unwrap().clone()).unwrap();
+                let mut failed = true;
+                if let Ok(expected_token) = expected_token.parse::<f64>() {
+                    if let Ok(actual_token) = actual_token.parse::<f64>() {
+                        if (expected_token - actual_token).abs() < EPS.get() {
                             failed = false;
                         }
                     }

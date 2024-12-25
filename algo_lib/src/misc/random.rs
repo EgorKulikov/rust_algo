@@ -1,7 +1,9 @@
 use crate::collections::slice_ext::indices::Indices;
+use crate::misc::value_ref::ValueRef;
 use crate::numbers::num_traits::algebra::IntegerSemiRingWithSub;
 use crate::numbers::num_traits::ord::MinMax;
 use crate::numbers::num_traits::primitive::Primitive;
+use crate::value_ref;
 use std::ops::{RangeBounds, Rem};
 use std::time::SystemTime;
 
@@ -107,17 +109,15 @@ impl Random {
     }
 }
 
-static mut RAND: Option<Random> = None;
+value_ref!(Rand: Random);
 
 pub fn random() -> &'static mut Random {
-    unsafe {
-        if RAND.is_none() {
-            RAND = Some(Random::new(
-                (SystemTime::UNIX_EPOCH.elapsed().unwrap().as_nanos() & 0xFFFFFFFFFFFFFFFF) as u64,
-            ));
-        }
-        RAND.as_mut().unwrap()
+    if !Rand::is_init() {
+        Rand::set_val(Random::new(
+            (SystemTime::UNIX_EPOCH.elapsed().unwrap().as_nanos() & 0xFFFFFFFFFFFFFFFF) as u64,
+        ));
     }
+    Rand::val_mut()
 }
 
 pub trait Shuffle {

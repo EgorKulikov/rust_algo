@@ -143,23 +143,23 @@ static mut EPSILON: Real = Real(1e-9);
 impl Real {
     pub const PI: Self = Self(std::f64::consts::PI);
 
-    pub fn abs(&self) -> Self {
+    pub fn abs(self) -> Self {
         Self(self.0.abs())
     }
 
-    pub fn sqrt(&self) -> Self {
+    pub fn sqrt(self) -> Self {
         Self(self.0.sqrt())
     }
 
-    pub fn sin(&self) -> Self {
+    pub fn sin(self) -> Self {
         Self(self.0.sin())
     }
 
-    pub fn cos(&self) -> Self {
+    pub fn cos(self) -> Self {
         Self(self.0.cos())
     }
 
-    pub fn tan(&self) -> Self {
+    pub fn tan(self) -> Self {
         Self(self.0.tan())
     }
 
