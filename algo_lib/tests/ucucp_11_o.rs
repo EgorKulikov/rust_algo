@@ -183,7 +183,7 @@ mod tester {
         let n = input.read_size();
         let m = input.read_size();
         let edges = input.read_size_pair_vec(m).dec();
-        let score = |mask: Str<'static>| -> Vec<i32> {
+        let score = |mask: Str| -> Vec<i32> {
             let mut res = Vec::with_capacity(m);
             for &(u, v) in edges.iter().rev() {
                 if mask[u] == mask[v] {
@@ -195,7 +195,7 @@ mod tester {
             res
         };
         let mut output = output.read_str();
-        if output.len() != 2 * n || output.iter().count_eq(&b'1') != n {
+        if output.len() != 2 * n || output.iter().count_eq(&&b'1') != n {
             return Err("Invalid output".to_string());
         }
         if let Some(mut expected) = expected {

@@ -14,7 +14,7 @@ pub struct UBigInt {
     z: Vec<u32>,
 }
 
-impl From<Str<'_>> for UBigInt {
+impl From<Str> for UBigInt {
     fn from(value: Str) -> Self {
         let mut at = value.len();
         let mut res = Vec::with_capacity((at + DIGITS - 1) / DIGITS);

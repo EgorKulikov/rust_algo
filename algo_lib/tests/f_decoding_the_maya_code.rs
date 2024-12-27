@@ -8,6 +8,7 @@ use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::recursive_function::{Callable2, RecursiveFunction2};
 use algo_lib::misc::test_type::TaskType;
+use std::ops::Deref;
 
 use algo_lib::misc::test_type::TestType;
 use algo_lib::string::aho_corasick::{ACPayload, AhoCorasickUppercase};
@@ -65,7 +66,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     for ((f, t), id) in by_query {
         let ac = AhoCorasickUppercase::<Data>::new(&s_ordered[f..t]);
         for i in id {
-            for x in ac.iterate(&queries[i].1) {
+            for x in ac.iterate(&queries[i].1.deref()) {
                 ans[i] += x.0;
             }
         }

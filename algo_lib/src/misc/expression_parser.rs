@@ -1,10 +1,9 @@
-use crate::string::str::Str;
 use std::cell::Cell;
 use std::marker::PhantomData;
 
 pub struct ExpressionParser<T, Parse>
 where
-    Parse: Fn(Str<'_>) -> T,
+    Parse: Fn(&[u8]) -> T,
 {
     max_priority: usize,
     binary_ops: Vec<(usize, u8, Box<dyn Fn(T, T) -> T>)>,
@@ -18,7 +17,7 @@ where
 
 impl<T, Parse> ExpressionParser<T, Parse>
 where
-    Parse: Fn(Str<'_>) -> T,
+    Parse: Fn(&[u8]) -> T,
 {
     pub fn new(parse: Parse) -> Self {
         Self {
@@ -44,12 +43,12 @@ where
         self.unary_ops.push((op, Box::new(f)));
     }
 
-    pub fn parse(&self, s: &Str) -> T {
+    pub fn parse(&self, s: &[u8]) -> T {
         self.pos.set(0);
         self.parse_expr(0, s)
     }
 
-    fn parse_expr(&self, priority: usize, s: &Str) -> T {
+    fn parse_expr(&self, priority: usize, s: &[u8]) -> T {
         if priority == self.max_priority {
             self.parse_unary(s)
         } else {
@@ -75,7 +74,7 @@ where
         }
     }
 
-    fn parse_unary(&self, s: &Str) -> T {
+    fn parse_unary(&self, s: &[u8]) -> T {
         while s[self.pos.get()] == b' ' {
             self.pos.set(self.pos.get() + 1);
         }
@@ -93,7 +92,7 @@ where
         self.parse_atom(s)
     }
 
-    fn parse_atom(&self, s: &Str) -> T {
+    fn parse_atom(&self, s: &[u8]) -> T {
         let start = self.pos.get();
         loop {
             if self.pos.get() == s.len()
@@ -104,8 +103,8 @@ where
             }
             self.pos.set(self.pos.get() + 1);
         }
-        let s = Str::from(&s[start..self.pos.get()]);
-        let s = s.trim();
+        let s = &s[start..self.pos.get()];
+        let s = s.trim_ascii();
         (self.parse)(s)
     }
 }

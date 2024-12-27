@@ -14,7 +14,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     while !input.is_empty() {
         let command = input.read_str();
         let value = input.read_int();
-        match command.as_ref() {
+        match command.as_slice() {
             b"insert" => {
                 set.insert(value);
             }

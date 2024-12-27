@@ -7,6 +7,7 @@ pub struct Input<'s> {
     buf: Vec<u8>,
     at: usize,
     buf_read: usize,
+    eol: bool,
 }
 
 macro_rules! read_impl {
@@ -38,6 +39,7 @@ impl<'s> Input<'s> {
             buf: default_vec(Self::DEFAULT_BUF_SIZE),
             at: 0,
             buf_read: 0,
+            eol: true,
         }
     }
 
@@ -47,6 +49,7 @@ impl<'s> Input<'s> {
             buf: default_vec(buf_size),
             at: 0,
             buf_read: 0,
+            eol: true,
         }
     }
 
@@ -55,11 +58,13 @@ impl<'s> Input<'s> {
             let res = self.buf[self.at];
             self.at += 1;
             if res == b'\r' {
+                self.eol = true;
                 if self.refill_buffer() && self.buf[self.at] == b'\n' {
                     self.at += 1;
                 }
                 return Some(b'\n');
             }
+            self.eol = res == b'\n';
             Some(res)
         } else {
             None
@@ -143,6 +148,10 @@ impl<'s> Input<'s> {
         } else {
             true
         }
+    }
+
+    pub fn is_eol(&self) -> bool {
+        self.eol
     }
 }
 
