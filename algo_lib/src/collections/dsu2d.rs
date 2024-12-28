@@ -1,5 +1,4 @@
 use crate::collections::dsu::DSU;
-use crate::collections::iter_ext::collect::IterCollect;
 use std::ops::{Deref, DerefMut};
 
 #[derive(Clone)]
@@ -55,8 +54,8 @@ impl DSU2d {
             .map(|v| {
                 v.into_iter()
                     .map(|i| (i / self.cols, i % self.cols))
-                    .collect_vec()
+                    .collect()
             })
-            .collect_vec()
+            .collect()
     }
 }

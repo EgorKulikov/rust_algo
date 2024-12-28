@@ -1,7 +1,6 @@
 //{"name":"ucup_10_g","group":"Manual","url":"","interactive":false,"timeLimit":2000,"tests":[{"input":"","output":""}],"testType":"multiNumber","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"ucup_10_g"}}}
 
 use algo_lib::collections::bit_set::BitSet;
-use algo_lib::collections::iter_ext::collect::IterCollect;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::graph::edges::edge_trait::EdgeTrait;
 use algo_lib::graph::edges::flow_edge::FlowEdge;
@@ -181,7 +180,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         }
     }
     out.print_line(ans);
-    out.print_line(to_remove.iter().collect_vec().inc());
+    out.print_line(to_remove.iter().collect::<Vec<_>>().inc());
 }
 
 pub static TEST_TYPE: TestType = TestType::MultiNumber;

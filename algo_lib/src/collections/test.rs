@@ -1,4 +1,4 @@
-use crate::collections::iter_ext::find_count::IterFindCount;
+use crate::collections::iter_ext::iter_copied::ItersCopied;
 use crate::collections::slice_ext::compress::{compress, Compressed};
 use crate::collections::slice_ext::permutation::Permutation;
 use crate::collections::vec_ext::inc_dec::IncDec;
@@ -6,8 +6,8 @@ use crate::collections::vec_ext::inc_dec::IncDec;
 #[test]
 fn test_find() {
     let v = vec![1, 2, 3];
-    assert_eq!(Some(1), v.iter().find_eq(&2));
-    assert_eq!(None, v.iter().find_eq(&0));
+    assert_eq!(Some(1), v.copy_find(2));
+    assert_eq!(None, v.copy_find(0));
 }
 
 #[test]

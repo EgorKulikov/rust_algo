@@ -2,8 +2,9 @@ use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::ops::{Index, IndexMut};
+use std::slice::{Iter, IterMut};
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq, Default, Debug, Hash)]
 pub struct Arr4d<T> {
     d1: usize,
     d2: usize,
@@ -64,11 +65,11 @@ impl<T> Arr4d<T> {
         self.d4
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
+    pub fn iter(&self) -> Iter<'_, T> {
         self.data.iter()
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+    pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         self.data.iter_mut()
     }
 }
@@ -77,7 +78,6 @@ impl<T> Index<(usize, usize, usize, usize)> for Arr4d<T> {
     type Output = T;
 
     fn index(&self, (a1, a2, a3, a4): (usize, usize, usize, usize)) -> &Self::Output {
-        assert!(a1 < self.d1);
         assert!(a2 < self.d2);
         assert!(a3 < self.d3);
         assert!(a4 < self.d4);
@@ -87,7 +87,6 @@ impl<T> Index<(usize, usize, usize, usize)> for Arr4d<T> {
 
 impl<T> IndexMut<(usize, usize, usize, usize)> for Arr4d<T> {
     fn index_mut(&mut self, (a1, a2, a3, a4): (usize, usize, usize, usize)) -> &mut Self::Output {
-        assert!(a1 < self.d1);
         assert!(a2 < self.d2);
         assert!(a3 < self.d3);
         assert!(a4 < self.d4);

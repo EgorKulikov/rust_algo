@@ -1,6 +1,6 @@
 //{"name":"F. Decoding the Maya Code","group":"Yandex - Yandex Cup 2024 — Algorithm — Semifinal","url":"https://contest.yandex.com/contest/70295/problems/F/","interactive":false,"timeLimit":3000,"tests":[{"input":"5 4\nA\nB\nC\nD\nE\n1 2\n1 3\n1 4\n2 5\n1 AABCDE\n1 A\n2 BEE\n3 CCCA\n","output":"6\n1\n3\n3\n"},{"input":"6 4\nAA\nAB\nBC\nCD\nAA\nAA\n1 2\n2 3\n3 4\n4 5\n5 6\n1 AAABCD\n2 AABCD\n3 BCD\n1 DCBA\n","output":"9\n5\n2\n0\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"FDecodingTheMayaCode"}}}
 
-use algo_lib::collections::default_map::default_hash_map::DefaultHashMap;
+use algo_lib::collections::default_map::DefaultHashMap;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::graph::dfs_order::{DFSOrder, DFSOrderTrait};
 use algo_lib::graph::Graph;
@@ -8,11 +8,10 @@ use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::recursive_function::{Callable2, RecursiveFunction2};
 use algo_lib::misc::test_type::TaskType;
-use std::ops::Deref;
-
 use algo_lib::misc::test_type::TestType;
 use algo_lib::string::aho_corasick::{ACPayload, AhoCorasickUppercase};
 use algo_lib::string::str::{Str, StrReader};
+use std::ops::Deref;
 
 type PreCalc = ();
 
@@ -26,7 +25,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let graph = Graph::from_biedges(n, &edges);
     let DFSOrder { position, end } = graph.dfs_order();
     let mut ans = vec![0; q];
-    let mut by_query = DefaultHashMap::<_, Vec<_>>::new();
+    let mut by_query = DefaultHashMap::new(Vec::new());
     for i in 0..q {
         let v = queries[i].0 - 1;
         let left = position[v];

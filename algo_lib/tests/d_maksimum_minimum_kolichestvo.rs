@@ -1,7 +1,6 @@
 //{"name":"D. Максимум + минимум + количество","group":"Codeforces - Codeforces Round 975 (Div. 1)","url":"https://codeforces.com/contest/2018/problem/D","interactive":false,"timeLimit":2000,"tests":[{"input":"4\n3\n5 4 5\n3\n4 5 4\n10\n3 3 3 3 4 1 2 3 5 4\n10\n17 89 92 42 29 41 92 14 70 45\n","output":"12\n11\n12\n186\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"DMaksimumMinimumKolichestvo"}}}
 
 use algo_lib::collections::bit_set::BitSet;
-use algo_lib::collections::iter_ext::collect::IterCollect;
 use algo_lib::collections::md_arr::arr2d::Arr2d;
 use algo_lib::collections::min_max::MinimMaxim;
 use algo_lib::collections::segment_tree::{Pushable, SegmentTree, SegmentTreeNode};
@@ -122,7 +121,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         .chain(odd_max.into_iter())
         .collect_vec();*/
     let mut ans = None;
-    let mut order = (0..n).collect_vec();
+    let mut order: Vec<_> = (0..n).collect();
     order.sort_by_key(|&i| x[i]);
     order.reverse();
     let mut added = BitSet::new(n);

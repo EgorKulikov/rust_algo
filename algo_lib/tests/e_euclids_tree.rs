@@ -1,6 +1,6 @@
 //{"name":"E. Euclid's Tree","group":"Yandex - Yandex Cup 2024 — Algorithm — Semifinal","url":"https://contest.yandex.com/contest/70295/problems/E/","interactive":false,"timeLimit":2000,"tests":[{"input":"1\n5\n4 6 6 6 5\n1 5\n2 5\n5 4\n3 4\n","output":"3\n3\n3\n2\n0\n"},{"input":"2\n5\n6 4 6 2 4\n5 3\n1 5\n5 2\n2 4\n9\n4 6 6 7 7 3 4 4 2\n2 7\n1 6\n3 4\n4 9\n6 4\n3 2\n5 2\n6 8\n","output":"3\n2\n3\n3\n2\n5\n4\n3\n3\n3\n3\n5\n5\n4\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"EEuclidsTree"}}}
 
-use algo_lib::collections::default_map::default_hash_map::DefaultHashMap;
+use algo_lib::collections::default_map::DefaultHashMap;
 use algo_lib::collections::min_max::MinimMaxim;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::graph::lca::LCATrait;
@@ -25,7 +25,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
 
         let graph = Graph::from_biedges(n, &edges);
         let lca = graph.lca();
-        let mut poi = DefaultHashMap::<_, Vec<_>>::new();
+        let mut poi = DefaultHashMap::new(Vec::new());
         for i in 0..n {
             let mut cur = a[i];
             while cur != 1 {

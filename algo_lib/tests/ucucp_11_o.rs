@@ -1,9 +1,8 @@
 //{"name":"ucucp_11_o","group":"Manual","url":"","interactive":false,"timeLimit":3000,"tests":[{"input":"","output":""},{"input":"","output":""}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"ucucp_11_o"}}}
 
 use algo_lib::collections::bit_set::BitSet;
-use algo_lib::collections::default_map::default_hash_map::DefaultHashMap;
+use algo_lib::collections::default_map::DefaultHashMap;
 use algo_lib::collections::dsu::DSU;
-use algo_lib::collections::iter_ext::collect::IterCollect;
 use algo_lib::collections::md_arr::arr2d::Arr2d;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::io::input::Input;
@@ -20,7 +19,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let edges = input.read_size_pair_vec(m).dec();
 
     let mut dsu = DSU::new(2 * n);
-    let mut sets = (0..2 * n).map(|i| vec![i]).collect_vec();
+    let mut sets: Vec<_> = (0..2 * n).map(|i| vec![i]).collect();
     let mut size = vec![(1, 0); 2 * n];
     let mut col = vec![0; 2 * n];
     let mut present = (0..2 * n).collect::<HashSet<_>>();
@@ -45,7 +44,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             res
         };
         present.remove(&v);
-        let mut with_qty = DefaultHashMap::<_, usize>::new();
+        let mut with_qty = DefaultHashMap::new(0usize);
         for &j in &present {
             let (u, v) = size[j];
             with_qty[(u.max(v), u.min(v))] += 1;
@@ -157,7 +156,7 @@ mod tester {
     #![allow(dead_code)]
 
     use crate::{run, TASK_TYPE};
-    use algo_lib::collections::iter_ext::find_count::IterFindCount;
+    use algo_lib::collections::iter_ext::iter_copied::ItersCopied;
     use algo_lib::collections::min_max::MinimMaxim;
     use algo_lib::collections::vec_ext::inc_dec::IncDec;
     use algo_lib::io::input::Input;
@@ -195,7 +194,7 @@ mod tester {
             res
         };
         let mut output = output.read_str();
-        if output.len() != 2 * n || output.iter().count_eq(&&b'1') != n {
+        if output.len() != 2 * n || output.copy_count(b'1') != n {
             return Err("Invalid output".to_string());
         }
         if let Some(mut expected) = expected {

@@ -1,12 +1,13 @@
 use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
+use std::iter::{Skip, StepBy, Take};
 use std::mem::MaybeUninit;
 use std::ops::{Index, IndexMut, Range};
-use std::slice::Iter;
+use std::slice::{Iter, IterMut};
 use std::vec::IntoIter;
 
-#[derive(Clone, Eq, PartialEq, Default)]
+#[derive(Clone, Eq, PartialEq, Default, Debug, Hash)]
 pub struct Arr2d<T> {
     d1: usize,
     d2: usize,
@@ -49,33 +50,31 @@ impl<T> Arr2d<T> {
         self.data.iter()
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+    pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         self.data.iter_mut()
     }
 
-    pub fn row(&self, row: usize) -> impl Iterator<Item = &T> {
+    pub fn row(&self, row: usize) -> Take<Skip<Iter<'_, T>>> {
         assert!(row < self.d1);
         self.data.iter().skip(row * self.d2).take(self.d2)
     }
 
-    pub fn row_mut(&mut self, row: usize) -> impl Iterator<Item = &mut T> {
+    pub fn row_mut(&mut self, row: usize) -> Take<Skip<IterMut<'_, T>>> {
         assert!(row < self.d1);
         self.data.iter_mut().skip(row * self.d2).take(self.d2)
     }
 
-    pub fn column(&self, col: usize) -> impl Iterator<Item = &T> {
+    pub fn col(&self, col: usize) -> StepBy<Skip<Iter<'_, T>>> {
         assert!(col < self.d2);
         self.data.iter().skip(col).step_by(self.d2)
     }
 
-    pub fn column_mut(&mut self, col: usize) -> impl Iterator<Item = &mut T> {
+    pub fn col_mut(&mut self, col: usize) -> StepBy<Skip<IterMut<'_, T>>> {
         assert!(col < self.d2);
         self.data.iter_mut().skip(col).step_by(self.d2)
     }
 
     pub fn swap(&mut self, r1: usize, c1: usize, r2: usize, c2: usize) {
-        assert!(r1 < self.d1);
-        assert!(r2 < self.d1);
         assert!(c1 < self.d2);
         assert!(c2 < self.d2);
         self.data.swap(r1 * self.d2 + c1, r2 * self.d2 + c2);
@@ -90,9 +89,8 @@ impl<T> Arr2d<T> {
     }
 
     pub fn swap_rows(&mut self, r1: usize, r2: usize) {
-        assert!(r1 < self.d1);
-        assert!(r2 < self.d1);
         if r1 == r2 {
+            assert!(r1 < self.d1);
             return;
         }
         let (r1, r2) = (r1.min(r2), r1.max(r2));
@@ -137,15 +135,30 @@ impl<T> Arr2d<T> {
             }
         }
     }
+
+    pub fn transpose(self) -> Self {
+        unsafe {
+            let d1 = self.d1;
+            let d2 = self.d2;
+            let mut res = MaybeUninit::new(Vec::with_capacity(d1 * d2));
+            (*res.as_mut_ptr()).set_len(d1 * d2);
+            for (id, element) in self.into_iter().enumerate() {
+                let (i, j) = (id / d2, id % d2);
+                let ptr: *mut T = (*res.as_mut_ptr()).as_mut_ptr();
+                ptr.add(j * d1 + i).write(element);
+            }
+            Self {
+                d1: d2,
+                d2: d1,
+                data: res.assume_init(),
+            }
+        }
+    }
 }
 
 impl<T: Clone> Arr2d<T> {
     pub fn fill(&mut self, elem: T) {
         self.data.legacy_fill(elem);
-    }
-
-    pub fn transpose(&self) -> Self {
-        Self::gen(self.d2, self.d1, |i, j| self[(j, i)].clone())
     }
 }
 
@@ -153,7 +166,6 @@ impl<T> Index<(usize, usize)> for Arr2d<T> {
     type Output = T;
 
     fn index(&self, (row, col): (usize, usize)) -> &Self::Output {
-        assert!(row < self.d1);
         assert!(col < self.d2);
         &self.data[self.d2 * row + col]
     }
@@ -169,7 +181,6 @@ impl<T> Index<usize> for Arr2d<T> {
 
 impl<T> IndexMut<(usize, usize)> for Arr2d<T> {
     fn index_mut(&mut self, (row, col): (usize, usize)) -> &mut T {
-        assert!(row < self.d1);
         assert!(col < self.d2);
         &mut self.data[self.d2 * row + col]
     }

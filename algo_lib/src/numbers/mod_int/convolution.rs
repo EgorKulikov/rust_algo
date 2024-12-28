@@ -1,4 +1,3 @@
-use crate::collections::iter_ext::collect::IterCollect;
 use crate::collections::vec_ext::gen::VecGen;
 use crate::misc::value::Value;
 use crate::numbers::gcd::remainder;
@@ -15,16 +14,16 @@ pub fn convolution(a: &[u32], b: &[u32]) -> Vec<i128> {
     type Mod2 = ModInt<Module2>;
     type Mod3 = ModInt<Module3>;
     let c1 = PrimeFFT::<Mod1>::new().multiply(
-        &a.iter().map(|&x| Mod1::new(x)).collect_vec(),
-        &b.iter().map(|&x| Mod1::new(x)).collect_vec(),
+        &a.iter().map(|&x| Mod1::new(x)).collect::<Vec<_>>(),
+        &b.iter().map(|&x| Mod1::new(x)).collect::<Vec<_>>(),
     );
     let c2 = PrimeFFT::<Mod2>::new().multiply(
-        &a.iter().map(|&x| Mod2::new(x)).collect_vec(),
-        &b.iter().map(|&x| Mod2::new(x)).collect_vec(),
+        &a.iter().map(|&x| Mod2::new(x)).collect::<Vec<_>>(),
+        &b.iter().map(|&x| Mod2::new(x)).collect::<Vec<_>>(),
     );
     let c3 = PrimeFFT::<Mod3>::new().multiply(
-        &a.iter().map(|&x| Mod3::new(x)).collect_vec(),
-        &b.iter().map(|&x| Mod3::new(x)).collect_vec(),
+        &a.iter().map(|&x| Mod3::new(x)).collect::<Vec<_>>(),
+        &b.iter().map(|&x| Mod3::new(x)).collect::<Vec<_>>(),
     );
     let mod12 = (Module1::val() as i64 * Module2::val() as i64) as i128;
     let mod123 = mod12 * Module3::val() as i128;

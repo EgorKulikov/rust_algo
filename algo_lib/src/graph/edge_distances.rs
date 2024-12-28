@@ -40,9 +40,9 @@ impl<E: BidirectionalEdgeTrait> BiEdgeAlgos for Graph<E> {
             return Vec::new();
         }
         let d0 = self.edge_distances(0);
-        let first = d0.iter().max_position().unwrap();
+        let first = d0.max_position().unwrap();
         let d1 = self.edge_distances(first);
-        let second = d1.iter().max_position().unwrap();
+        let second = d1.max_position().unwrap();
         let d2 = self.edge_distances(second);
         let mut res = Vec::new();
         let r1 = d1[second] / 2;

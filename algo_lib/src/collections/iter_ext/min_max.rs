@@ -1,10 +1,13 @@
 use crate::collections::min_max::MinimMaxim;
 
-pub trait IterMinMaxPos<T: Ord>: Iterator<Item = T> + Sized {
-    fn max_position(self) -> Option<usize> {
+pub trait IterMinMaxPos<'a, T: Ord + 'a>: 'a
+where
+    &'a Self: IntoIterator<Item = T>,
+{
+    fn max_position(&'a self) -> Option<usize> {
         let mut res = None;
         let mut val = None;
-        for (i, cur) in self.enumerate() {
+        for (i, cur) in self.into_iter().enumerate() {
             if val.maxim(cur) {
                 res = Some(i);
             }
@@ -12,10 +15,10 @@ pub trait IterMinMaxPos<T: Ord>: Iterator<Item = T> + Sized {
         res
     }
 
-    fn min_position(self) -> Option<usize> {
+    fn min_position(&'a self) -> Option<usize> {
         let mut res = None;
         let mut val = None;
-        for (i, cur) in self.enumerate() {
+        for (i, cur) in self.into_iter().enumerate() {
             if val.minim(cur) {
                 res = Some(i);
             }
@@ -24,4 +27,4 @@ pub trait IterMinMaxPos<T: Ord>: Iterator<Item = T> + Sized {
     }
 }
 
-impl<T: Ord, I: Iterator<Item = T> + Sized> IterMinMaxPos<T> for I {}
+impl<'a, T: Ord + 'a, I: ?Sized + 'a> IterMinMaxPos<'a, T> for I where &'a I: IntoIterator<Item = T> {}

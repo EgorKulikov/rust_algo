@@ -1,8 +1,9 @@
-use crate::collections::iter_ext::find_count::IterFindCount;
+use crate::collections::iter_ext::iter_copied::ItersCopied;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use crate::numbers::num_traits::algebra::{One, Zero};
 use crate::numbers::num_traits::invertible::Invertible;
+use crate::string::str::Str;
 use std::cmp::Ordering;
 use std::ops::{
     Add, AddAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
@@ -21,12 +22,12 @@ impl Real {
     pub fn floor(&self) -> i64 {
         self.0.floor() as i64
     }
-    pub fn with_precision(&self, precision: usize) -> String {
-        let res = format!("{:.*}", precision, self.0);
-        if res.starts_with('-') && res.chars().count_eq(&'0') == precision + 1 {
-            res[1..].to_string()
+    pub fn with_precision(&self, precision: usize) -> Str {
+        let res = format!("{:.*}", precision, self.0).into_bytes();
+        if res.starts_with(b"-") && res.copy_count(b'0') == precision + 1 {
+            res[1..].into()
         } else {
-            res
+            res.into()
         }
     }
 }
