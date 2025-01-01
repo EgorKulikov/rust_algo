@@ -1,5 +1,4 @@
 use crate::collections::min_max::MinimMaxim;
-use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::numbers::num_traits::algebra::AdditionMonoidWithSub;
 use std::ops::RangeBounds;
 
@@ -60,7 +59,7 @@ impl<T: AdditionMonoidWithSub + Copy> FenwickTree<T> {
     }
 
     pub fn clear(&mut self) {
-        self.value.legacy_fill(T::zero());
+        self.value.fill(T::zero());
     }
 }
 

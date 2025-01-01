@@ -4,8 +4,12 @@ pub trait Bounds<T: PartialOrd> {
     fn bin_search(&self, el: &T) -> Option<usize>;
     fn more(&self, el: &T) -> usize;
     fn more_or_eq(&self, el: &T) -> usize;
-    fn less(&self, el: &T) -> usize;
-    fn less_or_eq(&self, el: &T) -> usize;
+    fn less(&self, el: &T) -> usize {
+        self.lower_bound(el)
+    }
+    fn less_or_eq(&self, el: &T) -> usize {
+        self.upper_bound(el)
+    }
 }
 
 impl<T: PartialOrd> Bounds<T> for [T] {
@@ -52,13 +56,5 @@ impl<T: PartialOrd> Bounds<T> for [T] {
 
     fn more_or_eq(&self, el: &T) -> usize {
         self.len() - self.lower_bound(el)
-    }
-
-    fn less(&self, el: &T) -> usize {
-        self.lower_bound(el)
-    }
-
-    fn less_or_eq(&self, el: &T) -> usize {
-        self.upper_bound(el)
     }
 }

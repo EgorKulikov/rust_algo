@@ -1,6 +1,5 @@
 use crate::collections::indexed_heap::IndexedHeap;
 use crate::collections::min_max::MinimMaxim;
-use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::graph::edges::edge_id::EdgeId;
 use crate::graph::edges::edge_trait::EdgeTrait;
 use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
@@ -88,7 +87,7 @@ where
                     heap: &mut IndexedHeap<C>,
                     p: &Vec<C>,
                     s: usize| {
-        dis.legacy_fill(inf);
+        dis.fill(inf);
         dis[s] = C::zero();
         assert!(heap.is_empty());
         heap.add_or_adjust(s, C::zero());

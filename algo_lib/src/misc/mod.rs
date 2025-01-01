@@ -4,6 +4,7 @@ pub mod dirs;
 pub mod expression_parser;
 pub mod extensions;
 pub mod hungarian_algorithm;
+pub mod maybe;
 pub mod memo;
 pub mod owned_cell;
 pub mod random;

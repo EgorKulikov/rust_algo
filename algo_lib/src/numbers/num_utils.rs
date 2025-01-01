@@ -1,4 +1,6 @@
-use crate::numbers::num_traits::algebra::{AdditionMonoid, IntegerRing, MultiplicationMonoid};
+use crate::numbers::num_traits::algebra::{
+    AdditionMonoid, IntegerSemiRingWithSub, MultiplicationMonoid,
+};
 use crate::numbers::num_traits::as_index::AsIndex;
 
 pub fn factorials<T: MultiplicationMonoid + Copy + AsIndex>(len: usize) -> Vec<T> {
@@ -68,7 +70,7 @@ pub trait UpperDiv {
     fn upper_div(self, other: Self) -> Self;
 }
 
-impl<T: IntegerRing + Copy> UpperDiv for T {
+impl<T: IntegerSemiRingWithSub + Copy> UpperDiv for T {
     fn upper_div(self, other: Self) -> Self {
         (self + other - Self::one()) / other
     }

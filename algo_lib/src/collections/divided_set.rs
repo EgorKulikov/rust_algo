@@ -2,18 +2,18 @@ use crate::misc::direction::Direction;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 
-pub struct DividedSet<'s, T: Ord> {
+pub struct DividedSet<T: Ord, F: Fn(usize, usize) -> Option<Direction>> {
     left: BinaryHeap<T>,
     right: BinaryHeap<Reverse<T>>,
-    criteria: Box<dyn Fn(usize, usize) -> Option<Direction> + 's>,
+    criteria: F,
 }
 
-impl<'s, T: Ord> DividedSet<'s, T> {
-    pub fn new(criteria: impl Fn(usize, usize) -> Option<Direction> + 's) -> Self {
+impl<T: Ord, F: Fn(usize, usize) -> Option<Direction>> DividedSet<T, F> {
+    pub fn new(criteria: F) -> Self {
         Self {
             left: BinaryHeap::new(),
             right: BinaryHeap::new(),
-            criteria: Box::new(criteria),
+            criteria,
         }
     }
 

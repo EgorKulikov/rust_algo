@@ -1,4 +1,3 @@
-use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::ops::{Index, IndexMut};
@@ -156,6 +155,6 @@ impl<T: Readable> Readable for Arr4d<T> {
 
 impl<T: Clone> Arr4d<T> {
     pub fn fill(&mut self, elem: T) {
-        self.data.legacy_fill(elem);
+        self.data.fill(elem);
     }
 }

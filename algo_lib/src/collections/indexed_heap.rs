@@ -1,65 +1,59 @@
-use crate::collections::slice_ext::legacy_fill::LegacyFill;
-use std::mem;
+use crate::collections::vec_ext::default::default_vec;
+use crate::misc::maybe::Maybe;
 
-enum Opt<T> {
-    None,
-    Some(u32, T),
+struct Opt<T> {
+    index: u32,
+    value: Maybe<T>,
 }
 
 #[allow(clippy::derivable_impls)]
 impl<T> Default for Opt<T> {
     fn default() -> Self {
-        Opt::None
+        Self {
+            index: u32::MAX,
+            value: Maybe::none(),
+        }
     }
 }
 
 impl<T> Opt<T> {
     fn index(&self) -> usize {
-        match self {
-            Opt::None => panic!("unreachable"),
-            Opt::Some(index, _) => *index as usize,
-        }
+        assert!(self.index != u32::MAX);
+        self.index as usize
     }
 
     fn val(&self) -> &T {
-        match self {
-            Opt::None => panic!("unreachable"),
-            Opt::Some(_, val) => val,
-        }
+        assert!(self.index != u32::MAX);
+        unsafe { self.value.as_ref() }
     }
 
     fn set_index(&mut self, index: usize) {
-        match self {
-            Opt::None => panic!("unreachable"),
-            Opt::Some(ind, _) => {
-                *ind = index as u32;
-            }
-        }
+        assert!(self.index != u32::MAX);
+        self.index = index as u32;
     }
 
     fn set_val(&mut self, t: T) {
-        match self {
-            Opt::None => panic!("unreachable"),
-            Opt::Some(_, val) => {
-                *val = t;
-            }
-        }
+        assert!(self.index != u32::MAX);
+        unsafe { *self.value.as_mut() = t };
     }
 
     fn take(&mut self) -> (usize, T) {
-        let val = mem::take(self);
-        match val {
-            Opt::None => panic!("unreachable"),
-            Opt::Some(ind, val) => (ind as usize, val),
-        }
+        assert!(self.index != u32::MAX);
+        let value = unsafe { self.value.take() };
+        let index = self.index as usize;
+        self.index = u32::MAX;
+        (index, value)
+    }
+
+    fn is_none(&self) -> bool {
+        self.index == u32::MAX
     }
 }
 
-impl<T> Clone for Opt<T> {
-    fn clone(&self) -> Self {
-        match self {
-            Opt::None => Opt::None,
-            Opt::Some(..) => panic!("unreachable"),
+impl<T> Drop for Opt<T> {
+    fn drop(&mut self) {
+        if self.index != u32::MAX {
+            unsafe { self.value.drop() }
         }
     }
 }
@@ -73,7 +67,7 @@ impl<T: PartialOrd> IndexedHeap<T> {
     pub fn new(capacity: usize) -> Self {
         Self {
             heap: Vec::with_capacity(capacity),
-            pos: vec![Opt::None; capacity],
+            pos: default_vec(capacity),
         }
     }
 
@@ -90,33 +84,30 @@ impl<T: PartialOrd> IndexedHeap<T> {
     }
 
     pub fn add_or_adjust(&mut self, el: usize, val: T) {
-        match &self.pos[el] {
-            Opt::None => {
-                self.pos[el] = Opt::Some(self.heap.len() as u32, val);
-                self.heap.push(el as u32);
+        if self.pos[el].is_none() {
+            self.pos[el].index = self.heap.len() as u32;
+            self.pos[el].value = Maybe::new(val);
+            self.heap.push(el as u32);
+            self.sift_up(self.pos[el].index());
+        } else {
+            let v = self.pos[el].val();
+            let less = *v < val;
+            self.pos[el].set_val(val);
+            if less {
+                self.sift_down(self.pos[el].index());
+            } else {
                 self.sift_up(self.pos[el].index());
-            }
-            Opt::Some(_, v) => {
-                let less = *v < val;
-                self.pos[el].set_val(val);
-                if less {
-                    self.sift_down(self.pos[el].index());
-                } else {
-                    self.sift_up(self.pos[el].index());
-                }
             }
         }
     }
 
     pub fn add_or_relax(&mut self, el: usize, val: T) {
-        match &self.pos[el] {
-            Opt::None => {
+        if self.pos[el].is_none() {
+            self.add_or_adjust(el, val);
+        } else {
+            let value = self.pos[el].val();
+            if &val < value {
                 self.add_or_adjust(el, val);
-            }
-            Opt::Some(_, value) => {
-                if &val < value {
-                    self.add_or_adjust(el, val);
-                }
             }
         }
     }
@@ -141,33 +132,37 @@ impl<T: PartialOrd> IndexedHeap<T> {
 
     pub fn clear(&mut self) {
         self.heap.clear();
-        self.pos.legacy_fill(Opt::None);
+        for el in &mut self.pos {
+            *el = Opt::default();
+        }
     }
 
     pub fn remove(&mut self, el: usize) -> Option<T> {
-        match self.pos[el] {
-            Opt::None => None,
-            Opt::Some(pos, _) => {
-                let last = self.heap.pop().unwrap();
-                let val = self.pos[last as usize].take().1;
-                if self.is_empty() {
-                    Some(val)
-                } else {
-                    let top_val = self.pos[el].take().1;
-                    self.pos[last as usize] = Opt::Some(pos, val);
-                    self.heap[pos as usize] = last;
-                    self.sift_down(pos as usize);
-                    self.sift_up(pos as usize);
-                    Some(top_val)
-                }
+        if self.pos[el].is_none() {
+            None
+        } else {
+            let pos = self.pos[el].index();
+            let last = self.heap.pop().unwrap();
+            let val = self.pos[last as usize].take().1;
+            if self.is_empty() {
+                Some(val)
+            } else {
+                let top_val = self.pos[el].take().1;
+                self.pos[last as usize].index = pos as u32;
+                self.pos[last as usize].value = Maybe::new(val);
+                self.heap[pos] = last;
+                self.sift_down(pos);
+                self.sift_up(pos);
+                Some(top_val)
             }
         }
     }
 
     pub fn value(&self, el: usize) -> Option<&T> {
-        match &self.pos[el] {
-            Opt::None => None,
-            Opt::Some(_, val) => Some(val),
+        if self.pos[el].is_none() {
+            None
+        } else {
+            Some(self.pos[el].val())
         }
     }
 

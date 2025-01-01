@@ -1,6 +1,5 @@
 use crate::collections::bit_set::BitSet;
 use crate::collections::md_arr::arr2d::Arr2d;
-use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::numbers::num_traits::ord::MinMax;
 
 pub fn hungarian_algorithm(a: &Arr2d<i64>) -> i64 {
@@ -17,7 +16,7 @@ pub fn hungarian_algorithm(a: &Arr2d<i64>) -> i64 {
         p[n] = i;
         let mut j0 = n;
         used.fill(false);
-        min_v.legacy_fill(inf);
+        min_v.fill(inf);
         while p[j0] != n {
             used.set(j0);
             let i0 = p[j0];

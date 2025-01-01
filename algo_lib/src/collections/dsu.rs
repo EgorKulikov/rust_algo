@@ -1,6 +1,5 @@
 use crate::collections::slice_ext::bounds::Bounds;
 use crate::collections::slice_ext::indices::Indices;
-use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use std::cell::Cell;
 
 #[derive(Clone)]
@@ -62,7 +61,7 @@ impl DSU {
 
     pub fn clear(&mut self) {
         self.count = self.id.len();
-        self.id.legacy_fill(Cell::new(-1));
+        self.id.fill(Cell::new(-1));
     }
 
     pub fn parts(&self) -> Vec<Vec<usize>> {

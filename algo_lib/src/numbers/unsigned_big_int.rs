@@ -1,9 +1,11 @@
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
+use crate::numbers::mod_int::convolution::convolution;
 use crate::numbers::num_traits::algebra::{One, Zero};
 use crate::string::str::{Str, StrReader};
 use std::cmp::Ordering;
-use std::ops::{Add, AddAssign, DivAssign, MulAssign, Sub, SubAssign};
+use std::fmt::{Debug, Display, Formatter};
+use std::ops::{Add, AddAssign, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 const DIGITS: usize = 9;
 const BASE: u32 = 10u32.pow(DIGITS as u32);
@@ -22,6 +24,7 @@ impl From<Str> for UBigInt {
             let mut cur = 0;
             let start = at.saturating_sub(DIGITS);
             for &c in &value[start..at] {
+                assert!(c.is_ascii_digit());
                 cur *= 10;
                 cur += (c - b'0') as u32;
             }
@@ -178,6 +181,34 @@ impl MulAssign<u32> for UBigInt {
     }
 }
 
+impl Mul for UBigInt {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        let c = convolution(&self.z, &rhs.z);
+        let mut carry = 0;
+        let mut res = Vec::new();
+        for i in c {
+            carry += i;
+            let last = carry % BASE as i128;
+            res.push(last as u32);
+            carry /= BASE as i128;
+        }
+        while carry > 0 {
+            res.push((carry % BASE as i128) as u32);
+            carry /= BASE as i128;
+        }
+        while let Some(d) = res.last() {
+            if *d == 0 {
+                res.pop();
+            } else {
+                break;
+            }
+        }
+        Self { z: res }
+    }
+}
+
 impl DivAssign<u32> for UBigInt {
     fn div_assign(&mut self, rhs: u32) {
         let rhs = rhs as u64;
@@ -211,17 +242,23 @@ impl Writable for UBigInt {
     }
 }
 
-impl ToString for UBigInt {
-    fn to_string(&self) -> String {
+impl Display for UBigInt {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         if let Some(tail) = self.z.last() {
-            let mut ans = tail.to_string();
+            write!(f, "{}", tail)?;
             for &i in self.z.iter().rev().skip(1) {
-                ans += format!("{:09}", i).as_str();
+                write!(f, "{:09}", i)?;
             }
-            ans
         } else {
-            "0".to_string()
+            write!(f, "0")?;
         }
+        Ok(())
+    }
+}
+
+impl Debug for UBigInt {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self)
     }
 }
 

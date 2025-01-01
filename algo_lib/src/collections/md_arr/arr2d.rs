@@ -1,4 +1,3 @@
-use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use std::iter::{Skip, StepBy, Take};
@@ -158,7 +157,7 @@ impl<T> Arr2d<T> {
 
 impl<T: Clone> Arr2d<T> {
     pub fn fill(&mut self, elem: T) {
-        self.data.legacy_fill(elem);
+        self.data.fill(elem);
     }
 }
 

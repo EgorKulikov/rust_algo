@@ -1,5 +1,4 @@
 use crate::collections::iter_ext::iter_copied::ItersCopied;
-use crate::collections::slice_ext::legacy_fill::LegacyFill;
 use crate::numbers::num_traits::bit_ops::BitOps;
 use std::ops::{BitAndAssign, BitOrAssign, BitXorAssign, Index, ShlAssign, ShrAssign};
 
@@ -61,8 +60,7 @@ impl BitSet {
     }
 
     pub fn fill(&mut self, value: bool) {
-        // 1.43
-        self.data.legacy_fill(if value { std::u64::MAX } else { 0 });
+        self.data.fill(if value { std::u64::MAX } else { 0 });
         if value {
             self.fix_last();
         }
@@ -82,7 +80,7 @@ impl BitSet {
         other.is_superset(self)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = usize> + '_ {
+    pub fn iter(&self) -> BitSetIter<'_> {
         self.into_iter()
     }
 
@@ -121,16 +119,10 @@ impl<'s> Iterator for BitSetIter<'s> {
         if self.at == self.set.data.len() {
             None
         } else {
-            while !self.set.data[self.at].is_set(self.inside) {
-                self.inside += 1;
-            }
+            self.inside += (self.set.data[self.at] >> self.inside).trailing_zeros() as usize;
             let res = self.at * 64 + self.inside;
-            if res < self.set.len {
-                self.inside += 1;
-                Some(res)
-            } else {
-                None
-            }
+            self.inside += 1;
+            Some(res)
         }
     }
 }

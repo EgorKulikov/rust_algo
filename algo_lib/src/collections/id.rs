@@ -40,6 +40,19 @@ impl<T: Hash + Eq> Id<T> {
         }
     }
 
+    pub fn add(&mut self, arr: impl IntoIterator<Item = T>) {
+        for el in arr {
+            self.get(el);
+        }
+    }
+
+    pub fn add_pairs(&mut self, arr: impl IntoIterator<Item = (T, T)>) {
+        for (a, b) in arr {
+            self.get(a);
+            self.get(b);
+        }
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = (&T, &usize)> {
         self.map.iter()
     }

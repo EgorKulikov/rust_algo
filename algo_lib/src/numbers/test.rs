@@ -79,3 +79,21 @@ fn test_divisors() {
         i.prime_divisors();
     }
 }
+
+mod big_int {
+    use crate::numbers::unsigned_big_int::UBigInt;
+    use crate::string::str::Str;
+
+    #[test]
+    fn test_mul() {
+        let a = UBigInt::from(Str::from(b"18347"));
+        let res = a.clone() * a.clone();
+        let res2 = res.clone() * res.clone();
+        assert_eq!(res2.to_string(), "113307913892783281");
+        let b = UBigInt::from(Str::from(b"10365"));
+        let res = b.clone() * b.clone() * b.clone() * b.clone() * b.clone();
+        assert_eq!(res.to_string(), "119631771048379978125");
+        let res = res + res2;
+        assert_eq!(res.to_string(), "119745078962272761406");
+    }
+}

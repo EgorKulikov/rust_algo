@@ -50,13 +50,10 @@ impl<T: AdditionMonoidWithSub + Copy, E: PartialOrd + Copy> PersistentFenwickTre
         let mut result = T::zero();
         while to > 0 {
             to -= 1;
-            let mut pos = self.value[to].as_slice().lower_bound(&Value {
+            let pos = self.value[to].as_slice().upper_bound(&Value {
                 epoch,
                 value: T::zero(),
-            });
-            if pos == self.value[to].len() || self.value[to][pos].epoch != epoch {
-                pos -= 1;
-            }
+            }) - 1;
             result += self.value[to][pos].value;
             to &= to + 1;
         }
@@ -84,9 +81,6 @@ impl<T: AdditionMonoidWithSub + Copy, E: PartialOrd + Copy> PersistentFenwickTre
     }
 
     pub fn iter(&self, epoch: E) -> impl Iterator<Item = T> + '_ {
-        self.value
-            .indices()
-            // edition 2021
-            .map(move |i| self.get(i, i + 1, epoch))
+        self.value.indices().map(move |i| self.get(i, i + 1, epoch))
     }
 }

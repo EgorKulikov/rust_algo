@@ -7,13 +7,13 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use std::cell::Cell;
 use std::convert::TryInto;
+use std::sync::LazyLock;
 use std::time::SystemTime;
 use std::{
     collections::{HashMap, HashSet},
-    hash::{BuildHasherDefault, Hasher},
-    mem::size_of,
+    hash::{BuildHasherDefault, Hasher}
+    ,
     ops::BitXor,
 };
 
@@ -26,20 +26,20 @@ pub struct FxHasher {
     hash: usize,
 }
 
-thread_local! {
-    static K: Cell<usize> = Cell::new(
-        ((SystemTime::UNIX_EPOCH.elapsed().unwrap().as_nanos().wrapping_mul(2) + 1) & 0xFFFFFFFFFFFFFFFF) as usize
-    );
-}
+static K: LazyLock<usize> = LazyLock::new(|| {
+    ((SystemTime::UNIX_EPOCH
+        .elapsed()
+        .unwrap()
+        .as_nanos()
+        .wrapping_mul(2)
+        + 1)
+        & 0xFFFFFFFFFFFFFFFF) as usize
+});
 
 impl FxHasher {
     #[inline]
     fn add_to_hash(&mut self, i: usize) {
-        self.hash = self
-            .hash
-            .rotate_left(5)
-            .bitxor(i)
-            .wrapping_mul(K.with(|k| k.get()));
+        self.hash = self.hash.rotate_left(5).bitxor(i).wrapping_mul(*K);
     }
 }
 
@@ -49,19 +49,19 @@ impl Hasher for FxHasher {
         let read_usize = |bytes: &[u8]| u64::from_ne_bytes(bytes[..8].try_into().unwrap());
 
         let mut hash = FxHasher { hash: self.hash };
-        while bytes.len() >= size_of::<usize>() {
+        while bytes.len() >= 8 {
             hash.add_to_hash(read_usize(bytes) as usize);
-            bytes = &bytes[size_of::<usize>()..];
+            bytes = &bytes[8..];
         }
-        if (size_of::<usize>() > 4) && (bytes.len() >= 4) {
+        if bytes.len() >= 4 {
             hash.add_to_hash(u32::from_ne_bytes(bytes[..4].try_into().unwrap()) as usize);
             bytes = &bytes[4..];
         }
-        if (size_of::<usize>() > 2) && bytes.len() >= 2 {
+        if bytes.len() >= 2 {
             hash.add_to_hash(u16::from_ne_bytes(bytes[..2].try_into().unwrap()) as usize);
             bytes = &bytes[2..];
         }
-        if (size_of::<usize>() > 1) && !bytes.is_empty() {
+        if !bytes.is_empty() {
             hash.add_to_hash(bytes[0] as usize);
         }
         self.hash = hash.hash;
