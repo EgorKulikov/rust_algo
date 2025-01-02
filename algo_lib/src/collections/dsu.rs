@@ -29,7 +29,7 @@ impl DSU {
         self.id
             .iter()
             .enumerate()
-            .filter_map(|(i, id)| if -1 == id.get() { Some(i) } else { None })
+            .filter_map(|(i, id)| if id.get() < 0 { Some(i) } else { None })
     }
 
     pub fn set_count(&self) -> usize {

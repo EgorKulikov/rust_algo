@@ -80,7 +80,7 @@ mod tester {
     use algo_lib::collections::slice_ext::bounds::Bounds;
     use algo_lib::io::input::Input;
     use algo_lib::io::output::Output;
-    use algo_lib::misc::random::random;
+    // use algo_lib::misc::random::random;
     use tester::classic::default_checker;
     use tester::interactive::std_interactor;
     use tester::test_set::GeneratedTestSet;
@@ -110,7 +110,7 @@ mod tester {
         }
 
         fn input(&self, test: &Self::TestId, out: &mut Output) {
-            let n = 3;
+            /*let n = 3;
             out.print_line(n);
             for _ in 0..n {
                 if random().gen_bound(2) == 0 {
@@ -118,7 +118,7 @@ mod tester {
                 } else {
                     out.print_line(('?', random().gen_bound(1000000001)));
                 }
-            }
+            }*/
         }
 
         fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {

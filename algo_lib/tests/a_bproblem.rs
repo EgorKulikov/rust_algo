@@ -88,7 +88,7 @@ mod tester {
     use crate::{run, TASK_TYPE};
     use algo_lib::io::input::Input;
     use algo_lib::io::output::Output;
-    use algo_lib::misc::random::random;
+    // use algo_lib::misc::random::random;
     use tester::classic::default_checker;
     use tester::interactive::std_interactor;
     use tester::test_set::GeneratedTestSet;
@@ -118,13 +118,13 @@ mod tester {
         }
 
         fn input(&self, test: &Self::TestId, out: &mut Output) {
-            let n = random().gen_range(1..=5);
+            /*let n = random().gen_range(1..=5);
             let mut a = Vec::with_capacity(n);
             for _ in 0..n {
                 a.push(random().gen_range(-5..=5));
             }
             out.print_line(n);
-            out.print_line(a);
+            out.print_line(a);*/
         }
 
         fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {

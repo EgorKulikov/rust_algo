@@ -161,7 +161,6 @@ mod tester {
     use algo_lib::collections::vec_ext::inc_dec::IncDec;
     use algo_lib::io::input::Input;
     use algo_lib::io::output::Output;
-    use algo_lib::misc::random::random;
     use algo_lib::numbers::num_traits::bit_ops::BitOps;
     use algo_lib::string::str::{Str, StrReader};
     use tester::interactive::std_interactor;
@@ -220,21 +219,7 @@ mod tester {
             1..
         }
 
-        fn input(&self, test: &Self::TestId, out: &mut Output) {
-            let n = random().gen_range(1..=3);
-            let m = random().gen_range(1..=6);
-            out.print_line((n, m));
-            for _ in 0..m {
-                loop {
-                    let first = random().gen_range(1..=2 * n);
-                    let second = random().gen_range(1..=2 * n);
-                    if first != second {
-                        out.print_line((first, second));
-                        break;
-                    }
-                }
-            }
-        }
+        fn input(&self, test: &Self::TestId, out: &mut Output) {}
 
         fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
             let n = input.read_size();
@@ -273,7 +258,7 @@ mod tester {
         }
 
         fn input(&self, test: &Self::TestId, out: &mut Output) {
-            let n = 5000;
+            /*let n = 5000;
             let m = 1000000;
             out.print_line((n, m));
             for _ in 0..m {
@@ -285,7 +270,7 @@ mod tester {
                         break;
                     }
                 }
-            }
+            }*/
         }
 
         fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {

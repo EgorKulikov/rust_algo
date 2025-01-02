@@ -1,4 +1,4 @@
-use crate::misc::random::random;
+use crate::misc::random::gen_range;
 use crate::misc::value::DynamicValue;
 use crate::misc::value_ref::ValueRef;
 use crate::numbers::mod_int::ModInt64;
@@ -28,10 +28,8 @@ impl HashBase {
         if HashBaseContainer::is_init() {
             return;
         }
-        HM::set_val(next_prime(
-            random().gen_range(10u64.pow(18)..=2 * 10u64.pow(18)),
-        ));
-        let multiplier = HashMod::new(random().gen_range(4 * 10u64.pow(17)..=5 * 10u64.pow(17)));
+        HM::set_val(next_prime(gen_range(10u64.pow(18)..=2 * 10u64.pow(18))));
+        let multiplier = HashMod::new(gen_range(4 * 10u64.pow(17)..=5 * 10u64.pow(17)));
         let inv_multiplier = multiplier.inv().unwrap();
         HashBaseContainer::set_val(Self {
             multiplier,

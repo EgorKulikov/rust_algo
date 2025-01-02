@@ -161,7 +161,6 @@ mod tester {
     #![allow(dead_code)]
 
     use crate::{run, TASK_TYPE};
-    use algo_lib::collections::dsu::DSU;
     use algo_lib::collections::min_max::MinimMaxim;
     use algo_lib::collections::vec_ext::inc_dec::IncDec;
     use algo_lib::graph::distances::Distances;
@@ -170,7 +169,6 @@ mod tester {
     use algo_lib::graph::Graph;
     use algo_lib::io::input::Input;
     use algo_lib::io::output::Output;
-    use algo_lib::misc::random::random;
     use algo_lib::misc::recursive_function::{Callable4, RecursiveFunction4};
     use tester::classic::default_checker;
     use tester::interactive::std_interactor;
@@ -201,7 +199,7 @@ mod tester {
         }
 
         fn input(&self, test: &Self::TestId, out: &mut Output) {
-            let n = random().gen_range(2..=4);
+            /*let n = random().gen_range(2..=4);
             let s = random().gen_range(1..=n);
             out.print_line(1);
             out.print_line((n, s));
@@ -215,7 +213,7 @@ mod tester {
                         break;
                     }
                 }
-            }
+            }*/
         }
 
         fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {

@@ -109,12 +109,8 @@ mod tester {
     #![allow(unused_imports)]
 
     use crate::{run, TASK_TYPE};
-    use algo_lib::collections::vec_ext::inc_dec::IncDec;
     use algo_lib::io::input::Input;
     use algo_lib::io::output::Output;
-    use algo_lib::misc::random::random;
-    use algo_lib::misc::recursive_function::{Callable, RecursiveFunction};
-    use algo_lib::string::str::{Str, StrReader};
     use tester::classic::default_checker;
     use tester::interactive::std_interactor;
     use tester::test_set::GeneratedTestSet;
@@ -143,57 +139,10 @@ mod tester {
             1..
         }
 
-        fn input(&self, test: &Self::TestId, out: &mut Output) {
-            let n = random().gen_range(1..=3);
-            let q = 1;
-            out.print_line((n, q));
-            for _ in 0..n {
-                let len = random().gen_range(1..=3);
-                for _ in 0..len {
-                    out.print(random().gen_range(b'A'..=b'B'));
-                }
-                out.print_line(());
-            }
-            for i in 2..=n {
-                out.print_line((random().gen_range(1..i), i));
-            }
-            for _ in 0..q {
-                let len = random().gen_range(1..=10);
-                out.print((random().gen_range(1..=n), ()));
-                for _ in 0..len {
-                    out.print(random().gen_range(b'A'..=b'B'));
-                }
-                out.print_line(());
-            }
-        }
+        fn input(&self, test: &Self::TestId, out: &mut Output) {}
 
         fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-            let n = input.read_size();
-            let q = input.read_size();
-            let s = input.read_str_vec(n);
-            let edges = input.read_size_pair_vec(n - 1).dec();
-            let queries = input.read_vec::<(usize, Str)>(q);
-
-            for (id, t) in queries {
-                let id = id - 1;
-                let mut ans = 0;
-                let mut rec = RecursiveFunction::new(|rec, vert: usize| {
-                    for i in 0..=t.len().saturating_sub(s[vert].len()) {
-                        if t[i..].starts_with(&s[vert]) {
-                            ans += 1;
-                        }
-                    }
-                    for &(u, v) in &edges {
-                        if u == vert {
-                            rec.call(v);
-                        }
-                    }
-                });
-                rec.call(id);
-                out.print_line(ans);
-            }
-
-            true
+            false
         }
     }
 

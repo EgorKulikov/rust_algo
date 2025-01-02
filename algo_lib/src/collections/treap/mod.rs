@@ -7,7 +7,7 @@ pub mod treap_map;
 use crate::collections::treap::payload::{OrdPayload, Payload, Pushable};
 use crate::misc::direction::Direction;
 use crate::misc::extensions::replace_with::ReplaceWith;
-use crate::misc::random::random;
+use crate::misc::random::{gen, gen_range};
 use std::collections::Bound;
 use std::marker::{PhantomData, PhantomPinned};
 use std::mem::{forget, replace, swap, take, MaybeUninit};
@@ -67,7 +67,7 @@ impl<P> Node<P> {
 
     fn new(payload: P) -> NodeLink<Node<P>> {
         NodeLink::new(Node {
-            priority: random().gen(),
+            priority: gen(),
             size: 1,
             reversed: false,
             content: Some(Content {
@@ -178,7 +178,7 @@ impl<P: Payload> Node<P> {
         if from == to {
             (NodeLink::default(), f)
         } else {
-            let mid = random().gen_range(from..to);
+            let mid = gen_range(from..to);
             let mut node = Node::new(f(mid));
             let (left, f) = Self::build(f, from, mid);
             let (right, f) = Self::build(f, mid + 1, to);
@@ -454,15 +454,12 @@ impl<P: OrdPayload> NodeLink<Node<P>> {
                     swap(&mut a, &mut b);
                 }
                 let (b_left, b_right) = b.split(a.payload.key());
-                let (same, b_right) = b_right.split(a.payload.key());
-                let (left, right) = if same.size != 0 {
-                    let left = a.detach_left();
-                    let right = a.detach_right();
+                let (same, b_right) = b_right.split_inclusive(a.payload.key());
+                let left = a.detach_left();
+                let right = a.detach_right();
+                if same.size != 0 {
                     a = Node::new(P::union(a.into_payload(), same.into_payload()));
-                    (left, right)
-                } else {
-                    (a.detach_left(), a.detach_right())
-                };
+                }
                 let left = Self::union(left, b_left);
                 let right = Self::union(right, b_right);
                 a.attach_left(left);

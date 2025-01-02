@@ -1,9 +1,8 @@
 use crate::collections::slice_ext::indices::Indices;
-use crate::misc::value_ref::ValueRef;
 use crate::numbers::num_traits::algebra::IntegerSemiRingWithSub;
 use crate::numbers::num_traits::ord::MinMax;
 use crate::numbers::num_traits::primitive::Primitive;
-use crate::value_ref;
+use std::cell::RefCell;
 use std::ops::{RangeBounds, Rem};
 use std::time::SystemTime;
 
@@ -21,7 +20,13 @@ pub struct Random {
 }
 
 impl Random {
-    pub fn new(seed: u64) -> Self {
+    pub fn new() -> Self {
+        Self::new_with_seed(
+            (SystemTime::UNIX_EPOCH.elapsed().unwrap().as_nanos() & 0xFFFFFFFFFFFFFFFF) as u64,
+        )
+    }
+
+    pub fn new_with_seed(seed: u64) -> Self {
         let mut res = Self {
             mt: [0u64; NN],
             index: NN,
@@ -109,15 +114,43 @@ impl Random {
     }
 }
 
-value_ref!(Rand: Random);
+thread_local! {
+    static RANDOM: RefCell<Random> = RefCell::new(Random::new());
+}
 
-pub fn random() -> &'static mut Random {
-    if !Rand::is_init() {
-        Rand::set_val(Random::new(
-            (SystemTime::UNIX_EPOCH.elapsed().unwrap().as_nanos() & 0xFFFFFFFFFFFFFFFF) as u64,
-        ));
-    }
-    Rand::val_mut()
+pub fn gen<T>() -> T
+where
+    u64: Primitive<T>,
+{
+    RANDOM.with_borrow_mut(|r| r.gen())
+}
+
+pub fn gen_u128() -> u128 {
+    RANDOM.with_borrow_mut(|r| r.gen_u128())
+}
+
+pub fn gen_i128() -> i128 {
+    RANDOM.with_borrow_mut(|r| r.gen_i128())
+}
+
+pub fn gen_bool() -> bool {
+    RANDOM.with_borrow_mut(|r| r.gen_bool())
+}
+
+pub fn gen_bound<T: Rem<Output = T> + Primitive<u64>>(n: T) -> T
+where
+    u64: Primitive<T>,
+{
+    RANDOM.with_borrow_mut(|r| r.gen_bound(n))
+}
+
+pub fn gen_range<T: IntegerSemiRingWithSub + Primitive<u64> + MinMax>(
+    range: impl RangeBounds<T>,
+) -> T
+where
+    u64: Primitive<T>,
+{
+    RANDOM.with_borrow_mut(|r| r.gen_range(range))
 }
 
 pub trait Shuffle {
@@ -127,7 +160,7 @@ pub trait Shuffle {
 impl<T> Shuffle for [T] {
     fn shuffle(&mut self) {
         for i in self.indices() {
-            let at = random().gen_bound(i + 1);
+            let at = gen_bound(i + 1);
             self.swap(i, at);
         }
     }

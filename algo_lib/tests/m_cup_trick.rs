@@ -101,7 +101,7 @@ mod tester {
     use crate::{run, TASK_TYPE};
     use algo_lib::io::input::Input;
     use algo_lib::io::output::Output;
-    use algo_lib::misc::random::random;
+    // use algo_lib::misc::random::random;
     use tester::classic::default_checker;
     use tester::interactive::std_interactor;
     use tester::test_set::GeneratedTestSet;
@@ -147,10 +147,10 @@ mod tester {
         }
 
         fn input(&self, test: &Self::TestId, out: &mut Output) {
-            out.print_line((1000000, 1000000));
+            /*out.print_line((1000000, 1000000));
             for i in 1..=1000000 {
                 out.print_line((i, random().gen_range(i..=1000000)));
-            }
+            }*/
         }
 
         fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {

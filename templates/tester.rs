@@ -6,6 +6,7 @@
 use crate::{run, TASK_TYPE};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
+use algo_lib::misc::random::Random;
 use tester::classic::default_checker;
 use tester::interactive::std_interactor;
 use tester::test_set::GeneratedTestSet;
@@ -31,6 +32,7 @@ impl GeneratedTestSet for StressTest {
     }
 
     fn input(&self, test: &Self::TestId, out: &mut Output) {
+        let mut r = Random::new();
     }
 
     fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
@@ -48,6 +50,7 @@ impl GeneratedTestSet for MaxTest {
     }
 
     fn input(&self, test: &Self::TestId, out: &mut Output) {
+        let mut r = Random::new();
     }
 
     fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {

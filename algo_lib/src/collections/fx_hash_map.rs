@@ -7,13 +7,12 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+use crate::misc::lazy_lock::LazyLock;
 use std::convert::TryInto;
-use std::sync::LazyLock;
 use std::time::SystemTime;
 use std::{
     collections::{HashMap, HashSet},
-    hash::{BuildHasherDefault, Hasher}
-    ,
+    hash::{BuildHasherDefault, Hasher},
     ops::BitXor,
 };
 

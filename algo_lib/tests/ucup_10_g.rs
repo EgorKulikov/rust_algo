@@ -222,12 +222,10 @@ mod tester {
 
     use crate::{run, TASK_TYPE};
     use algo_lib::collections::bit_set::BitSet;
-    use algo_lib::collections::md_arr::arr2d::Arr2d;
     use algo_lib::collections::min_max::MinimMaxim;
     use algo_lib::collections::vec_ext::inc_dec::IncDec;
     use algo_lib::io::input::Input;
     use algo_lib::io::output::Output;
-    use algo_lib::misc::random::random;
     use algo_lib::numbers::num_traits::bit_ops::BitOps;
     use tester::interactive::std_interactor;
     use tester::test_set::GeneratedTestSet;
@@ -321,7 +319,7 @@ mod tester {
         }
 
         fn input(&self, test: &Self::TestId, out: &mut Output) {
-            out.print_line(1);
+            /*out.print_line(1);
             let n = 4;
             let m = 4;
             out.print_line((n, m, random().gen_range(1..=m)));
@@ -336,7 +334,7 @@ mod tester {
                         break;
                     }
                 }
-            }
+            }*/
         }
 
         fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
