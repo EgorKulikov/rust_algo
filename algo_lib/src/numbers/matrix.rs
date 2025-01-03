@@ -1,9 +1,9 @@
 use crate::collections::md_arr::arr2d::Arr2d;
 use crate::numbers::num_traits::algebra::{One, SemiRing, Zero};
+use crate::transparent_wrapper;
 use std::ops::{Deref, DerefMut};
 
-#[derive(Clone)]
-pub struct Matrix<T>(Arr2d<T>);
+transparent_wrapper!(Matrix<T> = Arr2d<T>, derive Clone);
 
 impl<T: Zero + One + Clone> Matrix<T> {
     pub fn zero(n: usize, m: usize) -> Self {
@@ -137,20 +137,6 @@ impl<T: SemiRing + Copy> Matrix<T> {
                 res.add_to(temp_pw);
             }
         }
-    }
-}
-
-impl<T> Deref for Matrix<T> {
-    type Target = Arr2d<T>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T> DerefMut for Matrix<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
     }
 }
 

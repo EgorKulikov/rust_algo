@@ -7,7 +7,7 @@ pub mod treap_map;
 use crate::collections::treap::payload::{OrdPayload, Payload, Pushable};
 use crate::misc::direction::Direction;
 use crate::misc::extensions::replace_with::ReplaceWith;
-use crate::misc::random::{gen, gen_range};
+use crate::misc::random::{RandomTrait, StaticRandom};
 use std::collections::Bound;
 use std::marker::{PhantomData, PhantomPinned};
 use std::mem::{forget, replace, swap, take, MaybeUninit};
@@ -67,7 +67,7 @@ impl<P> Node<P> {
 
     fn new(payload: P) -> NodeLink<Node<P>> {
         NodeLink::new(Node {
-            priority: gen(),
+            priority: StaticRandom.gen(),
             size: 1,
             reversed: false,
             content: Some(Content {
@@ -178,7 +178,7 @@ impl<P: Payload> Node<P> {
         if from == to {
             (NodeLink::default(), f)
         } else {
-            let mid = gen_range(from..to);
+            let mid = StaticRandom.gen_range(from..to);
             let mut node = Node::new(f(mid));
             let (left, f) = Self::build(f, from, mid);
             let (right, f) = Self::build(f, mid + 1, to);

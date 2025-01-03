@@ -1,3 +1,5 @@
+use std::ops::{Bound, RangeBounds};
+
 pub trait Bounds<T: PartialOrd> {
     fn lower_bound(&self, el: &T) -> usize;
     fn upper_bound(&self, el: &T) -> usize;
@@ -10,6 +12,9 @@ pub trait Bounds<T: PartialOrd> {
     fn less_or_eq(&self, el: &T) -> usize {
         self.upper_bound(el)
     }
+    fn inside<'a>(&self, bounds: impl RangeBounds<&'a T>) -> usize
+    where
+        T: 'a;
 }
 
 impl<T: PartialOrd> Bounds<T> for [T] {
@@ -56,5 +61,22 @@ impl<T: PartialOrd> Bounds<T> for [T] {
 
     fn more_or_eq(&self, el: &T) -> usize {
         self.len() - self.lower_bound(el)
+    }
+
+    fn inside<'a>(&self, bounds: impl RangeBounds<&'a T>) -> usize
+    where
+        T: 'a,
+    {
+        let to = match bounds.end_bound() {
+            Bound::Included(el) => self.less_or_eq(el),
+            Bound::Excluded(el) => self.less(el),
+            Bound::Unbounded => self.len(),
+        };
+        let from = match bounds.start_bound() {
+            Bound::Included(el) => self.less(el),
+            Bound::Excluded(el) => self.less_or_eq(el),
+            Bound::Unbounded => 0,
+        };
+        to - from
     }
 }

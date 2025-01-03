@@ -1,4 +1,4 @@
-use crate::misc::random::{gen_bound, gen_range};
+use crate::misc::random::{RandomTrait, StaticRandom};
 use crate::numbers::gcd::gcd;
 use crate::numbers::mod_int::ModInt64;
 use crate::numbers::num_traits::algebra::{One, Zero};
@@ -23,7 +23,7 @@ pub fn is_prime(n: impl Primitive<u64>) -> bool {
     dynamic_value!(IsPrimeModule: u64 = n);
     type Mod = ModInt64<IsPrimeModule>;
     for _ in 0..20 {
-        let a = Mod::new(gen_bound(n));
+        let a = Mod::new(StaticRandom.gen_bound(n));
         if a == Mod::zero() {
             continue;
         }
@@ -106,8 +106,8 @@ pub fn find_divisor(n: u64) -> u64 {
             loop {
                 let res = brent(
                     n,
-                    gen_range(2..n),
-                    gen_range(1..n),
+                    StaticRandom.gen_range(2..n),
+                    StaticRandom.gen_range(1..n),
                 );
                 if res != n {
                     return res;

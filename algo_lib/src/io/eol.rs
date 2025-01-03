@@ -1,9 +1,9 @@
 use crate::io::input::{Input, Readable};
 use crate::string::str::{Str, StrReader};
+use crate::transparent_wrapper;
 use std::ops::{Deref, DerefMut};
 
-pub struct EolStr(Str);
-
+transparent_wrapper!(EolStr = Str);
 impl EolStr {
     pub fn unwrap(self) -> Str {
         self.0
@@ -16,22 +16,7 @@ impl Readable for EolStr {
     }
 }
 
-impl Deref for EolStr {
-    type Target = Str;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for EolStr {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-pub struct EolVec<T>(Vec<T>);
-
+transparent_wrapper!(EolVec<T> = Vec<T>);
 impl<T> EolVec<T> {
     pub fn unwrap(self) -> Vec<T> {
         self.0
@@ -49,19 +34,5 @@ impl<T: Readable> Readable for EolVec<T> {
             vec.push(item);
         }
         Self(vec)
-    }
-}
-
-impl<T> Deref for EolVec<T> {
-    type Target = Vec<T>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T> DerefMut for EolVec<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
     }
 }

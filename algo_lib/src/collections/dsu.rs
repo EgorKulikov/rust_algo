@@ -42,8 +42,8 @@ impl DSU {
         if a == b {
             false
         } else {
-            self.id[a].replace(self.id[a].get() + self.id[b].get());
-            self.id[b].replace(a as i32);
+            self.id[a].set(self.id[a].get() + self.id[b].get());
+            self.id[b].set(a as i32);
             self.count -= 1;
             true
         }
@@ -52,7 +52,7 @@ impl DSU {
     pub fn find(&self, i: usize) -> usize {
         if self.id[i].get() >= 0 {
             let res = self.find(self.id[i].get() as usize);
-            self.id[i].replace(res as i32);
+            self.id[i].set(res as i32);
             res
         } else {
             i

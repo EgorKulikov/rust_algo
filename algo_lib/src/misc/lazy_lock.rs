@@ -33,7 +33,7 @@ impl<T, F: FnOnce() -> T> LazyLock<T, F> {
             data.value = ManuallyDrop::new(value);
         });
 
-        unsafe { &*(*this.data.get()).value }
+        unsafe { &(*this.data.get()).value }
     }
 }
 

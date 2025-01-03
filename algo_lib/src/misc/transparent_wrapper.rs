@@ -1,9 +1,10 @@
 #[macro_export]
 macro_rules! transparent_wrapper {
-    ($name: ident, $t: ty) => {
-        pub struct $name($t);
+    ($name: ident $(<$($par: ident$(,)?)+>)? = $t: ty $(, derive $($d: ty$(,)?)+)?) => {
+        $(#[derive($($d,)+)])?
+        pub struct $name$(<$($par,)+>)?($t);
 
-        impl Deref for $name {
+        impl$(<$($par,)+>)? Deref for $name$(<$($par,)+>)? {
             type Target = $t;
 
             fn deref(&self) -> &Self::Target {
@@ -11,7 +12,7 @@ macro_rules! transparent_wrapper {
             }
         }
 
-        impl DerefMut for $name {
+        impl$(<$($par,)+>)? DerefMut for $name$(<$($par,)+>)? {
             fn deref_mut(&mut self) -> &mut Self::Target {
                 &mut self.0
             }

@@ -1,20 +1,48 @@
-use crate::misc::random::gen_range;
+use crate::misc::random::{RandomTrait, StaticRandom};
 use crate::misc::value::DynamicValue;
-use crate::misc::value_ref::ValueRef;
 use crate::numbers::mod_int::ModInt64;
 use crate::numbers::num_traits::algebra::{One, Zero};
 use crate::numbers::num_traits::invertible::Invertible;
 use crate::numbers::num_traits::primitive::Primitive;
 use crate::numbers::primes::prime::next_prime;
-use crate::{dynamic_value, value_ref, when};
+use crate::{dynamic_value, when};
 use std::cmp::Ordering;
 use std::collections::Bound;
 use std::ops::RangeBounds;
+use std::sync::RwLock;
 
 dynamic_value!(HM: u64);
 type HashMod = ModInt64<HM>;
 
-value_ref!(HashBaseContainer: HashBase);
+static HASH_BASE: RwLock<Option<HashBase>> = RwLock::new(None);
+
+fn multiplier() -> HashMod {
+    HashBase::init();
+    HASH_BASE.read().unwrap().as_ref().unwrap().multiplier
+}
+
+fn ensure_capacity(n: usize) {
+    HashBase::init();
+    if HASH_BASE.read().unwrap().as_ref().unwrap().power.len() >= n {
+        return;
+    }
+    HASH_BASE
+        .write()
+        .unwrap()
+        .as_mut()
+        .unwrap()
+        .ensure_capacity(n);
+}
+
+fn power(n: usize) -> HashMod {
+    ensure_capacity(n + 1);
+    HASH_BASE.read().unwrap().as_ref().unwrap().power[n]
+}
+
+fn inv_power(n: usize) -> HashMod {
+    ensure_capacity(n + 1);
+    HASH_BASE.read().unwrap().as_ref().unwrap().inv_power[n]
+}
 
 pub struct HashBase {
     multiplier: HashMod,
@@ -25,13 +53,20 @@ pub struct HashBase {
 
 impl HashBase {
     pub fn init() {
-        if HashBaseContainer::is_init() {
+        if HASH_BASE.read().unwrap().is_some() {
             return;
         }
-        HM::set_val(next_prime(gen_range(10u64.pow(18)..=2 * 10u64.pow(18))));
-        let multiplier = HashMod::new(gen_range(4 * 10u64.pow(17)..=5 * 10u64.pow(17)));
+        let mut lock = HASH_BASE.write().unwrap();
+        if lock.is_some() {
+            return;
+        }
+        HM::set_val(next_prime(
+            StaticRandom.gen_range(10u64.pow(18)..=2 * 10u64.pow(18)),
+        ));
+        let multiplier =
+            HashMod::new(StaticRandom.gen_range(4 * 10u64.pow(17)..=5 * 10u64.pow(17)));
         let inv_multiplier = multiplier.inv().unwrap();
-        HashBaseContainer::set_val(Self {
+        *lock = Some(HashBase {
             multiplier,
             inv_multiplier,
             power: vec![HashMod::one()],
@@ -71,10 +106,10 @@ pub struct SimpleHash {
 
 impl SimpleHash {
     pub fn new(str: &[impl Primitive<u64>]) -> Self {
-        HashBaseContainer::val_mut().ensure_capacity(str.len() + 1);
+        ensure_capacity(str.len() + 1);
         let mut hash = Vec::with_capacity(str.len() + 1);
         hash.push(HashMod::zero());
-        let multiplier = HashBaseContainer::val().multiplier;
+        let multiplier = multiplier();
         let mut power = HashMod::one();
         for c in str {
             let c = HashMod::new(c.to());
@@ -86,11 +121,9 @@ impl SimpleHash {
     }
 
     pub fn push(&mut self, c: impl Primitive<u64>) {
-        HashBaseContainer::val_mut().ensure_capacity(self.hash.len() + 1);
-        self.hash.push(
-            *self.hash.last().unwrap()
-                + HashMod::new(c.to()) * HashBaseContainer::val().power[self.len()],
-        );
+        ensure_capacity(self.hash.len() + 1);
+        self.hash
+            .push(*self.hash.last().unwrap() + HashMod::new(c.to()) * power(self.len()));
     }
 }
 
@@ -101,7 +134,7 @@ impl StringHash for SimpleHash {
 
     fn hash<R: RangeBounds<usize>>(&self, r: R) -> u64 {
         let (from, to) = convert_bounds(r, self.len());
-        let res = (self.hash[to] - self.hash[from]) * HashBaseContainer::val().inv_power[from];
+        let res = (self.hash[to] - self.hash[from]) * inv_power(from);
         res.val()
     }
 }
@@ -174,7 +207,7 @@ impl<'s, Hash1: StringHash + ?Sized, Hash2: StringHash + ?Sized> StringHash
             else => {
                 let h1 = self.base1.hash(from..);
                 let h2 = self.base2.hash(..to - self.base1.len());
-                (HashMod::new(h2) * HashBaseContainer::val().power[self.base1.len() - from]
+                (HashMod::new(h2) * power(self.base1.len() - from)
                     + HashMod::new(h1))
                 .val()
             },
@@ -188,9 +221,8 @@ pub trait Hashable {
 
 impl<T: Primitive<u64>> Hashable for [T] {
     fn str_hash(&self) -> u64 {
-        HashBaseContainer::val_mut().ensure_capacity(self.len() + 1);
         let mut res = HashMod::zero();
-        let multiplier = HashBaseContainer::val().multiplier;
+        let multiplier = multiplier();
         let mut power = HashMod::one();
         for c in self {
             let c = HashMod::new(c.to());

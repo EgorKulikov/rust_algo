@@ -6,6 +6,60 @@ use std::cell::RefCell;
 use std::ops::{RangeBounds, Rem};
 use std::time::SystemTime;
 
+pub trait RandomTrait {
+    fn gen_impl(&mut self) -> u64;
+
+    fn gen<T>(&mut self) -> T
+    where
+        u64: Primitive<T>,
+    {
+        self.gen_impl().to()
+    }
+
+    fn gen_u128(&mut self) -> u128 {
+        (self.gen_impl() as u128) << 64 | self.gen_impl() as u128
+    }
+
+    fn gen_i128(&mut self) -> i128 {
+        self.gen_u128() as i128
+    }
+
+    fn gen_bool(&mut self) -> bool {
+        (self.gen_impl() & 1) == 1
+    }
+
+    fn gen_bound<T: Rem<Output = T> + Primitive<u64>>(&mut self, n: T) -> T
+    where
+        u64: Primitive<T>,
+    {
+        (self.gen_impl() % n.to()).to()
+    }
+
+    fn gen_range<T: IntegerSemiRingWithSub + Primitive<u64> + MinMax>(
+        &mut self,
+        range: impl RangeBounds<T>,
+    ) -> T
+    where
+        u64: Primitive<T>,
+    {
+        let f = match range.start_bound() {
+            std::ops::Bound::Included(&s) => s,
+            std::ops::Bound::Excluded(&s) => s + T::one(),
+            std::ops::Bound::Unbounded => T::min_val(),
+        };
+        let t = match range.end_bound() {
+            std::ops::Bound::Included(&e) => e,
+            std::ops::Bound::Excluded(&e) => e - T::one(),
+            std::ops::Bound::Unbounded => T::max_val(),
+        };
+        if f == T::min_val() && t == T::max_val() {
+            self.gen()
+        } else {
+            f + self.gen_bound(t - f + T::one())
+        }
+    }
+}
+
 const NN: usize = 312;
 const MM: usize = 156;
 const MATRIX_A: u64 = 0xB5026F5AA96619E9;
@@ -39,7 +93,15 @@ impl Random {
         }
         res
     }
+}
 
+impl Default for Random {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl RandomTrait for Random {
     fn gen_impl(&mut self) -> u64 {
         if self.index == NN {
             for i in 0..(NN - MM) {
@@ -62,95 +124,18 @@ impl Random {
         x ^= x >> 43;
         x
     }
-
-    pub fn gen<T>(&mut self) -> T
-    where
-        u64: Primitive<T>,
-    {
-        self.gen_impl().to()
-    }
-
-    pub fn gen_u128(&mut self) -> u128 {
-        (self.gen_impl() as u128) << 64 | self.gen_impl() as u128
-    }
-
-    pub fn gen_i128(&mut self) -> i128 {
-        self.gen_u128() as i128
-    }
-
-    pub fn gen_bool(&mut self) -> bool {
-        (self.gen_impl() & 1) == 1
-    }
-
-    pub fn gen_bound<T: Rem<Output = T> + Primitive<u64>>(&mut self, n: T) -> T
-    where
-        u64: Primitive<T>,
-    {
-        (self.gen_impl() % n.to()).to()
-    }
-
-    pub fn gen_range<T: IntegerSemiRingWithSub + Primitive<u64> + MinMax>(
-        &mut self,
-        range: impl RangeBounds<T>,
-    ) -> T
-    where
-        u64: Primitive<T>,
-    {
-        let f = match range.start_bound() {
-            std::ops::Bound::Included(&s) => s,
-            std::ops::Bound::Excluded(&s) => s + T::one(),
-            std::ops::Bound::Unbounded => T::min_val(),
-        };
-        let t = match range.end_bound() {
-            std::ops::Bound::Included(&e) => e,
-            std::ops::Bound::Excluded(&e) => e - T::one(),
-            std::ops::Bound::Unbounded => T::max_val(),
-        };
-        if f == T::min_val() && t == T::max_val() {
-            self.gen()
-        } else {
-            f + self.gen_bound(t - f + T::one())
-        }
-    }
 }
 
 thread_local! {
     static RANDOM: RefCell<Random> = RefCell::new(Random::new());
 }
 
-pub fn gen<T>() -> T
-where
-    u64: Primitive<T>,
-{
-    RANDOM.with_borrow_mut(|r| r.gen())
-}
+pub struct StaticRandom;
 
-pub fn gen_u128() -> u128 {
-    RANDOM.with_borrow_mut(|r| r.gen_u128())
-}
-
-pub fn gen_i128() -> i128 {
-    RANDOM.with_borrow_mut(|r| r.gen_i128())
-}
-
-pub fn gen_bool() -> bool {
-    RANDOM.with_borrow_mut(|r| r.gen_bool())
-}
-
-pub fn gen_bound<T: Rem<Output = T> + Primitive<u64>>(n: T) -> T
-where
-    u64: Primitive<T>,
-{
-    RANDOM.with_borrow_mut(|r| r.gen_bound(n))
-}
-
-pub fn gen_range<T: IntegerSemiRingWithSub + Primitive<u64> + MinMax>(
-    range: impl RangeBounds<T>,
-) -> T
-where
-    u64: Primitive<T>,
-{
-    RANDOM.with_borrow_mut(|r| r.gen_range(range))
+impl RandomTrait for StaticRandom {
+    fn gen_impl(&mut self) -> u64 {
+        RANDOM.with_borrow_mut(|r| r.gen_impl())
+    }
 }
 
 pub trait Shuffle {
@@ -160,7 +145,7 @@ pub trait Shuffle {
 impl<T> Shuffle for [T] {
     fn shuffle(&mut self) {
         for i in self.indices() {
-            let at = gen_bound(i + 1);
+            let at = StaticRandom.gen_bound(i + 1);
             self.swap(i, at);
         }
     }

@@ -1,5 +1,6 @@
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
+use crate::transparent_wrapper;
 use std::fmt::Display;
 use std::io::Write;
 use std::iter::FromIterator;
@@ -7,8 +8,7 @@ use std::ops::{AddAssign, Deref, DerefMut};
 use std::str::from_utf8_unchecked;
 use std::vec::IntoIter;
 
-#[derive(Eq, PartialEq, Hash, PartialOrd, Ord, Clone, Default)]
-pub struct Str(Vec<u8>);
+transparent_wrapper!(Str = Vec<u8>, derive Eq, PartialEq, Hash, PartialOrd, Ord, Clone, Default);
 
 impl Str {
     pub fn new() -> Self {
@@ -55,20 +55,6 @@ impl Readable for Str {
 impl Writable for Str {
     fn write(&self, output: &mut Output) {
         output.write_all(&self.0).unwrap()
-    }
-}
-
-impl Deref for Str {
-    type Target = Vec<u8>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for Str {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
     }
 }
 
