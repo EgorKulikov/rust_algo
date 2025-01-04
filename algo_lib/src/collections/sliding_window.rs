@@ -1,26 +1,25 @@
-use std::cmp::Ordering;
 use std::collections::VecDeque;
 
 pub struct SlidingWindow<T, F> {
     size: usize,
     data: VecDeque<(usize, T)>,
     last: usize,
-    cmp: F,
+    key: F,
 }
 
-impl<T: Ord, F: FnMut(&T, &T) -> Ordering> SlidingWindow<T, F> {
-    pub fn new(size: usize, cmp: F) -> Self {
+impl<T, R: Ord, F: FnMut(&T) -> R> SlidingWindow<T, F> {
+    pub fn new(size: usize, key: F) -> Self {
         Self {
             size,
             data: VecDeque::new(),
             last: 0,
-            cmp,
+            key,
         }
     }
 
     pub fn push(&mut self, val: T) {
         while let Some((_, last)) = self.data.back() {
-            if (self.cmp)(last, &val) <= Ordering::Equal {
+            if (self.key)(last) <= (self.key)(&val) {
                 self.data.pop_back();
             } else {
                 break;
