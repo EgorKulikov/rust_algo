@@ -1,23 +1,23 @@
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
+use crate::misc::extensions::replace_with::ReplaceWith;
 use crate::numbers::mod_int::convolution::convolution;
 use crate::numbers::num_traits::algebra::{One, Zero};
-use crate::string::str::{Str, StrReader};
+use crate::string::str::StrReader;
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Add, AddAssign, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 const DIGITS: usize = 9;
 const BASE: u32 = 10u32.pow(DIGITS as u32);
-// const FFT_MIN_SIZE: usize = 50000;
 
 #[derive(Eq, PartialEq, Clone)]
 pub struct UBigInt {
     z: Vec<u32>,
 }
 
-impl From<Str> for UBigInt {
-    fn from(value: Str) -> Self {
+impl From<&[u8]> for UBigInt {
+    fn from(value: &[u8]) -> Self {
         let mut at = value.len();
         let mut res = Vec::with_capacity((at + DIGITS - 1) / DIGITS);
         while at > 0 {
@@ -181,10 +181,10 @@ impl MulAssign<u32> for UBigInt {
     }
 }
 
-impl Mul for UBigInt {
+impl<'a> Mul<&'a UBigInt> for UBigInt {
     type Output = Self;
 
-    fn mul(self, rhs: Self) -> Self::Output {
+    fn mul(self, rhs: &'a Self) -> Self::Output {
         let c = convolution(&self.z, &rhs.z);
         let mut carry = 0;
         let mut res = Vec::new();
@@ -206,6 +206,20 @@ impl Mul for UBigInt {
             }
         }
         Self { z: res }
+    }
+}
+
+impl Mul for UBigInt {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        self * &rhs
+    }
+}
+
+impl MulAssign for UBigInt {
+    fn mul_assign(&mut self, rhs: Self) {
+        self.replace_with(|s| s * rhs);
     }
 }
 
@@ -284,6 +298,6 @@ impl Ord for UBigInt {
 
 impl Readable for UBigInt {
     fn read(input: &mut Input) -> Self {
-        input.read_str().into()
+        input.read_str().as_slice().into()
     }
 }
