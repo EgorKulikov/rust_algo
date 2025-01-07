@@ -6,7 +6,7 @@ use std::ops::{Index, IndexMut, Range};
 use std::slice::{Iter, IterMut};
 use std::vec::IntoIter;
 
-#[derive(Clone, Eq, PartialEq, Default, Debug, Hash)]
+#[derive(Clone, Eq, PartialEq, Default, Debug, Hash, Ord, PartialOrd)]
 pub struct Arr2d<T> {
     d1: usize,
     d2: usize,

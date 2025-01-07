@@ -1,6 +1,7 @@
 use crate::test_set::TestSet;
 use crate::Outcome;
 use std::fmt::Display;
+use std::time::Duration;
 
 const BLUE: &str = "\x1B[36m";
 const RED: &str = "\x1B[31m";
@@ -12,11 +13,16 @@ pub(crate) fn start_test_set(name: &str) {
     println!("{}Test set: {}{}", BLUE, name, DEF);
 }
 
-pub(crate) fn end_test_set(test_failed: usize, test_total: usize) {
+pub(crate) fn end_test_set(test_failed: usize, test_total: usize, max_time: Duration) {
     if test_failed == 0 {
         println!(
-            "{}All {}{}{} tests passed{}",
-            BLUE, GREEN, test_total, BLUE, DEF
+            "{}All {}{}{} tests passed, max time elapsed: {:.3}s{}",
+            BLUE,
+            GREEN,
+            test_total,
+            BLUE,
+            max_time.as_secs_f64(),
+            DEF
         );
     } else {
         println!(

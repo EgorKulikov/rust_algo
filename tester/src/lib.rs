@@ -121,6 +121,7 @@ impl Tester {
         let mut test_failed = 0usize;
         let mut test_total = 0usize;
         print::start_test_set(test_set.name());
+        let mut max_time = Duration::default();
         for test in test_set.tests() {
             test_total += 1;
             let input = test_set.input(&test);
@@ -132,7 +133,9 @@ impl Tester {
                 test_set.print_details(),
             );
             let outcome = self.run_single_test(&input, expected.as_deref(), &test_set, &test);
-            if !matches!(outcome, Outcome::OK { .. }) {
+            if let Outcome::OK { duration, .. } = outcome {
+                max_time = max_time.max(duration);
+            } else {
                 test_failed += 1;
                 if !test_set.print_details() {
                     print::start_test(
@@ -165,7 +168,7 @@ impl Tester {
             }
             print::end_test(outcome, test_set.print_details());
         }
-        print::end_test_set(test_failed, test_total);
+        print::end_test_set(test_failed, test_total, max_time);
         test_failed == 0
     }
 

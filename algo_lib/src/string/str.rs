@@ -8,7 +8,7 @@ use std::ops::{AddAssign, Deref, DerefMut};
 use std::str::from_utf8_unchecked;
 use std::vec::IntoIter;
 
-transparent_wrapper!(Str = Vec<u8>, derive Eq, PartialEq, Hash, PartialOrd, Ord, Clone, Default);
+transparent_wrapper!(Str = Vec<u8>);
 
 impl Str {
     pub fn new() -> Self {

@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! transparent_wrapper {
-    ($name: ident $(<$($par: ident$(,)?)+>)? = $t: ty $(, derive $($d: ty$(,)?)+)?) => {
-        $(#[derive($($d,)+)])?
+    ($name: ident $(<$($par: ident$(,)?)+>)? = $t: ty) => {
+        #[derive(Eq, PartialEq, Hash, PartialOrd, Ord, Clone, Default, Debug)]
         pub struct $name$(<$($par,)+>)?($t);
 
         impl$(<$($par,)+>)? Deref for $name$(<$($par,)+>)? {
