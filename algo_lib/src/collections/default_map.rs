@@ -107,3 +107,19 @@ default_map!(
     TreeMapIntoValues,
     TreeMapIntoIter
 );
+
+pub fn qty<T: Eq + Hash + Clone>(arr: &[T]) -> DefaultHashMap<T, usize> {
+    let mut map = DefaultHashMap::new(0);
+    for item in arr {
+        map[item.clone()] += 1;
+    }
+    map
+}
+
+pub fn by_index<T: Eq + Hash + Clone>(arr: &[T]) -> DefaultHashMap<T, Vec<usize>> {
+    let mut map = DefaultHashMap::new(Vec::new());
+    for (i, item) in arr.iter().enumerate() {
+        map[item.clone()].push(i);
+    }
+    map
+}
