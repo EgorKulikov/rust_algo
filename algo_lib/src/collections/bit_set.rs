@@ -99,11 +99,9 @@ impl BitSet {
         let small_shift = rhs & 63;
         let big_shift = rhs >> 6;
         for i in (0..self.data.len() - big_shift).rev() {
-            if small_shift != 0 {
+            if small_shift != 0 && i + 1 + big_shift < self.data.len() {
                 let big = self.data[i] >> (64 - small_shift);
-                if i + 1 + big_shift < self.data.len() {
-                    self.data[i + 1 + big_shift] |= big;
-                }
+                self.data[i + 1 + big_shift] |= big;
             }
             let small = self.data[i] << small_shift;
             self.data[i + big_shift] |= small;

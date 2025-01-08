@@ -42,9 +42,9 @@ macro_rules! default_map {
             }
 
             pub fn get_mut(&mut self, key: K) -> &mut V {
-                self.inner
-                    .entry(key)
-                    .or_insert_with(|| self.default.clone())
+                // Wait for rust update
+                let clone = self.default.clone();
+                self.inner.entry(key).or_insert(clone)
             }
 
             pub fn into_values(self) -> $into_values<K, V> {
