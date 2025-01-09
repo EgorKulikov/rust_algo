@@ -108,7 +108,10 @@ impl Tester {
         name: &str,
         print_details: bool,
         set: Set,
-    ) -> bool {
+    ) -> bool
+    where
+        Set::TestId: 'static,
+    {
         let test_set = GeneratedTests {
             name: name.to_string(),
             print_details,
