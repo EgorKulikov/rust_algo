@@ -8,6 +8,7 @@ use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::random::Random;
 use tester::classic::default_checker;
+use tester::classic::EPS;
 use tester::interactive::std_interactor;
 use tester::test_set::GeneratedTestSet;
 use tester::Tester;

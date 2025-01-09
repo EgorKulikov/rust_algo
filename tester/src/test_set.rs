@@ -132,6 +132,7 @@ impl TestSet for SampleTests {
 pub trait GeneratedTestSet {
     type TestId: Display + Clone;
 
+    // 1.75
     fn tests(&self) -> Box<dyn Iterator<Item = Self::TestId>>;
     fn input(&self, test: &Self::TestId, input: &mut Output);
     fn output(&self, test: &Self::TestId, input: &mut Input, output: &mut Output) -> bool;
