@@ -60,8 +60,11 @@ impl<T> Index<usize> for FastClearArr<T> {
 impl<T: Clone> IndexMut<usize> for FastClearArr<T> {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         if index >= self.arr.len() || self.arr[index].1 != self.epoch {
-            self.arr
-                .resize_with(index + 1, || (self.default.clone(), self.epoch));
+            // edition 2021
+            let item = (self.default.clone(), self.epoch);
+            self.arr.resize(index + 1, item);
+            // self.arr
+            //     .resize_with(index + 1, || (self.default.clone(), self.epoch));
             self.arr[index].1 = self.epoch;
         }
         &mut self.arr[index].0

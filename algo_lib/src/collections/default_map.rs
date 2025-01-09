@@ -2,6 +2,7 @@ use crate::collections::fx_hash_map::FxHashMap;
 use std::collections::BTreeMap;
 use std::fmt::Debug;
 use std::hash::Hash;
+// edition 2021
 use std::iter::FromIterator;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 
@@ -42,9 +43,12 @@ macro_rules! default_map {
             }
 
             pub fn get_mut(&mut self, key: K) -> &mut V {
-                // Wait for rust update
+                // edition 2021
                 let clone = self.default.clone();
-                self.inner.entry(key).or_insert(clone)
+                self.inner.entry(key).or_insert_with(|| clone)
+                // self.inner
+                //     .entry(key)
+                //     .or_insert_with(|| self.default.clone())
             }
 
             pub fn into_values(self) -> $into_values<K, V> {

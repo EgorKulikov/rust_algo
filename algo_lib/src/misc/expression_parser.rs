@@ -1,3 +1,4 @@
+use crate::string::trim::StrTrim;
 use std::cell::Cell;
 use std::marker::PhantomData;
 
@@ -104,7 +105,9 @@ where
             self.pos.set(self.pos.get() + 1);
         }
         let s = &s[start..self.pos.get()];
-        let s = s.trim_ascii();
+        let s = s.trim();
+        // 1.80
+        // let s = s.trim_ascii();
         (self.parse)(s)
     }
 }

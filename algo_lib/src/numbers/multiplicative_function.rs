@@ -19,7 +19,7 @@ impl MulitplicativeFunction {
     }
 
     pub fn calculate_up_to(&self, n: usize) -> Vec<i64> {
-        let divisor_table = divisor_table::<usize>(n);
+        let divisor_table = divisor_table(n);
         let mut res = Vec::with_capacity(n);
         if n >= 1 {
             res.push(0);

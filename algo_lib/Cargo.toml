@@ -1,7 +1,7 @@
 [package]
 name = "algo_lib"
 version = "0.1.0"
-edition = "2021"
+edition = "2018"
 
 [dev-dependencies]
 tester = { path = "../tester", features = ["test"] }

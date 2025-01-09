@@ -1,5 +1,4 @@
 use crate::collections::bit_set::BitSet;
-use crate::numbers::num_traits::as_index::AsIndex;
 
 pub fn primality_table(n: usize) -> BitSet {
     let mut res = BitSet::new(n);
@@ -22,20 +21,17 @@ pub fn primality_table(n: usize) -> BitSet {
     res
 }
 
-pub fn primes<T: AsIndex>(n: usize) -> Vec<T> {
-    primality_table(n)
-        .into_iter()
-        .map(|i| T::from_index(i))
-        .collect()
+pub fn primes(n: usize) -> Vec<usize> {
+    primality_table(n).into_iter().collect()
 }
 
-pub fn divisor_table<T: AsIndex + PartialEq>(n: usize) -> Vec<T> {
-    let mut res: Vec<_> = (0..n).map(|i| T::from_index(i)).collect();
+pub fn divisor_table(n: usize) -> Vec<usize> {
+    let mut res: Vec<_> = (0..n).collect();
     let mut i = 2;
     while i * i < n {
-        if res[i] == T::from_index(i) {
+        if res[i] == i {
             for j in ((i * i)..n).step_by(i) {
-                res[j] = T::from_index(i);
+                res[j] = i;
             }
         }
         i += 1;

@@ -7,13 +7,11 @@ macro_rules! min_max_integer_impl {
     ($($t: ident)+) => {$(
         impl MinMax for $t {
             fn min_val() -> Self {
-                // 1.43
-                std::$t::MIN
+                $t::MIN
             }
 
             fn max_val() -> Self {
-                // 1.43
-                std::$t::MAX
+                $t::MAX
             }
         }
     )+};

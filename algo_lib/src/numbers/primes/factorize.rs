@@ -1,6 +1,5 @@
 use crate::collections::vec_ext::sorted::Sorted;
 use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
-use crate::numbers::num_traits::algebra::MultiplicationMonoid;
 use crate::numbers::num_traits::as_index::AsIndex;
 use crate::numbers::num_traits::primitive::Primitive;
 use crate::numbers::primes::prime::find_divisor;
@@ -98,17 +97,14 @@ impl<T: Primitive<u64>> Factorize for T {
     }
 }
 
-pub fn all_divisors<T: AsIndex + PartialEq + Copy + MultiplicationMonoid + Ord>(
-    n: usize,
-    sorted: bool,
-) -> Vec<Vec<T>> {
-    let d: Vec<T> = divisor_table(n);
+pub fn all_divisors(n: usize, sorted: bool) -> Vec<Vec<usize>> {
+    let d: Vec<usize> = divisor_table(n);
     let mut res = Vec::with_capacity(n);
     if n > 0 {
         res.push(Vec::new());
     }
     if n > 1 {
-        res.push(vec![T::from_index(1)]);
+        res.push(vec![1]);
     }
     for (i, p) in d.into_iter().enumerate().skip(2) {
         let mut q = 0;
@@ -118,7 +114,7 @@ pub fn all_divisors<T: AsIndex + PartialEq + Copy + MultiplicationMonoid + Ord>(
             q += 1;
         }
         let mut cur = Vec::with_capacity(res[c].len() * (q + 1));
-        let mut by = T::from_index(1);
+        let mut by = 1;
         for j in 0..=q {
             cur.extend(res[c].iter().map(|&x| x * by));
             if j != q {

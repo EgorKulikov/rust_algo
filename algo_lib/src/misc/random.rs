@@ -134,7 +134,9 @@ pub struct StaticRandom;
 
 impl RandomTrait for StaticRandom {
     fn gen_impl(&mut self) -> u64 {
-        RANDOM.with_borrow_mut(|r| r.gen_impl())
+        // 1.73
+        RANDOM.with(|r| r.borrow_mut().gen_impl())
+        // RANDOM.with_borrow_mut(|r| r.gen_impl())
     }
 }
 

@@ -8,6 +8,7 @@ union Data<T, F> {
     f: ManuallyDrop<F>,
 }
 
+// 1.80
 pub struct LazyLock<T, F = fn() -> T> {
     once: Once,
     data: UnsafeCell<Data<T, F>>,

@@ -140,7 +140,8 @@ pub fn default_checker_eps_rel(
                 if let Ok(expected_token) = expected_token.parse::<f64>() {
                     if let Ok(actual_token) = actual_token.parse::<f64>() {
                         let by = expected_token.abs().max(1.);
-                        if (expected_token - actual_token).abs() < EPS.get() * by {
+                        // 1.73
+                        if (expected_token - actual_token).abs() < EPS.with(|eps| eps.get()) * by {
                             failed = false;
                         }
                     }
@@ -186,7 +187,8 @@ pub fn default_checker_eps_abs(
                 let mut failed = true;
                 if let Ok(expected_token) = expected_token.parse::<f64>() {
                     if let Ok(actual_token) = actual_token.parse::<f64>() {
-                        if (expected_token - actual_token).abs() < EPS.get() {
+                        // 1.73
+                        if (expected_token - actual_token).abs() < EPS.with(|eps| eps.get()) {
                             failed = false;
                         }
                     }

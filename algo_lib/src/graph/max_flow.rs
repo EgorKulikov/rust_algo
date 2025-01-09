@@ -20,8 +20,7 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> MaxFlo
         let mut total_flow = C::zero();
         let mut q = VecDeque::new();
         loop {
-            // 1.43
-            dist.fill(std::u32::MAX);
+            dist.fill(u32::MAX);
             dist[source] = 0;
             q.push_back(source);
             while !q.is_empty() {
@@ -29,16 +28,14 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> MaxFlo
                 for e in self[cur].iter() {
                     if e.capacity() != C::zero() {
                         let next = e.to();
-                        // 1.43
-                        if dist[next] == std::u32::MAX {
+                        if dist[next] == u32::MAX {
                             dist[next] = dist[cur] + 1;
                             q.push_back(next);
                         }
                     }
                 }
             }
-            // 1.43
-            if dist[destination] == std::u32::MAX {
+            if dist[destination] == u32::MAX {
                 break;
             }
             next_edge.fill(0);

@@ -7,3 +7,4 @@ pub mod slicelike;
 pub mod split;
 pub mod str;
 pub mod string_algorithms;
+pub mod trim;
