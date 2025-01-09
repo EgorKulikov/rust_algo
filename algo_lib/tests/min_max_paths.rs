@@ -96,7 +96,7 @@ mod test {
     fn test() {
         let n = 2000u64;
         let m = n * 1000000000;
-        let p = primes::<u64>(n as usize + 1);
+        let p = primes(n as usize + 1);
         let mut ans = None;
         let mut rec = RecursiveFunction3::new(|rec, mut cur: u64, step: usize, max: usize| {
             if max == 0 {
@@ -112,7 +112,7 @@ mod test {
             }
             for i in 0..=max {
                 rec.call(cur, step + 1, i);
-                cur *= p[step];
+                cur *= p[step] as u64;
                 if cur > m {
                     break;
                 }
@@ -194,8 +194,8 @@ mod tester {
     impl GeneratedTestSet for StressTest {
         type TestId = usize;
 
-        fn tests(&self) -> impl Iterator<Item = Self::TestId> {
-            1..
+        fn tests(&self) -> Box<dyn Iterator<Item = Self::TestId>> {
+            Box::new(1..)
         }
 
         fn input(&self, test: &Self::TestId, out: &mut Output) {

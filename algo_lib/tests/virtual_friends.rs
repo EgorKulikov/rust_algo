@@ -89,8 +89,8 @@ mod tester {
     impl GeneratedTestSet for StressTest {
         type TestId = usize;
 
-        fn tests(&self) -> impl Iterator<Item = Self::TestId> {
-            1..
+        fn tests(&self) -> Box<dyn Iterator<Item = Self::TestId>> {
+            Box::new(1..)
         }
 
         fn input(&self, test: &Self::TestId, out: &mut Output) {}
@@ -105,8 +105,8 @@ mod tester {
     impl GeneratedTestSet for MaxTest {
         type TestId = usize;
 
-        fn tests(&self) -> impl Iterator<Item = Self::TestId> {
-            1..=1
+        fn tests(&self) -> Box<dyn Iterator<Item = Self::TestId>> {
+            Box::new(1..=1)
         }
 
         fn input(&self, test: &Self::TestId, out: &mut Output) {}

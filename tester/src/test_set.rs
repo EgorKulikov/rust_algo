@@ -144,7 +144,10 @@ pub(crate) struct GeneratedTests<TestSet: GeneratedTestSet> {
     pub(crate) set: TestSet,
 }
 
-impl<Set: GeneratedTestSet> TestSet for GeneratedTests<Set> {
+impl<Set: GeneratedTestSet> TestSet for GeneratedTests<Set>
+where
+    Set::TestId: 'static,
+{
     type TestId = Set::TestId;
 
     fn name(&self) -> &str {
@@ -153,7 +156,7 @@ impl<Set: GeneratedTestSet> TestSet for GeneratedTests<Set> {
 
     fn tests(&self) -> Box<dyn Iterator<Item = Self::TestId>> {
         #[cfg(feature = "test")]
-        return self.set.tests().take(100).into();
+        return Box::new(self.set.tests().take(100));
         #[cfg(not(feature = "test"))]
         self.set.tests()
     }
