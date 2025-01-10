@@ -25,6 +25,18 @@ impl<T: Ord, F: Fn(usize, usize) -> Option<Direction>> DividedSet<T, F> {
         self.right.peek().map(|x| &x.0)
     }
 
+    pub fn pop_left_tail(&mut self) -> Option<T> {
+        let res = self.left.pop();
+        self.balance();
+        res
+    }
+
+    pub fn pop_right_head(&mut self) -> Option<T> {
+        let res = self.right.pop().map(|x| x.0);
+        self.balance();
+        res
+    }
+
     pub fn insert(&mut self, value: T) {
         if let Some(left_tail) = self.left_tail() {
             if value < *left_tail {
