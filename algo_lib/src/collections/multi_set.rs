@@ -2,8 +2,6 @@ use crate::collections::fx_hash_map::FxHashMap;
 use std::collections::BTreeMap;
 use std::hash::Hash;
 use std::iter::repeat;
-// edition 2021
-use std::iter::FromIterator;
 use std::ops::{Deref, RangeBounds};
 
 #[derive(Default)]

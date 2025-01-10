@@ -32,7 +32,7 @@ impl Real {
     }
 }
 
-#[allow(clippy::non_canonical_partial_ord_impl)]
+// #[allow(clippy::non_canonical_partial_ord_impl)]
 impl PartialOrd for Real {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         if self == other {

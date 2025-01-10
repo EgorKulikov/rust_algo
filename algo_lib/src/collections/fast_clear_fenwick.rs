@@ -51,8 +51,7 @@ impl<T: AdditionMonoidWithSub + Copy> FastClearFenwickTree<T> {
         self.value
             .iter()
             .enumerate()
-            // edition 2021
-            .map(move |(i, _)| self.get(i, i + 1))
+            .map(|(i, _)| self.get(i, i + 1))
     }
 
     pub fn clear(&mut self) {

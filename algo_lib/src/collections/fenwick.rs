@@ -51,11 +51,7 @@ impl<T: AdditionMonoidWithSub + Copy> FenwickTree<T> {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = T> + '_ {
-        self.value
-            .iter()
-            .enumerate()
-            // edition 2021
-            .map(move |(i, _)| self.get(i..=i))
+        self.value.iter().enumerate().map(|(i, _)| self.get(i..=i))
     }
 
     pub fn clear(&mut self) {
