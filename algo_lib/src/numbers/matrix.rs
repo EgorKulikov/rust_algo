@@ -3,7 +3,7 @@ use crate::numbers::num_traits::algebra::{One, SemiRing, Zero};
 use crate::transparent_wrapper;
 use std::ops::{Deref, DerefMut};
 
-transparent_wrapper!(Matrix<T> = Arr2d<T>);
+transparent_wrapper!(Matrix<T> = Arr2d<T>, derive Clone, Eq, PartialEq);
 
 impl<T: Zero + One + Clone> Matrix<T> {
     pub fn zero(n: usize, m: usize) -> Self {

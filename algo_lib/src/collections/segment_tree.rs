@@ -371,12 +371,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
     where
         Node: QueryResult<T, ()>,
     {
-        let (from, to) = clamp(range, self.n);
-        if from >= to {
-            Node::empty_result(&())
-        } else {
-            self.do_query(self.nodes.len() - 1, 0, self.n, from, to, &())
-        }
+        self.query_with_args(range, &())
     }
 
     pub fn query_with_args<T, Args>(&mut self, range: impl RangeBounds<usize>, args: &Args) -> T
