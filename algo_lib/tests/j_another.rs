@@ -3,7 +3,7 @@
 use algo_lib::collections::slice_ext::permutation::Permutation;
 use algo_lib::collections::treap::pure_payload::PurePayload;
 use algo_lib::collections::treap::Tree;
-use algo_lib::collections::vec_ext::gen::VecGen;
+use algo_lib::collections::vec_ext::gen_vec::VecGen;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
@@ -19,7 +19,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let p = input.read_size_vec(n).dec();
 
     let mut treap = Tree::new();
-    let nodes = Vec::gen(n, |i, _| treap.add_back(PurePayload(p[i])));
+    let nodes = Vec::gen_vec(n, |i, _| treap.add_back(PurePayload(p[i])));
     let pp = p.inv();
 
     for _ in 0..q {

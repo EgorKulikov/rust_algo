@@ -15,7 +15,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let s = input.read_str();
 
     let n = (s.len() as i64).sqrt().unwrap() as usize;
-    let t = Arr2d::gen(n, n, |i, j| s[i * n + j]);
+    let t = Arr2d::gen_md(n, n, |i, j| s[i * n + j]);
     let ans = t.rotate_counterclockwise();
     out.print_line(Str::from(ans.as_ref().as_slice()));
 }

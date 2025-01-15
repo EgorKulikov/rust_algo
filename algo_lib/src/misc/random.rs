@@ -9,7 +9,7 @@ use std::time::SystemTime;
 pub trait RandomTrait {
     fn gen_impl(&mut self) -> u64;
 
-    fn gen<T>(&mut self) -> T
+    fn gen_int<T>(&mut self) -> T
     where
         u64: Primitive<T>,
     {
@@ -53,7 +53,7 @@ pub trait RandomTrait {
             std::ops::Bound::Unbounded => T::max_val(),
         };
         if f == T::min_val() && t == T::max_val() {
-            self.gen()
+            self.gen_int()
         } else {
             f + self.gen_bound(t - f + T::one())
         }

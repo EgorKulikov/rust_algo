@@ -3,7 +3,7 @@
 use algo_lib::collections::default_map::DefaultTreeMap;
 use algo_lib::collections::treap::multi_payload::MultiPayload;
 use algo_lib::collections::treap::Tree;
-use algo_lib::collections::vec_ext::gen::VecGen;
+use algo_lib::collections::vec_ext::gen_vec::VecGen;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::extensions::replace_with::ReplaceWith;
@@ -16,7 +16,7 @@ type PreCalc = ();
 fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut PreCalc) {
     let n = input.read_size();
     let q = input.read_size();
-    let mut treaps = Vec::gen(n, |_, _| {
+    let mut treaps = Vec::gen_vec(n, |_, _| {
         let k = input.read_size();
         let s = input.read_size_vec(k);
         let mut map = DefaultTreeMap::new(0usize);

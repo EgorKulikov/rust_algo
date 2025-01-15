@@ -1,7 +1,7 @@
 //{"name":"P6 - Candygrams","group":"DMOJ - UTS Open '24","url":"https://dmoj.ca/problem/utso24p6","interactive":false,"timeLimit":1000,"tests":[{"input":"7 5\n1 2\n3 1\n2 4\n4 6\n5 4\n6 7\nU 5 2\nQ 1 4\nU 7 3\nU 5 -1\nQ 6 3\n","output":"4\n12\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"P6Candygrams"}}}
 
 use algo_lib::collections::segment_tree::{SegmentTree, SegmentTreeNode};
-use algo_lib::collections::vec_ext::gen::VecGen;
+use algo_lib::collections::vec_ext::gen_vec::VecGen;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::graph::hl_decomposition::{HLDecomposition, HLDecompositionTrait};
 use algo_lib::graph::lca::LCATrait;
@@ -49,7 +49,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             self.delta = 0;
         }
     }
-    let mut st = Vec::gen(paths.len(), |i, _| SegmentTree::<Node>::new(paths[i].len()));
+    let mut st = Vec::gen_vec(paths.len(), |i, _| SegmentTree::<Node>::new(paths[i].len()));
 
     let mut base = 0;
 

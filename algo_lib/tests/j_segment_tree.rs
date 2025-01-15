@@ -64,7 +64,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let q = input.read_size();
     let a = input.read_int_vec(n);
 
-    let mut st = SegmentTree::gen(n, |i| Node {
+    let mut st = SegmentTree::gen_tree(n, |i| Node {
         max: a[i],
         left: i,
         right: i + 1,

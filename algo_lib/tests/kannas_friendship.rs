@@ -74,7 +74,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             self.enabled = false;
         }
     }
-    let mut st = SegmentTree::gen(poi.len() - 1, |i| Node {
+    let mut st = SegmentTree::gen_tree(poi.len() - 1, |i| Node {
         len: poi[i + 1] - poi[i],
         ans: 0,
         enabled: false,

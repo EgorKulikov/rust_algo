@@ -23,7 +23,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     timer.milestone("read");
     let mut not_seen = BitSet::new(n);
     not_seen.fill(true);
-    let mut treap = Tree::gen(n, |i| PurePayload((None, i)));
+    let mut treap = Tree::gen_tree(n, |i| PurePayload((None, i)));
     // let mut treap = Treap::gen_sized(n, |i| PurePayload((None, i)));
     timer.milestone("init");
     for &(y, x) in &swaps {

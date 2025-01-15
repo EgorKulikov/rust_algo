@@ -69,30 +69,40 @@ impl<V: ConstValueRef<[(isize, isize)]>> Iterator for DirectionsIter<V> {
 }
 
 const_value_ref!(
-    D4Dirs: [(isize, isize); 4] as [(isize, isize)] = [
-        (0isize, 1isize),
-        (1isize, 0isize),
-        (0isize, -1isize),
-        (-1isize, 0isize),
-    ]
+    D4Dirs: [(isize, isize); 4] as [(isize, isize)] = [(0, 1), (1, 0), (0, -1), (-1, 0),]
 );
 
 pub type D4 = Directions<D4Dirs>;
 
 const_value_ref!(
     D8Dirs: [(isize, isize); 8] as [(isize, isize)] = [
-        (0isize, 1isize),
-        (1isize, 1isize),
-        (1isize, 0isize),
-        (1isize, -1isize),
-        (0isize, -1isize),
-        (-1isize, -1isize),
-        (-1isize, 0isize),
-        (-1isize, 1isize),
+        (0, 1),
+        (1, 1),
+        (1, 0),
+        (1, -1),
+        (0, -1),
+        (-1, -1),
+        (-1, 0),
+        (-1, 1),
     ]
 );
 
 pub type D8 = Directions<D8Dirs>;
+
+const_value_ref!(
+    DKDirs: [(isize, isize); 8] as [(isize, isize)] = [
+        (1, 2),
+        (2, 1),
+        (2, -1),
+        (1, -2),
+        (-1, -2),
+        (-2, -1),
+        (-2, 1),
+        (-1, 2),
+    ]
+);
+
+pub type DK = Directions<DKDirs>;
 
 pub fn border(n: usize, m: usize) -> Vec<(usize, usize)> {
     let mut ans = Vec::new();

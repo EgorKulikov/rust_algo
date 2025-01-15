@@ -24,7 +24,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         }
     }
     d_qty.push((d[n - 1], n - start));
-    let mut set = unsafe { MultiTreapSet::gen(d_qty.len(), |i| d_qty[i]) };
+    let mut set = unsafe { MultiTreapSet::gen_ms(d_qty.len(), |i| d_qty[i]) };
 
     for _ in 0..q {
         let t = input.read_size();

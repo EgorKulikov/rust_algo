@@ -27,7 +27,7 @@ impl<T: Clone> Arr5d<T> {
 }
 
 impl<T> Arr5d<T> {
-    pub fn gen<F>(d1: usize, d2: usize, d3: usize, d4: usize, d5: usize, mut gen: F) -> Self
+    pub fn gen_md<F>(d1: usize, d2: usize, d3: usize, d4: usize, d5: usize, mut g: F) -> Self
     where
         F: FnMut(usize, usize, usize, usize, usize) -> T,
     {
@@ -37,7 +37,7 @@ impl<T> Arr5d<T> {
                 for k in 0..d3 {
                     for l in 0..d4 {
                         for m in 0..d5 {
-                            data.push(gen(i, j, k, l, m));
+                            data.push(g(i, j, k, l, m));
                         }
                     }
                 }
@@ -159,7 +159,7 @@ impl Arr5dRead for Input<'_> {
         d4: usize,
         d5: usize,
     ) -> Arr5d<T> {
-        Arr5d::gen(d1, d2, d3, d4, d5, |_, _, _, _, _| self.read())
+        Arr5d::gen_md(d1, d2, d3, d4, d5, |_, _, _, _, _| self.read())
     }
 }
 

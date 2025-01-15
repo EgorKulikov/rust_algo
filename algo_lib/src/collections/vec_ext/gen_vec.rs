@@ -1,5 +1,5 @@
 pub trait VecGen<T> {
-    fn gen(n: usize, f: impl FnMut(usize, &Self) -> T) -> Vec<T>;
+    fn gen_vec(n: usize, f: impl FnMut(usize, &Self) -> T) -> Vec<T>;
     fn gen_append(&mut self, n: usize, f: impl FnMut(usize, &Self) -> T);
 
     fn gen_back(n: usize, f: impl FnMut(usize, &Self) -> T) -> Vec<T>
@@ -8,7 +8,7 @@ pub trait VecGen<T> {
 }
 
 impl<T> VecGen<T> for Vec<T> {
-    fn gen(n: usize, f: impl FnMut(usize, &Self) -> T) -> Vec<T> {
+    fn gen_vec(n: usize, f: impl FnMut(usize, &Self) -> T) -> Vec<T> {
         let mut vec = Vec::with_capacity(n);
         vec.gen_append(n, f);
         vec

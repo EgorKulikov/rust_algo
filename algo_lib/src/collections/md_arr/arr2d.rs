@@ -24,14 +24,14 @@ impl<T: Clone> Arr2d<T> {
 }
 
 impl<T> Arr2d<T> {
-    pub fn gen<F>(d1: usize, d2: usize, mut gen: F) -> Self
+    pub fn gen_md<F>(d1: usize, d2: usize, mut g: F) -> Self
     where
         F: FnMut(usize, usize) -> T,
     {
         let mut data = Vec::with_capacity(d1 * d2);
         for i in 0usize..d1 {
             for j in 0usize..d2 {
-                data.push(gen(i, j));
+                data.push(g(i, j));
             }
         }
         Self { d1, d2, data }
@@ -249,7 +249,7 @@ pub trait Arr2dRead {
 
 impl Arr2dRead for Input<'_> {
     fn read_table<T: Readable>(&mut self, d1: usize, d2: usize) -> Arr2d<T> {
-        Arr2d::gen(d1, d2, |_, _| self.read())
+        Arr2d::gen_md(d1, d2, |_, _| self.read())
     }
 
     fn read_int_table(&mut self, d1: usize, d2: usize) -> Arr2d<i32> {
