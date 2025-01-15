@@ -4,6 +4,7 @@ use crate::io::output::{Output, Writable};
 use crate::numbers::num_traits::algebra::{One, Zero};
 use crate::numbers::num_traits::invertible::Invertible;
 use crate::string::str::Str;
+use std::cell::Cell;
 use std::cmp::Ordering;
 use std::ops::{
     Add, AddAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
@@ -139,7 +140,9 @@ impl One for Real {
     }
 }
 
-static mut EPSILON: Real = Real(1e-9);
+thread_local! {
+    static EPSILON: Cell<Real> = Cell::new(Real(1e-9));
+}
 
 impl Real {
     pub const PI: Self = Self(std::f64::consts::PI);
@@ -173,13 +176,11 @@ impl Real {
     }
 
     pub fn epsilon() -> Self {
-        unsafe { EPSILON }
+        EPSILON.with(|eps| eps.get())
     }
 
     pub fn set_epsilon(eps: impl Into<Self>) {
-        unsafe {
-            EPSILON = eps.into();
-        }
+        EPSILON.with(|e| e.set(eps.into()));
     }
 }
 

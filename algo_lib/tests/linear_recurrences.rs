@@ -23,7 +23,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     for _ in 0..q {
         let t = input.read_size();
         let m = input.read_unsigned();
-        Modulo::set_val(m);
+        Modulo::set(m);
         type Mod = ModInt<Modulo>;
         let mut matrix = Matrix::zero(n + 1, n + 1);
         for i in 0..n {

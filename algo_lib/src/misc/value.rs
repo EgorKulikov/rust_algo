@@ -1,6 +1,6 @@
 use std::hash::Hash;
 
-pub trait Value<T>: Copy + Eq + Hash {
+pub trait Value<T>: Copy + Ord + Hash + Default {
     fn val() -> T;
 }
 
@@ -16,9 +16,9 @@ impl<T, V: ConstValue<T>> Value<T> for V {
 
 #[macro_export]
 macro_rules! value {
-    ($name: ident: $t: ty = $val: expr) => {
+    ($v: vis $name: ident: $t: ty = $val: expr) => {
         #[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Default)]
-        pub struct $name {}
+        $v struct $name {}
 
         impl $crate::misc::value::ConstValue<$t> for $name {
             const VAL: $t = $val;
@@ -27,36 +27,35 @@ macro_rules! value {
 }
 
 pub trait DynamicValue<T>: Value<T> {
-    //noinspection RsSelfConvention
-    fn set_val(t: T);
+    fn set(t: T);
 }
 
 #[macro_export]
 macro_rules! dynamic_value {
-    ($name: ident: $t: ty) => {
-        #[allow(non_upper_case_globals)]
-        static mut $name: Option<$t> = None;
+    ($v: vis $name: ident: $t: ty) => {
+        thread_local! {
+            #[allow(non_upper_case_globals)]
+            static $name: std::cell::Cell<Option<$t>> = std::cell::Cell::new(None);
+        }
 
-        #[derive(Copy, Clone, Eq, PartialEq, Hash, Default)]
-        struct $name {}
+        #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
+        $v struct $name {}
 
         impl $crate::misc::value::DynamicValue<$t> for $name {
-            fn set_val(t: $t) {
-                unsafe {
-                    $name = Some(t);
-                }
+            fn set(t: $t) {
+                $name.with(|c| c.set(Some(t)));
             }
         }
 
         impl $crate::misc::value::Value<$t> for $name {
             fn val() -> $t {
-                unsafe { $name.unwrap() }
+                $name.with(|c| c.get().unwrap())
             }
         }
     };
-    ($name: ident: $t: ty = $val: expr) => {
-        dynamic_value!($name: $t);
+    ($v: vis $name: ident: $t: ty = $val: expr) => {
+        dynamic_value!($v $name: $t);
 
-        <$name as $crate::misc::value::DynamicValue<$t>>::set_val($val);
+        <$name as $crate::misc::value::DynamicValue<$t>>::set($val);
     };
 }

@@ -1,47 +1,39 @@
 use crate::misc::random::{RandomTrait, StaticRandom};
 use crate::misc::value::DynamicValue;
+use crate::misc::value_ref::ValueRef;
 use crate::numbers::mod_int::ModInt64;
 use crate::numbers::num_traits::algebra::{One, Zero};
 use crate::numbers::num_traits::invertible::Invertible;
 use crate::numbers::num_traits::primitive::Primitive;
 use crate::numbers::primes::prime::next_prime;
-use crate::{dynamic_value, when};
+use crate::{dynamic_value, value_ref, when};
 use std::cmp::Ordering;
 use std::collections::Bound;
 use std::ops::RangeBounds;
-use std::sync::RwLock;
 
 dynamic_value!(HM: u64);
 type HashMod = ModInt64<HM>;
 
-static HASH_BASE: RwLock<Option<HashBase>> = RwLock::new(None);
+value_ref!(HashBaseHolder: HashBase);
 
 fn multiplier() -> HashMod {
     HashBase::init();
-    HASH_BASE.read().unwrap().as_ref().unwrap().multiplier
+    HashBaseHolder::with(|h| h.multiplier)
 }
 
 fn ensure_capacity(n: usize) {
     HashBase::init();
-    if HASH_BASE.read().unwrap().as_ref().unwrap().power.len() >= n {
-        return;
-    }
-    HASH_BASE
-        .write()
-        .unwrap()
-        .as_mut()
-        .unwrap()
-        .ensure_capacity(n);
+    HashBaseHolder::with_mut(|h| h.ensure_capacity(n));
 }
 
 fn power(n: usize) -> HashMod {
     ensure_capacity(n + 1);
-    HASH_BASE.read().unwrap().as_ref().unwrap().power[n]
+    HashBaseHolder::with(|h| h.power[n])
 }
 
 fn inv_power(n: usize) -> HashMod {
     ensure_capacity(n + 1);
-    HASH_BASE.read().unwrap().as_ref().unwrap().inv_power[n]
+    HashBaseHolder::with(|h| h.inv_power[n])
 }
 
 pub struct HashBase {
@@ -53,20 +45,16 @@ pub struct HashBase {
 
 impl HashBase {
     pub fn init() {
-        if HASH_BASE.read().unwrap().is_some() {
+        if HashBaseHolder::is_init() {
             return;
         }
-        let mut lock = HASH_BASE.write().unwrap();
-        if lock.is_some() {
-            return;
-        }
-        HM::set_val(next_prime(
+        HM::set(next_prime(
             StaticRandom.gen_range(10u64.pow(18)..=2 * 10u64.pow(18)),
         ));
         let multiplier =
             HashMod::new(StaticRandom.gen_range(4 * 10u64.pow(17)..=5 * 10u64.pow(17)));
         let inv_multiplier = multiplier.inv().unwrap();
-        *lock = Some(HashBase {
+        HashBaseHolder::set(HashBase {
             multiplier,
             inv_multiplier,
             power: vec![HashMod::one()],

@@ -1,6 +1,6 @@
 use crate::collections::vec_ext::default::default_vec;
 use std::cmp::Reverse;
-use std::io::{stderr, Stderr, Write};
+use std::io::Write;
 
 #[derive(Copy, Clone)]
 pub enum BoolOutput {
@@ -287,16 +287,5 @@ impl Writable for bool {
 impl<T: Writable> Writable for Reverse<T> {
     fn write(&self, output: &mut Output) {
         self.0.write(output);
-    }
-}
-
-static mut ERR: Option<Stderr> = None;
-
-pub fn err() -> Output<'static> {
-    unsafe {
-        if ERR.is_none() {
-            ERR = Some(stderr());
-        }
-        Output::new_with_auto_flush(ERR.as_mut().unwrap())
     }
 }

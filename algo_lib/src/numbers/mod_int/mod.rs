@@ -282,11 +282,11 @@ macro_rules! mod_int {
 mod_int!(ModInt, u32, i32, i64);
 mod_int!(ModInt64, u64, i64, i128);
 
-value!(Val7: u32 = 1_000_000_007);
+value!(pub Val7: u32 = 1_000_000_007);
 pub type ModInt7 = ModInt<Val7>;
 
-value!(Val9: u32 = 1_000_000_009);
+value!(pub Val9: u32 = 1_000_000_009);
 pub type ModInt9 = ModInt<Val9>;
 
-value!(ValF: u32 = 998_244_353);
+value!(pub ValF: u32 = 998_244_353);
 pub type ModIntF = ModInt<ValF>;

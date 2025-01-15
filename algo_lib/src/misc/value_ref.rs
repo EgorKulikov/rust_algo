@@ -3,20 +3,20 @@ pub trait ConstValueRef<T: ?Sized + 'static> {
 }
 
 pub trait ValueRef<T: 'static> {
-    fn val() -> &'static T;
-    fn set_val(t: T);
-    fn val_mut() -> &'static mut T;
+    fn with<R, F: FnMut(&T) -> R>(f: F) -> R;
+    fn set(t: T);
+    fn with_mut<R, F: FnMut(&mut T) -> R>(f: F) -> R;
     fn is_init() -> bool;
 }
 
 #[macro_export]
 macro_rules! const_value_ref {
-    ($name: ident: $int_t: ty as $ext_t: ty = $base: expr) => {
+    ($v: vis $name: ident: $int_t: ty as $ext_t: ty = $base: expr) => {
         #[allow(non_upper_case_globals)]
         const $name: $int_t = $base;
 
-        #[derive(Copy, Clone, Eq, PartialEq, Hash)]
-        pub struct $name {}
+        #[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Default)]
+        $v struct $name {}
 
         impl $crate::misc::value_ref::ConstValueRef<$ext_t> for $name {
             fn val() -> &'static $ext_t {
@@ -24,40 +24,42 @@ macro_rules! const_value_ref {
             }
         }
     };
-    ($name: ident: $int_t: ty = $base: expr) => {
-        const_value_ref!($name: $int_t as $int_t = $base);
+    ($v: vis $name: ident: $int_t: ty = $base: expr) => {
+        const_value_ref!($v $name: $int_t as $int_t = $base);
     };
 }
 
 #[macro_export]
 macro_rules! value_ref {
-    ($name: ident: $t: ty) => {
-        #[allow(non_upper_case_globals)]
-        static mut $name: Option<$t> = None;
+    ($v: vis $name: ident: $t: ty) => {
+        thread_local! {
+            #[allow(non_upper_case_globals)]
+            static $name: std::cell::RefCell<Option<$t>> = std::cell::RefCell::new(None);
+        }
 
-        #[derive(Copy, Clone, Eq, PartialEq, Hash)]
-        struct $name {}
+        #[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Default)]
+        $v struct $name {}
 
         impl $crate::misc::value_ref::ValueRef<$t> for $name {
-            fn val() -> &'static $t {
-                unsafe { $name.as_ref().unwrap() }
+            fn with<R, F: FnMut(&$t) -> R>(mut f: F) -> R {
+                $name.with(|cell| f(cell.borrow().as_ref().unwrap()))
             }
 
-            fn set_val(t: $t) {
-                unsafe { $name = Some(t); }
+            fn set(t: $t) {
+                $name.with(|cell| *cell.borrow_mut() = Some(t));
             }
 
-            fn val_mut() -> &'static mut $t {
-                unsafe { $name.as_mut().unwrap() }
+            fn with_mut<R, F: FnMut(&mut $t) -> R>(mut f: F) -> R {
+                $name.with(|cell| f(cell.borrow_mut().as_mut().unwrap()))
             }
 
             fn is_init() -> bool {
-                unsafe { $name.is_some() }
+                $name.with(|cell| cell.borrow().is_some())
             }
         }
     };
-    ($name: ident: $t: ty = $init_val: expr) => {
-        value_ref!($name: $t);
-        <$name as $crate::misc::value_ref::ValueRef<$t>>::set_val($init_val);
-    }
+    ($v: vis $name: ident: $t: ty = $init_val: expr) => {
+        value_ref!($v $name: $t);
+        <$name as $crate::misc::value_ref::ValueRef<$t>>::set($init_val);
+    };
 }
