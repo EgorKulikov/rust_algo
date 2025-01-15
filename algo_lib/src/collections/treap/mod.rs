@@ -817,7 +817,7 @@ impl<'a, P: Payload> Iterator for Iter<'a, P> {
 }
 
 impl<P: OrdPayload> Tree<P> {
-    pub fn range<'s: 'r, 'r>(&'s mut self, bounds: impl RangeBounds<&'r P::Key>) -> &mut Self {
+    pub fn range<'s: 'r, 'r>(&'s mut self, bounds: impl RangeBounds<&'r P::Key>) -> &'s mut Self {
         self.do_split_three(|root| {
             let (left, mid_right) = match bounds.start_bound() {
                 Bound::Included(key) => root.split(key),
