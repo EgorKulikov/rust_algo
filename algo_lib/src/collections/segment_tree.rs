@@ -71,16 +71,16 @@ pub struct SegmentTree<Node> {
 
 impl<Node: SegmentTreeNode> SegmentTree<Node> {
     pub fn new(n: usize) -> Self {
-        Self::gen_tree(n, |left| Node::new(left, left + 1))
+        Self::with_gen(n, |left| Node::new(left, left + 1))
     }
 
     pub fn from_array(arr: Vec<Node>) -> Self {
         let n = arr.len();
         let mut iter = arr.into_iter();
-        Self::gen_tree(n, |_| iter.next().unwrap())
+        Self::with_gen(n, |_| iter.next().unwrap())
     }
 
-    pub fn gen_tree<F>(n: usize, g: F) -> Self
+    pub fn with_gen<F>(n: usize, g: F) -> Self
     where
         F: FnMut(usize) -> Node,
     {
@@ -458,8 +458,8 @@ impl<'s, Node: SegmentTreeNode, Args, Res> PointOperationClosure<'s, Node, Args,
     }
 }
 
-impl<'s, Node: SegmentTreeNode, Args, Res> PointOperation<Node, Args, Res>
-    for PointOperationClosure<'s, Node, Args, Res>
+impl<Node: SegmentTreeNode, Args, Res> PointOperation<Node, Args, Res>
+    for PointOperationClosure<'_, Node, Args, Res>
 {
     fn adjust_leaf(&mut self, leaf: &mut Node, at: usize, args: Args) -> Res {
         (self.adjust_leaf)(leaf, at, args)
@@ -512,8 +512,8 @@ impl<'s, Node: SegmentTreeNode, Args, Res> OperationClosure<'s, Node, Args, Res>
     }
 }
 
-impl<'s, Node: SegmentTreeNode, Args, Res> Operation<Node, Args, Res>
-    for OperationClosure<'s, Node, Args, Res>
+impl<Node: SegmentTreeNode, Args, Res> Operation<Node, Args, Res>
+    for OperationClosure<'_, Node, Args, Res>
 {
     fn process_result(&mut self, node: &mut Node, args: &Args) -> Res {
         (self.process_result)(node, args)

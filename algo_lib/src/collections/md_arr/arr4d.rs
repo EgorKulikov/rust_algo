@@ -25,7 +25,7 @@ impl<T: Clone> Arr4d<T> {
 }
 
 impl<T> Arr4d<T> {
-    pub fn gen_md<F>(d1: usize, d2: usize, d3: usize, d4: usize, mut g: F) -> Self
+    pub fn with_gen<F>(d1: usize, d2: usize, d3: usize, d4: usize, mut g: F) -> Self
     where
         F: FnMut(usize, usize, usize, usize) -> T,
     {
@@ -139,7 +139,7 @@ impl Arr4dRead for Input<'_> {
         d3: usize,
         d4: usize,
     ) -> Arr4d<T> {
-        Arr4d::gen_md(d1, d2, d3, d4, |_, _, _, _| self.read())
+        Arr4d::with_gen(d1, d2, d3, d4, |_, _, _, _| self.read())
     }
 }
 

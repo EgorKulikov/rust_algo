@@ -19,6 +19,8 @@ pub struct UBigInt {
 impl From<&[u8]> for UBigInt {
     fn from(value: &[u8]) -> Self {
         let mut at = value.len();
+        // 1.73
+        #[allow(clippy::manual_div_ceil)]
         let mut res = Vec::with_capacity((at + DIGITS - 1) / DIGITS);
         while at > 0 {
             let mut cur = 0;

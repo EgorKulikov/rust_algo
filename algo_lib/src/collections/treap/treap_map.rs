@@ -32,9 +32,9 @@ impl<T: Ord, V> TreapMap<T, V> {
         Self { root: Tree::new() }
     }
 
-    pub unsafe fn gen_map(n: usize, mut f: impl FnMut(usize) -> (T, V)) -> Self {
+    pub unsafe fn with_gen(n: usize, mut f: impl FnMut(usize) -> (T, V)) -> Self {
         Self {
-            root: Tree::gen_tree(n, |i| {
+            root: Tree::with_gen(n, |i| {
                 let (key, value) = f(i);
                 MapPayload::new(key, value)
             }),
@@ -172,8 +172,8 @@ impl<T: Ord> TreapSet<T> {
         Self(TreapMap::new())
     }
 
-    pub unsafe fn gen_set(n: usize, mut f: impl FnMut(usize) -> T) -> Self {
-        Self(TreapMap::gen_map(n, |i| (f(i), ())))
+    pub unsafe fn with_gen(n: usize, mut f: impl FnMut(usize) -> T) -> Self {
+        Self(TreapMap::with_gen(n, |i| (f(i), ())))
     }
 
     pub fn insert(&mut self, key: T) -> bool {

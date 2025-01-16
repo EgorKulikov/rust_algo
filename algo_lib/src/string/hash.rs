@@ -141,7 +141,7 @@ impl<'s, BaseHash: StringHash + ?Sized> SubstrigHash<'s, BaseHash> {
     }
 }
 
-impl<'s, BaseHash: StringHash + ?Sized> StringHash for SubstrigHash<'s, BaseHash> {
+impl<BaseHash: StringHash + ?Sized> StringHash for SubstrigHash<'_, BaseHash> {
     fn len(&self) -> usize {
         self.to - self.from
     }
@@ -180,8 +180,8 @@ impl<'s, Hash1: StringHash + ?Sized, Hash2: StringHash + ?Sized> CompositeHash<'
     }
 }
 
-impl<'s, Hash1: StringHash + ?Sized, Hash2: StringHash + ?Sized> StringHash
-    for CompositeHash<'s, Hash1, Hash2>
+impl<Hash1: StringHash + ?Sized, Hash2: StringHash + ?Sized> StringHash
+    for CompositeHash<'_, Hash1, Hash2>
 {
     fn len(&self) -> usize {
         self.base1.len() + self.base2.len()

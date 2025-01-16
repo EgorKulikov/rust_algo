@@ -19,7 +19,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let p = input.read_size_vec(n).dec();
 
     let mut treap = Tree::new();
-    let nodes = Vec::gen_vec(n, |i, _| treap.add_back(PurePayload(p[i])));
+    let nodes = Vec::with_gen(n, |i, _| treap.add_back(PurePayload(p[i])));
     let pp = p.inv();
 
     for _ in 0..q {

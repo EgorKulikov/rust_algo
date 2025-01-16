@@ -12,9 +12,9 @@ impl<T: Ord> MultiTreapSet<T> {
         Self { root: Tree::new() }
     }
 
-    pub unsafe fn gen_ms(n: usize, mut f: impl FnMut(usize) -> (T, usize)) -> Self {
+    pub unsafe fn with_gen(n: usize, mut f: impl FnMut(usize) -> (T, usize)) -> Self {
         Self {
-            root: Tree::gen_tree(n, |i| {
+            root: Tree::with_gen(n, |i| {
                 let (key, qty) = f(i);
                 MultiPayload::new_with_size(key, (), qty)
             }),

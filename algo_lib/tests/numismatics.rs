@@ -142,7 +142,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             self.delta = false;
         }
     }
-    let mut st = SegmentTree::gen_tree(n, |i| Node::new(s[i]));
+    let mut st = SegmentTree::with_gen(n, |i| Node::new(s[i]));
     for _ in 0..q {
         match input.read_int() {
             1 => {

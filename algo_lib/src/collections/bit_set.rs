@@ -60,7 +60,7 @@ impl BitSet {
     }
 
     pub fn fill(&mut self, value: bool) {
-        self.data.fill(if value { std::u64::MAX } else { 0 });
+        self.data.fill(if value { u64::MAX } else { 0 });
         if value {
             self.fix_last();
         }
@@ -123,7 +123,7 @@ pub struct BitSetIter<'s> {
     set: &'s BitSet,
 }
 
-impl<'s> Iterator for BitSetIter<'s> {
+impl Iterator for BitSetIter<'_> {
     type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {

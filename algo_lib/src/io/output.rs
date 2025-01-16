@@ -38,7 +38,6 @@ pub struct Output<'s> {
     output: &'s mut dyn Write,
     buf: Vec<u8>,
     at: usize,
-    auto_flush: bool,
     bool_output: BoolOutput,
     precision: Option<usize>,
     separator: u8,
@@ -52,19 +51,6 @@ impl<'s> Output<'s> {
             output,
             buf: default_vec(Self::DEFAULT_BUF_SIZE),
             at: 0,
-            auto_flush: false,
-            bool_output: BoolOutput::YesNoCaps,
-            precision: None,
-            separator: b' ',
-        }
-    }
-
-    pub fn new_with_auto_flush(output: &'s mut dyn Write) -> Self {
-        Self {
-            output,
-            buf: default_vec(Self::DEFAULT_BUF_SIZE),
-            at: 0,
-            auto_flush: true,
             bool_output: BoolOutput::YesNoCaps,
             precision: None,
             separator: b' ',
@@ -81,25 +67,17 @@ impl<'s> Output<'s> {
 
     pub fn print<T: Writable>(&mut self, s: T) {
         s.write(self);
-        self.maybe_flush();
     }
 
     pub fn print_line<T: Writable>(&mut self, s: T) {
         self.print(s);
         self.put(b'\n');
-        self.maybe_flush();
     }
 
     pub fn put(&mut self, b: u8) {
         self.buf[self.at] = b;
         self.at += 1;
         if self.at == self.buf.len() {
-            self.flush();
-        }
-    }
-
-    pub fn maybe_flush(&mut self) {
-        if self.auto_flush {
             self.flush();
         }
     }
@@ -166,7 +144,6 @@ impl Write for Output<'_> {
             start += len;
             rem -= len;
         }
-        self.maybe_flush();
         Ok(buf.len())
     }
 

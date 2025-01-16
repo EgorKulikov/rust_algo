@@ -33,7 +33,7 @@ impl Real {
     }
 }
 
-// #[allow(clippy::non_canonical_partial_ord_impl)]
+#[allow(clippy::non_canonical_partial_ord_impl)]
 impl PartialOrd for Real {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         if self == other {
@@ -141,7 +141,7 @@ impl One for Real {
 }
 
 thread_local! {
-    static EPSILON: Cell<Real> = Cell::new(Real(1e-9));
+    static EPSILON: Cell<Real> = const { Cell::new(Real(1e-9)) };
 }
 
 impl Real {

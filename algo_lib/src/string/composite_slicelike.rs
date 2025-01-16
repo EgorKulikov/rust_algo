@@ -30,8 +30,8 @@ where
 
 impl<S: Slicelike + ?Sized> SlicelikeZip for S where S::Output: Sized {}
 
-impl<'a, T, S1: Slicelike<Output = T> + ?Sized, S2: Slicelike<Output = T> + ?Sized> Index<usize>
-    for CompositeSlicelike<'a, T, S1, S2>
+impl<T, S1: Slicelike<Output = T> + ?Sized, S2: Slicelike<Output = T> + ?Sized> Index<usize>
+    for CompositeSlicelike<'_, T, S1, S2>
 {
     type Output = T;
 
@@ -44,8 +44,8 @@ impl<'a, T, S1: Slicelike<Output = T> + ?Sized, S2: Slicelike<Output = T> + ?Siz
     }
 }
 
-impl<'a, T, S1: Slicelike<Output = T> + ?Sized, S2: Slicelike<Output = T> + ?Sized> Slicelike
-    for CompositeSlicelike<'a, T, S1, S2>
+impl<T, S1: Slicelike<Output = T> + ?Sized, S2: Slicelike<Output = T> + ?Sized> Slicelike
+    for CompositeSlicelike<'_, T, S1, S2>
 {
     fn len(&self) -> usize {
         self.s1.len() + self.s2.len()

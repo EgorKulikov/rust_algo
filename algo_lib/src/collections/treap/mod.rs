@@ -168,7 +168,7 @@ impl<P: Payload> Node<P> {
         }
     }
 
-    fn gen_tree(n: usize, f: impl FnMut(usize) -> P) -> NodeLink<Node<P>> {
+    fn with_gen(n: usize, f: impl FnMut(usize) -> P) -> NodeLink<Node<P>> {
         let mut res = Self::build(f, 0, n).0;
         res.heapify();
         res
@@ -532,7 +532,7 @@ impl<P: Payload> Tree<P> {
         }
     }
 
-    pub fn gen_tree(n: usize, f: impl FnMut(usize) -> P) -> Self {
+    pub fn with_gen(n: usize, f: impl FnMut(usize) -> P) -> Self {
         Self::gen_impl(n, f)
     }
 
@@ -542,7 +542,7 @@ impl<P: Payload> Tree<P> {
 
     fn gen_impl(n: usize, f: impl FnMut(usize) -> P) -> Self {
         Tree::Whole {
-            root: Node::gen_tree(n, f),
+            root: Node::with_gen(n, f),
         }
     }
 

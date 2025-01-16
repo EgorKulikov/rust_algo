@@ -49,7 +49,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             self.delta = 0;
         }
     }
-    let mut st = Vec::gen_vec(paths.len(), |i, _| SegmentTree::<Node>::new(paths[i].len()));
+    let mut st = Vec::with_gen(paths.len(), |i, _| SegmentTree::<Node>::new(paths[i].len()));
 
     let mut base = 0;
 
