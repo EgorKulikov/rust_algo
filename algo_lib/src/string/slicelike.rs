@@ -1,4 +1,4 @@
-use std::ops::{Index, IndexMut};
+use std::ops::Index;
 
 pub trait Slicelike: Index<usize>
 where
@@ -16,15 +16,29 @@ impl<T> Slicelike for [T] {
     }
 }
 
-pub trait SlicelikeMut: Slicelike + IndexMut<usize>
-where
-    Self::Output: Sized,
-{
+pub struct Concat<'s, T> {
+    first: &'s [T],
+    second: &'s [T],
 }
 
-impl<U> SlicelikeMut for U
-where
-    U: Slicelike + IndexMut<usize>,
-    U::Output: Sized,
-{
+impl<T> Index<usize> for Concat<'_, T> {
+    type Output = T;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        if index < self.first.len() {
+            &self.first[index]
+        } else {
+            &self.second[index - self.first.len()]
+        }
+    }
+}
+
+impl<T> Slicelike for Concat<'_, T> {
+    fn len(&self) -> usize {
+        self.first.len() + self.second.len()
+    }
+}
+
+pub fn chain<'a, T>(first: &'a [T], second: &'a [T]) -> Concat<'a, T> {
+    Concat { first, second }
 }

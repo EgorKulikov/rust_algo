@@ -1,5 +1,4 @@
-use crate::string::composite_slicelike::SlicelikeZip;
-use crate::string::slicelike::Slicelike;
+use crate::string::slicelike::chain;
 use crate::string::string_algorithms::z_algorithm::ZAlgorithm;
 
 pub trait StringSearch {
@@ -10,13 +9,9 @@ pub trait StringSearch {
     fn all_matches(&self, pattern: &Self) -> Vec<usize>;
 }
 
-impl<S: Slicelike + ?Sized> StringSearch for S
-where
-    S::Output: PartialEq + Sized,
-{
+impl<T: PartialEq + Sized> StringSearch for [T] {
     fn index_of(&self, pattern: &Self) -> Option<usize> {
-        pattern
-            .chain(self)
+        chain(pattern, self)
             .z_algorithm()
             .into_iter()
             .skip(pattern.len())
@@ -24,8 +19,7 @@ where
     }
 
     fn all_matches(&self, pattern: &Self) -> Vec<usize> {
-        pattern
-            .chain(self)
+        chain(pattern, self)
             .z_algorithm()
             .into_iter()
             .skip(pattern.len())

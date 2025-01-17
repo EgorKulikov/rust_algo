@@ -1,5 +1,4 @@
 pub mod aho_corasick;
-pub mod composite_slicelike;
 pub mod concat;
 pub mod hash;
 pub mod qty;
