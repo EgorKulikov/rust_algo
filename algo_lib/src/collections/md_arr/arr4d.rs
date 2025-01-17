@@ -131,7 +131,7 @@ pub trait Arr4dRead {
     ) -> Arr4d<T>;
 }
 
-impl Arr4dRead for Input<'_> {
+impl Arr4dRead for Input {
     fn read_4d_table<T: Readable>(
         &mut self,
         d1: usize,

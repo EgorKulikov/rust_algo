@@ -116,7 +116,7 @@ pub trait StrReader {
     fn read_lines(&mut self) -> Vec<Str>;
 }
 
-impl StrReader for Input<'_> {
+impl StrReader for Input {
     fn read_str(&mut self) -> Str {
         self.read()
     }

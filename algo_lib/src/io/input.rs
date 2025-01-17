@@ -1,9 +1,16 @@
-use crate::collections::vec_ext::default::default_vec;
-use std::io::Read;
+use std::fs::File;
+use std::io::{Read, Stdin};
 use std::mem::MaybeUninit;
 
-pub struct Input<'s> {
-    input: &'s mut (dyn Read + Send),
+enum InputSource {
+    Stdin(Stdin),
+    File(File),
+    Slice,
+    Delegate(Box<dyn Read + Send>),
+}
+
+pub struct Input {
+    input: InputSource,
     buf: Vec<u8>,
     at: usize,
     buf_read: usize,
@@ -30,23 +37,43 @@ macro_rules! read_impl {
     };
 }
 
-impl<'s> Input<'s> {
+impl Input {
     const DEFAULT_BUF_SIZE: usize = 4096;
 
-    pub fn new(input: &'s mut (dyn Read + Send)) -> Self {
+    pub fn slice(input: &[u8]) -> Self {
         Self {
-            input,
-            buf: default_vec(Self::DEFAULT_BUF_SIZE),
+            input: InputSource::Slice,
+            buf: input.to_vec(),
+            at: 0,
+            buf_read: input.len(),
+            eol: true,
+        }
+    }
+
+    pub fn stdin() -> Self {
+        Self {
+            input: InputSource::Stdin(std::io::stdin()),
+            buf: vec![0; Self::DEFAULT_BUF_SIZE],
             at: 0,
             buf_read: 0,
             eol: true,
         }
     }
 
-    pub fn new_with_size(input: &'s mut (dyn Read + Send), buf_size: usize) -> Self {
+    pub fn file(file: File) -> Self {
         Self {
-            input,
-            buf: default_vec(buf_size),
+            input: InputSource::File(file),
+            buf: vec![0; Self::DEFAULT_BUF_SIZE],
+            at: 0,
+            buf_read: 0,
+            eol: true,
+        }
+    }
+
+    pub fn delegate(reader: impl Read + Send + 'static) -> Self {
+        Self {
+            input: InputSource::Delegate(Box::new(reader)),
+            buf: vec![0; Self::DEFAULT_BUF_SIZE],
             at: 0,
             buf_read: 0,
             eol: true,
@@ -143,7 +170,12 @@ impl<'s> Input<'s> {
     fn refill_buffer(&mut self) -> bool {
         if self.at == self.buf_read {
             self.at = 0;
-            self.buf_read = self.input.read(&mut self.buf).unwrap();
+            self.buf_read = match &mut self.input {
+                InputSource::Stdin(stdin) => stdin.read(&mut self.buf).unwrap(),
+                InputSource::File(file) => file.read(&mut self.buf).unwrap(),
+                InputSource::Delegate(reader) => reader.read(&mut self.buf).unwrap(),
+                InputSource::Slice => 0,
+            };
             self.buf_read != 0
         } else {
             true

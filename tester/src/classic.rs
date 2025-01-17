@@ -15,28 +15,24 @@ pub(crate) fn run_single_test_classic<T: TestSet>(
 ) -> Outcome {
     let input = &input;
     let (outcome, output) = match std::panic::catch_unwind(|| {
-        let mut input = *input;
+        let input = *input;
         let started = std::time::Instant::now();
         let mut output = Vec::new();
-        let is_exhausted = (tester.solution)(Input::new(&mut input), Output::new(&mut output));
+        let is_exhausted = (tester.solution)(Input::slice(input), Output::buf(&mut output));
         let res = started.elapsed();
         (output, res, is_exhausted)
     }) {
         Ok((output, duration, is_exhausted)) => {
             test_set.save_output(test_id, &output);
-            let mut input = *input;
-            let checker_result = if let Some(mut expected) = expected {
+            let input = *input;
+            let checker_result = if let Some(expected) = expected {
                 (checker)(
-                    Input::new(&mut input),
-                    Some(Input::new(&mut expected)),
-                    Input::new(&mut output.as_slice()),
+                    Input::slice(input),
+                    Some(Input::slice(expected)),
+                    Input::slice(output.as_slice()),
                 )
             } else {
-                (checker)(
-                    Input::new(&mut input),
-                    None,
-                    Input::new(&mut output.as_slice()),
-                )
+                (checker)(Input::slice(input), None, Input::slice(output.as_slice()))
             };
             if let Err(checker_output) = checker_result {
                 (

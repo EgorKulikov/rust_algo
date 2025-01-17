@@ -164,18 +164,20 @@ where
 
     fn input(&self, test: &Self::TestId) -> Vec<u8> {
         let mut input_container = Vec::new();
-        let mut input = Output::new(&mut input_container);
+        let mut input = Output::buf(&mut input_container);
         self.set.input(test, &mut input);
         input.flush();
+        drop(input);
         input_container
     }
 
-    fn output(&self, test: &Self::TestId, mut input: &[u8]) -> Option<Vec<u8>> {
+    fn output(&self, test: &Self::TestId, input: &[u8]) -> Option<Vec<u8>> {
         let mut output_container = Vec::new();
-        let mut input = Input::new(&mut input);
-        let mut output = Output::new(&mut output_container);
+        let mut input = Input::slice(input);
+        let mut output = Output::buf(&mut output_container);
         if self.set.output(test, &mut input, &mut output) {
             output.flush();
+            drop(output);
             Some(output_container)
         } else {
             None

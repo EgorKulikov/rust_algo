@@ -1,6 +1,6 @@
-use crate::collections::vec_ext::default::default_vec;
 use std::cmp::Reverse;
-use std::io::Write;
+use std::fs::File;
+use std::io::{Stdout, Write};
 
 #[derive(Copy, Clone)]
 pub enum BoolOutput {
@@ -34,8 +34,15 @@ impl BoolOutput {
     }
 }
 
+enum OutputDest<'s> {
+    Stdout(Stdout),
+    File(File),
+    Buf(&'s mut Vec<u8>),
+    Delegate(Box<dyn Write + 's>),
+}
+
 pub struct Output<'s> {
-    output: &'s mut dyn Write,
+    output: OutputDest<'s>,
     buf: Vec<u8>,
     at: usize,
     bool_output: BoolOutput,
@@ -44,23 +51,56 @@ pub struct Output<'s> {
 }
 
 impl<'s> Output<'s> {
-    const DEFAULT_BUF_SIZE: usize = 4096;
+    pub fn buf(buf: &'s mut Vec<u8>) -> Self {
+        Self::new(OutputDest::Buf(buf))
+    }
 
-    pub fn new(output: &'s mut dyn Write) -> Self {
+    pub fn delegate(delegate: impl Write + 'static) -> Self {
+        Self::new(OutputDest::Delegate(Box::new(delegate)))
+    }
+
+    fn new(output: OutputDest<'s>) -> Self {
         Self {
             output,
-            buf: default_vec(Self::DEFAULT_BUF_SIZE),
+            buf: vec![0; Self::DEFAULT_BUF_SIZE],
             at: 0,
             bool_output: BoolOutput::YesNoCaps,
             precision: None,
             separator: b' ',
         }
     }
+}
+
+impl Output<'static> {
+    pub fn stdout() -> Self {
+        Self::new(OutputDest::Stdout(std::io::stdout()))
+    }
+
+    pub fn file(file: File) -> Self {
+        Self::new(OutputDest::File(file))
+    }
+}
+
+impl Output<'_> {
+    const DEFAULT_BUF_SIZE: usize = 4096;
 
     pub fn flush(&mut self) {
         if self.at != 0 {
-            self.output.write_all(&self.buf[..self.at]).unwrap();
-            self.output.flush().unwrap();
+            match &mut self.output {
+                OutputDest::Stdout(stdout) => {
+                    stdout.write_all(&self.buf[..self.at]).unwrap();
+                    stdout.flush().unwrap();
+                }
+                OutputDest::File(file) => {
+                    file.write_all(&self.buf[..self.at]).unwrap();
+                    file.flush().unwrap();
+                }
+                OutputDest::Buf(buf) => buf.extend_from_slice(&self.buf[..self.at]),
+                OutputDest::Delegate(delegate) => {
+                    delegate.write_all(&self.buf[..self.at]).unwrap();
+                    delegate.flush().unwrap();
+                }
+            }
             self.at = 0;
         }
     }

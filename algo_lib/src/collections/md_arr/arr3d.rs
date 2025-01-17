@@ -114,7 +114,7 @@ pub trait Arr3dRead {
     fn read_3d_table<T: Readable>(&mut self, d1: usize, d2: usize, d3: usize) -> Arr3d<T>;
 }
 
-impl Arr3dRead for Input<'_> {
+impl Arr3dRead for Input {
     fn read_3d_table<T: Readable>(&mut self, d1: usize, d2: usize, d3: usize) -> Arr3d<T> {
         Arr3d::with_gen(d1, d2, d3, |_, _, _| self.read())
     }

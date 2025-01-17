@@ -239,7 +239,7 @@ pub trait RealReader {
     fn read_real_vec(&mut self, n: usize) -> Vec<Real>;
 }
 
-impl RealReader for Input<'_> {
+impl RealReader for Input {
     fn read_real(&mut self) -> Real {
         self.read()
     }

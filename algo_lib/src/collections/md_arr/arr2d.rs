@@ -247,7 +247,7 @@ pub trait Arr2dRead {
     fn read_char_table(&mut self, d1: usize, d2: usize) -> Arr2d<u8>;
 }
 
-impl Arr2dRead for Input<'_> {
+impl Arr2dRead for Input {
     fn read_table<T: Readable>(&mut self, d1: usize, d2: usize) -> Arr2d<T> {
         Arr2d::with_gen(d1, d2, |_, _| self.read())
     }

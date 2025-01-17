@@ -150,7 +150,7 @@ pub trait Arr5dRead {
     ) -> Arr5d<T>;
 }
 
-impl Arr5dRead for Input<'_> {
+impl Arr5dRead for Input {
     fn read_5d_table<T: Readable>(
         &mut self,
         d1: usize,

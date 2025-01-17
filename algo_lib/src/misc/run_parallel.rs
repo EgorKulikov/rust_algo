@@ -36,7 +36,7 @@ where
                 let lock = inp.lock().unwrap();
                 il.store(false, Ordering::Relaxed);
                 let mut res = Vec::new();
-                let mut output = Output::new(&mut res);
+                let mut output = Output::buf(&mut res);
                 run(lock, &mut output, i, pre_calc);
                 eprintln!(
                     "Test {} done, {} tests remaining",
@@ -45,6 +45,7 @@ where
                 );
                 output.flush();
                 fs.fetch_add(1, Ordering::Relaxed);
+                drop(output);
                 res
             });
             if do_parallel {

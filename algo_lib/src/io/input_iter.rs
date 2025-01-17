@@ -2,12 +2,12 @@ use crate::io::input::{Input, Readable};
 use crate::string::str::Str;
 use std::marker::PhantomData;
 
-pub struct InputIterator<'t, 's: 't, T: Readable + 't + 's> {
-    input: &'t mut Input<'s>,
+pub struct InputIterator<'t, T: Readable + 't> {
+    input: &'t mut Input,
     phantom: PhantomData<T>,
 }
 
-impl<'t, 's: 't, T: Readable + 't + 's> Iterator for InputIterator<'t, 's, T> {
+impl<'t, T: Readable + 't> Iterator for InputIterator<'t, T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -15,24 +15,24 @@ impl<'t, 's: 't, T: Readable + 't + 's> Iterator for InputIterator<'t, 's, T> {
     }
 }
 
-pub trait InputIterable<'t, 's: 't> {
-    fn iter<T: Readable + 't + 's>(&'t mut self) -> InputIterator<'t, 's, T>;
-    fn iter_int(&'t mut self) -> InputIterator<'t, 's, i32> {
+pub trait InputIterable<'t> {
+    fn iter<T: Readable + 't>(&'t mut self) -> InputIterator<'t, T>;
+    fn iter_int(&'t mut self) -> InputIterator<'t, i32> {
         self.iter()
     }
-    fn iter_long(&'t mut self) -> InputIterator<'t, 's, i64> {
+    fn iter_long(&'t mut self) -> InputIterator<'t, i64> {
         self.iter()
     }
-    fn iter_size(&'t mut self) -> InputIterator<'t, 's, usize> {
+    fn iter_size(&'t mut self) -> InputIterator<'t, usize> {
         self.iter()
     }
-    fn iter_str(&'t mut self) -> InputIterator<'t, 's, Str> {
+    fn iter_str(&'t mut self) -> InputIterator<'t, Str> {
         self.iter()
     }
 }
 
-impl<'t, 's: 't> InputIterable<'t, 's> for Input<'s> {
-    fn iter<T: Readable + 't + 's>(&'t mut self) -> InputIterator<'t, 's, T> {
+impl<'t> InputIterable<'t> for Input {
+    fn iter<T: Readable + 't>(&'t mut self) -> InputIterator<'t, T> {
         InputIterator {
             input: self,
             phantom: PhantomData,

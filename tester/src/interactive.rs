@@ -3,7 +3,7 @@ use crate::{process_error, Outcome, Tester};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::string::str::StrReader;
-use std::io::{stdin, Read, Write};
+use std::io::{Read, Write};
 use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::time::Instant;
@@ -11,7 +11,7 @@ use std::time::Instant;
 pub(crate) fn run_single_test_interactive(
     tester: &Tester,
     interactor: fn(Input, Output, Input) -> Result<(), String>,
-    mut input: &[u8],
+    input: &[u8],
     _expected: Option<&[u8]>,
     print_details: bool,
 ) -> Outcome {
@@ -23,20 +23,20 @@ pub(crate) fn run_single_test_interactive(
     let solution = tester.solution;
     let print_limit = if print_details { tester.print_limit } else { 0 };
     let handle = thread::spawn(move || {
-        let mut read_delegate = ReadDelegate::new(rcv2);
-        let mut write_delegate = WriteDelegate::new(snd1, "> ", print_limit);
+        let read_delegate = ReadDelegate::new(rcv2);
+        let write_delegate = WriteDelegate::new(snd1, "> ", print_limit);
         (solution)(
-            Input::new(&mut read_delegate),
-            Output::new(&mut write_delegate),
+            Input::delegate(read_delegate),
+            Output::delegate(write_delegate),
         );
     });
 
-    let mut read_delegate = ReadDelegate::new(rcv1);
-    let mut write_delegate = WriteDelegate::new(snd2, "< ", print_limit);
+    let read_delegate = ReadDelegate::new(rcv1);
+    let write_delegate = WriteDelegate::new(snd2, "< ", print_limit);
     let result = (interactor)(
-        Input::new(&mut read_delegate),
-        Output::new(&mut write_delegate),
-        Input::new(&mut input),
+        Input::delegate(read_delegate),
+        Output::delegate(write_delegate),
+        Input::slice(input),
     );
     match handle.join() {
         Ok(_) => match result {
@@ -68,8 +68,7 @@ pub fn std_interactor(
     mut sol_output: Output,
     _input: Input,
 ) -> Result<(), String> {
-    let mut stdin = stdin();
-    let mut input = Input::new(&mut stdin);
+    let mut input = Input::stdin();
     while !input.is_exhausted() {
         let line = input.read_line();
         if line.as_slice() == b"###" {

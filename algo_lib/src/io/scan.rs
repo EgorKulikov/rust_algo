@@ -77,9 +77,7 @@ macro_rules! scan {
         let mut res = parse($s, $sp);
         $(
             let cur = res.pop_front().unwrap();
-            let len = cur.len();
-            let mut slice = cur.as_slice();
-            let mut input = Input::new_with_size(&mut slice, len);
+            let mut input = Input::slice(cur.as_slice());
             let $v: $t = input.read();
             assert!(input.is_exhausted());
         )*
@@ -92,8 +90,7 @@ macro_rules! str_scan {
         str_scan!($input, $s, '@', $($v: $t),*);
     };
     ($input: expr, $s: expr, $sp: expr, $($v:ident: $t: ty),*) => {
-        let mut bytes = $input;
-        let mut input = Input::new(&mut bytes);
+        let mut input = Input::slice($input);
         $crate::scan!(&mut input, $s, $sp, $($v: $t),*);
     };
 }
