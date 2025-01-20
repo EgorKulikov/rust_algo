@@ -29,17 +29,20 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             }
         }
     }
-    impl SegmentTreeNode for Node {
-        fn new(left: usize, right: usize) -> Self {
+    impl Default for Node {
+        fn default() -> Self {
             Self {
                 sum: Mod::zero(),
                 a: Mod::one(),
                 b: Mod::zero(),
-                len: right - left,
+                len: 0,
             }
         }
+    }
 
-        fn join(&mut self, left_val: &Self, right_val: &Self) {
+    impl SegmentTreeNode for Node {
+        fn update(&mut self, left_val: &Self, right_val: &Self) {
+            self.len = left_val.len + right_val.len;
             self.sum = left_val.sum + right_val.sum;
         }
 

@@ -23,7 +23,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         let a = input.read_size_vec(n);
         let edges = input.read_size_pair_vec(n - 1).dec();
 
-        let graph = Graph::from_biedges(n, &edges);
+        let graph = Graph::with_biedges(n, &edges);
         let lca = graph.lca();
         let mut poi = DefaultHashMap::new(Vec::new());
         for i in 0..n {

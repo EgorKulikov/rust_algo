@@ -66,8 +66,8 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         }
     }
 
-    impl SegmentTreeNode for Node {
-        fn new(_left: usize, _right: usize) -> Self {
+    impl Default for Node {
+        fn default() -> Self {
             Node {
                 empty_coins: 0,
                 empty_to_state: State::AtOccupied,
@@ -80,8 +80,10 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                 delta: false,
             }
         }
+    }
 
-        fn join(&mut self, left_val: &Self, right_val: &Self) {
+    impl SegmentTreeNode for Node {
+        fn update(&mut self, left_val: &Self, right_val: &Self) {
             self.empty_coins = left_val.empty_coins
                 + match left_val.empty_to_state {
                     State::AtEmpty => right_val.empty_coins,

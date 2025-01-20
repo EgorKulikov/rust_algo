@@ -16,7 +16,7 @@ type PreCalc = ();
 fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut PreCalc) {
     let n = input.read_size();
     let q = input.read_size();
-    let mut treaps = Vec::with_gen(n, |_, _| {
+    let mut treaps = Vec::with_gen_prefix(n, |_, _| {
         let k = input.read_size();
         let s = input.read_size_vec(k);
         let mut map = DefaultTreeMap::new(0usize);

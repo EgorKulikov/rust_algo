@@ -1,7 +1,7 @@
 //{"name":"E. Innocent Students","group":"Codeforces - TheForces Round #35 (LOL-Forces)","url":"https://codeforces.com/gym/105390/problem/E","interactive":false,"timeLimit":4000,"tests":[{"input":"2\n3 5\n1 -2 3\n1 1 3 0\n2 3 -2\n1 2 3 1\n2 1 -4\n1 1 1 -10\n7 8\n1 2 4 2 4 6 7\n1 3 5 5\n1 1 7 5\n2 1 6\n2 4 4\n1 1 7 5\n1 1 3 2\n2 7 1\n1 1 7 -1\n","output":"1\n2\n1\n2\n3\n5\n1\n1\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"EInnocentStudents"}}}
 
 use algo_lib::collections::multi_set::MultiTreeSet;
-use algo_lib::collections::segment_tree::{Pushable, QueryResult, SegmentTree, SegmentTreeNode};
+use algo_lib::collections::segment_tree::{SegmentTree, SegmentTreeNode};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::{TaskType, TestType};
@@ -14,79 +14,18 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let q = input.read_size();
     let mut a = input.read_int_vec(n);
 
+    #[derive(Default)]
     struct Node {
         values: MultiTreeSet<i32>,
     }
 
-    impl SegmentTreeNode for Node {
-        fn new(_left: usize, _right: usize) -> Self {
-            Self {
-                values: MultiTreeSet::new(),
-            }
-        }
-
-        fn join(&mut self, _left_val: &Self, _right_val: &Self) {}
-
-        fn accumulate(&mut self, _value: &Self) {}
-
-        fn reset_delta(&mut self) {}
-    }
-
-    impl QueryResult<(i32, usize), i32> for Node {
-        fn empty_result(_args: &i32) -> (i32, usize) {
-            (i32::MAX, 0)
-        }
-
-        fn result(&self, args: &i32) -> (i32, usize) {
-            let left = self
-                .values
-                .range_rev(..args)
-                .next()
-                .copied()
-                .map(|t| ((t - *args).abs(), *self.values.get(&t).unwrap()))
-                .unwrap_or(Self::empty_result(args));
-            let right = self
-                .values
-                .range(args..)
-                .next()
-                .copied()
-                .map(|t| ((t - *args).abs(), *self.values.get(&t).unwrap()))
-                .unwrap_or(Self::empty_result(args));
-            Self::join_results(left, right, args, 0, 0, 0)
-        }
-
-        fn join_results(
-            left_res: (i32, usize),
-            right_res: (i32, usize),
-            _args: &i32,
-            _left: usize,
-            _mid: usize,
-            _right: usize,
-        ) -> (i32, usize) {
-            match left_res.0.cmp(&right_res.0) {
-                Ordering::Less => left_res,
-                Ordering::Equal => (left_res.0, left_res.1 + right_res.1),
-                Ordering::Greater => right_res,
-            }
-        }
-    }
-
-    impl Pushable<&(i32, i32)> for Node {
-        fn push(&mut self, delta: &(i32, i32)) {
-            self.values.remove(&delta.0);
-            self.values.insert(delta.1);
-        }
-    }
-
-    impl Pushable<&i32> for Node {
-        fn push(&mut self, delta: &i32) {
-            self.values.insert(*delta);
-        }
-    }
+    impl SegmentTreeNode for Node {}
 
     let mut st = SegmentTree::<Node>::new(n);
     for i in 0..n {
-        st.point_through_update(i, &a[i]);
+        st.point_through_update(i, |node| {
+            node.values.insert(a[i]);
+        });
     }
 
     for _ in 0..q {
@@ -95,12 +34,46 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                 let l = input.read_size() - 1;
                 let r = input.read_size();
                 let x = input.read_int();
-                out.print_line(st.query_with_args(l..r, &x).1);
+                fn join_results(left_res: (i32, usize), right_res: (i32, usize)) -> (i32, usize) {
+                    match left_res.0.cmp(&right_res.0) {
+                        Ordering::Less => left_res,
+                        Ordering::Equal => (left_res.0, left_res.1 + right_res.1),
+                        Ordering::Greater => right_res,
+                    }
+                }
+                let b = st
+                    .for_each_with_init(
+                        l..r,
+                        |r, node| {
+                            let left = node
+                                .values
+                                .range_rev(..&x)
+                                .next()
+                                .copied()
+                                .map(|t| ((t - x).abs(), *node.values.get(&t).unwrap()))
+                                .unwrap_or((i32::MAX, 0));
+                            let right = node
+                                .values
+                                .range(&x..)
+                                .next()
+                                .copied()
+                                .map(|t| ((t - x).abs(), *node.values.get(&t).unwrap()))
+                                .unwrap_or((i32::MAX, 0));
+                            let res = join_results(left, right);
+                            join_results(r, res)
+                        },
+                        (i32::MAX, 0),
+                    )
+                    .1;
+                out.print_line(b);
             }
             2 => {
                 let at = input.read_size() - 1;
                 let n_val = input.read_int();
-                st.point_through_update(at, &(a[at], n_val));
+                st.point_through_update(at, |node| {
+                    node.values.remove(&a[at]);
+                    node.values.insert(n_val);
+                });
                 a[at] = n_val;
             }
             _ => unreachable!(),

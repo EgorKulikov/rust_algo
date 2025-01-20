@@ -44,6 +44,10 @@ impl<T: Copy + IntegerRing + Ord> Rational<T> {
         Self::new_internal(num / g, den / g)
     }
 
+    pub fn new_int(num: T) -> Self {
+        Self::new(num, T::one())
+    }
+
     pub fn abs(mut self) -> Self {
         if self.num < T::zero() {
             self.num = T::zero() - self.num;

@@ -3,9 +3,10 @@
 use algo_lib::collections::bit_set::BitSet;
 use algo_lib::collections::md_arr::arr2d::Arr2d;
 use algo_lib::collections::min_max::MinimMaxim;
-use algo_lib::collections::segment_tree::{Pushable, SegmentTree, SegmentTreeNode};
+use algo_lib::collections::segment_tree::{SegmentTree, SegmentTreeNode};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
+use algo_lib::misc::direction::Direction;
 use algo_lib::misc::test_type::{TaskType, TestType};
 
 type PreCalc = ();
@@ -14,7 +15,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let n = input.read_size();
     let x = input.read_long_vec(n);
 
-    #[derive(Copy, Clone)]
+    #[derive(Copy, Clone, Default)]
     struct Result {
         res: i64,
         max: i64,
@@ -62,16 +63,16 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         ans: Arr2d<Result>,
     }
 
-    impl SegmentTreeNode for Node {
-        fn new(_left: usize, _right: usize) -> Self {
-            let mut res = Self {
-                ans: Arr2d::new(2, 2, Result::new()),
-            };
-            res.ans[(0, 0)].update(0, INF);
-            res
+    impl Default for Node {
+        fn default() -> Self {
+            Self {
+                ans: Arr2d::new(2, 2, Result::default()),
+            }
         }
+    }
 
-        fn join(&mut self, left_val: &Self, right_val: &Self) {
+    impl SegmentTreeNode for Node {
+        fn update(&mut self, left_val: &Self, right_val: &Self) {
             for i in 0..2 {
                 for j in 0..2 {
                     let mut cur = Result::new();
@@ -84,51 +85,34 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                 }
             }
         }
-
-        fn accumulate(&mut self, _value: &Self) {}
-
-        fn reset_delta(&mut self) {}
     }
 
-    impl Pushable<i64> for Node {
-        fn push(&mut self, delta: i64) {
-            self.ans[(1, 1)].update(1, delta);
-        }
-    }
-
-    /*let mut even_max = Vec::with_capacity(4);
-    let mut odd_max = Vec::with_capacity(4);
-    for i in 0..n {
-        let cur = if i % 2 == 0 {
-            &mut even_max
-        } else {
-            &mut odd_max
-        };
-        cur.push(i);
-        for j in cur.indices().rev().skip(1) {
-            if x[cur[j]] < x[cur[j + 1]] {
-                cur.swap(j, j + 1);
-            } else {
-                break;
-            }
-        }
-        if cur.len() > 3 {
-            cur.pop();
-        }
-    }
-    let max = even_max
-        .into_iter()
-        .chain(odd_max.into_iter())
-        .collect_vec();*/
     let mut ans = None;
     let mut order: Vec<_> = (0..n).collect();
     order.sort_by_key(|&i| x[i]);
     order.reverse();
     let mut added = BitSet::new(n);
-    let mut st = SegmentTree::<Node>::new(n);
+    let mut st = SegmentTree::with_gen(n, |_| {
+        let mut res = Node {
+            ans: Arr2d::new(2, 2, Result::new()),
+        };
+        res.ans[(0, 0)].update(0, INF);
+        res
+    });
     for i in order {
         added.set(i);
-        st.point_update(i, x[i]);
+        st.binary_search_mut_with_mid(
+            |_, _, _, mid| {
+                if i < mid {
+                    Direction::Left
+                } else {
+                    Direction::Right
+                }
+            },
+            |node, _| {
+                node.ans[(1, 1)].update(1, x[i]);
+            },
+        );
         let prefix = st.query(0..i);
         let suffix = st.query(i..n);
         let mut res = Result::new();

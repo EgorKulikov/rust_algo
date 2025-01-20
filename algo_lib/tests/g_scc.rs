@@ -15,7 +15,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let m = input.read_size();
     let edges = input.read_size_pair_vec(m);
 
-    let graph = Graph::from_edges(n, &edges);
+    let graph = Graph::with_edges(n, &edges);
     let StronglyConnectedComponents { color, condensed } = graph.strongly_connected_components();
     let mut groups = vec![Vec::new(); condensed.vertex_count()];
     for i in 0..n {

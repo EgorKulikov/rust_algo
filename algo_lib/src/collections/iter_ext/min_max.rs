@@ -4,7 +4,7 @@ pub trait IterMinMaxPos<'a, T: Ord + 'a>: 'a
 where
     &'a Self: IntoIterator<Item = T>,
 {
-    fn max_position(&'a self) -> Option<usize> {
+    fn max_position(&'a self) -> usize {
         let mut res = None;
         let mut val = None;
         for (i, cur) in self.into_iter().enumerate() {
@@ -12,10 +12,10 @@ where
                 res = Some(i);
             }
         }
-        res
+        res.unwrap()
     }
 
-    fn min_position(&'a self) -> Option<usize> {
+    fn min_position(&'a self) -> usize {
         let mut res = None;
         let mut val = None;
         for (i, cur) in self.into_iter().enumerate() {
@@ -23,7 +23,7 @@ where
                 res = Some(i);
             }
         }
-        res
+        res.unwrap()
     }
 }
 

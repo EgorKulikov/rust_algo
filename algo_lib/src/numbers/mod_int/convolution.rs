@@ -27,7 +27,7 @@ pub fn convolution(a: &[u32], b: &[u32]) -> Vec<i128> {
     );
     let mod12 = (Module1::val() as i64 * Module2::val() as i64) as i128;
     let mod123 = mod12 * Module3::val() as i128;
-    Vec::with_gen(c1.len(), |i, _| {
+    Vec::with_gen_prefix(c1.len(), |i, _| {
         let x1 = c1[i].value();
         let x2 = c2[i].value();
         let x3 = c3[i].value();

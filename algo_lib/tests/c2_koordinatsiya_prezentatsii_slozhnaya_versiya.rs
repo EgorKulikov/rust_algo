@@ -27,16 +27,18 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         sorted: bool,
     }
 
-    impl SegmentTreeNode for Node {
-        fn new(_left: usize, _right: usize) -> Self {
+    impl Default for Node {
+        fn default() -> Self {
             Self {
                 left: usize::MAX,
                 right: usize::MAX,
                 sorted: true,
             }
         }
+    }
 
-        fn join(&mut self, left_val: &Self, right_val: &Self) {
+    impl SegmentTreeNode for Node {
+        fn update(&mut self, left_val: &Self, right_val: &Self) {
             self.left = left_val.left;
             self.right = right_val.right;
             self.sorted = left_val.sorted && right_val.sorted && left_val.right <= right_val.left;

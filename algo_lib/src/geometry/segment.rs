@@ -98,7 +98,7 @@ impl<T: Field + Base + PartialEq + Ord> Segment<T> {
         let line = self.line();
         let perp = line.perpendicular(p);
         let pp = line.intersect(perp);
-        if self.contains(pp) {
+        if self.contains_if_on_line(pp) {
             pp.square_dist_point(p)
         } else {
             self.p1

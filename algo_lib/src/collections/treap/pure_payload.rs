@@ -1,5 +1,6 @@
 use crate::collections::treap::payload::{OrdPayload, Payload, Pushable};
 
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct PurePayload<T>(pub T);
 
 impl<T> Payload for PurePayload<T> {}

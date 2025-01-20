@@ -1,6 +1,6 @@
 //{"name":"J - Segment Tree","group":"AtCoder - AtCoder Library Practice Contest","url":"https://atcoder.jp/contests/practice2/tasks/practice2_j","interactive":false,"timeLimit":5000,"tests":[{"input":"5 5\n1 2 3 2 1\n2 1 5\n3 2 3\n1 3 1\n2 2 4\n3 1 3\n","output":"3\n3\n2\n6\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"JSegmentTree"}}}
 
-use algo_lib::collections::segment_tree::{QueryResult, SegmentTree, SegmentTreeNode};
+use algo_lib::collections::segment_tree::{SegmentTree, SegmentTreeNode};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::direction::Direction;
@@ -10,7 +10,7 @@ use algo_lib::misc::test_type::{TaskType, TestType};
 type PreCalc = ();
 
 fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut PreCalc) {
-    #[derive(Copy, Clone)]
+    #[derive(Copy, Clone, Default)]
     struct Node {
         max: i32,
         left: usize,
@@ -18,46 +18,15 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     }
 
     impl SegmentTreeNode for Node {
-        fn new(left: usize, right: usize) -> Self {
-            Self {
-                max: 0,
-                left,
-                right,
-            }
-        }
-
-        fn join(&mut self, left_val: &Self, right_val: &Self) {
+        fn update(&mut self, left_val: &Self, right_val: &Self) {
+            self.left = left_val.left;
+            self.right = right_val.right;
             self.max = left_val.max.max(right_val.max);
         }
 
         fn accumulate(&mut self, _value: &Self) {}
 
         fn reset_delta(&mut self) {}
-    }
-
-    impl QueryResult<Option<Node>, i32> for Node {
-        fn empty_result(_args: &i32) -> Option<Node> {
-            None
-        }
-
-        fn result(&self, args: &i32) -> Option<Node> {
-            (*self).take_if(self.max >= *args)
-        }
-
-        fn join_results(
-            left_res: Option<Node>,
-            right_res: Option<Node>,
-            _args: &i32,
-            _left: usize,
-            _mid: usize,
-            _right: usize,
-        ) -> Option<Node> {
-            if left_res.is_some() {
-                left_res
-            } else {
-                right_res
-            }
-        }
     }
 
     let n = input.read_size();
@@ -91,7 +60,13 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             3 => {
                 let x = input.read_size() - 1;
                 let v = input.read_int();
-                let base_node = st.query_with_args(x.., &v);
+                let base_node = st.for_each(x.., |res: Option<Node>, node| {
+                    if res.is_none() {
+                        (*node).take_if(node.max >= v)
+                    } else {
+                        res
+                    }
+                });
                 let ans = if let Some(base_node) = base_node {
                     st.binary_search(
                         |left, _| {

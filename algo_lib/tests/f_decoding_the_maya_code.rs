@@ -22,7 +22,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let edges = input.read_size_pair_vec(n - 1).dec();
     let queries = input.read_vec::<(usize, Str)>(q);
 
-    let graph = Graph::from_biedges(n, &edges);
+    let graph = Graph::with_biedges(n, &edges);
     let DFSOrder { position, end } = graph.dfs_order();
     let mut ans = vec![0; q];
     let mut by_query = DefaultHashMap::new(Vec::new());

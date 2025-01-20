@@ -33,7 +33,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         }
     }
     let mut ans = vec![0; n];
-    let graph = Graph::from_biedges(n, &edges);
+    let graph = Graph::with_biedges(n, &edges);
     let mut dfs = RecursiveFunction2::new(|f, vert: usize, prev: usize| -> (Tree<Node>, usize) {
         let mut treap = Tree::new();
         treap.insert(Node(a[vert]));

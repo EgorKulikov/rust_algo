@@ -23,7 +23,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let edges = input.read_size_pair_vec(m).dec();
 
     type Mod = ModIntF;
-    let graph = Graph::from_biedges(n, &edges);
+    let graph = Graph::with_biedges(n, &edges);
     let mat1 = Matrix::zero(2 * n, 2 * n).do_with(|mat| {
         for i in 0..n {
             mat[(i + n, i)] = Mod::one();

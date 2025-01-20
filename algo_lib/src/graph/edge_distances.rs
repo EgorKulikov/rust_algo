@@ -1,3 +1,4 @@
+use crate::collections::iter_ext::iters::Iters;
 use crate::collections::iter_ext::min_max::IterMinMaxPos;
 use crate::graph::edges::edge_trait::{BidirectionalEdgeTrait, EdgeTrait};
 use crate::graph::Graph;
@@ -9,6 +10,7 @@ pub trait EdgeAlgos {
 
 pub trait BiEdgeAlgos: EdgeAlgos {
     fn centers(&self) -> Vec<usize>;
+    fn diameter(&self) -> usize;
 }
 
 impl<E: EdgeTrait> EdgeAlgos for Graph<E> {
@@ -38,9 +40,9 @@ impl<E: BidirectionalEdgeTrait> BiEdgeAlgos for Graph<E> {
             return Vec::new();
         }
         let d0 = self.edge_distances(0);
-        let first = d0.max_position().unwrap();
+        let first = d0.max_position();
         let d1 = self.edge_distances(first);
-        let second = d1.max_position().unwrap();
+        let second = d1.max_position();
         let d2 = self.edge_distances(second);
         let mut res = Vec::new();
         let r1 = d1[second] / 2;
@@ -51,5 +53,13 @@ impl<E: BidirectionalEdgeTrait> BiEdgeAlgos for Graph<E> {
             }
         }
         res
+    }
+
+    fn diameter(&self) -> usize {
+        debug_assert!(self.is_tree());
+        let d0 = self.edge_distances(0);
+        let first = d0.max_position();
+        let d1 = self.edge_distances(first);
+        d1.iter_max() as usize
     }
 }

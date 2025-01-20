@@ -17,7 +17,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let s = input.read_size() - 1;
     let edges = input.read_size_pair_vec(n - 1).dec();
 
-    let graph = Graph::from_biedges(n, &edges);
+    let graph = Graph::with_biedges(n, &edges);
     let lca = graph.lca();
     let mut ans = vec![usize::MAX; n];
     let mut max_to = vec![0; n];
@@ -222,7 +222,7 @@ mod tester {
             let s = input.read_size() - 1;
             let edges = input.read_size_pair_vec(n - 1).dec();
 
-            let graph = Graph::from_biedges(n, &edges);
+            let graph = Graph::with_biedges(n, &edges);
             let mut moves = Graph::new(n);
             for i in 0..n {
                 let mut dfs = RecursiveFunction4::new(

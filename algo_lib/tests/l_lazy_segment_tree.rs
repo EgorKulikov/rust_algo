@@ -1,6 +1,6 @@
 //{"name":"L - Lazy Segment Tree","group":"AtCoder - AtCoder Library Practice Contest","url":"https://atcoder.jp/contests/practice2/tasks/practice2_l","interactive":false,"timeLimit":5000,"tests":[{"input":"5 5\n0 1 0 0 1\n2 1 5\n1 3 4\n2 2 5\n1 1 3\n2 1 2\n","output":"2\n0\n1\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"LLazySegmentTree"}}}
 
-use algo_lib::collections::segment_tree::{Pushable, SegmentTree, SegmentTreeNode};
+use algo_lib::collections::segment_tree::{SegmentTree, SegmentTreeNode};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::{TaskType, TestType};
@@ -15,6 +15,12 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         num_inversions: usize,
         inv_num_inversions: usize,
         delta: bool,
+    }
+
+    impl Default for Node {
+        fn default() -> Self {
+            Self::zero()
+        }
     }
 
     impl Node {
@@ -40,11 +46,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     }
 
     impl SegmentTreeNode for Node {
-        fn new(_left: usize, _right: usize) -> Self {
-            Self::zero()
-        }
-
-        fn join(&mut self, left_val: &Self, right_val: &Self) {
+        fn update(&mut self, left_val: &Self, right_val: &Self) {
             self.zeroes = left_val.zeroes + right_val.zeroes;
             self.ones = left_val.ones + right_val.ones;
             self.num_inversions = left_val.num_inversions
@@ -56,21 +58,15 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         }
 
         fn accumulate(&mut self, value: &Self) {
-            self.push(&value.delta);
-        }
-
-        fn reset_delta(&mut self) {
-            self.delta = false;
-        }
-    }
-
-    impl Pushable<&bool> for Node {
-        fn push(&mut self, delta: &bool) {
-            if *delta {
+            if value.delta {
                 std::mem::swap(&mut self.zeroes, &mut self.ones);
                 std::mem::swap(&mut self.num_inversions, &mut self.inv_num_inversions);
                 self.delta = !self.delta;
             }
+        }
+
+        fn reset_delta(&mut self) {
+            self.delta = false;
         }
     }
 
@@ -86,7 +82,13 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
 
         match t {
             1 => {
-                st.update(l..r, &true);
+                st.update(
+                    l..r,
+                    &Node {
+                        delta: true,
+                        ..Node::default()
+                    },
+                );
             }
             2 => {
                 out.print_line(st.query(l..r).num_inversions);

@@ -20,7 +20,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let k = input.read_size();
     let edges = input.read_size_pair_vec(n - 1).dec();
 
-    let graph = Graph::from_biedges(n, &edges);
+    let graph = Graph::with_biedges(n, &edges);
     let root = n * (n - 1) / 2 - edges.iter_map(|(_, c)| c).sum::<usize>();
     struct Node(usize);
     impl Payload for Node {}

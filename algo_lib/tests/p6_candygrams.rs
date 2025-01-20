@@ -19,24 +19,29 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let q = input.read_size();
     let edges = input.read_size_pair_vec(n - 1).dec();
 
-    let graph = Graph::from_biedges(n, &edges);
+    let graph = Graph::with_biedges(n, &edges);
     let lca = graph.lca();
     let HLDecomposition { paths, id, pos } = graph.hl_decomposition();
-    #[derive(Clone, Default)]
+    #[derive(Clone)]
     struct Node {
         val: i64,
         delta: i64,
         len: i64,
     }
-    impl SegmentTreeNode for Node {
-        fn new(left: usize, right: usize) -> Self {
+
+    impl Default for Node {
+        fn default() -> Self {
             Self {
-                len: (right - left) as i64,
-                ..Default::default()
+                val: 0,
+                delta: 0,
+                len: 1,
             }
         }
+    }
 
-        fn join(&mut self, left_val: &Self, right_val: &Self) {
+    impl SegmentTreeNode for Node {
+        fn update(&mut self, left_val: &Self, right_val: &Self) {
+            self.len = left_val.len + right_val.len;
             self.val = left_val.val + right_val.val;
         }
 
@@ -49,7 +54,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             self.delta = 0;
         }
     }
-    let mut st = Vec::with_gen(paths.len(), |i, _| SegmentTree::<Node>::new(paths[i].len()));
+    let mut st = Vec::with_gen_prefix(paths.len(), |i, _| SegmentTree::<Node>::new(paths[i].len()));
 
     let mut base = 0;
 
@@ -228,7 +233,7 @@ mod tester {
             let n = input.read_size();
             let q = input.read_size();
             let edges = input.read_size_pair_vec(n - 1).dec();
-            let graph = Graph::from_biedges(n, &edges);
+            let graph = Graph::with_biedges(n, &edges);
             let mut qty = vec![0; n];
             for _ in 0..q {
                 let command = input.read_char();

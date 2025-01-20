@@ -127,7 +127,7 @@ impl<E: EdgeTrait> IndexMut<usize> for Graph<E> {
 }
 
 impl Graph<Edge<()>> {
-    pub fn from_edges(n: usize, edges: &[(usize, usize)]) -> Self {
+    pub fn with_edges(n: usize, edges: &[(usize, usize)]) -> Self {
         let mut graph = Self::new(n);
         for &(from, to) in edges {
             graph.add_edge(Edge::new(from, to));
@@ -137,7 +137,7 @@ impl Graph<Edge<()>> {
 }
 
 impl<P: Clone> Graph<Edge<P>> {
-    pub fn from_edges_with_payload(n: usize, edges: &[(usize, usize, P)]) -> Self {
+    pub fn with_edges_with_payload(n: usize, edges: &[(usize, usize, P)]) -> Self {
         let mut graph = Self::new(n);
         for (from, to, p) in edges.iter() {
             graph.add_edge(Edge::with_payload(*from, *to, p.clone()));
@@ -147,7 +147,7 @@ impl<P: Clone> Graph<Edge<P>> {
 }
 
 impl Graph<BiEdge<()>> {
-    pub fn from_biedges(n: usize, edges: &[(usize, usize)]) -> Self {
+    pub fn with_biedges(n: usize, edges: &[(usize, usize)]) -> Self {
         let mut graph = Self::new(n);
         for &(from, to) in edges {
             graph.add_edge(BiEdge::new(from, to));
@@ -157,7 +157,7 @@ impl Graph<BiEdge<()>> {
 }
 
 impl<P: Clone> Graph<BiEdge<P>> {
-    pub fn from_biedges_with_payload(n: usize, edges: &[(usize, usize, P)]) -> Self {
+    pub fn with_biedges_with_payload(n: usize, edges: &[(usize, usize, P)]) -> Self {
         let mut graph = Self::new(n);
         for (from, to, p) in edges.iter() {
             graph.add_edge(BiEdge::with_payload(*from, *to, p.clone()));

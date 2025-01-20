@@ -54,11 +54,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         enabled: bool,
     }
     impl SegmentTreeNode for Node {
-        fn new(_left: usize, _right: usize) -> Self {
-            Self::default()
-        }
-
-        fn join(&mut self, left_val: &Self, right_val: &Self) {
+        fn update(&mut self, left_val: &Self, right_val: &Self) {
             self.len = left_val.len + right_val.len;
             self.ans = left_val.ans + right_val.ans;
         }
