@@ -12,6 +12,7 @@ pub mod fx_hash_map;
 pub mod id;
 pub mod indexed_heap;
 pub mod iter_ext;
+pub mod link_cut;
 pub mod md_arr;
 pub mod min_max;
 pub mod multi_set;

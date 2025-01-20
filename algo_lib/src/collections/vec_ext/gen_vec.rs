@@ -1,3 +1,5 @@
+use crate::collections::vec_ext::default::default_vec;
+
 pub trait VecGen<T> {
     fn with_gen(n: usize, f: impl FnMut(usize) -> T) -> Vec<T>;
     fn with_gen_prefix(n: usize, f: impl FnMut(usize, &Self) -> T) -> Vec<T>;
@@ -5,7 +7,7 @@ pub trait VecGen<T> {
 
     fn with_gen_back(n: usize, f: impl FnMut(usize, &Self) -> T) -> Vec<T>
     where
-        T: Default + Clone;
+        T: Default;
 }
 
 impl<T> VecGen<T> for Vec<T> {
@@ -29,9 +31,9 @@ impl<T> VecGen<T> for Vec<T> {
 
     fn with_gen_back(n: usize, mut f: impl FnMut(usize, &Self) -> T) -> Vec<T>
     where
-        T: Default + Clone,
+        T: Default,
     {
-        let mut vec = vec![T::default(); n];
+        let mut vec = default_vec(n);
         for i in (0..n).rev() {
             vec[i] = f(i, &vec);
         }

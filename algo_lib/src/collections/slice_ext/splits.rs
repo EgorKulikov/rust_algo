@@ -1,10 +1,10 @@
 pub trait Split<T> {
-    fn two_mut(&mut self, i: usize, j: usize) -> (&mut T, &mut T);
-    fn three_mut(&mut self, i: usize, j: usize, k: usize) -> (&mut T, &mut T, &mut T);
+    fn two_mut(&mut self, i: usize, j: usize) -> (&mut T, &T);
+    fn three_mut(&mut self, i: usize, j: usize, k: usize) -> (&mut T, &T, &T);
 }
 
 impl<T> Split<T> for [T] {
-    fn two_mut(&mut self, i: usize, j: usize) -> (&mut T, &mut T) {
+    fn two_mut(&mut self, i: usize, j: usize) -> (&mut T, &T) {
         assert_ne!(i, j);
         if i < j {
             let (left, right) = self.split_at_mut(j);
@@ -15,10 +15,13 @@ impl<T> Split<T> for [T] {
         }
     }
 
-    fn three_mut(&mut self, i: usize, j: usize, k: usize) -> (&mut T, &mut T, &mut T) {
+    fn three_mut(&mut self, i: usize, j: usize, k: usize) -> (&mut T, &T, &T) {
         assert_ne!(i, j);
-        assert_ne!(j, k);
         assert_ne!(i, k);
+        if j == k {
+            let (r_i, r_j) = self.two_mut(i, j);
+            return (r_i, r_j, r_j);
+        }
         if i > j && i > k {
             let (left, right) = self.split_at_mut(i);
             let (r_j, r_k) = left.two_mut(j, k);
