@@ -21,7 +21,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
 
     let graph = Graph::with_biedges(n, &edges);
     let lca = graph.lca();
-    let HLDecomposition { paths, id, pos } = graph.hl_decomposition();
+    let HLDecomposition { paths, id, pos, .. } = graph.hl_decomposition();
     #[derive(Clone)]
     struct Node {
         val: i64,
