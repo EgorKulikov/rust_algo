@@ -9,14 +9,29 @@ pub struct Content<P> {
     parent: LinkCutNode<P>,
     direction: Option<Direction>,
     tree_parent: LinkCutNode<P>,
+    lc_parent: LinkCutNode<P>,
     left: LinkCutNode<P>,
     right: LinkCutNode<P>,
 }
 
 impl<P: LinkCutPayload> Content<P> {
     fn update(&mut self) {
-        self.payload
-            .update(self.left.deref().payload(), self.right.deref().payload());
+        if P::NEED_UPDATE {
+            self.payload
+                .update(self.left.deref().payload(), self.right.deref().payload());
+        }
+    }
+
+    fn push_down(&mut self) {
+        if P::NEED_PUSH_DOWN && self.payload.need_push_down() {
+            if self.left.size != 0 {
+                self.left.payload_mut().push_delta(&self.payload);
+            }
+            if self.right.size != 0 {
+                self.right.payload_mut().push_delta(&self.payload);
+            }
+            self.payload.reset_delta();
+        }
     }
 }
 
@@ -69,6 +84,9 @@ impl<P: LinkCutPayload> Node<P> {
 
     fn detach_parent(&mut self) -> LinkCutNode<P> {
         let mut parent = self.parent;
+        if parent.size != 0 {
+            parent.push_down();
+        }
         match self.direction {
             None => {}
             Some(Direction::Left) => {
@@ -151,6 +169,7 @@ impl<P> LinkCutNode<P> {
                 tree_parent: LinkCutNode::default(),
                 left: LinkCutNode::default(),
                 right: LinkCutNode::default(),
+                lc_parent: LinkCutNode::default(),
             }),
             _phantom_pinned: PhantomPinned,
         };
@@ -170,7 +189,15 @@ impl<P> LinkCutNode<P> {
 }
 
 impl<P: LinkCutPayload> LinkCutNode<P> {
+    fn do_push_down(mut self) {
+        if self.size != 0 {
+            self.parent.do_push_down();
+            self.push_down();
+        }
+    }
+
     fn splay(mut self) {
+        self.do_push_down();
         loop {
             match self.direction {
                 None => {
@@ -263,7 +290,7 @@ impl<P: LinkCutPayload> LinkCutNode<P> {
         self
     }
 
-    pub fn access(mut self) {
+    pub fn access(mut self) -> Self {
         self.splay();
         let mut right = self.detach_right();
         if right.size != 0 {
@@ -271,12 +298,16 @@ impl<P: LinkCutPayload> LinkCutNode<P> {
         }
         self.update();
         let mut tree_parent = self.tree_parent;
-        if tree_parent.size != 0 {
-            tree_parent.access();
+        let res = if tree_parent.size != 0 {
+            let res = tree_parent.access();
             tree_parent.attach_right(self);
             self.splay();
-        }
+            res
+        } else {
+            self
+        };
         self.tree_parent = LinkCutNode::default();
+        res
     }
 
     pub fn find_root(self) -> Self {
@@ -290,7 +321,7 @@ impl<P: LinkCutPayload> LinkCutNode<P> {
         self.access();
         self.detach_left();
         self.update();
-        self.tree_parent = LinkCutNode::default();
+        self.lc_parent = LinkCutNode::default();
     }
 
     pub fn link(mut self, parent: Self) {
@@ -298,6 +329,7 @@ impl<P: LinkCutPayload> LinkCutNode<P> {
         assert!(self.tree_parent.size == 0);
         parent.access();
         self.attach_left(parent);
+        self.lc_parent = parent;
     }
 
     pub fn dist_to_root(self) -> usize {
@@ -305,15 +337,35 @@ impl<P: LinkCutPayload> LinkCutNode<P> {
         self.size as usize - 1
     }
 
-    pub fn payload(&self) -> &P {
+    pub fn with_payload<R>(self, f: impl FnOnce(&P) -> R) -> R {
         self.access();
-        &self.deref().payload
+        unsafe { f(self.payload().unwrap_unchecked()) }
     }
 
-    pub fn with_payload_mut<R>(mut self, f: impl FnOnce(&mut P) -> R) {
+    pub fn with_payload_mut<R>(mut self, f: impl FnOnce(&mut P) -> R) -> R {
         self.access();
-        f(self.payload_mut());
+        let res = f(self.payload_mut());
         self.update();
+        res
+    }
+
+    pub fn lca(u: Self, v: Self) -> Option<Self> {
+        let r1 = u.find_root();
+        let lca = v.access();
+        let r2 = v.find_root();
+        if r1 == r2 {
+            Some(lca)
+        } else {
+            None
+        }
+    }
+
+    pub fn parent(self) -> Option<Self> {
+        if self.lc_parent.size != 0 {
+            Some(self.lc_parent)
+        } else {
+            None
+        }
     }
 }
 
@@ -349,6 +401,20 @@ impl<P> Default for LinkCutNode<P> {
     }
 }
 
+#[allow(unused_variables)]
 pub trait LinkCutPayload: Sized {
-    fn update(&mut self, left: Option<&Self>, right: Option<&Self>);
+    const NEED_UPDATE: bool = false;
+    const NEED_PUSH_DOWN: bool = false;
+    fn reset_delta(&mut self) {
+        unimplemented!()
+    }
+    fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
+        unimplemented!()
+    }
+    fn push_delta(&mut self, delta: &Self) {
+        unimplemented!()
+    }
+    fn need_push_down(&self) -> bool {
+        true
+    }
 }
