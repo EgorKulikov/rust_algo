@@ -1,9 +1,20 @@
 use crate::graph::edges::edge_trait::BidirectionalEdgeTrait;
 use crate::graph::Graph;
+use std::ops::Range;
 
 pub struct DFSOrder {
     pub position: Vec<usize>,
     pub end: Vec<usize>,
+}
+
+impl DFSOrder {
+    pub fn len(&self, vert: usize) -> usize {
+        self.end[vert] - self.position[vert]
+    }
+
+    pub fn subtree(&self, vert: usize) -> Range<usize> {
+        self.position[vert]..self.end[vert]
+    }
 }
 
 pub trait DFSOrderTrait {
