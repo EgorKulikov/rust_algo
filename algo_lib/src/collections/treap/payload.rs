@@ -12,7 +12,7 @@ pub trait Payload: Sized {
         unimplemented!()
     }
     fn need_push_down(&self) -> bool {
-        unimplemented!()
+        true
     }
 }
 

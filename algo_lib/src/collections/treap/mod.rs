@@ -192,7 +192,9 @@ impl<P: Payload> Node<P> {
     where
         P: Pushable<D>,
     {
-        self.payload_mut().push(delta);
+        if self.size != 0 {
+            self.payload_mut().push(delta);
+        }
     }
 
     fn refs(&mut self, res: &mut Vec<NodeId<P>>) {
@@ -276,6 +278,14 @@ impl<P> DerefMut for Node<P> {
 }
 
 pub struct NodeId<P>(NodeLink<Node<P>>);
+
+impl<P: Payload> NodeId<P> {
+    pub unsafe fn with_payload<R>(&self, f: impl FnOnce(&P) -> R) -> R {
+        let node = &self.0;
+        node.push_from_up(&mut Vec::new());
+        f(node.payload().unwrap())
+    }
+}
 
 pub struct NodeLink<P> {
     link: NonNull<P>,
@@ -833,16 +843,21 @@ impl<P: OrdPayload> Tree<P> {
         })
     }
 
-    pub fn insert(&mut self, p: P) -> Option<P> {
+    pub fn insert_with_id(&mut self, p: P) -> (Option<P>, NodeId<P>) {
         let mid = self.range(&p.key()..=&p.key());
         let mut res = None;
+        let link = Node::new(p);
         mid.replace_with(|mid| {
             if mid.size() != 0 {
                 res = Some(mid.into_node().into_payload());
             }
-            Tree::single(p)
+            Tree::Whole { root: link.clone() }
         });
-        res
+        (res, NodeId(link))
+    }
+
+    pub fn insert(&mut self, p: P) -> Option<P> {
+        self.insert_with_id(p).0
     }
 
     pub fn remove(&mut self, key: &P::Key) -> Option<P> {
