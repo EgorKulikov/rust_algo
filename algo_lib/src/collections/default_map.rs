@@ -33,9 +33,7 @@ macro_rules! default_map {
                     default,
                 }
             }
-        }
 
-        impl<K: $key_trait + Eq, V: Clone> $name<K, V> {
             pub fn get(&self, key: &K) -> &V {
                 self.inner.get(key).unwrap_or(&self.default)
             }
@@ -51,7 +49,7 @@ macro_rules! default_map {
             }
         }
 
-        impl<K: $key_trait + Eq, V: Clone> Index<K> for $name<K, V> {
+        impl<K: Eq + $key_trait, V: Clone> Index<K> for $name<K, V> {
             type Output = V;
 
             fn index(&self, index: K) -> &Self::Output {
@@ -59,7 +57,7 @@ macro_rules! default_map {
             }
         }
 
-        impl<K: $key_trait + Eq, V: Clone> IndexMut<K> for $name<K, V> {
+        impl<K: Eq + $key_trait, V: Clone> IndexMut<K> for $name<K, V> {
             fn index_mut(&mut self, index: K) -> &mut Self::Output {
                 self.get_mut(index)
             }
@@ -74,7 +72,7 @@ macro_rules! default_map {
             }
         }
 
-        impl<K: $key_trait + Eq, V: Default> FromIterator<(K, V)> for $name<K, V> {
+        impl<K: Eq + $key_trait, V: Default> FromIterator<(K, V)> for $name<K, V> {
             fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
                 Self {
                     inner: $inner::from_iter(iter),
