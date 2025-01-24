@@ -127,6 +127,7 @@ impl RandomTrait for Random {
 }
 
 thread_local! {
+    // static RANDOM: RefCell<Random> = RefCell::new(Random::new_with_seed(33));
     static RANDOM: RefCell<Random> = RefCell::new(Random::new());
 }
 

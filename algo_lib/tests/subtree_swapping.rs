@@ -1,6 +1,7 @@
 //{"name":"Subtree swapping","group":"CodeChef - LTIME43","url":"https://www.codechef.com/problems/SBSWAP","interactive":false,"timeLimit":5000,"tests":[{"input":"10 5\n1 1 1 1 1 1 1 1 1 1\n1 2\n1 3\n1 8\n3 4\n8 9\n8 10\n4 5\n4 6\n4 7\n2 8 1\n1 3\n3 4 8\n1 3\n3 1 2\n","output":"5\n7\n-1\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null}}
 
-use algo_lib::collections::link_cut::{LinkCutNode, LinkCutPayload};
+use algo_lib::collections::link_cut::LinkCutNode;
+use algo_lib::collections::payload::Payload;
 use algo_lib::collections::vec_ext::gen_vec::VecGen;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::graph::dfs_order::DFSOrderTrait;
@@ -29,8 +30,8 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         subtree_size_delta: i64,
     }
 
-    impl LinkCutPayload for Node {
-        const NEED_PUSH_DOWN: bool = true;
+    impl Payload for Node {
+        const NEED_ACCUMULATE: bool = true;
         const NEED_UPDATE: bool = true;
 
         fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
@@ -39,7 +40,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                 + right.map_or(0, |node| node.add_to_subtree_all);
         }
 
-        fn push_delta(&mut self, delta: &Self) {
+        fn accumulate(&mut self, delta: &Self) {
             self.val += delta.delta;
             self.delta += delta.delta;
             self.subtree_size += delta.subtree_size_delta;
@@ -158,85 +159,88 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
 }
 
 mod tester {
-#![allow(unused_variables)]
-#![allow(unused_mut)]
-#![allow(dead_code)]
-#![allow(unused_imports)]
+    #![allow(unused_variables)]
+    #![allow(unused_mut)]
+    #![allow(dead_code)]
+    #![allow(unused_imports)]
 
-use crate::{run, TASK_TYPE};
-use algo_lib::io::input::Input;
-use algo_lib::io::output::Output;
-use algo_lib::misc::random::Random;
-use tester::classic::default_checker;
-use tester::classic::EPS;
-use tester::interactive::std_interactor;
-use tester::test_set::GeneratedTestSet;
-use tester::Tester;
+    use crate::{run, TASK_TYPE};
+    use algo_lib::io::input::Input;
+    use algo_lib::io::output::Output;
+    use algo_lib::misc::random::Random;
+    use tester::classic::default_checker;
+    use tester::interactive::std_interactor;
+    use tester::test_set::GeneratedTestSet;
+    use tester::Tester;
 
-const PRINT_LIMIT: usize = 1000;
+    const PRINT_LIMIT: usize = 1000;
 
-fn interact(mut sol_input: Input, mut sol_output: Output, mut input: Input) -> Result<(), String> {
-    Ok(())
-}
-
-fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
-    Ok(())
-}
-
-struct StressTest;
-
-impl GeneratedTestSet for StressTest {
-    type TestId = usize;
-
-    fn tests(&self) -> Box<dyn Iterator<Item = Self::TestId>> {
-        Box::new(1..)
+    fn interact(
+        mut sol_input: Input,
+        mut sol_output: Output,
+        mut input: Input,
+    ) -> Result<(), String> {
+        Ok(())
     }
 
-    fn input(&self, test: &Self::TestId, out: &mut Output) {
-        let mut r = Random::new();
+    fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
+        Ok(())
     }
 
-    fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-        false
-    }
-}
+    struct StressTest;
 
-struct MaxTest;
+    impl GeneratedTestSet for StressTest {
+        type TestId = usize;
 
-impl GeneratedTestSet for MaxTest {
-    type TestId = usize;
-
-    fn tests(&self) -> Box<dyn Iterator<Item = Self::TestId>> {
-        Box::new(1..=1)
-    }
-
-    fn input(&self, test: &Self::TestId, out: &mut Output) {
-        let mut r = Random::new();
-    }
-
-    fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
-        false
-    }
-}
-
-pub(crate) fn run_tests() -> bool {
-    let path = "./subtree_swapping";
-    let tl = 5000;
-    let tester = match TASK_TYPE {
-        crate::TaskType::Interactive => {
-            Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)
-            // Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, interact)
+        fn tests(&self) -> Box<dyn Iterator<Item = Self::TestId>> {
+            Box::new(1..)
         }
-        crate::TaskType::Classic => {
-            Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker)
-            // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
+
+        fn input(&self, test: &Self::TestId, out: &mut Output) {
+            let mut r = Random::new();
         }
-    };
-    let passed = tester.test_samples();
-    // tester.test_generated("Max test", true, MaxTest);
-    // tester.test_generated("Stress test", false, StressTest);
-    passed
-}
+
+        fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
+            false
+        }
+    }
+
+    struct MaxTest;
+
+    impl GeneratedTestSet for MaxTest {
+        type TestId = usize;
+
+        fn tests(&self) -> Box<dyn Iterator<Item = Self::TestId>> {
+            Box::new(1..=1)
+        }
+
+        fn input(&self, test: &Self::TestId, out: &mut Output) {
+            let mut r = Random::new();
+        }
+
+        fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {
+            false
+        }
+    }
+
+    pub(crate) fn run_tests() -> bool {
+        let path = "./subtree_swapping";
+        let tl = 5000;
+        let tester = match TASK_TYPE {
+            crate::TaskType::Interactive => {
+                Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)
+                // Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, interact)
+            }
+            crate::TaskType::Classic => {
+                Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker)
+                // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
+            }
+        };
+        let passed = tester.test_samples();
+        // tester.test_generated("Max test", true, MaxTest);
+        // tester.test_generated("Stress test", false, StressTest);
+        passed
+    }
 }
 #[test]
 fn subtree_swapping() {

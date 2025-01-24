@@ -1,10 +1,8 @@
 pub mod multi_payload;
 pub mod multi_treap_set;
-pub mod payload;
-pub mod pure_payload;
 pub mod treap_map;
 
-use crate::collections::treap::payload::{OrdPayload, Payload, Pushable};
+use crate::collections::payload::{OrdPayload, Payload};
 use crate::misc::direction::Direction;
 use crate::misc::extensions::replace_with::ReplaceWith;
 use crate::misc::random::{RandomTrait, StaticRandom};
@@ -16,25 +14,19 @@ use std::ptr::NonNull;
 
 pub struct Content<P> {
     payload: P,
-    parent: NodeLink<Node<P>>,
-    left: NodeLink<Node<P>>,
-    right: NodeLink<Node<P>>,
+    parent: TreapNode<P>,
+    left: TreapNode<P>,
+    right: TreapNode<P>,
 }
 
 impl<P: Payload> Content<P> {
     fn push_down(&mut self) {
-        if P::NEED_PUSH_DOWN && self.payload.need_push_down() {
+        if P::NEED_ACCUMULATE && self.payload.need_push_down() {
             if self.left.size != 0 {
-                self.left
-                    .deref_mut()
-                    .payload_mut()
-                    .push_delta(&self.payload);
+                self.left.payload_mut().accumulate(&self.payload);
             }
             if self.right.size != 0 {
-                self.right
-                    .deref_mut()
-                    .payload_mut()
-                    .push_delta(&self.payload);
+                self.right.payload_mut().accumulate(&self.payload);
             }
             self.payload.reset_delta();
         }
@@ -64,21 +56,6 @@ impl<P> Node<P> {
         content: None,
         _phantom_pinned: PhantomPinned,
     };
-
-    fn new(payload: P) -> NodeLink<Node<P>> {
-        NodeLink::new(Node {
-            priority: StaticRandom.gen_int(),
-            size: 1,
-            reversed: false,
-            content: Some(Content {
-                payload,
-                parent: NodeLink::default(),
-                left: NodeLink::default(),
-                right: NodeLink::default(),
-            }),
-            _phantom_pinned: PhantomPinned,
-        })
-    }
 
     fn payload(&self) -> Option<&P> {
         self.content.as_ref().map(|c| &c.payload)
@@ -113,38 +90,38 @@ impl<P: Payload> Node<P> {
 
     fn detach(&mut self) {
         if self.size != 0 {
-            self.parent = NodeLink::default();
+            self.parent = TreapNode::default();
         }
     }
 
-    fn detach_left(&mut self) -> NodeLink<Node<P>> {
+    fn detach_left(&mut self) -> TreapNode<P> {
         self.push_down();
         let mut left = take(&mut self.left);
         left.detach();
         left
     }
 
-    fn detach_right(&mut self) -> NodeLink<Node<P>> {
+    fn detach_right(&mut self) -> TreapNode<P> {
         self.push_down();
         let mut right = take(&mut self.right);
         right.detach();
         right
     }
 
-    fn attach_left(&mut self, left: NodeLink<Node<P>>) {
+    fn attach_left(&mut self, left: TreapNode<P>) {
         assert_eq!(self.left.size, 0);
         if left.size != 0 {
             self.left = left;
-            self.left.deref_mut().parent = NodeLink::new_ref(self);
+            self.left.deref_mut().parent = TreapNode::new_ref(self);
         }
         self.update();
     }
 
-    fn attach_right(&mut self, right: NodeLink<Node<P>>) {
+    fn attach_right(&mut self, right: TreapNode<P>) {
         assert_eq!(self.right.size, 0);
         if right.size != 0 {
             self.right = right;
-            self.right.deref_mut().parent = NodeLink::new_ref(self);
+            self.right.deref_mut().parent = TreapNode::new_ref(self);
         }
         self.update();
     }
@@ -168,18 +145,18 @@ impl<P: Payload> Node<P> {
         }
     }
 
-    fn with_gen(n: usize, f: impl FnMut(usize) -> P) -> NodeLink<Node<P>> {
+    fn with_gen(n: usize, f: impl FnMut(usize) -> P) -> TreapNode<P> {
         let mut res = Self::build(f, 0, n).0;
         res.heapify();
         res
     }
 
-    fn build<F: FnMut(usize) -> P>(mut f: F, from: usize, to: usize) -> (NodeLink<Node<P>>, F) {
+    fn build<F: FnMut(usize) -> P>(mut f: F, from: usize, to: usize) -> (TreapNode<P>, F) {
         if from == to {
-            (NodeLink::default(), f)
+            (TreapNode::default(), f)
         } else {
             let mid = StaticRandom.gen_range(from..to);
-            let mut node = Node::new(f(mid));
+            let mut node = TreapNode::new(f(mid));
             let (left, f) = Self::build(f, from, mid);
             let (right, f) = Self::build(f, mid + 1, to);
             node.attach_left(left);
@@ -188,19 +165,10 @@ impl<P: Payload> Node<P> {
         }
     }
 
-    fn push<D>(&mut self, delta: D)
-    where
-        P: Pushable<D>,
-    {
-        if self.size != 0 {
-            self.payload_mut().push(delta);
-        }
-    }
-
     fn refs(&mut self, res: &mut Vec<NodeId<P>>) {
         if self.size != 0 {
             self.left.refs(res);
-            res.push(NodeId(NodeLink::new_ref(self)));
+            res.push(NodeId(TreapNode::new_ref(self)));
             self.right.refs(res);
         }
     }
@@ -277,7 +245,7 @@ impl<P> DerefMut for Node<P> {
     }
 }
 
-pub struct NodeId<P>(NodeLink<Node<P>>);
+pub struct NodeId<P>(TreapNode<P>);
 
 impl<P: Payload> NodeId<P> {
     pub unsafe fn with_payload<R>(&self, f: impl FnOnce(&P) -> R) -> R {
@@ -287,14 +255,26 @@ impl<P: Payload> NodeId<P> {
     }
 }
 
-pub struct NodeLink<P> {
-    link: NonNull<P>,
+pub struct TreapNode<P> {
+    link: NonNull<Node<P>>,
 }
 
-impl<P> NodeLink<Node<P>> {
-    fn new(node: Node<P>) -> Self {
+impl<P: Payload> TreapNode<P> {
+    fn new(payload: P) -> Self {
+        let node = Node {
+            priority: StaticRandom.gen_int(),
+            size: 1,
+            reversed: false,
+            content: Some(Content {
+                payload,
+                parent: TreapNode::default(),
+                left: TreapNode::default(),
+                right: TreapNode::default(),
+            }),
+            _phantom_pinned: PhantomPinned,
+        };
         let mut pinned = Box::pin(node);
-        let res = NodeLink {
+        let res = TreapNode {
             link: unsafe { NonNull::from(pinned.as_mut().get_unchecked_mut()) },
         };
         forget(pinned);
@@ -302,7 +282,7 @@ impl<P> NodeLink<Node<P>> {
     }
 
     fn new_ref(node: &Node<P>) -> Self {
-        NodeLink {
+        TreapNode {
             link: NonNull::from(node),
         }
     }
@@ -311,11 +291,10 @@ impl<P> NodeLink<Node<P>> {
         assert_eq!(self.left.size, 0);
         assert_eq!(self.right.size, 0);
         assert_eq!(self.parent.size, 0);
+        self.size = 0;
         self.content.take().unwrap().payload
     }
-}
 
-impl<P: Payload> NodeLink<Node<P>> {
     fn merge(mut left: Self, mut right: Self) -> Self {
         match (left.size, right.size) {
             (0, _) => right,
@@ -353,11 +332,11 @@ impl<P: Payload> NodeLink<Node<P>> {
                 }
             }
         } else {
-            (NodeLink::default(), NodeLink::default())
+            (TreapNode::default(), TreapNode::default())
         }
     }
 
-    fn push_from_up(&self, directions: &mut Vec<Direction>) -> NodeLink<Node<P>> {
+    fn push_from_up(&self, directions: &mut Vec<Direction>) -> TreapNode<P> {
         if self.parent.size != 0 {
             if self.parent.left == *self {
                 directions.push(Direction::Left);
@@ -368,11 +347,11 @@ impl<P: Payload> NodeLink<Node<P>> {
             }
             self.parent.push_from_up(directions)
         } else {
-            NodeLink { link: self.link }
+            TreapNode { link: self.link }
         }
     }
 
-    fn raise(self, link: &NodeLink<Node<P>>) -> (Self, Self, Self) {
+    fn raise(self, link: &TreapNode<P>) -> (Self, Self, Self) {
         assert!(link.content.is_some());
         let mut directions = Vec::new();
         let expected_parent = link.push_from_up(&mut directions);
@@ -434,7 +413,7 @@ impl<P: Payload> NodeLink<Node<P>> {
     }
 }
 
-impl<P: OrdPayload> NodeLink<Node<P>> {
+impl<P: OrdPayload> TreapNode<P> {
     fn split(self, key: &P::Key) -> (Self, Self) {
         self.split_by(|payload, _left, _right| {
             if payload.key() < key {
@@ -468,7 +447,7 @@ impl<P: OrdPayload> NodeLink<Node<P>> {
                 let left = a.detach_left();
                 let right = a.detach_right();
                 if same.size != 0 {
-                    a = Node::new(P::union(a.into_payload(), same.into_payload()));
+                    a = TreapNode::new(P::union(a.into_payload(), same.into_payload()));
                 }
                 let left = Self::union(left, b_left);
                 let right = Self::union(right, b_right);
@@ -480,37 +459,37 @@ impl<P: OrdPayload> NodeLink<Node<P>> {
     }
 }
 
-impl<P> Clone for NodeLink<P> {
+impl<P> Clone for TreapNode<P> {
     fn clone(&self) -> Self {
-        NodeLink { link: self.link }
+        TreapNode { link: self.link }
     }
 }
 
-impl<P> PartialEq for NodeLink<P> {
+impl<P> PartialEq for TreapNode<P> {
     fn eq(&self, other: &Self) -> bool {
         self.link == other.link
     }
 }
 
-impl<P> Eq for NodeLink<P> {}
+impl<P> Eq for TreapNode<P> {}
 
-impl<P> Deref for NodeLink<P> {
-    type Target = P;
+impl<P> Deref for TreapNode<P> {
+    type Target = Node<P>;
 
     fn deref(&self) -> &Self::Target {
         unsafe { self.link.as_ref() }
     }
 }
 
-impl<P> DerefMut for NodeLink<P> {
+impl<P> DerefMut for TreapNode<P> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe { self.link.as_mut() }
     }
 }
 
-impl<P> Default for NodeLink<Node<P>> {
+impl<P> Default for TreapNode<P> {
     fn default() -> Self {
-        NodeLink {
+        TreapNode {
             link: unsafe {
                 NonNull::new_unchecked(&Node::NULL_NODE as *const Node<P> as *mut Node<P>)
             },
@@ -520,12 +499,12 @@ impl<P> Default for NodeLink<Node<P>> {
 
 pub enum Tree<P> {
     Whole {
-        root: NodeLink<Node<P>>,
+        root: TreapNode<P>,
     },
     Split {
-        left: NodeLink<Node<P>>,
+        left: TreapNode<P>,
         mid: Box<Tree<P>>,
-        right: NodeLink<Node<P>>,
+        right: TreapNode<P>,
     },
 }
 
@@ -538,7 +517,7 @@ impl<P: Payload> Default for Tree<P> {
 impl<P: Payload> Tree<P> {
     pub fn new() -> Self {
         Tree::Whole {
-            root: NodeLink::default(),
+            root: TreapNode::default(),
         }
     }
 
@@ -547,7 +526,9 @@ impl<P: Payload> Tree<P> {
     }
 
     fn single(p: P) -> Self {
-        Tree::Whole { root: Node::new(p) }
+        Tree::Whole {
+            root: TreapNode::new(p),
+        }
     }
 
     fn gen_impl(n: usize, f: impl FnMut(usize) -> P) -> Self {
@@ -556,7 +537,7 @@ impl<P: Payload> Tree<P> {
         }
     }
 
-    fn into_node(mut self) -> NodeLink<Node<P>> {
+    fn into_node(mut self) -> TreapNode<P> {
         self.rebuild();
         match self {
             Tree::Whole { root } => root,
@@ -564,18 +545,18 @@ impl<P: Payload> Tree<P> {
         }
     }
 
-    fn as_node(&mut self) -> &mut NodeLink<Node<P>> {
+    fn as_node(&mut self) -> &mut TreapNode<P> {
         match self {
             Tree::Whole { root } => root,
             _ => unreachable!(),
         }
     }
 
-    fn rebuild(&mut self) -> &mut NodeLink<Node<P>> {
+    fn rebuild(&mut self) -> &mut TreapNode<P> {
         self.replace_with(|self_| {
             if let Tree::Split { left, mid, right } = self_ {
                 Tree::Whole {
-                    root: NodeLink::merge(left, NodeLink::merge(mid.into_node(), right)),
+                    root: TreapNode::merge(left, TreapNode::merge(mid.into_node(), right)),
                 }
             } else {
                 self_
@@ -586,7 +567,7 @@ impl<P: Payload> Tree<P> {
 
     fn do_split(
         mut self,
-        f: impl FnOnce(NodeLink<Node<P>>) -> (NodeLink<Node<P>>, NodeLink<Node<P>>),
+        f: impl FnOnce(TreapNode<P>) -> (TreapNode<P>, TreapNode<P>),
     ) -> (Self, Self) {
         let mut right = MaybeUninit::uninit();
         self.replace_with(|self_| {
@@ -600,7 +581,7 @@ impl<P: Payload> Tree<P> {
 
     fn do_split_three(
         &mut self,
-        f: impl FnOnce(NodeLink<Node<P>>) -> (NodeLink<Node<P>>, NodeLink<Node<P>>, NodeLink<Node<P>>),
+        f: impl FnOnce(TreapNode<P>) -> (TreapNode<P>, TreapNode<P>, TreapNode<P>),
     ) -> &mut Self {
         self.replace_with(|self_| {
             let root = self_.into_node();
@@ -623,14 +604,14 @@ impl<P: Payload> Tree<P> {
 
     pub fn push_front(&mut self, other: Self) -> &mut Self {
         self.replace_with(|root| Tree::Whole {
-            root: NodeLink::merge(other.into_node(), root.into_node()),
+            root: TreapNode::merge(other.into_node(), root.into_node()),
         });
         self
     }
 
     pub fn push_back(&mut self, other: Self) -> &mut Self {
         self.replace_with(|root| Tree::Whole {
-            root: NodeLink::merge(root.into_node(), other.into_node()),
+            root: TreapNode::merge(root.into_node(), other.into_node()),
         });
         self
     }
@@ -649,11 +630,22 @@ impl<P: Payload> Tree<P> {
         self.rebuild().binary_search(f);
     }
 
-    pub fn push<D>(&mut self, delta: D)
-    where
-        P: Pushable<D>,
-    {
-        self.rebuild().push(delta);
+    pub fn push(&mut self, delta: &P) {
+        self.with_payload_mut(|p| p.accumulate(delta));
+    }
+
+    pub fn replace(&mut self, delta: P) {
+        self.with_payload_mut(|p| *p = delta);
+    }
+
+    pub fn payload_mut(&mut self) -> Option<&mut P> {
+        self.rebuild().content.as_mut().map(|c| &mut c.payload)
+    }
+
+    pub fn with_payload_mut(&mut self, f: impl FnOnce(&mut P)) {
+        if let Some(payload) = self.payload_mut() {
+            f(payload);
+        }
     }
 
     pub fn merge(left: Self, right: Self) -> Self {
@@ -661,7 +653,7 @@ impl<P: Payload> Tree<P> {
             Tree::Whole { root: left_root } => Tree::Split {
                 left: left_root,
                 mid: Box::new(right),
-                right: NodeLink::default(),
+                right: TreapNode::default(),
             },
             Tree::Split {
                 left,
@@ -670,7 +662,7 @@ impl<P: Payload> Tree<P> {
             } => Tree::Split {
                 left,
                 mid,
-                right: NodeLink::merge(left_right, right.into_node()),
+                right: TreapNode::merge(left_right, right.into_node()),
             },
         }
     }
@@ -793,12 +785,12 @@ impl<P: Payload> Tree<P> {
 }
 
 pub struct Iter<'a, P> {
-    stack: Vec<*mut NodeLink<Node<P>>>,
+    stack: Vec<*mut TreapNode<P>>,
     _marker: PhantomData<&'a P>,
 }
 
 impl<'a, P: Payload> Iter<'a, P> {
-    fn new(root: &'a mut NodeLink<Node<P>>) -> Self {
+    fn new(root: &'a mut TreapNode<P>) -> Self {
         let mut res = Self {
             stack: Vec::new(),
             _marker: PhantomData,
@@ -807,7 +799,7 @@ impl<'a, P: Payload> Iter<'a, P> {
         res
     }
 
-    fn add_left(&mut self, mut node: &mut NodeLink<Node<P>>) {
+    fn add_left(&mut self, mut node: &mut TreapNode<P>) {
         while node.size != 0 {
             node.push_down();
             self.stack.push(node);
@@ -832,12 +824,12 @@ impl<P: OrdPayload> Tree<P> {
             let (left, mid_right) = match bounds.start_bound() {
                 Bound::Included(key) => root.split(key),
                 Bound::Excluded(key) => root.split_inclusive(key),
-                Bound::Unbounded => (NodeLink::default(), root),
+                Bound::Unbounded => (TreapNode::default(), root),
             };
             let (mid, right) = match bounds.end_bound() {
                 Bound::Included(key) => mid_right.split_inclusive(key),
                 Bound::Excluded(key) => mid_right.split(key),
-                Bound::Unbounded => (mid_right, NodeLink::default()),
+                Bound::Unbounded => (mid_right, TreapNode::default()),
             };
             (left, mid, right)
         })
@@ -846,7 +838,7 @@ impl<P: OrdPayload> Tree<P> {
     pub fn insert_with_id(&mut self, p: P) -> (Option<P>, NodeId<P>) {
         let mid = self.range(&p.key()..=&p.key());
         let mut res = None;
-        let link = Node::new(p);
+        let link = TreapNode::new(p);
         mid.replace_with(|mid| {
             if mid.size() != 0 {
                 res = Some(mid.into_node().into_payload());
@@ -904,7 +896,7 @@ impl<P: OrdPayload> Tree<P> {
         let a = a.into_node();
         let b = b.into_node();
         Self::Whole {
-            root: NodeLink::union(a, b),
+            root: TreapNode::union(a, b),
         }
     }
 

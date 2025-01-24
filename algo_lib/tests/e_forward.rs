@@ -1,6 +1,6 @@
 //{"name":"E. Forward!","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/E","interactive":false,"timeLimit":3000,"tests":[{"input":"6 3\n2 4\n3 5\n2 2\n","output":"1 4 5 2 3 6\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"EForward"}}}
 
-use algo_lib::collections::treap::pure_payload::PurePayload;
+use algo_lib::collections::payload::PurePayload;
 use algo_lib::collections::treap::Tree;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;

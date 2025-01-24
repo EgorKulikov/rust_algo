@@ -1,7 +1,7 @@
 //{"name":"J. Another","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/J","interactive":false,"timeLimit":3000,"tests":[{"input":"6 6\n1 2 3 4 5 6\n2 4\n1 1 2 4 5\n2 4\n2 1\n1 1 3 4 6\n2 1\n","output":"5 6 -1\n5 3 1\n2 6 -1\n2 6 4\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"JAnother"}}}
 
+use algo_lib::collections::payload::PurePayload;
 use algo_lib::collections::slice_ext::permutation::Permutation;
-use algo_lib::collections::treap::pure_payload::PurePayload;
 use algo_lib::collections::treap::Tree;
 use algo_lib::collections::vec_ext::gen_vec::VecGen;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;

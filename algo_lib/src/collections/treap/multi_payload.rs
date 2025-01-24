@@ -1,5 +1,4 @@
-use crate::collections::treap::payload::{OrdPayload, Payload, Pushable};
-
+use crate::collections::payload::{OrdPayload, Payload};
 pub struct MultiPayload<T, V = ()> {
     pub key: T,
     pub value: V,
@@ -34,13 +33,6 @@ impl<T, V> Payload for MultiPayload<T, V> {
     fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
         self.total_size =
             self.self_size + left.map_or(0, |l| l.total_size) + right.map_or(0, |r| r.total_size);
-    }
-}
-
-impl<T, V> Pushable<isize> for MultiPayload<T, V> {
-    fn push(&mut self, delta: isize) {
-        self.self_size = (self.self_size as isize + delta) as usize;
-        self.total_size = (self.total_size as isize + delta) as usize;
     }
 }
 

@@ -1,7 +1,7 @@
 //{"name":"Similar Pair","group":"HackerRank - Algorithms - Search","url":"https://www.hackerrank.com/challenges/similarpair/problem?utm_campaign=challenge-recommendation&utm_medium=email&utm_source=24-hour-campaign","interactive":false,"timeLimit":4000,"tests":[{"input":"5 2\n3 2\n3 1\n1 4\n1 5\n","output":"4\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"SimilarPair"}}}
 
 use algo_lib::collections::iter_ext::iters::Iters;
-use algo_lib::collections::treap::payload::{OrdPayload, Payload};
+use algo_lib::collections::payload::{OrdPayload, Payload};
 use algo_lib::collections::treap::Tree;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::graph::edges::edge_trait::EdgeTrait;

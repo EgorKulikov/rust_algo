@@ -1,4 +1,5 @@
-use crate::collections::link_cut::{LinkCutNode, LinkCutPayload};
+use crate::collections::link_cut::LinkCutNode;
+use crate::collections::payload::Payload;
 use crate::collections::vec_ext::gen_vec::VecGen;
 use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
 use crate::graph::flow_graph::FlowGraph;
@@ -24,9 +25,9 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> FastMa
             delta: C,
             pushed: C,
         }
-        impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax> LinkCutPayload for Node<C> {
+        impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax> Payload for Node<C> {
             const NEED_UPDATE: bool = true;
-            const NEED_PUSH_DOWN: bool = true;
+            const NEED_ACCUMULATE: bool = true;
             fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
                 self.val_id = self.id;
                 self.val = self.self_val;
@@ -44,7 +45,7 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> FastMa
                 }
             }
 
-            fn push_delta(&mut self, delta: &Self) {
+            fn accumulate(&mut self, delta: &Self) {
                 self.self_val += delta.delta;
                 self.val += delta.delta;
                 self.delta += delta.delta;

@@ -1,6 +1,6 @@
 //{"name":"K. Река","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/K","interactive":false,"timeLimit":3000,"tests":[{"input":"4 0\n3 5 5 4\n5\n1 1\n2 1\n1 3\n2 2\n1 3\n","output":"75\n105\n73\n101\n83\n113\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"KReka"}}}
 
-use algo_lib::collections::treap::payload::{Payload, Pushable};
+use algo_lib::collections::payload::Payload;
 use algo_lib::collections::treap::Tree;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
@@ -32,12 +32,10 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         }
     }
 
-    impl Pushable<usize> for Node {
-        fn push(&mut self, delta: usize) {
-            self.sum_sq -= self.len * self.len;
-            self.len += delta;
-            self.sum_sq += self.len * self.len;
-        }
+    fn push(node: &mut Node, delta: usize) {
+        node.sum_sq -= node.len * node.len;
+        node.len += delta;
+        node.sum_sq += node.len * node.len;
     }
 
     let n = input.read_size();
@@ -63,12 +61,21 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                 let len = view.payload().unwrap().len;
                 view.detach();
                 if id == 0 {
-                    treap.range_index(..1).push(len);
+                    treap.range_index(..1).payload_mut().map(|p| push(p, len));
                 } else if id == size - 1 {
-                    treap.range_index(size - 2..).push(len);
+                    treap
+                        .range_index(size - 2..)
+                        .payload_mut()
+                        .map(|p| push(p, len));
                 } else {
-                    treap.range_index(id - 1..id).push(len / 2);
-                    treap.range_index(id..id + 1).push(len - len / 2);
+                    treap
+                        .range_index(id - 1..id)
+                        .payload_mut()
+                        .map(|p| push(p, len / 2));
+                    treap
+                        .range_index(id..id + 1)
+                        .payload_mut()
+                        .map(|p| push(p, len - len / 2));
                 }
             }
             2 => {

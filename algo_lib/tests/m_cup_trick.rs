@@ -1,7 +1,7 @@
 //{"name":"M. Cup Trick","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/M","interactive":false,"timeLimit":3000,"tests":[{"input":"2 1\n2 1\n","output":"2 1\n"},{"input":"3 2\n1 2\n1 1\n","output":"2 1 3\n"},{"input":"3 3\n1 3\n2 3\n1 3\n","output":"-1\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"MCupTrick"}}}
 
 use algo_lib::collections::bit_set::BitSet;
-use algo_lib::collections::treap::pure_payload::PurePayload;
+use algo_lib::collections::payload::PurePayload;
 use algo_lib::collections::treap::Tree;
 // use algo_lib::collections::tree::Tree;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
@@ -41,7 +41,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                     return;
                 }
                 not_seen.unset(y);
-                node.push((Some(y), id));
+                node.replace(PurePayload((Some(y), id)));
             }
         }
         let mid = node.detach();

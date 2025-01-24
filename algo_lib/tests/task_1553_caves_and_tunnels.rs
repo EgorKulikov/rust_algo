@@ -1,7 +1,8 @@
 //{"name":"1553. Caves and Tunnels","group":"Timus Online Judge - Novosibirsk SU Contest. Petrozavodsk training camp, September 2007","url":"https://acm.timus.ru/problem.aspx?space=1&num=1553","interactive":false,"timeLimit":3000,"tests":[{"input":"4\n1 2\n2 3\n2 4\n6\nI 1 1\nG 1 1\nG 3 4\nI 2 3\nG 1 1\nG 3 4\n","output":"1\n0\n1\n3\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null}}
 
-use algo_lib::collections::link_cut::{LinkCutNode, LinkCutPayload};
+use algo_lib::collections::link_cut::LinkCutNode;
 use algo_lib::collections::min_max::MinimMaxim;
+use algo_lib::collections::payload::Payload;
 use algo_lib::collections::vec_ext::gen_vec::VecGen;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::graph::lca::LCATrait;
@@ -24,7 +25,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         level: i64,
         max_level: i64,
     }
-    impl LinkCutPayload for Node {
+    impl Payload for Node {
         const NEED_UPDATE: bool = true;
 
         fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {

@@ -1,4 +1,6 @@
+use crate::collections::payload::Payload;
 use crate::misc::direction::Direction;
+use std::cell::Cell;
 use std::marker::PhantomPinned;
 use std::mem::{forget, take};
 use std::ops::{Deref, DerefMut};
@@ -14,7 +16,7 @@ pub struct Content<P> {
     right: LinkCutNode<P>,
 }
 
-impl<P: LinkCutPayload> Content<P> {
+impl<P: Payload> Content<P> {
     fn update(&mut self) {
         if P::NEED_UPDATE {
             self.payload
@@ -23,12 +25,12 @@ impl<P: LinkCutPayload> Content<P> {
     }
 
     fn push_down(&mut self) {
-        if P::NEED_PUSH_DOWN && self.payload.need_push_down() {
+        if P::NEED_ACCUMULATE && self.payload.need_push_down() {
             if self.left.size != 0 {
-                self.left.payload_mut().push_delta(&self.payload);
+                self.left.payload_mut().accumulate(&self.payload);
             }
             if self.right.size != 0 {
-                self.right.payload_mut().push_delta(&self.payload);
+                self.right.payload_mut().accumulate(&self.payload);
             }
             self.payload.reset_delta();
         }
@@ -57,7 +59,7 @@ impl<P> Node<P> {
     }
 }
 
-impl<P: LinkCutPayload> Node<P> {
+impl<P: Payload> Node<P> {
     fn update(&mut self) {
         self.size = 1 + self.left.size + self.right.size;
         self.deref_mut().update();
@@ -158,7 +160,7 @@ impl<P> Clone for LinkCutNode<P> {
     }
 }
 
-impl<P> LinkCutNode<P> {
+impl<P: Payload> LinkCutNode<P> {
     pub fn new(payload: P) -> Self {
         let node = Node {
             size: 1,
@@ -186,9 +188,7 @@ impl<P> LinkCutNode<P> {
             link: NonNull::from(node),
         }
     }
-}
 
-impl<P: LinkCutPayload> LinkCutNode<P> {
     fn do_push_down(mut self) {
         if self.size != 0 {
             self.parent.do_push_down();
@@ -291,6 +291,7 @@ impl<P: LinkCutPayload> LinkCutNode<P> {
     }
 
     pub fn access(mut self) -> Self {
+        Self::check_lock();
         self.splay();
         let mut right = self.detach_right();
         if right.size != 0 {
@@ -339,12 +340,17 @@ impl<P: LinkCutPayload> LinkCutNode<P> {
 
     pub fn with_payload<R>(self, f: impl FnOnce(&P) -> R) -> R {
         self.access();
-        unsafe { f(self.payload().unwrap_unchecked()) }
+        Self::lock();
+        let res = unsafe { f(self.payload().unwrap_unchecked()) };
+        Self::unlock();
+        res
     }
 
     pub fn with_payload_mut<R>(mut self, f: impl FnOnce(&mut P) -> R) -> R {
         self.access();
+        Self::lock();
         let res = f(self.payload_mut());
+        Self::unlock();
         self.update();
         res
     }
@@ -366,6 +372,18 @@ impl<P: LinkCutPayload> LinkCutNode<P> {
         } else {
             None
         }
+    }
+
+    fn lock() {
+        LOCK.with(|lock| lock.set(true));
+    }
+
+    fn unlock() {
+        LOCK.with(|lock| lock.set(false));
+    }
+
+    fn check_lock() {
+        assert!(LOCK.with(|lock| !lock.get()), "LinkCutNode is locked");
     }
 }
 
@@ -401,20 +419,6 @@ impl<P> Default for LinkCutNode<P> {
     }
 }
 
-#[allow(unused_variables)]
-pub trait LinkCutPayload: Sized {
-    const NEED_UPDATE: bool = false;
-    const NEED_PUSH_DOWN: bool = false;
-    fn reset_delta(&mut self) {
-        unimplemented!()
-    }
-    fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
-        unimplemented!()
-    }
-    fn push_delta(&mut self, delta: &Self) {
-        unimplemented!()
-    }
-    fn need_push_down(&self) -> bool {
-        true
-    }
+thread_local! {
+    static LOCK: Cell<bool> = Cell::new(false);
 }

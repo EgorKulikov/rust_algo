@@ -1,4 +1,4 @@
-use crate::collections::treap::payload::{OrdPayload, Payload};
+use crate::collections::payload::{OrdPayload, Payload};
 use crate::collections::treap::Tree;
 use std::ops::{Bound, Deref, DerefMut, RangeBounds};
 

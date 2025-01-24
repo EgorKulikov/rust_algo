@@ -1,6 +1,6 @@
 //{"name":"Roy and Tree Permutation","group":"SeriousOJ - Happy New Year 2025","url":"https://judge.eluminatis-of-lu.com/contest/676ffd92569fb90008aac7da/1157","interactive":false,"timeLimit":1000,"tests":[{"input":"1\n8\n1 5 2 1 1 3 5 6\n1 2\n1 3\n2 7\n2 8\n3 4\n4 5\n4 6\n5\n4 3 2 5 1\n","output":"1\n1\n3\n0\n3\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"RoyAndTreePermutation"}}}
 
-use algo_lib::collections::treap::payload::{OrdPayload, Payload};
+use algo_lib::collections::payload::{OrdPayload, Payload};
 use algo_lib::collections::treap::Tree;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::graph::edges::edge_trait::EdgeTrait;

@@ -1,6 +1,7 @@
 //{"name":"Break And Fix The Tree","group":"CodeChef - CDRV2021","url":"https://www.codechef.com/problems/FIXTREE","interactive":false,"timeLimit":5000,"tests":[{"input":"5\n1 1 2 2\n1 2 3 4 5\n6\n3 4 5\n1 4 3\n1 5 3\n1 2 4\n2 4 10\n3 2 5\n","output":"11\n20\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null}}
 
-use algo_lib::collections::link_cut::{LinkCutNode, LinkCutPayload};
+use algo_lib::collections::link_cut::LinkCutNode;
+use algo_lib::collections::payload::Payload;
 use algo_lib::collections::vec_ext::gen_vec::VecGen;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::io::input::Input;
@@ -20,7 +21,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         val: i64,
         sum: i64,
     }
-    impl LinkCutPayload for Node {
+    impl Payload for Node {
         const NEED_UPDATE: bool = true;
 
         fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {

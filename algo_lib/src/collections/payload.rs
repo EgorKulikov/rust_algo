@@ -1,14 +1,14 @@
 #[allow(unused_variables)]
 pub trait Payload: Sized {
     const NEED_UPDATE: bool = false;
-    const NEED_PUSH_DOWN: bool = false;
+    const NEED_ACCUMULATE: bool = false;
     fn reset_delta(&mut self) {
         unimplemented!()
     }
     fn update(&mut self, left: Option<&Self>, right: Option<&Self>) {
         unimplemented!()
     }
-    fn push_delta(&mut self, delta: &Self) {
+    fn accumulate(&mut self, delta: &Self) {
         unimplemented!()
     }
     fn need_push_down(&self) -> bool {
@@ -24,21 +24,20 @@ pub trait OrdPayload: Payload {
         unimplemented!()
     }
 }
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
+pub struct PurePayload<T>(pub T);
 
-pub trait Pushable<Delta>: Payload {
-    fn push(&mut self, delta: Delta);
-}
+impl<T> Payload for PurePayload<T> {}
 
-impl<P: Payload> Pushable<&P> for P {
+impl<T: Ord> OrdPayload for PurePayload<T> {
+    type Key = T;
+
     #[inline]
-    fn push(&mut self, delta: &P) {
-        self.push_delta(delta);
+    fn key(&self) -> &Self::Key {
+        &self.0
     }
-}
 
-impl<P: Payload> Pushable<P> for P {
-    #[inline]
-    fn push(&mut self, delta: P) {
-        *self = delta;
+    fn union(a: Self, _b: Self) -> Self {
+        a
     }
 }

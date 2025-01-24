@@ -1,6 +1,6 @@
 //{"name":"C. И снова сумма...","group":"Codeforces - Treaps","url":"https://codeforces.com/gym/539514/problem/C","interactive":false,"timeLimit":3000,"tests":[{"input":"6\n+ 1\n+ 3\n+ 3\n? 2 4\n+ 1\n? 2 4\n","output":"3\n7\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"CISnovaSumma"}}}
 
-use algo_lib::collections::treap::payload::{OrdPayload, Payload};
+use algo_lib::collections::payload::{OrdPayload, Payload};
 use algo_lib::collections::treap::Tree;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
