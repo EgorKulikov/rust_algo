@@ -351,7 +351,6 @@ impl<P: Payload> LinkCutNode<P> {
         Self::lock();
         let res = f(self.payload_mut());
         Self::unlock();
-        self.update();
         res
     }
 

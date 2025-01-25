@@ -129,7 +129,7 @@ impl<P: Payload> TreapNode<P> {
             priority: StaticRandom.gen_int(),
             size: 1,
             content: Some(Content {
-                payload: payload,
+                payload,
                 parent: TreapNode::default(),
                 left: TreapNode::default(),
                 right: TreapNode::default(),
@@ -359,8 +359,7 @@ impl<P: Payload> EulerTourForest<P> {
 
     pub fn with_component_mut<R>(&self, u: usize, f: impl FnOnce(&mut P) -> R) -> R {
         let mut root = self.nodes[u].root();
-        let res = f(&mut root.payload);
-        res
+        f(&mut root.payload)
     }
 
     pub fn with_edge<R>(&self, u: usize, v: usize, f: impl FnOnce(&P) -> R) -> R {

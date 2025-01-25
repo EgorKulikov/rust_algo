@@ -23,6 +23,7 @@ pub mod persistent_fenwick;
 pub mod segment_tree;
 pub mod slice_ext;
 pub mod sliding_window;
+pub mod sparse_table;
 #[cfg(test)]
 mod test;
 pub mod treap;
