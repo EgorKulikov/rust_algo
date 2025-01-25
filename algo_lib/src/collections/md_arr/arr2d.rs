@@ -153,6 +153,10 @@ impl<T> Arr2d<T> {
             }
         }
     }
+
+    pub fn as_slice(&self) -> &[T] {
+        &self.data
+    }
 }
 
 impl<T: Clone> Arr2d<T> {

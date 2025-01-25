@@ -1,6 +1,6 @@
 use crate::geometry::point::Point;
 use crate::geometry::Base;
-use crate::numbers::num_traits::algebra::Field;
+use crate::numbers::num_traits::algebra::{Field, One, Zero};
 use crate::numbers::real::{IntoReal, Real};
 use std::any::{Any, TypeId};
 
@@ -19,9 +19,14 @@ impl<T: Base> Line<T> {
             let b = *(&b as &dyn Any).downcast_ref::<Real>().unwrap();
             let c = *(&c as &dyn Any).downcast_ref::<Real>().unwrap();
             let h = Real::hypot(a, b);
-            let a = a / h;
-            let b = b / h;
-            let c = c / h;
+            let mut a = a / h;
+            let mut b = b / h;
+            let mut c = c / h;
+            if a < Real::zero() || a == Real::zero() && b < Real::zero() {
+                a *= -Real::one();
+                b *= -Real::one();
+                c *= -Real::one();
+            }
             Self {
                 a: *(&a as &dyn Any).downcast_ref::<T>().unwrap(),
                 b: *(&b as &dyn Any).downcast_ref::<T>().unwrap(),
