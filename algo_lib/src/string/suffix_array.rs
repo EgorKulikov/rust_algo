@@ -1,8 +1,7 @@
 use crate::collections::bounds::clamp;
 use crate::collections::slice_ext::permutation::Permutation;
-use crate::collections::sparse_table_pos::SparseTableWithPos;
+use crate::collections::sparse_table::SparseTable;
 use crate::collections::vec_ext::gen_vec::VecGen;
-use crate::misc::direction::Direction;
 use crate::misc::owned_cell::OwnedCell;
 use crate::numbers::num_traits::algebra::Zero;
 use std::cmp::Ordering;
@@ -14,7 +13,7 @@ pub struct SuffixArray<T> {
     sorted_suffixes: Vec<usize>,
     pos_in_sorted: Vec<usize>,
     lcp: Vec<u32>,
-    lcp_sparse_table: OwnedCell<Option<SparseTableWithPos<u32>>>,
+    lcp_sparse_table: OwnedCell<Option<SparseTable<u32>>>,
 }
 
 impl<T: Ord> SuffixArray<T> {
@@ -27,11 +26,10 @@ impl<T: Ord> SuffixArray<T> {
         self.sorted_suffixes.len()
     }
 
-    fn lcp_sparse_table(&self) -> &SparseTableWithPos<u32> {
+    fn lcp_sparse_table(&self) -> &SparseTable<u32> {
         unsafe {
             if self.lcp_sparse_table.as_ref().is_none() {
-                *self.lcp_sparse_table.as_mut() =
-                    Some(SparseTableWithPos::new(&self.lcp, min_direction));
+                *self.lcp_sparse_table.as_mut() = Some(SparseTable::new(self.lcp.clone(), ref_min));
             }
             self.lcp_sparse_table.as_ref().as_ref().unwrap()
         }
@@ -47,8 +45,7 @@ impl<T: Ord> SuffixArray<T> {
             return self.lcp[min_pos] as usize;
         }
         let lcp_table = self.lcp_sparse_table();
-        let pos = lcp_table.query(min_pos..max_pos).1;
-        self.lcp[pos] as usize
+        lcp_table.query(min_pos..max_pos) as usize
     }
 
     fn build_lcp(str: &[T], sorted_suffixes: &[usize], pos_in_sorted: &[usize]) -> Vec<u32> {
@@ -204,10 +201,6 @@ impl<T> Index<usize> for SuffixArray<T> {
     }
 }
 
-fn min_direction(a: &u32, b: &u32) -> Direction {
-    if a <= b {
-        Direction::Left
-    } else {
-        Direction::Right
-    }
+fn ref_min(a: &u32, b: &u32) -> u32 {
+    *a.min(b)
 }
