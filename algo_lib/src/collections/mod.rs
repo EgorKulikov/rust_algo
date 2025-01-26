@@ -24,6 +24,7 @@ pub mod segment_tree;
 pub mod slice_ext;
 pub mod sliding_window;
 pub mod sparse_table;
+pub mod sparse_table_pos;
 #[cfg(test)]
 mod test;
 pub mod treap;

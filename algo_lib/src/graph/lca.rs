@@ -8,7 +8,7 @@ pub struct LCA {
     lca_arr: Arr2d<u32>,
     level: Vec<u32>,
     parent: Vec<u32>,
-    predecessors: OwnedCell<Option<Arr2d<i32>>>,
+    ancestors: OwnedCell<Option<Arr2d<i32>>>,
 }
 
 impl LCA {
@@ -54,16 +54,16 @@ impl LCA {
 
     pub fn num_levels(&self) -> usize {
         self.build_steps();
-        unsafe { self.predecessors.as_ref().as_ref().unwrap().d1() }
+        unsafe { self.ancestors.as_ref().as_ref().unwrap().d1() }
     }
 
-    pub fn predecessor(&self, level: usize, vert: usize) -> Option<usize> {
+    pub fn ancestor(&self, level: usize, vert: usize) -> Option<usize> {
         self.build_steps();
         unsafe {
-            if level >= self.predecessors.as_ref().as_ref().unwrap().d1() {
+            if level >= self.ancestors.as_ref().as_ref().unwrap().d1() {
                 None
             } else {
-                let pred = self.predecessors.as_ref().as_ref().unwrap()[(level, vert)];
+                let pred = self.ancestors.as_ref().as_ref().unwrap()[(level, vert)];
                 if pred == -1 {
                     None
                 } else {
@@ -75,7 +75,7 @@ impl LCA {
 
     fn build_steps(&self) {
         unsafe {
-            if self.predecessors.as_ref().is_some() {
+            if self.ancestors.as_ref().is_some() {
                 return;
             }
         }
@@ -99,7 +99,7 @@ impl LCA {
             }
         }
         unsafe {
-            self.predecessors.replace(Some(predecessors));
+            self.ancestors.replace(Some(predecessors));
         }
     }
 }
@@ -183,7 +183,7 @@ impl<E: BidirectionalEdgeTrait> LCATrait for Graph<E> {
             lca_arr,
             level,
             parent,
-            predecessors: OwnedCell::new(None),
+            ancestors: OwnedCell::new(None),
         }
     }
 }
