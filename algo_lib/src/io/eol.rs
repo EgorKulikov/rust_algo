@@ -26,9 +26,12 @@ impl<T> EolVec<T> {
 impl<T: Readable> Readable for EolVec<T> {
     fn read(input: &mut Input) -> Self {
         let mut vec = Vec::new();
-        while !input.is_eol() {
+        loop {
             let item = T::read(input);
             vec.push(item);
+            if input.is_eol() {
+                break;
+            }
         }
         Self(vec)
     }
