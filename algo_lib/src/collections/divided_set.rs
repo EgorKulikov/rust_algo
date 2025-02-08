@@ -17,6 +17,14 @@ impl<T: Ord, F: Fn(usize, usize) -> Option<Direction>> DividedSet<T, F> {
         }
     }
 
+    pub fn left_size(&self) -> usize {
+        self.left.len()
+    }
+
+    pub fn right_size(&self) -> usize {
+        self.right.len()
+    }
+
     pub fn left_tail(&self) -> Option<&T> {
         self.left.peek()
     }

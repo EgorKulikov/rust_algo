@@ -525,7 +525,7 @@ impl<P: Payload> Tree<P> {
         Self::gen_impl(n, f)
     }
 
-    fn single(p: P) -> Self {
+    pub fn single(p: P) -> Self {
         Tree::Whole {
             root: TreapNode::new(p),
         }

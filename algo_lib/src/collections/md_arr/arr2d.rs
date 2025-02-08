@@ -97,6 +97,16 @@ impl<T> Arr2d<T> {
         head[r1 * self.d2..(r1 + 1) * self.d2].swap_with_slice(&mut tail[..self.d2]);
     }
 
+    pub fn find(&self, value: &T) -> Option<(usize, usize)>
+    where
+        T: PartialEq,
+    {
+        self.data
+            .iter()
+            .position(|x| x == value)
+            .map(|pos| (pos / self.d2, pos % self.d2))
+    }
+
     pub fn rotate_clockwise(self) -> Self {
         unsafe {
             let d1 = self.d1;

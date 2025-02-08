@@ -1,7 +1,6 @@
 pub mod fwht;
 pub mod gauss;
 pub mod gcd;
-pub mod inf_int;
 pub mod integer_sqrt;
 pub mod interpolation;
 pub mod matrix;
