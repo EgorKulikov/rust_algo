@@ -9,11 +9,11 @@ use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Add, AddAssign, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 const DIGITS: usize = 9;
-const BASE: u32 = 10u32.pow(DIGITS as u32);
+const BASE: i32 = 10i32.pow(DIGITS as u32);
 
 #[derive(Eq, PartialEq, Clone)]
 pub struct UBigInt {
-    z: Vec<u32>,
+    z: Vec<i32>,
 }
 
 impl From<&[u8]> for UBigInt {
@@ -28,7 +28,7 @@ impl From<&[u8]> for UBigInt {
             for &c in &value[start..at] {
                 assert!(c.is_ascii_digit());
                 cur *= 10;
-                cur += (c - b'0') as u32;
+                cur += (c - b'0') as i32;
             }
             res.push(cur);
             at = start;
@@ -37,8 +37,8 @@ impl From<&[u8]> for UBigInt {
     }
 }
 
-impl From<u32> for UBigInt {
-    fn from(mut v: u32) -> Self {
+impl From<i32> for UBigInt {
+    fn from(mut v: i32) -> Self {
         let mut z = Vec::new();
         while v > 0 {
             z.push(v % BASE);
@@ -162,22 +162,22 @@ impl Sub for UBigInt {
     }
 }
 
-impl MulAssign<u32> for UBigInt {
-    fn mul_assign(&mut self, rhs: u32) {
+impl MulAssign<i32> for UBigInt {
+    fn mul_assign(&mut self, rhs: i32) {
         if rhs == 0 {
             *self = Self::zero();
             return;
         }
-        let rhs = rhs as u64;
+        let rhs = rhs as i64;
         let mut carry = 0;
-        let base = BASE as u64;
+        let base = BASE as i64;
         for i in self.z.iter_mut() {
-            let val: u64 = (*i as u64) * rhs + carry;
-            *i = (val % base) as u32;
+            let val: i64 = (*i as i64) * rhs + carry;
+            *i = (val % base) as i32;
             carry = val / base;
         }
         while carry > 0 {
-            self.z.push((carry % base) as u32);
+            self.z.push((carry % base) as i32);
             carry /= base;
         }
     }
@@ -193,11 +193,11 @@ impl<'a> Mul<&'a UBigInt> for UBigInt {
         for i in c {
             carry += i;
             let last = carry % BASE as i128;
-            res.push(last as u32);
+            res.push(last as i32);
             carry /= BASE as i128;
         }
         while carry > 0 {
-            res.push((carry % BASE as i128) as u32);
+            res.push((carry % BASE as i128) as i32);
             carry /= BASE as i128;
         }
         while let Some(d) = res.last() {
@@ -225,14 +225,14 @@ impl MulAssign for UBigInt {
     }
 }
 
-impl DivAssign<u32> for UBigInt {
-    fn div_assign(&mut self, rhs: u32) {
-        let rhs = rhs as u64;
+impl DivAssign<i32> for UBigInt {
+    fn div_assign(&mut self, rhs: i32) {
+        let rhs = rhs as i64;
         let mut carry = 0;
-        let base = BASE as u64;
+        let base = BASE as i64;
         for i in self.z.iter_mut().rev() {
-            let val = carry + *i as u64;
-            *i = (val / rhs) as u32;
+            let val = carry + *i as i64;
+            *i = (val / rhs) as i32;
             carry = (val % rhs) * base;
         }
         while let Some(d) = self.z.last() {

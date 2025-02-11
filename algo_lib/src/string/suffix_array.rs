@@ -188,7 +188,7 @@ impl<T: Ord> SuffixArray<T> {
         } else {
             let s1 = &self.str[l1 + lcp];
             let s2 = &self.str[l2 + lcp];
-            s1.cmp(&s2)
+            s1.cmp(s2)
         }
     }
 }

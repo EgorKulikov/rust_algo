@@ -25,7 +25,7 @@ pub(crate) fn run_single_test_interactive(
     let handle = thread::spawn(move || {
         let read_delegate = ReadDelegate::new(rcv2);
         let write_delegate = WriteDelegate::new(snd1, "> ", print_limit);
-        (solution)(
+        solution(
             Input::delegate(read_delegate),
             Output::delegate(write_delegate),
         );
@@ -38,8 +38,8 @@ pub(crate) fn run_single_test_interactive(
         Output::delegate(write_delegate),
         Input::slice(input),
     );
-    match handle.join() {
-        Ok(_) => match result {
+    match result {
+        Ok(()) => match handle.join() {
             Ok(()) => {
                 let duration = start.elapsed();
                 if duration.as_millis() as u64 > tester.time_limit {
@@ -54,12 +54,15 @@ pub(crate) fn run_single_test_interactive(
                     }
                 }
             }
-            Err(err) => Outcome::WrongAnswer {
-                checker_output: err,
-                input_exhausted: true,
-            },
+            Err(err) => process_error(err),
         },
-        Err(err) => process_error(err),
+        Err(err) => {
+            let _ = handle.join();
+            Outcome::WrongAnswer {
+                checker_output: err,
+                input_exhausted: false,
+            }
+        }
     }
 }
 

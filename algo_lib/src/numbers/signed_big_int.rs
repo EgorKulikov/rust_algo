@@ -38,12 +38,12 @@ impl From<i32> for BigInt {
     fn from(v: i32) -> Self {
         if v >= 0 {
             Self {
-                value: (v as u32).into(),
+                value: v.into(),
                 sign: if v == 0 { 0 } else { 1 },
             }
         } else {
             Self {
-                value: (-v as u32).into(),
+                value: (-v).into(),
                 sign: -1,
             }
         }
@@ -128,10 +128,10 @@ impl Sub for BigInt {
 impl MulAssign<i32> for BigInt {
     fn mul_assign(&mut self, rhs: i32) {
         if rhs >= 0 {
-            self.value *= rhs as u32;
+            self.value *= rhs;
             self.sign *= if rhs == 0 { 0 } else { 1 };
         } else {
-            self.value *= -rhs as u32;
+            self.value *= -rhs;
             self.sign *= -1;
         }
     }
@@ -140,9 +140,9 @@ impl MulAssign<i32> for BigInt {
 impl DivAssign<i32> for BigInt {
     fn div_assign(&mut self, rhs: i32) {
         if rhs >= 0 {
-            self.value /= rhs as u32;
+            self.value /= rhs;
         } else {
-            self.value /= -rhs as u32;
+            self.value /= -rhs;
             self.sign *= -1;
         }
     }
