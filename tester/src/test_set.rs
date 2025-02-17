@@ -11,7 +11,7 @@ pub(crate) trait TestSet {
     type TestId: Display + Clone;
 
     fn name(&self) -> &str;
-    fn tests(&self) -> Box<dyn Iterator<Item = Self::TestId>>;
+    fn tests(&self) -> impl Iterator<Item = Self::TestId>;
     fn input(&self, test: &Self::TestId) -> Vec<u8>;
     fn output(&self, test: &Self::TestId, input: &[u8]) -> Option<Vec<u8>>;
     fn print_details(&self) -> bool;
@@ -44,13 +44,13 @@ impl TestSet for SampleTests {
         "Sample tests"
     }
 
-    fn tests(&self) -> Box<dyn Iterator<Item = Self::TestId>> {
+    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
         let mut paths = std::fs::read_dir(self.test_path())
             .unwrap()
             .map(|res| res.unwrap())
             .collect::<Vec<_>>();
         paths.sort_by_key(|dir| dir.path());
-        Box::new(paths.into_iter().filter_map(|path| {
+        paths.into_iter().filter_map(|path| {
             if path.file_type().unwrap().is_file() {
                 let path = path.path();
                 match path.extension() {
@@ -66,7 +66,7 @@ impl TestSet for SampleTests {
             } else {
                 None
             }
-        }))
+        })
     }
 
     fn input(&self, test: &Self::TestId) -> Vec<u8> {
@@ -133,7 +133,7 @@ pub trait GeneratedTestSet {
     type TestId: Display + Clone;
 
     // 1.75
-    fn tests(&self) -> Box<dyn Iterator<Item = Self::TestId>>;
+    fn tests(&self) -> impl Iterator<Item = Self::TestId>;
     fn input(&self, test: &Self::TestId, input: &mut Output);
     fn output(&self, test: &Self::TestId, input: &mut Input, output: &mut Output) -> bool;
 }
@@ -155,9 +155,9 @@ where
         &self.name
     }
 
-    fn tests(&self) -> Box<dyn Iterator<Item = Self::TestId>> {
+    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
         #[cfg(feature = "test")]
-        return Box::new(self.set.tests().take(100));
+        return self.set.tests().take(100);
         #[cfg(not(feature = "test"))]
         self.set.tests()
     }

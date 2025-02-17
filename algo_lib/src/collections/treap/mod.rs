@@ -552,7 +552,7 @@ impl<P: Payload> Tree<P> {
         }
     }
 
-    fn rebuild(&mut self) -> &mut TreapNode<P> {
+    pub fn rebuild(&mut self) -> &mut TreapNode<P> {
         self.replace_with(|self_| {
             if let Tree::Split { left, mid, right } = self_ {
                 Tree::Whole {
