@@ -1,4 +1,3 @@
-use crate::collections::iter_ext::iter_copied::ItersCopied;
 use crate::numbers::num_traits::bit_ops::BitOps;
 use std::ops::{BitAndAssign, BitOrAssign, BitXorAssign, Index, ShlAssign, ShrAssign};
 
@@ -68,7 +67,7 @@ impl BitSet {
 
     pub fn is_superset(&self, other: &Self) -> bool {
         assert_eq!(self.len, other.len);
-        for (we, them) in self.data.copy_zip(&other.data) {
+        for (we, them) in self.data.iter().copied().zip(other.data.iter().copied()) {
             if (we & them) != them {
                 return false;
             }
@@ -107,6 +106,15 @@ impl BitSet {
             self.data[i + big_shift] |= small;
         }
         self.fix_last();
+    }
+
+    pub fn not(&self) -> Self {
+        let mut res = self.clone();
+        for data in res.data.iter_mut() {
+            *data = !*data;
+        }
+        res.fix_last();
+        res
     }
 
     fn fix_last(&mut self) {

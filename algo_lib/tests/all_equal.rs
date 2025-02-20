@@ -28,7 +28,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             for d in ad[j].copy_iter() {
                 cnt += mu[d] * (m / (d * i)) as i64;
             }
-            ans += Mod::new_from_wide(cnt).power(n);
+            ans += Mod::new_wide(cnt).power(n);
         }
     }
     out.print_line(ans);

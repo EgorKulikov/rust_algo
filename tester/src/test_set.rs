@@ -105,10 +105,11 @@ impl TestSet for SampleTests {
         #[cfg(not(feature = "test"))]
         {
             let mut expected = String::new();
-            File::open(format!("tasks/{}/tests/{}.out", self.task_folder, test))
-                .unwrap()
-                .read_to_string(&mut expected)
-                .unwrap();
+            let Ok(mut exp) = File::open(format!("tasks/{}/tests/{}.out", self.task_folder, test))
+            else {
+                return;
+            };
+            exp.read_to_string(&mut expected).unwrap();
             if expected.len() > 500 {
                 return;
             }

@@ -38,10 +38,10 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             let l1 = l.upper_root(i + 1).max(2) as i64;
             let r1 = (r + 1).upper_root(i + 1).max(2) as i64;
             let c = if i == 0 { Mod::new(2) } else { Mod::one() };
-            let delta = pw[i].calculate(Mod::new_from_wide(r1 - 1))
-                - pw[i].calculate(Mod::new_from_wide(l1 - 1));
-            ans += (Mod::new_from_wide(r + 1) * Mod::new_from_wide(r1 - l1) - delta) * c;
-            ans += Mod::new_from_wide(l1 - 2) * Mod::new_from_wide(r + 1 - l) * c;
+            let delta =
+                pw[i].calculate(Mod::new_wide(r1 - 1)) - pw[i].calculate(Mod::new_wide(l1 - 1));
+            ans += (Mod::new_wide(r + 1) * Mod::new_wide(r1 - l1) - delta) * c;
+            ans += Mod::new_wide(l1 - 2) * Mod::new_wide(r + 1 - l) * c;
         }
         out.print_line(ans);
     }

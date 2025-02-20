@@ -2,7 +2,7 @@ use crate::collections::slice_ext::indices::Indices;
 use crate::numbers::num_traits::algebra::IntegerSemiRingWithSub;
 use crate::numbers::num_traits::ord::MinMax;
 use crate::numbers::num_traits::primitive::Primitive;
-use crate::numbers::real::{IntoReal, Real};
+// use crate::numbers::real::{IntoReal, Real};
 use std::cell::RefCell;
 use std::ops::{RangeBounds, Rem};
 use std::time::SystemTime;
@@ -29,9 +29,9 @@ pub trait RandomTrait {
         (self.gen_impl() & 1) == 1
     }
 
-    fn gen_real(&mut self) -> Real {
-        self.gen_impl().into_real() / u64::MAX
-    }
+    // fn gen_real(&mut self) -> Real {
+    //     self.gen_impl().into_real() / u64::MAX
+    // }
 
     fn gen_bound<T: Rem<Output = T> + Primitive<u64>>(&mut self, n: T) -> T
     where

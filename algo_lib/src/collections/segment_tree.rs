@@ -69,7 +69,18 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
             n,
             nodes: Vec::with_capacity(2 * n - 1),
         };
-        res.init_impl(2 * n - 2, 0, n, &mut |left, right, _, _| f(left, right));
+        res.init_impl(
+            2 * n - 2,
+            0,
+            n,
+            &mut |left, right, left_node, right_node| {
+                let mut res = f(left, right);
+                if left_node.is_some() {
+                    res.update(left_node.unwrap(), right_node.unwrap());
+                }
+                res
+            },
+        );
         res
     }
 

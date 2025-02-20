@@ -39,12 +39,9 @@ macro_rules! mod_int {
                 }
             }
 
-            unsafe fn maybe_subtract_mod(mut n: $t) -> $t {
+            unsafe fn maybe_subtract_mod(n: $t) -> $t {
                 debug_assert!(n < 2 * V::val());
-                if n >= V::val() {
-                    n -= V::val();
-                }
-                n
+                n - (n >= V::val()) as $t * V::val()
             }
         }
 
@@ -95,7 +92,7 @@ macro_rules! mod_int {
         }
 
         impl<V: Value<$t>> $name<V> {
-            pub fn new_from_wide(n: $w) -> Self {
+            pub fn new_wide(n: $w) -> Self {
                 unsafe {
                     Self::unchecked_new(Self::maybe_subtract_mod(
                         (n % V::val() as $w + V::val() as $w) as $t,
@@ -112,7 +109,7 @@ macro_rules! mod_int {
                 if g != 1 {
                     None
                 } else {
-                    Some(Self::new_from_wide(x))
+                    Some(Self::new_wide(x))
                 }
             }
         }
@@ -266,7 +263,7 @@ macro_rules! mod_int {
             fn from_index(idx: usize) -> Self {
                 let v = idx as $w;
                 if v >= V::val() as $w {
-                    Self::new_from_wide(v)
+                    Self::new_wide(v)
                 } else {
                     unsafe { Self::unchecked_new(v as $t) }
                 }

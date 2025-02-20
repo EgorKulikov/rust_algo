@@ -15,26 +15,26 @@ pub fn convolution(a: &[i32], b: &[i32]) -> Vec<i128> {
     type Mod3 = ModInt<Module3>;
     let c1 = PrimeFFT::<Mod1>::new().multiply(
         &a.iter()
-            .map(|&x| Mod1::new_from_wide(x as i64))
+            .map(|&x| Mod1::new_wide(x as i64))
             .collect::<Vec<_>>(),
         &b.iter()
-            .map(|&x| Mod1::new_from_wide(x as i64))
+            .map(|&x| Mod1::new_wide(x as i64))
             .collect::<Vec<_>>(),
     );
     let c2 = PrimeFFT::<Mod2>::new().multiply(
         &a.iter()
-            .map(|&x| Mod2::new_from_wide(x as i64))
+            .map(|&x| Mod2::new_wide(x as i64))
             .collect::<Vec<_>>(),
         &b.iter()
-            .map(|&x| Mod2::new_from_wide(x as i64))
+            .map(|&x| Mod2::new_wide(x as i64))
             .collect::<Vec<_>>(),
     );
     let c3 = PrimeFFT::<Mod3>::new().multiply(
         &a.iter()
-            .map(|&x| Mod3::new_from_wide(x as i64))
+            .map(|&x| Mod3::new_wide(x as i64))
             .collect::<Vec<_>>(),
         &b.iter()
-            .map(|&x| Mod3::new_from_wide(x as i64))
+            .map(|&x| Mod3::new_wide(x as i64))
             .collect::<Vec<_>>(),
     );
     let mod12 = (Module1::val() as i64 * Module2::val() as i64) as i128;
