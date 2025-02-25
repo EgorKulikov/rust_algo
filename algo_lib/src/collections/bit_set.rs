@@ -1,5 +1,6 @@
 use crate::numbers::num_traits::bit_ops::BitOps;
 use std::ops::{BitAndAssign, BitOrAssign, BitXorAssign, Index, ShlAssign, ShrAssign};
+use std::slice::Iter;
 
 const TRUE: bool = true;
 const FALSE: bool = false;
@@ -81,6 +82,10 @@ impl BitSet {
 
     pub fn iter(&self) -> BitSetIter<'_> {
         self.into_iter()
+    }
+
+    pub fn raw_iter(&self) -> Iter<u64> {
+        self.data.iter()
     }
 
     fn index(at: usize) -> usize {
