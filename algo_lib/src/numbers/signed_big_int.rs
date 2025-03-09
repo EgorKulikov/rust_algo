@@ -164,7 +164,7 @@ impl<'a> Mul<&'a Self> for BigInt {
 
     fn mul(self, rhs: &'a Self) -> Self::Output {
         Self {
-            value: self.value * &rhs.value,
+            value: &self.value * &rhs.value,
             sign: self.sign * rhs.sign,
         }
     }

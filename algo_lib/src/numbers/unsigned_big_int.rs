@@ -16,6 +16,19 @@ pub struct UBigInt {
     z: Vec<i32>,
 }
 
+impl UBigInt {
+    pub fn power(&self, exp: usize) -> Self {
+        if exp == 0 {
+            Self::one()
+        } else if exp % 2 == 0 {
+            let half = self.power(exp / 2);
+            &half * &half
+        } else {
+            &self.power(exp - 1) * self
+        }
+    }
+}
+
 impl From<&[u8]> for UBigInt {
     fn from(value: &[u8]) -> Self {
         let mut at = value.len();
@@ -183,10 +196,10 @@ impl MulAssign<i32> for UBigInt {
     }
 }
 
-impl<'a> Mul<&'a UBigInt> for UBigInt {
-    type Output = Self;
+impl<'a> Mul<&'a UBigInt> for &UBigInt {
+    type Output = UBigInt;
 
-    fn mul(self, rhs: &'a Self) -> Self::Output {
+    fn mul(self, rhs: &'a UBigInt) -> Self::Output {
         let c = convolution(&self.z, &rhs.z);
         let mut carry = 0;
         let mut res = Vec::new();
@@ -207,7 +220,7 @@ impl<'a> Mul<&'a UBigInt> for UBigInt {
                 break;
             }
         }
-        Self { z: res }
+        UBigInt { z: res }
     }
 }
 
@@ -215,7 +228,7 @@ impl Mul for UBigInt {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        self * &rhs
+        &self * &rhs
     }
 }
 

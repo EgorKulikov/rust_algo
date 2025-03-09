@@ -75,8 +75,8 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
             n,
             &mut |left, right, left_node, right_node| {
                 let mut res = f(left, right);
-                if left_node.is_some() {
-                    res.update(left_node.unwrap(), right_node.unwrap());
+                if let Some(left_node) = left_node {
+                    res.update(left_node, right_node.unwrap());
                 }
                 res
             },
