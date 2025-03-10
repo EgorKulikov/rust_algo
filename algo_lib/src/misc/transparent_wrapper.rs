@@ -2,7 +2,7 @@
 macro_rules! transparent_wrapper {
     ($name: ident $(<$($par: ident$(,)?)+>)? = $t: ty $(, derive $($d: ty$(,)?)+)?) => {
         $(#[derive($($d,)+)])?
-            pub struct $name$(<$($par,)+>)?($t);
+        pub struct $name$(<$($par,)+>)?($t);
 
         impl$(<$($par,)+>)? Deref for $name$(<$($par,)+>)? {
             type Target = $t;
