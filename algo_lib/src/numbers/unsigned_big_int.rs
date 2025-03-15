@@ -6,7 +6,7 @@ use crate::numbers::num_traits::algebra::{One, Zero};
 use crate::string::str::StrReader;
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
-use std::ops::{Add, AddAssign, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, DivAssign, Mul, MulAssign, Rem, Sub, SubAssign};
 
 const DIGITS: usize = 9;
 const BASE: i32 = 10i32.pow(DIGITS as u32);
@@ -255,6 +255,20 @@ impl DivAssign<i32> for UBigInt {
                 break;
             }
         }
+    }
+}
+
+impl Rem<i32> for &UBigInt {
+    type Output = i32;
+
+    fn rem(self, rhs: i32) -> Self::Output {
+        let mut res = 0i64;
+        for &i in self.z.iter().rev() {
+            res *= BASE as i64;
+            res += i as i64;
+            res %= rhs as i64;
+        }
+        res as i32
     }
 }
 
