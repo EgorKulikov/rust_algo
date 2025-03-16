@@ -127,6 +127,18 @@ impl StringHash for SimpleHash {
     }
 }
 
+impl StringHash for &SimpleHash {
+    fn len(&self) -> usize {
+        self.hash.len() - 1
+    }
+
+    fn hash<R: RangeBounds<usize>>(&self, r: R) -> u64 {
+        let (from, to) = convert_bounds(r, self.len());
+        let res = (self.hash[to] - self.hash[from]) * inv_power(from);
+        res.val()
+    }
+}
+
 #[derive(Clone)]
 pub struct SubstrigHash<'s, BaseHash: StringHash + ?Sized> {
     base: &'s BaseHash,

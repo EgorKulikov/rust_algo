@@ -16,7 +16,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let mut ans = BitSet::new(2000);
     ans.set(0);
     for x in a {
-        ans.shift_or(x);
+        ans.shift_left_or(x);
     }
     for i in 0..1000 {
         if ans[1000 + i] {

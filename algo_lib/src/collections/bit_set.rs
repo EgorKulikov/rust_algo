@@ -96,7 +96,7 @@ impl BitSet {
         self.data.iter().map(|x| x.count_ones() as usize).sum()
     }
 
-    pub fn shift_or(&mut self, rhs: usize) {
+    pub fn shift_left_or(&mut self, rhs: usize) {
         if rhs == 0 || rhs >= self.len {
             return;
         }
@@ -113,6 +113,22 @@ impl BitSet {
         self.fix_last();
     }
 
+    pub fn shift_right_or(&mut self, rhs: usize) {
+        if rhs == 0 || rhs >= self.len {
+            return;
+        }
+        let small_shift = rhs & 63;
+        let big_shift = rhs >> 6;
+        for i in big_shift..self.data.len() {
+            if small_shift != 0 && i > big_shift {
+                let big = self.data[i] << (64 - small_shift);
+                self.data[i - 1 - big_shift] |= big;
+            }
+            let small = self.data[i] >> small_shift;
+            self.data[i - big_shift] |= small;
+        }
+    }
+
     pub fn not(&self) -> Self {
         let mut res = self.clone();
         for data in res.data.iter_mut() {
@@ -120,6 +136,10 @@ impl BitSet {
         }
         res.fix_last();
         res
+    }
+
+    pub fn raw(&self, i: usize) -> u64 {
+        self.data[i]
     }
 
     fn fix_last(&mut self) {
