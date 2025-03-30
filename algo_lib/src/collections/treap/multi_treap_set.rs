@@ -116,6 +116,7 @@ impl<T: Ord> MultiTreapSet<T> {
     }
 
     pub fn clear(&mut self) {
+        self.root.rebuild();
         self.root.detach();
     }
 

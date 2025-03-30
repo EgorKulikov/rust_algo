@@ -5,6 +5,7 @@ use crate::graph::strongly_connected_components::{
 use crate::graph::Graph;
 use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
 
+#[derive(Clone)]
 pub struct TwoSat {
     n: usize,
     graph: Graph<Edge<()>>,

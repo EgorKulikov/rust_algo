@@ -124,6 +124,7 @@ impl<T: Ord, V> TreapMap<T, V> {
     }
 
     pub fn clear(&mut self) {
+        self.root.rebuild();
         self.root.detach();
     }
 
