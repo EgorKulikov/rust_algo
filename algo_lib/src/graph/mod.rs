@@ -12,6 +12,7 @@ pub mod dfs_order;
 pub mod distances;
 pub mod edge_distances;
 pub mod edges;
+pub mod euler_path;
 pub mod fast_max_flow;
 pub mod flow_graph;
 pub mod flow_with_demand;

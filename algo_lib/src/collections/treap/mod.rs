@@ -848,6 +848,21 @@ impl<P: OrdPayload> Tree<P> {
         (res, NodeId(link))
     }
 
+    pub fn insert_or_update(&mut self, p: P) {
+        let mid = self.range(&p.key()..=&p.key());
+        mid.replace_with(|mid| {
+            if mid.is_empty() {
+                Tree::Whole {
+                    root: TreapNode::new(p),
+                }
+            } else {
+                Tree::Whole {
+                    root: TreapNode::new(P::union(mid.into_payload(), p)),
+                }
+            }
+        });
+    }
+
     pub fn insert(&mut self, p: P) -> Option<P> {
         self.insert_with_id(p).0
     }

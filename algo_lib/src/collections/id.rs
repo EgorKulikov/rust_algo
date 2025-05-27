@@ -1,6 +1,7 @@
 use crate::collections::fx_hash_map::FxHashMap;
 use std::hash::Hash;
 use std::mem::MaybeUninit;
+use std::ops::Deref;
 
 #[derive(Default, Clone)]
 pub struct Id<T> {
@@ -16,16 +17,8 @@ impl<T: Hash + Eq> Id<T> {
         }
     }
 
-    pub fn len(&self) -> usize {
-        self.next
-    }
-
     pub fn advance(&mut self, by: usize) {
         self.next += by;
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
     }
 
     pub fn get(&mut self, el: T) -> usize {
@@ -52,9 +45,13 @@ impl<T: Hash + Eq> Id<T> {
             self.get(b);
         }
     }
+}
 
-    pub fn iter(&self) -> impl Iterator<Item = (&T, &usize)> {
-        self.map.iter()
+impl<T> Deref for Id<T> {
+    type Target = FxHashMap<T, usize>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.map
     }
 }
 

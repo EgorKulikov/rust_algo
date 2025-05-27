@@ -214,7 +214,7 @@ macro_rules! mod_int {
 
         impl<V: Value<$t>> Readable for $name<V> {
             fn read(input: &mut Input) -> Self {
-                Self::new(input.read())
+                Self::new_signed(input.read())
             }
         }
 

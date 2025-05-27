@@ -6,7 +6,9 @@ use crate::misc::owned_cell::OwnedCell;
 use crate::numbers::num_traits::algebra::Zero;
 use std::cmp::Ordering;
 use std::fmt::Debug;
+use std::iter::Cloned;
 use std::ops::{Index, RangeBounds};
+use std::slice::Iter;
 
 pub struct SuffixArray<T> {
     str: Vec<T>,
@@ -203,4 +205,13 @@ impl<T> Index<usize> for SuffixArray<T> {
 
 fn ref_min(a: &u32, b: &u32) -> u32 {
     *a.min(b)
+}
+
+impl<'a, T> IntoIterator for &'a SuffixArray<T> {
+    type Item = usize;
+    type IntoIter = Cloned<Iter<'a, usize>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.sorted_suffixes.iter().cloned()
+    }
 }
