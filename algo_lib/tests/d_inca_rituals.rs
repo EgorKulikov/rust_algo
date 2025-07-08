@@ -9,7 +9,6 @@ use algo_lib::numbers::integer_sqrt::IntegerSqrt;
 use algo_lib::numbers::interpolation::Interpolation;
 use algo_lib::numbers::mod_int::ModInt7;
 use algo_lib::numbers::num_traits::algebra::{One, Zero};
-use algo_lib::numbers::num_traits::as_index::AsIndex;
 use algo_lib::numbers::number_ext::Power;
 
 type PreCalc = ();
@@ -23,7 +22,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         let mut values = vec![Mod::zero()];
         let mut last = Mod::zero();
         for j in 1..=i + 2 {
-            last += Mod::from_index(j).power(i + 1);
+            last += Mod::from(j).power(i + 1);
             values.push(last);
         }
         pw.push(Interpolation::new(values));

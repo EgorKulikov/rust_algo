@@ -6,7 +6,6 @@ use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::{TaskType, TestType};
 use algo_lib::numbers::mod_int::ModIntF;
 use algo_lib::numbers::num_traits::algebra::{One, Zero};
-use algo_lib::numbers::num_traits::as_index::AsIndex;
 
 type PreCalc = ();
 
@@ -47,7 +46,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         }
 
         fn accumulate(&mut self, value: &Self) {
-            self.sum = self.sum * value.a + value.b * Mod::from_index(self.len);
+            self.sum = self.sum * value.a + value.b * self.len;
             self.b = self.b * value.a + value.b;
             self.a *= value.a;
         }

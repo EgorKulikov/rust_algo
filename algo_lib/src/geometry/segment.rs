@@ -40,6 +40,7 @@ impl<T: Base + Ord> Segment<T> {
     }
 }
 
+#[derive(PartialEq)]
 pub enum SegmentIntersectionResult<T> {
     None,
     Point(Point<T>),

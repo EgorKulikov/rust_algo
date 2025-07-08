@@ -1,40 +1,53 @@
-use std::collections::VecDeque;
-
 pub struct SlidingWindow<T, F> {
+    comb: F,
     size: usize,
-    data: VecDeque<(usize, T)>,
-    last: usize,
-    key: F,
+    window: Vec<T>,
+    left_cum: Vec<T>,
+    right_cum: Vec<T>,
 }
 
-impl<T, R: Ord, F: FnMut(&T) -> R> SlidingWindow<T, F> {
-    pub fn new(size: usize, key: F) -> Self {
+impl<T: Copy, F: Fn(T, T) -> T> SlidingWindow<T, F> {
+    pub fn new(size: usize, comb: F) -> Self {
         Self {
+            comb,
             size,
-            data: VecDeque::new(),
-            last: 0,
-            key,
+            window: Vec::with_capacity(size),
+            left_cum: Vec::with_capacity(size),
+            right_cum: Vec::with_capacity(size),
         }
     }
 
     pub fn push(&mut self, val: T) {
-        while let Some((_, last)) = self.data.back() {
-            if (self.key)(last) <= (self.key)(&val) {
-                self.data.pop_back();
-            } else {
-                break;
+        self.window.push(val);
+        self.right_cum.push(if self.right_cum.is_empty() {
+            val
+        } else {
+            (self.comb)(*self.right_cum.last().unwrap(), val)
+        });
+        if self.window.len() == self.size {
+            self.left_cum.clear();
+            self.left_cum.push(self.window[self.size - 1]);
+            for i in 1..self.size {
+                self.left_cum.push((self.comb)(
+                    self.window[self.size - 1 - i],
+                    self.left_cum[i - 1],
+                ));
             }
+            self.window.clear();
+            self.right_cum.clear();
         }
-        self.data.push_back((self.last, val));
-        if let Some((id, _)) = self.data.front() {
-            if *id + self.size == self.last {
-                self.data.pop_front();
-            }
-        }
-        self.last += 1;
     }
 
-    pub fn get(&self) -> Option<&T> {
-        self.data.front().map(|(_, val)| val)
+    pub fn get(&self) -> T {
+        if self.left_cum.is_empty() {
+            *self.right_cum.last().unwrap()
+        } else if self.right_cum.is_empty() {
+            *self.left_cum.last().unwrap()
+        } else {
+            (self.comb)(
+                self.left_cum[self.size - self.window.len() - 1],
+                *self.right_cum.last().unwrap(),
+            )
+        }
     }
 }

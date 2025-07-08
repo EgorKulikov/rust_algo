@@ -12,7 +12,6 @@ use algo_lib::misc::test_type::TestType;
 use algo_lib::numbers::matrix::Matrix;
 use algo_lib::numbers::mod_int::ModIntF;
 use algo_lib::numbers::num_traits::algebra::One;
-use algo_lib::numbers::num_traits::as_index::AsIndex;
 
 type PreCalc = ();
 
@@ -27,7 +26,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let mat1 = Matrix::zero(2 * n, 2 * n).do_with(|mat| {
         for i in 0..n {
             mat[(i + n, i)] = Mod::one();
-            mat[(i, i + n)] = -Mod::from_index(graph[i].len()) + Mod::one();
+            mat[(i, i + n)] = -Mod::from(graph[i].len()) + 1;
             for e in &graph[i] {
                 mat[(i, e.to())] = Mod::one();
             }
@@ -36,7 +35,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let mat2 = Matrix::zero(2 * n, 2 * n).do_with(|mat| {
         for i in 0..n {
             mat[(i + n, i)] = Mod::one();
-            mat[(i, i + n)] = -Mod::from_index(graph[i].len());
+            mat[(i, i + n)] = -Mod::from(graph[i].len());
             for e in &graph[i] {
                 mat[(i, e.to())] = Mod::one();
             }

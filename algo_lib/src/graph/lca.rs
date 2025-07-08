@@ -2,6 +2,7 @@ use crate::collections::md_arr::arr2d::Arr2d;
 use crate::graph::edges::edge_trait::BidirectionalEdgeTrait;
 use crate::graph::Graph;
 use crate::misc::owned_cell::OwnedCell;
+use crate::numbers::num_traits::bit_ops::BitOps;
 
 pub struct LCA {
     position: Vec<u32>,
@@ -57,19 +58,34 @@ impl LCA {
         unsafe { self.ancestors.as_ref().as_ref().unwrap().d1() }
     }
 
-    pub fn ancestor(&self, level: usize, vert: usize) -> Option<usize> {
+    pub fn nth_ancestor(&self, mut vert: usize, index: usize) -> Option<usize> {
         self.build_steps();
         unsafe {
-            if level >= self.ancestors.as_ref().as_ref().unwrap().d1() {
-                None
-            } else {
-                let pred = self.ancestors.as_ref().as_ref().unwrap()[(level, vert)];
-                if pred == -1 {
-                    None
-                } else {
-                    Some(pred as usize)
+            let height = self.ancestors.as_ref().as_ref().unwrap().d1();
+            if index >= (1 << height) {
+                return None;
+            }
+            for i in 0..height {
+                if index.is_set(i) {
+                    let pred = self.ancestors.as_ref().as_ref().unwrap()[(i, vert)];
+                    if pred == -1 {
+                        return None;
+                    }
+                    vert = pred as usize;
                 }
             }
+            Some(vert)
+        }
+    }
+
+    pub fn nth_vert_on_path(&self, from: usize, to: usize, index: usize) -> usize {
+        let len = self.path_length(from, to);
+        assert!(index <= len);
+        let lca = self.lca(from, to);
+        if index <= self.level(from) - self.level(lca) {
+            self.nth_ancestor(from, index).unwrap()
+        } else {
+            self.nth_ancestor(to, len - index).unwrap()
         }
     }
 

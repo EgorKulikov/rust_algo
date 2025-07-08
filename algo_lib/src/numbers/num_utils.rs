@@ -1,15 +1,14 @@
 use crate::numbers::num_traits::algebra::{
     AdditionMonoid, IntegerSemiRingWithSub, MultiplicationMonoid,
 };
-use crate::numbers::num_traits::as_index::AsIndex;
 
-pub fn factorials<T: MultiplicationMonoid + Copy + AsIndex>(len: usize) -> Vec<T> {
+pub fn factorials<T: MultiplicationMonoid + Copy + From<usize>>(len: usize) -> Vec<T> {
     let mut res = Vec::new();
     if len > 0 {
         res.push(T::one());
     }
     while res.len() < len {
-        res.push((*res.last().unwrap()) * T::from_index(res.len()));
+        res.push((*res.last().unwrap()) * T::from(res.len()));
     }
     res
 }
@@ -43,10 +42,10 @@ impl<T: MultiplicationMonoid + Copy> Powers<T> {
     }
 }
 
-pub fn factorial<T: MultiplicationMonoid + AsIndex>(n: usize) -> T {
+pub fn factorial<T: MultiplicationMonoid + From<usize>>(n: usize) -> T {
     let mut res = T::one();
     for i in 1..=n {
-        res *= T::from_index(i);
+        res *= T::from(i);
     }
     res
 }

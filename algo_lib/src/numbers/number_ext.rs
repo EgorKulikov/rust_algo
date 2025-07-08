@@ -1,5 +1,4 @@
 use crate::numbers::num_traits::algebra::{IntegerSemiRing, MultiplicationMonoid};
-use crate::numbers::num_traits::as_index::AsIndex;
 use std::ops::Mul;
 
 pub trait Power {
@@ -22,8 +21,8 @@ impl<S: MultiplicationMonoid + Copy> Power for S {
     }
 }
 
-pub fn num_digs<S: IntegerSemiRing + AsIndex + Copy>(mut copy: S) -> usize {
-    let ten = S::from_index(10);
+pub fn num_digs<S: IntegerSemiRing + Copy>(mut copy: S) -> usize {
+    let ten = S::ten();
     let mut res = 0;
     while copy != S::zero() {
         copy /= ten;
@@ -32,8 +31,8 @@ pub fn num_digs<S: IntegerSemiRing + AsIndex + Copy>(mut copy: S) -> usize {
     res
 }
 
-pub fn sum_digs<S: IntegerSemiRing + AsIndex + Copy>(mut copy: S) -> S {
-    let ten = S::from_index(10);
+pub fn sum_digs<S: IntegerSemiRing + Copy>(mut copy: S) -> S {
+    let ten = S::ten();
     let mut res = S::zero();
     while copy != S::zero() {
         res += copy % ten;
@@ -42,8 +41,8 @@ pub fn sum_digs<S: IntegerSemiRing + AsIndex + Copy>(mut copy: S) -> S {
     res
 }
 
-pub fn digits<S: IntegerSemiRing + AsIndex + Copy>(mut copy: S) -> impl Iterator<Item = S> {
-    let ten = S::from_index(10);
+pub fn digits<S: IntegerSemiRing + Copy>(mut copy: S) -> impl Iterator<Item = S> {
+    let ten = S::ten();
     std::iter::from_fn(move || {
         if copy == S::zero() {
             None

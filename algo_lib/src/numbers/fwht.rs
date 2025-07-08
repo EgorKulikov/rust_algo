@@ -1,11 +1,10 @@
 use crate::numbers::num_traits::algebra::IntegerSemiRingWithSub;
-use crate::numbers::num_traits::as_index::AsIndex;
 
 pub trait FWHT {
     fn fwht(&mut self, inverse: bool);
 }
 
-impl<T: IntegerSemiRingWithSub + AsIndex + Copy> FWHT for [T] {
+impl<T: IntegerSemiRingWithSub + From<usize> + Copy> FWHT for [T] {
     fn fwht(&mut self, inverse: bool) {
         assert!(!self.is_empty());
         let n = self.len();
@@ -23,7 +22,7 @@ impl<T: IntegerSemiRingWithSub + AsIndex + Copy> FWHT for [T] {
 
         if inverse {
             for p in self.iter_mut() {
-                *p /= T::from_index(n);
+                *p /= T::from(n);
             }
         }
     }

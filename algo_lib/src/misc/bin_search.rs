@@ -1,7 +1,7 @@
 use crate::numbers::num_traits::algebra::IntegerSemiRingWithSub;
 use crate::numbers::real::Real;
 
-pub fn search_last_false<T: Copy + PartialOrd + IntegerSemiRingWithSub>(
+pub fn last_false<T: Copy + PartialOrd + IntegerSemiRingWithSub>(
     mut left: T,
     mut right: T,
     mut pred: impl FnMut(T) -> bool,
@@ -20,7 +20,7 @@ pub fn search_last_false<T: Copy + PartialOrd + IntegerSemiRingWithSub>(
     left
 }
 
-pub fn search_first_true<T: Copy + PartialOrd + IntegerSemiRingWithSub>(
+pub fn first_true<T: Copy + PartialOrd + IntegerSemiRingWithSub>(
     mut left: T,
     mut right: T,
     mut pred: impl FnMut(T) -> bool,
@@ -39,7 +39,11 @@ pub fn search_first_true<T: Copy + PartialOrd + IntegerSemiRingWithSub>(
     left
 }
 
-pub fn search_real(mut left: Real, mut right: Real, mut pred: impl FnMut(Real) -> bool) -> Real {
+pub fn bin_search_real(
+    mut left: Real,
+    mut right: Real,
+    mut pred: impl FnMut(Real) -> bool,
+) -> Real {
     assert!(left <= right);
     for _ in 0..100 {
         let mid = (left + right) / 2;

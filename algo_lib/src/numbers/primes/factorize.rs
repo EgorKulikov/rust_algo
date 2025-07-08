@@ -1,6 +1,5 @@
 use crate::collections::vec_ext::sorted::Sorted;
 use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
-use crate::numbers::num_traits::as_index::AsIndex;
 use crate::numbers::num_traits::primitive::Primitive;
 use crate::numbers::primes::prime::find_divisor;
 use crate::numbers::primes::sieve::divisor_table;
@@ -109,8 +108,8 @@ pub fn all_divisors(n: usize, sorted: bool) -> Vec<Vec<usize>> {
     for (i, p) in d.into_iter().enumerate().skip(2) {
         let mut q = 0;
         let mut c = i;
-        while c % p.to_index() == 0 {
-            c /= p.to_index();
+        while c % p == 0 {
+            c /= p;
             q += 1;
         }
         let mut cur = Vec::with_capacity(res[c].len() * (q + 1));

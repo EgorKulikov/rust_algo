@@ -71,7 +71,6 @@ mod tester {
     use algo_lib::io::output::Output;
     use algo_lib::misc::random::Random;
     use tester::classic::default_checker;
-    use tester::classic::EPS;
     use tester::interactive::std_interactor;
     use tester::test_set::GeneratedTestSet;
     use tester::Tester;
@@ -128,7 +127,7 @@ mod tester {
 
     pub(crate) fn run_tests() -> bool {
         let path = "./g_fine_triplets";
-        let tl = 3000;
+        let tl = 4000;
         let tester = match TASK_TYPE {
             crate::TaskType::Interactive => {
                 Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)

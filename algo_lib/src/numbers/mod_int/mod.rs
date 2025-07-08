@@ -4,7 +4,6 @@ use crate::io::output::{Output, Writable};
 use crate::misc::value::Value;
 use crate::numbers::gcd::extended_gcd;
 use crate::numbers::num_traits::algebra::{Field, One, Zero};
-use crate::numbers::num_traits::as_index::AsIndex;
 use crate::numbers::num_traits::invertible::Invertible;
 use crate::{value, when};
 use std::fmt::{Display, Formatter};
@@ -16,8 +15,7 @@ pub mod convolution;
 pub mod mod_utils;
 pub mod prime_fft;
 
-pub trait BaseModInt<T>: Field + Copy {
-    fn from(v: T) -> Self;
+pub trait BaseModInt<T>: Field + Copy + From<T> + From<usize> + Into<usize> {
     fn module() -> T;
     fn value(&self) -> T;
 }
@@ -115,10 +113,6 @@ macro_rules! mod_int {
         }
 
         impl<V: Value<$t>> BaseModInt<$t> for $name<V> {
-            fn from(v: $t) -> Self {
-                Self::new(v)
-            }
-
             fn module() -> $t {
                 V::val()
             }
@@ -134,63 +128,80 @@ macro_rules! mod_int {
             }
         }
 
-        impl<V: Value<$t>> AddAssign for $name<V> {
-            fn add_assign(&mut self, rhs: Self) {
-                self.n = unsafe { Self::maybe_subtract_mod(self.n + rhs.n) };
+        impl<V: Value<$t>> From<$s> for $name<V> {
+            fn from(n: $s) -> Self {
+                Self::new_signed(n)
             }
         }
 
-        impl<V: Value<$t>> Add for $name<V> {
+        impl<V: Value<$t>> From<usize> for $name<V> {
+            fn from(idx: usize) -> Self {
+                let v = idx as $w;
+                if v >= V::val() as $w {
+                    Self::new_wide(v)
+                } else {
+                    unsafe { Self::unchecked_new(v as $t) }
+                }
+            }
+        }
+
+        impl<V: Value<$t>, T: Into<$name<V>>> AddAssign<T> for $name<V> {
+            fn add_assign(&mut self, rhs: T) {
+                self.n = unsafe { Self::maybe_subtract_mod(self.n + rhs.into().n) };
+            }
+        }
+
+        impl<V: Value<$t>, T: Into<$name<V>>> Add<T> for $name<V> {
             type Output = Self;
 
-            fn add(mut self, rhs: Self) -> Self::Output {
-                self += rhs;
+            fn add(mut self, rhs: T) -> Self::Output {
+                self += rhs.into();
                 self
             }
         }
 
-        impl<V: Value<$t>> SubAssign for $name<V> {
-            fn sub_assign(&mut self, rhs: Self) {
-                self.n = unsafe { Self::maybe_subtract_mod(self.n + V::val() - rhs.n) };
+        impl<V: Value<$t>, T: Into<$name<V>>> SubAssign<T> for $name<V> {
+            fn sub_assign(&mut self, rhs: T) {
+                self.n = unsafe { Self::maybe_subtract_mod(self.n + V::val() - rhs.into().n) };
             }
         }
 
-        impl<V: Value<$t>> Sub for $name<V> {
+        impl<V: Value<$t>, T: Into<$name<V>>> Sub<T> for $name<V> {
             type Output = Self;
 
-            fn sub(mut self, rhs: Self) -> Self::Output {
-                self -= rhs;
+            fn sub(mut self, rhs: T) -> Self::Output {
+                self -= rhs.into();
                 self
             }
         }
 
-        impl<V: Value<$t>> MulAssign for $name<V> {
-            fn mul_assign(&mut self, rhs: Self) {
-                self.n = ((self.n as $w) * (rhs.n as $w) % (V::val() as $w)) as $t;
+        impl<V: Value<$t>, T: Into<$name<V>>> MulAssign<T> for $name<V> {
+            fn mul_assign(&mut self, rhs: T) {
+                self.n = ((self.n as $w) * (rhs.into().n as $w) % (V::val() as $w)) as $t;
             }
         }
 
-        impl<V: Value<$t>> Mul for $name<V> {
+        impl<V: Value<$t>, T: Into<$name<V>>> Mul<T> for $name<V> {
             type Output = Self;
 
-            fn mul(mut self, rhs: Self) -> Self::Output {
-                self *= rhs;
+            fn mul(mut self, rhs: T) -> Self::Output {
+                self *= rhs.into();
                 self
             }
         }
 
-        impl<V: Value<$t>> DivAssign for $name<V> {
+        impl<V: Value<$t>, T: Into<$name<V>>> DivAssign<T> for $name<V> {
             #[allow(clippy::suspicious_op_assign_impl)]
-            fn div_assign(&mut self, rhs: Self) {
-                *self *= rhs.inv().unwrap();
+            fn div_assign(&mut self, rhs: T) {
+                *self *= rhs.into().inv().unwrap();
             }
         }
 
-        impl<V: Value<$t>> Div for $name<V> {
+        impl<V: Value<$t>, T: Into<$name<V>>> Div<T> for $name<V> {
             type Output = Self;
 
-            fn div(mut self, rhs: Self) -> Self::Output {
-                self /= rhs;
+            fn div(mut self, rhs: T) -> Self::Output {
+                self /= rhs.into();
                 self
             }
         }
@@ -259,18 +270,9 @@ macro_rules! mod_int {
             }
         }
 
-        impl<V: Value<$t>> AsIndex for $name<V> {
-            fn from_index(idx: usize) -> Self {
-                let v = idx as $w;
-                if v >= V::val() as $w {
-                    Self::new_wide(v)
-                } else {
-                    unsafe { Self::unchecked_new(v as $t) }
-                }
-            }
-
-            fn to_index(self) -> usize {
-                self.n.to_index()
+        impl<V: Value<$t>> From<$name<V>> for usize {
+            fn from(val: $name<V>) -> usize {
+                val.n as usize
             }
         }
     };

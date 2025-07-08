@@ -1,5 +1,4 @@
 pub mod algebra;
-pub mod as_index;
 pub mod assign_to_op;
 pub mod bit_ops;
 pub mod invertible;

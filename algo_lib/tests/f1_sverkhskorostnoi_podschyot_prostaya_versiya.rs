@@ -8,7 +8,6 @@ use algo_lib::misc::recursive_function::Callable2;
 use algo_lib::misc::test_type::{TaskType, TestType};
 use algo_lib::numbers::mod_int::ModInt;
 use algo_lib::numbers::num_traits::algebra::{One, Zero};
-use algo_lib::numbers::num_traits::as_index::AsIndex;
 use algo_lib::numbers::number_ext::Power;
 
 type PreCalc = ();
@@ -29,9 +28,9 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             } else if len == n {
                 (Mod::one(), Mod::one(), Mod::one())
             } else {
-                let started_right = mem.call(max, len + 1).2 * Mod::from_index(n + 1 - max)
-                    + mem.call(max + 1, len).0;
-                let started_left = mem.call(max, len + 1).1 * Mod::from_index(n + 1 - max)
+                let started_right =
+                    mem.call(max, len + 1).2 * (n + 1 - max) + mem.call(max + 1, len).0;
+                let started_left = mem.call(max, len + 1).1 * (n + 1 - max)
                     + mem.call(max, len + 1).2
                     + mem.call(max + 1, len).0;
                 let not_started =
@@ -45,16 +44,16 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         let mut cur = Mod::one();
         for j in 0..i {
             let dist = j.min(i - j - 1);
-            cur *= Mod::from_index(n + 1 - (i - dist));
+            cur *= n + 1 - (i - dist);
         }
         cur *= mem.call(i, i).0;
         for j in 0..n - i {
-            cur -= ans[j] * Mod::from_index(n - i + 1 - j);
+            cur -= ans[j] * (n - i + 1 - j);
         }
         ans.push(cur);
         total += cur;
     }
-    ans.push(Mod::from_index(n).power(n) - total);
+    ans.push(Mod::from(n).power(n) - total);
     ans.reverse();
     out.print_line(ans);
 }

@@ -1,12 +1,8 @@
 use crate::numbers::num_traits::algebra::IntegerSemiRing;
-use crate::numbers::num_traits::as_index::AsIndex;
 use crate::numbers::num_traits::ord::MinMax;
 
-pub fn iterate<T: Copy + IntegerSemiRing + Ord + AsIndex + MinMax>(
-    from: T,
-    to: T,
-) -> Vec<(T, usize, T)> {
-    iterate_with_base(from, to, T::from_index(10))
+pub fn iterate<T: Copy + IntegerSemiRing + Ord + MinMax>(from: T, to: T) -> Vec<(T, usize, T)> {
+    iterate_with_base(from, to, T::ten())
 }
 
 pub fn iterate_with_base<T: Copy + IntegerSemiRing + Ord + MinMax>(

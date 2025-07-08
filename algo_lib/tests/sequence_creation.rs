@@ -10,7 +10,6 @@ use algo_lib::misc::test_type::TaskType;
 use algo_lib::misc::test_type::TestType;
 use algo_lib::numbers::mod_int::ModInt7;
 use algo_lib::numbers::num_traits::algebra::One;
-use algo_lib::numbers::num_traits::as_index::AsIndex;
 
 type PreCalc = ();
 
@@ -70,7 +69,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                 if x != y {
                     ans /= Mod::new(2);
                 }
-                ans *= Mod::from_index(etf.component_size(x));
+                ans *= etf.component_size(x);
             } else if let Some((p, q)) = marker {
                 etf.remove_edge(x, y);
                 let xp = etf.is_connected(x, p);
@@ -78,24 +77,24 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                     etf.add_edge(p, q, Node::default(), Node::default());
                     etf.with_component_mut(x, |node| node.0 = None);
                     ans /= Mod::new(2);
-                    ans *= Mod::from_index(etf.component_size(x));
+                    ans *= etf.component_size(x);
                 } else if xp {
                     etf.with_component_mut(y, |node| node.0 = None);
-                    ans *= Mod::from_index(etf.component_size(y));
+                    ans *= etf.component_size(y);
                 } else {
                     etf.with_component_mut(x, |node| node.0 = None);
-                    ans *= Mod::from_index(etf.component_size(x));
+                    ans *= etf.component_size(x);
                 }
             } else {
-                ans /= Mod::from_index(etf.component_size(x));
+                ans /= etf.component_size(x);
                 etf.remove_edge(x, y);
-                ans *= Mod::from_index(etf.component_size(x));
-                ans *= Mod::from_index(etf.component_size(y));
+                ans *= etf.component_size(x);
+                ans *= etf.component_size(y);
             }
         }
 
         if etf.is_connected(aa, bb) {
-            ans /= Mod::from_index(etf.component_size(aa));
+            ans /= etf.component_size(aa);
             if aa != bb {
                 ans *= Mod::new(2);
             }
@@ -108,14 +107,14 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                     ans /= Mod::new(2);
                 }
             } else {
-                ans /= Mod::from_index(etf.component_size(aa));
+                ans /= etf.component_size(aa);
             }
             if m2.is_some() {
                 if m2.unwrap().0 != m2.unwrap().1 {
                     ans /= Mod::new(2);
                 }
             } else {
-                ans /= Mod::from_index(etf.component_size(bb));
+                ans /= etf.component_size(bb);
             }
             let marker = m1.or(m2);
             etf.add_edge(aa, bb, Node::default(), Node::default());
@@ -125,7 +124,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                     ans *= Mod::new(2);
                 }
             } else {
-                ans *= Mod::from_index(etf.component_size(aa));
+                ans *= etf.component_size(aa);
             }
         }
     }
@@ -143,7 +142,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             if x != y {
                 ans /= Mod::new(2);
             }
-            ans *= Mod::from_index(etf.component_size(x));
+            ans *= etf.component_size(x);
         } else if let Some((p, q)) = marker {
             etf.remove_edge(x, y);
             let xp = etf.is_connected(x, p);
@@ -151,19 +150,19 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                 etf.add_edge(p, q, Node::default(), Node::default());
                 etf.with_component_mut(x, |node| node.0 = None);
                 ans /= Mod::new(2);
-                ans *= Mod::from_index(etf.component_size(x));
+                ans *= etf.component_size(x);
             } else if xp {
                 etf.with_component_mut(y, |node| node.0 = None);
-                ans *= Mod::from_index(etf.component_size(y));
+                ans *= etf.component_size(y);
             } else {
                 etf.with_component_mut(x, |node| node.0 = None);
-                ans *= Mod::from_index(etf.component_size(x));
+                ans *= etf.component_size(x);
             }
         } else {
-            ans /= Mod::from_index(etf.component_size(x));
+            ans /= etf.component_size(x);
             etf.remove_edge(x, y);
-            ans *= Mod::from_index(etf.component_size(x));
-            ans *= Mod::from_index(etf.component_size(y));
+            ans *= etf.component_size(x);
+            ans *= etf.component_size(y);
         }
     }
     out.print_line(res);
@@ -209,7 +208,6 @@ mod tester {
     use algo_lib::io::output::Output;
     use algo_lib::misc::random::Random;
     use tester::classic::default_checker;
-    use tester::classic::EPS;
     use tester::interactive::std_interactor;
     use tester::test_set::GeneratedTestSet;
     use tester::Tester;

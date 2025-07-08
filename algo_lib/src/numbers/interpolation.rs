@@ -1,16 +1,17 @@
 use crate::numbers::mod_int::mod_utils::inverse_factorials;
 use crate::numbers::mod_int::BaseModInt;
-use crate::numbers::num_traits::algebra::IntegerMultiplicationMonoid;
-use crate::numbers::num_traits::as_index::AsIndex;
+use crate::numbers::num_traits::algebra::IntegerSemiRing;
 use std::marker::PhantomData;
 
-pub struct Interpolation<T, Mod: BaseModInt<T> + AsIndex> {
+pub struct Interpolation<T, Mod: BaseModInt<T> + From<usize> + Into<usize>> {
     values: Vec<Mod>,
     coef: Vec<Mod>,
     phantom_data: PhantomData<T>,
 }
 
-impl<T: AsIndex + IntegerMultiplicationMonoid, Mod: BaseModInt<T> + AsIndex> Interpolation<T, Mod> {
+impl<T: IntegerSemiRing + Copy, Mod: BaseModInt<T> + From<usize> + Into<usize>>
+    Interpolation<T, Mod>
+{
     pub fn new(values: Vec<Mod>) -> Self {
         let n = values.len();
         Self::with_inverse_factorials(values, inverse_factorials(n).as_slice())
@@ -38,17 +39,17 @@ impl<T: AsIndex + IntegerMultiplicationMonoid, Mod: BaseModInt<T> + AsIndex> Int
     }
 
     pub fn calculate(&self, x: Mod) -> Mod {
-        let i = x.to_index();
+        let i = x.into();
         if i < self.values.len() {
             return self.values[i];
         }
         let mut product = Mod::one();
         for j in 0..self.values.len() {
-            product *= x - Mod::from_index(j);
+            product *= x - Mod::from(j);
         }
         let mut res = Mod::zero();
         for (i, &c) in self.coef.iter().enumerate() {
-            res += c * (x - Mod::from_index(i)).inv().unwrap();
+            res += c * (x - Mod::from(i)).inv().unwrap();
         }
         res * product
     }

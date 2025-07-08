@@ -1,10 +1,9 @@
 use crate::numbers::mod_int::{BaseModInt, ModIntF};
-use crate::numbers::num_traits::algebra::IntegerMultiplicationMonoid;
-use crate::numbers::num_traits::as_index::AsIndex;
+use crate::numbers::num_traits::algebra::IntegerSemiRing;
 use crate::numbers::num_utils::{factorial, factorials};
 use std::marker::PhantomData;
 
-pub fn inverses<T: AsIndex + IntegerMultiplicationMonoid, M: BaseModInt<T>>(len: usize) -> Vec<M> {
+pub fn inverses<T: IntegerSemiRing + Copy, M: BaseModInt<T>>(len: usize) -> Vec<M> {
     let mut res = Vec::new();
     if len > 0 {
         res.push(M::zero());
@@ -12,18 +11,15 @@ pub fn inverses<T: AsIndex + IntegerMultiplicationMonoid, M: BaseModInt<T>>(len:
     if len > 1 {
         res.push(M::one());
     }
+    let mut res_len = T::one() + T::one();
     while res.len() < len {
-        res.push(
-            res[M::module().to_index() % res.len()]
-                * (-M::from(M::module() / (T::from_index(res.len())))),
-        );
+        res.push(res[M::from(M::module() % res_len).into()] * (-M::from(M::module() / res_len)));
+        res_len += T::one();
     }
     res
 }
 
-pub fn inverse_factorials<T: AsIndex + IntegerMultiplicationMonoid, M: BaseModInt<T>>(
-    len: usize,
-) -> Vec<M> {
+pub fn inverse_factorials<T: IntegerSemiRing + Copy, M: BaseModInt<T>>(len: usize) -> Vec<M> {
     let mut res = inverses(len);
     if len > 0 {
         res[0] = M::one();
@@ -35,13 +31,13 @@ pub fn inverse_factorials<T: AsIndex + IntegerMultiplicationMonoid, M: BaseModIn
     res
 }
 
-pub struct Combinations<M: BaseModInt<T> = ModIntF, T: AsIndex = u32> {
+pub struct Combinations<M: BaseModInt<T> + From<usize> = ModIntF, T = u32> {
     fact: Vec<M>,
     inv_fact: Vec<M>,
     phantom_data: PhantomData<T>,
 }
 
-impl<T: AsIndex + IntegerMultiplicationMonoid, M: BaseModInt<T> + AsIndex> Combinations<M, T> {
+impl<T: IntegerSemiRing + Copy, M: BaseModInt<T> + From<usize>> Combinations<M, T> {
     pub fn new(len: usize) -> Self {
         Self {
             fact: factorials(len),
@@ -75,7 +71,7 @@ impl<T: AsIndex + IntegerMultiplicationMonoid, M: BaseModInt<T> + AsIndex> Combi
     }
 }
 
-pub fn combinations<T, M: BaseModInt<T> + AsIndex>(n: usize, mut k: usize) -> M {
+pub fn combinations<T, M: BaseModInt<T>>(n: usize, mut k: usize) -> M {
     if k > n {
         return M::zero();
     }
@@ -84,7 +80,7 @@ pub fn combinations<T, M: BaseModInt<T> + AsIndex>(n: usize, mut k: usize) -> M 
     }
     let mut res = M::one();
     for i in n - k + 1..=n {
-        res *= M::from_index(i);
+        res *= M::from(i);
     }
     res /= factorial(k);
     res

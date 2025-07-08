@@ -23,7 +23,7 @@ impl<M: BaseModInt<u32>> PrimeFFT<M> {
             exp = root_power;
             root_power += root_power;
         }
-        let mut i = M::from(2);
+        let mut i = M::from(2u32);
         let rem = (M::module() - 1) / root_power;
         loop {
             let j = i.power(rem);

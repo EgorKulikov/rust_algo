@@ -59,7 +59,20 @@ pub trait Ring: SemiRing + AdditionGroup {}
 
 impl<T: SemiRing + AdditionGroup> Ring for T {}
 
-pub trait IntegerSemiRing: SemiRing + IntegerMultiplicationMonoid {}
+pub trait IntegerSemiRing: SemiRing + IntegerMultiplicationMonoid {
+    fn ten() -> Self {
+        Self::one()
+            + Self::one()
+            + Self::one()
+            + Self::one()
+            + Self::one()
+            + Self::one()
+            + Self::one()
+            + Self::one()
+            + Self::one()
+            + Self::one()
+    }
+}
 
 impl<T: SemiRing + IntegerMultiplicationMonoid> IntegerSemiRing for T {}
 

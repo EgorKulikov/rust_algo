@@ -15,7 +15,6 @@ use algo_lib::misc::test_type::TaskType;
 use algo_lib::misc::test_type::TestType;
 use algo_lib::numbers::mod_int::ModIntF;
 use algo_lib::numbers::num_traits::algebra::Zero;
-use algo_lib::numbers::num_traits::as_index::AsIndex;
 use algo_lib::numbers::num_traits::invertible::Invertible;
 
 type PreCalc = ();
@@ -43,18 +42,15 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let mut total_add = vec![Mod::zero(); n];
     let mut pushed = vec![DefaultHashMap::new(Mod::zero()); n];
 
-    let inv = Mod::from_index(n).inv().unwrap();
+    let inv = Mod::from(n).inv().unwrap();
     for _ in 0..q {
         let t = input.read_int();
         match t {
             1 => {
                 let v = input.read_size() - 1;
                 let d: Mod = input.read();
-                st.update(
-                    dfs_order.position[v]..=dfs_order.position[v],
-                    &Node(d * Mod::from_index(n)),
-                );
-                let outer = d * Mod::from_index(dfs_order.len(v));
+                st.update(dfs_order.position[v]..=dfs_order.position[v], &Node(d * n));
+                let outer = d * dfs_order.len(v);
                 st.update(..dfs_order.position[v], &Node(outer));
                 st.update(dfs_order.end[v].., &Node(outer));
                 total_add[v] += d;
@@ -64,7 +60,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                     let child = hl.paths[id][pos + 1];
                     st.update(
                         dfs_order.subtree(child),
-                        &Node(d * Mod::from_index(n - dfs_order.len(child))),
+                        &Node(d * (n - dfs_order.len(child))),
                     );
                 }
             }
@@ -79,7 +75,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                     pushed[parent][vert] += delta;
                     st.update(
                         dfs_order.subtree(vert),
-                        &Node(delta * Mod::from_index(n - dfs_order.len(vert))),
+                        &Node(delta * (n - dfs_order.len(vert))),
                     );
                 }
                 out.print_line(st.point_query(dfs_order.position[v]).0 * inv);
@@ -129,7 +125,6 @@ mod tester {
     use algo_lib::io::output::Output;
     use algo_lib::misc::random::Random;
     use tester::classic::default_checker;
-    use tester::classic::EPS;
     use tester::interactive::std_interactor;
     use tester::test_set::GeneratedTestSet;
     use tester::Tester;
