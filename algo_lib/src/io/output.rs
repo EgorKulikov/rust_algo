@@ -1,6 +1,6 @@
 use std::cmp::Reverse;
 use std::fs::File;
-use std::io::{Stdout, Write};
+use std::io::{StdoutLock, Write};
 
 #[derive(Copy, Clone)]
 pub enum BoolOutput {
@@ -35,7 +35,7 @@ impl BoolOutput {
 }
 
 enum OutputDest<'s> {
-    Stdout(Stdout),
+    Stdout(StdoutLock<'static>),
     File(File),
     Buf(&'s mut Vec<u8>),
     Delegate(Box<dyn Write + 's>),
@@ -73,7 +73,7 @@ impl<'s> Output<'s> {
 
 impl Output<'static> {
     pub fn stdout() -> Self {
-        Self::new(OutputDest::Stdout(std::io::stdout()))
+        Self::new(OutputDest::Stdout(std::io::stdout().lock()))
     }
 
     pub fn file(file: File) -> Self {

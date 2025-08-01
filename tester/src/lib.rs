@@ -157,7 +157,7 @@ impl Tester {
                         File::create(in_file).unwrap().write_all(&input).unwrap();
                         if let Some(expected) = expected {
                             File::create(format!(
-                                "tasks/{}/tests/.failed_{:03}.out",
+                                "tasks/{}/tests/.failed_{:03}.ans",
                                 self.task_folder, i
                             ))
                             .unwrap()

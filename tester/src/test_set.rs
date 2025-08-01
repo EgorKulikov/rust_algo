@@ -79,9 +79,9 @@ impl TestSet for SampleTests {
 
     fn output(&self, test: &Self::TestId, _input: &[u8]) -> Option<Vec<u8>> {
         #[cfg(feature = "test")]
-        let file = format!("tests/{}/{}.out", self.task_folder, test);
+        let file = format!("tests/{}/{}.ans", self.task_folder, test);
         #[cfg(not(feature = "test"))]
-        let file = format!("tasks/{}/tests/{}.out", self.task_folder, test);
+        let file = format!("tasks/{}/tests/{}.ans", self.task_folder, test);
         std::fs::read(file).ok()
     }
 
@@ -92,7 +92,7 @@ impl TestSet for SampleTests {
     fn save_output(&self, test: &Self::TestId, output: &[u8]) {
         #[cfg(not(feature = "test"))]
         {
-            let file = format!("tasks/{}/tests/{}.ans", self.task_folder, test);
+            let file = format!("tasks/{}/tests/{}.out", self.task_folder, test);
             std::fs::write(file, output).unwrap();
         }
         #[cfg(feature = "test")]
@@ -105,7 +105,7 @@ impl TestSet for SampleTests {
         #[cfg(not(feature = "test"))]
         {
             let mut expected = String::new();
-            let Ok(mut exp) = File::open(format!("tasks/{}/tests/{}.out", self.task_folder, test))
+            let Ok(mut exp) = File::open(format!("tasks/{}/tests/{}.ans", self.task_folder, test))
             else {
                 return;
             };
@@ -114,7 +114,7 @@ impl TestSet for SampleTests {
                 return;
             }
             let mut actual = String::new();
-            File::open(format!("tasks/{}/tests/{}.ans", self.task_folder, test))
+            File::open(format!("tasks/{}/tests/{}.out", self.task_folder, test))
                 .unwrap()
                 .read_to_string(&mut actual)
                 .unwrap();
