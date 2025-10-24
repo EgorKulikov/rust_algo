@@ -134,6 +134,12 @@ macro_rules! mod_int {
             }
         }
 
+        impl<V: Value<$t>> From<$w> for $name<V> {
+            fn from(n: $w) -> Self {
+                Self::new_wide(n)
+            }
+        }
+
         impl<V: Value<$t>> From<usize> for $name<V> {
             fn from(idx: usize) -> Self {
                 let v = idx as $w;

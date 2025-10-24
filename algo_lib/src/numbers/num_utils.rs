@@ -42,10 +42,10 @@ impl<T: MultiplicationMonoid + Copy> Powers<T> {
     }
 }
 
-pub fn factorial<T: MultiplicationMonoid + From<usize>>(n: usize) -> T {
+pub fn factorial<T: MultiplicationMonoid + TryFrom<usize>>(n: usize) -> T {
     let mut res = T::one();
     for i in 1..=n {
-        res *= T::from(i);
+        res *= T::try_from(i).unwrap_or_else(|_| panic!("Cannot convert {} to target type", i));
     }
     res
 }

@@ -3,7 +3,6 @@
 use algo_lib::collections::segment_tree::{SegmentTree, SegmentTreeNode};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
-use algo_lib::misc::direction::Direction;
 use algo_lib::misc::test_type::TaskType;
 
 use algo_lib::misc::test_type::TestType;
@@ -44,18 +43,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                 let r = input.read_size();
                 let p = input.read_int();
                 let mut ans = 0;
-                while let Some(pos) = st.binary_search_in(
-                    l..r,
-                    |node| node.0 <= p,
-                    |left, _| {
-                        if left.0 <= p {
-                            Direction::Left
-                        } else {
-                            Direction::Right
-                        }
-                    },
-                    |_, pos| pos,
-                ) {
+                while let Some(pos) = st.binary_search_in(l..r, |node| node.0 <= p, |_, pos| pos) {
                     st.point_update(pos, Node(i32::MAX));
                     ans += 1;
                 }
@@ -106,7 +94,6 @@ mod tester {
     use algo_lib::io::output::Output;
     use algo_lib::misc::random::Random;
     use tester::classic::default_checker;
-    use tester::classic::EPS;
     use tester::interactive::std_interactor;
     use tester::test_set::GeneratedTestSet;
     use tester::Tester;

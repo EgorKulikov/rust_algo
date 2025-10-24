@@ -17,7 +17,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let h2 = input.read_real();
 
     let t = x / (v0 * theta.cos());
-    let y = v0 * t * theta.sin() - 0.5 * 9.81 * t * t;
+    let y = v0 * t * theta.sin() - t * t * 0.5 * 9.81;
     if h1 <= y - 1 && y + 1 <= h2 {
         out.print_line("Safe");
     } else {

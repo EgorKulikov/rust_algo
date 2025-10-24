@@ -14,7 +14,7 @@ pub trait BitOps: Sized {
     fn iter_all(n: usize) -> RangeInclusive<Self>;
     fn lowest_bit(&self) -> usize;
     fn highest_bit(&self) -> usize;
-    fn is_subset(self, other: Self) -> bool;
+    fn is_subset(&self, other: Self) -> bool;
 }
 
 pub struct BitIter<T> {
@@ -78,8 +78,8 @@ macro_rules! bit_ops {
                 assert_ne!(*self, 0);
                 Self::BITS as usize - 1 - self.leading_zeros() as usize
             }
-            fn is_subset(self, other: $t) -> bool {
-                (self & other) == self
+            fn is_subset(&self, other: $t) -> bool {
+                (*self & other) == *self
             }
         }
 

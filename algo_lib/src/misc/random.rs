@@ -147,13 +147,16 @@ impl RandomTrait for StaticRandom {
 }
 
 pub trait Shuffle {
-    fn shuffle(&mut self);
+    fn shuffle(&mut self) {
+        self.shuffle_with(&mut StaticRandom);
+    }
+    fn shuffle_with(&mut self, rng: &mut impl RandomTrait);
 }
 
 impl<T> Shuffle for [T] {
-    fn shuffle(&mut self) {
+    fn shuffle_with(&mut self, rng: &mut impl RandomTrait) {
         for i in self.indices() {
-            let at = StaticRandom.gen_bound(i + 1);
+            let at = rng.gen_bound(i + 1);
             self.swap(i, at);
         }
     }

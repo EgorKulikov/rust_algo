@@ -52,7 +52,7 @@ impl GeneratedTestSet for MaxTest {
     }
 
     fn input(&self, test: &Self::TestId, out: &mut Output) {
-        let mut r = Random::new();
+        let mut r = Random::new_with_seed(239);
     }
 
     fn output(&self, test: &Self::TestId, input: &mut Input, out: &mut Output) -> bool {

@@ -3,7 +3,6 @@
 use algo_lib::collections::segment_tree::{SegmentTree, SegmentTreeNode};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
-use algo_lib::misc::direction::Direction;
 use algo_lib::misc::test_type::TaskType;
 
 use algo_lib::misc::test_type::TestType;
@@ -55,18 +54,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             2 => {
                 let x = input.read_int();
                 let l = input.read_size();
-                out.print_line(st.binary_search_in(
-                    l..,
-                    |node| node.val >= x,
-                    |left, _| {
-                        if left.val >= x {
-                            Direction::Left
-                        } else {
-                            Direction::Right
-                        }
-                    },
-                    |_, pos| pos,
-                ));
+                out.print_line(st.binary_search_in(l.., |node| node.val >= x, |_, pos| pos));
             }
             _ => unreachable!(),
         }
@@ -113,7 +101,6 @@ mod tester {
     use algo_lib::io::output::Output;
     use algo_lib::misc::random::Random;
     use tester::classic::default_checker;
-    use tester::classic::EPS;
     use tester::interactive::std_interactor;
     use tester::test_set::GeneratedTestSet;
     use tester::Tester;

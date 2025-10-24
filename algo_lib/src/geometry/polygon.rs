@@ -1,5 +1,6 @@
 use crate::collections::iter_ext::cur_next::cur_next;
 use crate::geometry::point::Point;
+use crate::geometry::segment::Segment;
 use crate::geometry::Base;
 use crate::numbers::num_traits::algebra::Field;
 
@@ -27,6 +28,27 @@ impl<T: Base> Polygon<T> {
             ans -= self.points[i].y * self.points[j].x;
         }
         ans
+    }
+}
+
+impl<T: Base + Ord> Polygon<T> {
+    pub fn contains(&self, point: Point<T>) -> bool {
+        let mut pos = false;
+        let mut neg = false;
+        for (i, j) in cur_next(self.points.len()) {
+            let seg = Segment::new(self.points[i], self.points[j]);
+            if seg.contains(point) {
+                return true;
+            }
+            let val = seg.line().value(point);
+            if val >= T::zero() {
+                pos = true;
+            }
+            if val <= T::zero() {
+                neg = true;
+            }
+        }
+        !pos || !neg
     }
 }
 

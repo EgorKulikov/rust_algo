@@ -44,11 +44,11 @@ impl Circle<Real> {
         if dist == 0. {
             return vec![];
         }
-        let a = 2. * (d.center.x - self.center.x);
-        let b = 2. * (d.center.y - self.center.y);
+        let a = (d.center.x - self.center.x) * 2;
+        let b = (d.center.y - self.center.y) * 2;
         let f = d.radius * d.radius - self.radius * self.radius + self.center.value_square()
             - d.center.value_square();
-        let l = Line::new(a, b, f);
+        let l = Line::new_canonical(a, b, f);
         self.intersect_line(l)
     }
 

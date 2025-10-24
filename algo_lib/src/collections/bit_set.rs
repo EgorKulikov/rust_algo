@@ -84,7 +84,7 @@ impl BitSet {
         self.into_iter()
     }
 
-    pub fn raw_iter(&self) -> Iter<u64> {
+    pub fn raw_iter(&self) -> Iter<'_, u64> {
         self.data.iter()
     }
 

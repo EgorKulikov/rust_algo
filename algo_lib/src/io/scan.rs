@@ -95,12 +95,12 @@ macro_rules! str_scan {
     };
 }
 
-pub trait Parse<T: Readable> {
-    fn parse(&self) -> T;
+pub trait Parse {
+    fn parse<T: Readable>(&self) -> T;
 }
 
-impl<T: Readable> Parse<T> for [u8] {
-    fn parse(&self) -> T {
+impl Parse for [u8] {
+    fn parse<T: Readable>(&self) -> T {
         str_scan!(self, "@", x: T);
         x
     }

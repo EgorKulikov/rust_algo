@@ -80,6 +80,13 @@ impl<E: EdgeTrait> Graph<E> {
     pub fn degrees(&self) -> Vec<usize> {
         self.edges.iter().map(|v| v.len()).collect()
     }
+
+    pub fn edges(&self) -> impl Iterator<Item = (usize, &E)> + '_ {
+        self.edges
+            .iter()
+            .enumerate()
+            .flat_map(|(from, ve)| ve.iter().map(move |e| (from, e)))
+    }
 }
 
 impl<E: BidirectionalEdgeTrait> Graph<E> {

@@ -80,6 +80,15 @@ impl<P: Default + ACPayload, const K: usize, const BASE: u8> AhoCorasick<P, K, B
         res
     }
 
+    #[allow(clippy::len_without_is_empty)]
+    pub fn len(&self) -> usize {
+        self.nodes.len()
+    }
+
+    pub fn payload_at(&self, node: usize) -> &P {
+        &self.nodes[node].payload
+    }
+
     pub fn iterate<'a, S: AsRef<[u8]>>(&'a self, s: &'a S) -> Iter<'a, P, S, K, BASE> {
         Iter {
             ac: self,

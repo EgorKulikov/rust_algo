@@ -1,10 +1,11 @@
-use crate::numbers::num_traits::algebra::IntegerSemiRingWithSub;
+use crate::numbers::num_traits::algebra::SemiRingWithSub;
+use std::ops::DivAssign;
 
 pub trait FWHT {
     fn fwht(&mut self, inverse: bool);
 }
 
-impl<T: IntegerSemiRingWithSub + From<usize> + Copy> FWHT for [T] {
+impl<T: SemiRingWithSub + DivAssign + From<usize> + Copy> FWHT for [T] {
     fn fwht(&mut self, inverse: bool) {
         assert!(!self.is_empty());
         let n = self.len();

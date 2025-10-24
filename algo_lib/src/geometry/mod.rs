@@ -9,6 +9,6 @@ pub mod polygon;
 pub mod ray;
 pub mod segment;
 
-pub trait Base: Copy + Ring + 'static {}
+pub trait Base: Copy + Ring {}
 
-impl<T: Copy + Ring + 'static> Base for T {}
+impl<T: Copy + Ring> Base for T {}

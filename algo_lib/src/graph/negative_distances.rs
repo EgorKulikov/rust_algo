@@ -17,6 +17,7 @@ impl<W: SemiRing + Ord + Copy, E: WeightedEdgeTrait<W>> NegativeDistances<W> for
             edge: self[source].len(),
         });
         for _ in 0..self.vertex_count() {
+            let mut updated = false;
             for i in 0..self.vertex_count() {
                 for (j, e) in self[i].iter().enumerate() {
                     let next = e.to();
@@ -26,8 +27,11 @@ impl<W: SemiRing + Ord + Copy, E: WeightedEdgeTrait<W>> NegativeDistances<W> for
                         edge: j,
                     };
                     let candidate = res[i] + edge;
-                    res[next].minim(candidate);
+                    updated |= res[next].minim(candidate);
                 }
+            }
+            if !updated {
+                return res;
             }
         }
         let mut infinities = Vec::with_capacity(self.vertex_count());

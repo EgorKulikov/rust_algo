@@ -11,6 +11,7 @@ impl<'t, T: Readable + 't> Iterator for InputIterator<'t, T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
+        self.input.skip_whitespace();
         self.input.peek().map(|_| self.input.read())
     }
 }

@@ -1,8 +1,7 @@
 use crate::geometry::point::Point;
 use crate::geometry::Base;
-use crate::numbers::num_traits::algebra::{Field, One, Zero};
+use crate::numbers::num_traits::algebra::{Field, Zero};
 use crate::numbers::real::{IntoReal, Real};
-use std::any::{Any, TypeId};
 
 #[derive(Copy, Clone, Ord, PartialOrd, Hash)]
 #[allow(clippy::derived_hash_with_manual_eq)]
@@ -14,24 +13,18 @@ pub struct Line<T: Base> {
 
 impl<T: Base> Line<T> {
     pub fn new(a: T, b: T, c: T) -> Self {
-        if a.type_id() == TypeId::of::<Real>() {
-            let a = *(&a as &dyn Any).downcast_ref::<Real>().unwrap();
-            let b = *(&b as &dyn Any).downcast_ref::<Real>().unwrap();
-            let c = *(&c as &dyn Any).downcast_ref::<Real>().unwrap();
-            let h = Real::hypot(a, b);
-            let mut a = a / h;
-            let mut b = b / h;
-            let mut c = c / h;
-            if a < Real::zero() || a == Real::zero() && b < Real::zero() {
-                a *= -Real::one();
-                b *= -Real::one();
-                c *= -Real::one();
-            }
-            Self {
-                a: *(&a as &dyn Any).downcast_ref::<T>().unwrap(),
-                b: *(&b as &dyn Any).downcast_ref::<T>().unwrap(),
-                c: *(&c as &dyn Any).downcast_ref::<T>().unwrap(),
-            }
+        Self { a, b, c }
+    }
+}
+
+impl Line<Real> {
+    pub fn new_canonical(a: Real, b: Real, c: Real) -> Self {
+        let h = Real::hypot(a, b);
+        let a = a / h;
+        let b = b / h;
+        let c = c / h;
+        if a < Real::zero() || (a == Real::zero() && b < Real::zero()) {
+            Self::new(-a, -b, -c)
         } else {
             Self { a, b, c }
         }

@@ -167,6 +167,11 @@ impl<T> Arr2d<T> {
     pub fn as_slice(&self) -> &[T] {
         &self.data
     }
+
+    pub fn indices(&self) -> impl Iterator<Item = (usize, usize)> {
+        let m = self.d2();
+        (0..self.d1).flat_map(move |i| (0..m).map(move |j| (i, j)))
+    }
 }
 
 impl<T: Clone> Arr2d<T> {

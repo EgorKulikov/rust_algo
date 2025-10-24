@@ -8,7 +8,7 @@ use crate::misc::extensions::replace_with::ReplaceWith;
 use crate::misc::random::{RandomTrait, StaticRandom};
 use std::collections::Bound;
 use std::marker::{PhantomData, PhantomPinned};
-use std::mem::{forget, replace, swap, take, MaybeUninit};
+use std::mem::{forget, swap, take, MaybeUninit};
 use std::ops::{Deref, DerefMut, RangeBounds};
 use std::ptr::NonNull;
 
@@ -252,6 +252,12 @@ impl<P: Payload> NodeId<P> {
         let node = &self.0;
         node.push_from_up(&mut Vec::new());
         f(node.payload().unwrap())
+    }
+}
+
+impl<P> Clone for NodeId<P> {
+    fn clone(&self) -> Self {
+        NodeId(self.0.clone())
     }
 }
 
@@ -619,7 +625,7 @@ impl<P: Payload> Tree<P> {
     pub fn detach(&mut self) -> Self {
         match self {
             Tree::Whole { root } => Tree::Whole { root: take(root) },
-            Tree::Split { mid, .. } => replace(mid, Tree::new()),
+            Tree::Split { mid, .. } => take(mid),
         }
     }
 
@@ -632,6 +638,28 @@ impl<P: Payload> Tree<P> {
 
     pub fn push(&mut self, delta: &P) {
         self.with_payload_mut(|p| p.accumulate(delta));
+    }
+
+    pub fn push_right(&mut self, delta: &P) {
+        match self {
+            Tree::Whole { .. } => unreachable!(),
+            Tree::Split { right, .. } => {
+                if right.size != 0 {
+                    right.payload.accumulate(delta);
+                }
+            }
+        }
+    }
+
+    pub fn push_left(&mut self, delta: &P) {
+        match self {
+            Tree::Whole { .. } => unreachable!(),
+            Tree::Split { left, .. } => {
+                if left.size != 0 {
+                    left.payload.accumulate(delta);
+                }
+            }
+        }
     }
 
     pub fn replace(&mut self, delta: P) {

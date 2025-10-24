@@ -138,7 +138,7 @@ impl<T: Copy + Writable> Writable for Rational<T> {
 
 impl<T: Copy + IntegerRing + Ord> PartialOrd for Rational<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some((self.num * other.den).cmp(&(other.num * self.den)))
+        Some(self.cmp(other))
     }
 }
 

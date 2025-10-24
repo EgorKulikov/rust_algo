@@ -82,7 +82,7 @@ impl HashBase {
 pub trait StringHash {
     fn len(&self) -> usize;
     fn hash<R: RangeBounds<usize>>(&self, r: R) -> u64;
-    fn sub_hash<R: RangeBounds<usize>>(&self, r: R) -> SubstrigHash<Self> {
+    fn sub_hash<R: RangeBounds<usize>>(&self, r: R) -> SubstrigHash<'_, Self> {
         SubstrigHash::new(self, r)
     }
 }

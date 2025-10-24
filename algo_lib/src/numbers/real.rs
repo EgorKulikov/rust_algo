@@ -34,9 +34,10 @@ impl Real {
 }
 
 #[allow(clippy::non_canonical_partial_ord_impl)]
-impl PartialOrd for Real {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        if self == other {
+impl<T: IntoReal + Copy> PartialOrd<T> for Real {
+    fn partial_cmp(&self, other: &T) -> Option<Ordering> {
+        let other = other.into_real();
+        if self == &other {
             Some(Ordering::Equal)
         } else if self.0 < other.0 {
             Some(Ordering::Less)
@@ -46,9 +47,9 @@ impl PartialOrd for Real {
     }
 }
 
-impl PartialEq for Real {
-    fn eq(&self, other: &Self) -> bool {
-        (self.0 - other.0).abs() < Real::epsilon().0
+impl<T: IntoReal + Copy> PartialEq<T> for Real {
+    fn eq(&self, other: &T) -> bool {
+        (self.0 - other.into_real().0).abs() < Real::epsilon().0
     }
 }
 
@@ -60,61 +61,61 @@ impl Ord for Real {
     }
 }
 
-impl AddAssign for Real {
-    fn add_assign(&mut self, rhs: Self) {
-        self.0 += rhs.0;
+impl<T: IntoReal> AddAssign<T> for Real {
+    fn add_assign(&mut self, rhs: T) {
+        self.0 += rhs.into_real().0;
     }
 }
 
-impl Add for Real {
+impl<T: IntoReal> Add<T> for Real {
     type Output = Self;
 
-    fn add(mut self, rhs: Self) -> Self::Output {
+    fn add(mut self, rhs: T) -> Self::Output {
         self += rhs;
         self
     }
 }
 
-impl SubAssign for Real {
-    fn sub_assign(&mut self, rhs: Self) {
-        self.0 -= rhs.0;
+impl<T: IntoReal> SubAssign<T> for Real {
+    fn sub_assign(&mut self, rhs: T) {
+        self.0 -= rhs.into_real().0;
     }
 }
 
-impl Sub for Real {
+impl<T: IntoReal> Sub<T> for Real {
     type Output = Self;
 
-    fn sub(mut self, rhs: Self) -> Self::Output {
+    fn sub(mut self, rhs: T) -> Self::Output {
         self -= rhs;
         self
     }
 }
 
-impl MulAssign for Real {
-    fn mul_assign(&mut self, rhs: Self) {
-        self.0 *= rhs.0;
+impl<T: IntoReal> MulAssign<T> for Real {
+    fn mul_assign(&mut self, rhs: T) {
+        self.0 *= rhs.into_real().0;
     }
 }
 
-impl Mul for Real {
+impl<T: IntoReal> Mul<T> for Real {
     type Output = Self;
 
-    fn mul(mut self, rhs: Self) -> Self::Output {
-        self.0 *= rhs.0;
+    fn mul(mut self, rhs: T) -> Self::Output {
+        self *= rhs;
         self
     }
 }
 
-impl DivAssign for Real {
-    fn div_assign(&mut self, rhs: Self) {
-        self.0 /= rhs.0;
+impl<T: IntoReal> DivAssign<T> for Real {
+    fn div_assign(&mut self, rhs: T) {
+        self.0 /= rhs.into_real().0;
     }
 }
 
-impl Div for Real {
+impl<T: IntoReal> Div<T> for Real {
     type Output = Self;
 
-    fn div(mut self, rhs: Self) -> Self::Output {
+    fn div(mut self, rhs: T) -> Self::Output {
         self /= rhs;
         self
     }
@@ -272,123 +273,7 @@ macro_rules! into_real {
                 Real(x as f64)
             }
         }
-
-        impl PartialOrd<$t> for Real {
-            fn partial_cmp(&self, other: &$t) -> Option<Ordering> {
-                self.partial_cmp(&other.into_real())
-            }
-        }
-
-        impl PartialOrd<Real> for $t {
-            fn partial_cmp(&self, other: &Real) -> Option<Ordering> {
-                self.into_real().partial_cmp(other)
-            }
-        }
-
-        impl PartialEq<$t> for Real {
-            fn eq(&self, other: &$t) -> bool {
-                self.eq(&other.into_real())
-            }
-        }
-
-        impl PartialEq<Real> for $t {
-            fn eq(&self, other: &Real) -> bool {
-                self.into_real().eq(other)
-            }
-        }
-
-    impl AddAssign<$t> for Real {
-        fn add_assign(&mut self, rhs: $t) {
-            *self += rhs.into_real();
-        }
-    }
-
-    impl Add<$t> for Real {
-        type Output = Self;
-
-        fn add(mut self, rhs: $t) -> Self::Output {
-            self += rhs;
-            self
-        }
-    }
-
-    impl Add<Real> for $t {
-        type Output = Real;
-
-        fn add(self, rhs: Real) -> Self::Output {
-            self.into_real() + rhs
-        }
-    }
-
-    impl SubAssign<$t> for Real {
-        fn sub_assign(&mut self, rhs: $t) {
-            *self -= rhs.into_real();
-        }
-    }
-
-    impl Sub<$t> for Real {
-        type Output = Self;
-
-        fn sub(mut self, rhs: $t) -> Self::Output {
-            self -= rhs;
-            self
-        }
-    }
-
-    impl Sub<Real> for $t {
-        type Output = Real;
-
-        fn sub(self, rhs: Real) -> Self::Output {
-            self.into_real() - rhs
-        }
-    }
-
-    impl MulAssign<$t> for Real {
-        fn mul_assign(&mut self, rhs: $t) {
-            *self *= rhs.into_real();
-        }
-    }
-
-    impl Mul<$t> for Real {
-        type Output = Self;
-
-        fn mul(mut self, rhs: $t) -> Self::Output {
-            self *= rhs;
-            self
-        }
-    }
-
-    impl Mul<Real> for $t {
-        type Output = Real;
-
-        fn mul(self, rhs: Real) -> Self::Output {
-            self.into_real() * rhs
-        }
-    }
-
-    impl DivAssign<$t> for Real {
-        fn div_assign(&mut self, rhs: $t) {
-            *self /= rhs.into_real();
-        }
-    }
-
-    impl Div<$t> for Real {
-        type Output = Self;
-
-        fn div(mut self, rhs: $t) -> Self::Output {
-            self /= rhs;
-            self
-        }
-    }
-
-    impl Div<Real> for $t {
-        type Output = Real;
-
-        fn div(self, rhs: Real) -> Self::Output {
-           self.into_real() / rhs
-        }
-    }
-)+}
+    )+}
 }
 
 into_real!(u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64);

@@ -7,10 +7,11 @@ pub trait Permutation: NextPermutation {
 
 impl Permutation for [usize] {
     fn inv(&self) -> Vec<usize> {
-        let mut inv = vec![0; self.len()];
+        let mut inv = vec![self.len(); self.len()];
         for i in 0..self.len() {
             inv[self[i]] = i;
         }
+        debug_assert!(inv.iter().all(|&x| x < self.len()));
         inv
     }
 
