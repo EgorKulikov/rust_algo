@@ -29,7 +29,10 @@ impl<T: Ord> MultiTreapSet<T> {
     pub fn insert(&mut self, key: T) {
         let view = self.root.range(&key..=&key);
         if view.payload().is_some() {
-            view.payload_mut().unwrap().self_size += 1;
+            view.with_payload_mut(|p| {
+                p.self_size += 1;
+                p.total_size += 1;
+            });
         } else {
             view.add_back(MultiPayload::new(key, ()));
         }

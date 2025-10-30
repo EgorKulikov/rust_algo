@@ -6,7 +6,7 @@ use crate::numbers::num_traits::algebra::Zero;
 use crate::numbers::real::{IntoReal, Real};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
-#[derive(Copy, Clone, Hash, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Copy, Clone, Hash, Ord, PartialOrd, Eq, PartialEq, Default)]
 pub struct Point<T> {
     pub x: T,
     pub y: T,

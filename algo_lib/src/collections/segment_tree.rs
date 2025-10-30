@@ -136,19 +136,34 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         );
     }
 
-    pub fn point_through_update(&mut self, at: usize, f: impl Fn(&mut Node)) {
+    pub fn point_through_update(&mut self, at: usize, f: impl FnMut(&mut Node)) {
         assert!(at < self.n);
-        self.binary_search_mut_with_mid(
-            |node, _, _, mid| {
-                f(node);
-                if at < mid {
-                    Direction::Left
-                } else {
-                    Direction::Right
-                }
-            },
-            |node, _| f(node),
-        );
+        self.point_through_update_impl(at, 0, self.n, self.nodes.len() - 1, f);
+    }
+
+    fn point_through_update_impl(
+        &mut self,
+        at: usize,
+        left: usize,
+        right: usize,
+        root: usize,
+        mut f: impl FnMut(&mut Node),
+    ) {
+        if left + 1 == right {
+            f(&mut self.nodes[root]);
+        } else {
+            let mid = (left + right) >> 1;
+            self.push_down(root, mid, right);
+            f(&mut self.nodes[root]);
+            let left_child = root - 2 * (right - mid);
+            let right_child = root - 1;
+            if at < mid {
+                self.point_through_update_impl(at, left, mid, left_child, f);
+            } else {
+                self.point_through_update_impl(at, mid, right, right_child, f);
+            }
+            self.join(root, mid, right);
+        }
     }
 
     pub fn update(&mut self, range: impl RangeBounds<usize>, val: &Node) {
