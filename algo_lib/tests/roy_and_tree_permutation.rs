@@ -8,7 +8,7 @@ use algo_lib::graph::Graph;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::recursive_function::{Callable2, RecursiveFunction2};
-use algo_lib::misc::test_type::TaskType;
+use algo_lib::misc::test_type::LegacyTaskType;
 
 use algo_lib::misc::test_type::TestType;
 
@@ -64,7 +64,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
 }
 
 pub static TEST_TYPE: TestType = TestType::MultiNumber;
-pub static TASK_TYPE: TaskType = TaskType::Classic;
+pub static TASK_TYPE: LegacyTaskType = LegacyTaskType::Classic;
 
 pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
     let mut pre_calc = ();
@@ -87,8 +87,8 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
     }
     output.flush();
     match TASK_TYPE {
-        TaskType::Classic => input.is_empty(),
-        TaskType::Interactive => true,
+        LegacyTaskType::Classic => input.is_empty(),
+        LegacyTaskType::Interactive => true,
     }
 }
 
@@ -161,11 +161,11 @@ mod tester {
         let path = "./roy_and_tree_permutation";
         let tl = 1000;
         let tester = match TASK_TYPE {
-            crate::TaskType::Interactive => {
+            crate::LegacyTaskType::Interactive => {
                 Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)
                 // Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, interact)
             }
-            crate::TaskType::Classic => {
+            crate::LegacyTaskType::Classic => {
                 Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker)
                 // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
             }

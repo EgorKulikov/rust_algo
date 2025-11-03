@@ -52,9 +52,13 @@ pub(crate) fn start_test<TestId: Display>(
     }
 }
 
-pub(crate) fn print_output(output: &[u8], print_details: bool) {
+pub(crate) fn print_output(output: &[u8], print_details: bool, output_index: usize) {
     if print_details && !output.is_empty() {
-        println!("{}Output:{}", BLUE, DEF);
+        print!("{}Output", BLUE);
+        if output_index != 0 {
+            print!(" #{}", output_index);
+        }
+        println!(":{}", DEF);
         println!("{}", String::from_utf8_lossy(output));
     }
 }
@@ -73,15 +77,19 @@ pub(crate) fn end_test(outcome: Outcome, print_details: bool) {
     match outcome {
         Outcome::OK {
             duration,
+            second_duration,
             input_exhausted,
         } => {
             if print_details {
-                println!(
-                    "{}Time elapsed: {:.3}s{}",
+                print!(
+                    "{}Time elapsed: {:.3}s",
                     BLUE,
                     (duration.as_millis() as f64) / 1000.,
-                    DEF,
                 );
+                if let Some(sd) = second_duration {
+                    print!(" + {:.3}s", (sd.as_millis() as f64) / 1000.,);
+                }
+                println!("{}", DEF);
                 if !input_exhausted {
                     println!("{}Input not exhausted{}", RED, DEF);
                 }
@@ -92,15 +100,19 @@ pub(crate) fn end_test(outcome: Outcome, print_details: bool) {
         }
         Outcome::TimeLimit {
             duration,
+            second_duration,
             input_exhausted,
         } => {
             if print_details {
-                println!(
-                    "{}Time elapsed: {:.3}s{}",
+                print!(
+                    "{}Time elapsed: {:.3}s",
                     BLUE,
                     (duration.as_millis() as f64) / 1000.,
-                    DEF,
                 );
+                if let Some(sd) = second_duration {
+                    print!(" + {:.3}s", (sd.as_millis() as f64) / 1000.,);
+                }
+                println!("{}", DEF);
                 if !input_exhausted {
                     println!("{}Input not exhausted{}", RED, DEF);
                 }

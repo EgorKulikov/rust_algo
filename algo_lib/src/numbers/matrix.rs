@@ -1,7 +1,7 @@
 use crate::collections::md_arr::arr2d::Arr2d;
-use crate::numbers::num_traits::algebra::{One, SemiRing, Zero};
+use crate::numbers::num_traits::algebra::{One, Zero};
 use crate::transparent_wrapper;
-use std::ops::{Deref, DerefMut};
+use std::ops::{Add, AddAssign, Deref, DerefMut, Mul};
 
 transparent_wrapper!(Matrix<T> = Arr2d<T>, derive Clone, Eq, PartialEq, Default);
 
@@ -38,7 +38,7 @@ impl<T: Copy> Matrix<T> {
     }
 }
 
-impl<T: SemiRing + Copy> Matrix<T> {
+impl<T: Add<Output = T> + AddAssign + Mul<Output = T> + One + Zero + Copy> Matrix<T> {
     pub fn mult(&self, a: &Matrix<T>) -> Self {
         let mut res = Self::zero(self.d1(), a.d2());
         Self::do_mult(&mut res, self, a);

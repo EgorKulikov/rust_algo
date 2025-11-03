@@ -7,7 +7,7 @@ use algo_lib::collections::segment_tree::{SegmentTree, SegmentTreeNode};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::direction::Direction;
-use algo_lib::misc::test_type::{TaskType, TestType};
+use algo_lib::misc::test_type::{LegacyTaskType, TestType};
 
 type PreCalc = ();
 
@@ -127,7 +127,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
 }
 
 pub static TEST_TYPE: TestType = TestType::MultiNumber;
-pub static TASK_TYPE: TaskType = TaskType::Classic;
+pub static TASK_TYPE: LegacyTaskType = LegacyTaskType::Classic;
 
 pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
     let mut pre_calc = ();
@@ -150,11 +150,11 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
     }
     output.flush();
     match TASK_TYPE {
-        TaskType::Classic => {
+        LegacyTaskType::Classic => {
             input.skip_whitespace();
             input.peek().is_none()
         }
-        TaskType::Interactive => true,
+        LegacyTaskType::Interactive => true,
     }
 }
 
@@ -205,7 +205,7 @@ mod tester {
         let path = "./d_maksimum_minimum_kolichestvo";
         let time_limit = 2000;
         let tester = match TASK_TYPE {
-            crate::TaskType::Interactive => {
+            crate::LegacyTaskType::Interactive => {
                 Tester::new_interactive(
                     time_limit,
                     PRINT_LIMIT,
@@ -215,7 +215,7 @@ mod tester {
                 )
                 //Tester::new_interactive(time_limit, PRINT_LIMIT, path.to_string(), run, interact)
             }
-            crate::TaskType::Classic => {
+            crate::LegacyTaskType::Classic => {
                 Tester::new_classic(
                     time_limit,
                     PRINT_LIMIT,

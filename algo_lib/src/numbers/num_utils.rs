@@ -1,14 +1,19 @@
 use crate::numbers::num_traits::algebra::{
     AdditionMonoid, IntegerSemiRingWithSub, MultiplicationMonoid,
 };
+use std::convert::TryFrom;
 
-pub fn factorials<T: MultiplicationMonoid + Copy + From<usize>>(len: usize) -> Vec<T> {
+pub fn factorials<T: MultiplicationMonoid + Copy + TryFrom<usize>>(len: usize) -> Vec<T> {
     let mut res = Vec::new();
     if len > 0 {
         res.push(T::one());
     }
     while res.len() < len {
-        res.push((*res.last().unwrap()) * T::from(res.len()));
+        res.push(
+            (*res.last().unwrap())
+                * T::try_from(res.len())
+                    .unwrap_or_else(|_| panic!("Cannot convert {} to target type", res.len())),
+        );
     }
     res
 }

@@ -63,6 +63,15 @@ pub enum Distance<W> {
     None,
 }
 
+impl<W> Distance<W> {
+    pub fn to_finite(self) -> W {
+        match self {
+            Distance::Finite(w) => w,
+            _ => unreachable!(),
+        }
+    }
+}
+
 impl<W: Ord + SemiRing> Add for Distance<W> {
     type Output = Distance<W>;
 

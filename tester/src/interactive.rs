@@ -45,11 +45,13 @@ pub(crate) fn run_single_test_interactive(
                 if duration.as_millis() as u64 > tester.time_limit {
                     Outcome::TimeLimit {
                         duration,
+                        second_duration: None,
                         input_exhausted: true,
                     }
                 } else {
                     Outcome::OK {
                         duration,
+                        second_duration: None,
                         input_exhausted: true,
                     }
                 }

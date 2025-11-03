@@ -3,14 +3,16 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
-use algo_lib::collections::vec_ext::gen_vec::VecGen;
 use crate::{run, TASK_TYPE};
+use algo_lib::collections::vec_ext::gen_vec::VecGen;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::random::Random;
+use algo_lib::string::str::StrReader;
 use tester::classic::default_checker;
 use tester::classic::EPS;
 use tester::interactive::std_interactor;
+use tester::run_twice::default_mixer;
 use tester::test_set::GeneratedTestSet;
 use tester::Tester;
 
@@ -23,13 +25,33 @@ fn interact(mut sol_input: Input, mut sol_output: Output, mut input: Input) -> R
 fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
     Ok(())
 }
+fn mix(mut input: Input,
+       mut output: Input,
+       expected: Option<Input>,
+       mut new_input: Output,
+       mut new_expected: Output
+) -> Result<bool, String> {
+    while !output.is_exhausted() {
+        new_input.print_line(output.read_line());
+    }
+    new_input.flush();
+    if let Some(mut expected) = expected {
+        while !expected.is_exhausted() {
+            new_expected.print_line(expected.read_line());
+        }
+        new_expected.flush();
+        Ok(true)
+    } else {
+        Ok(false)
+    }
+}
 
 struct StressTest;
 
 impl GeneratedTestSet for StressTest {
     type TestId = usize;
 
-    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
+    fn tests(&self) -> impl Iterator<Item=Self::TestId> {
         1..
     }
 
@@ -47,7 +69,7 @@ struct MaxTest;
 impl GeneratedTestSet for MaxTest {
     type TestId = usize;
 
-    fn tests(&self) -> impl Iterator<Item = Self::TestId> {
+    fn tests(&self) -> impl Iterator<Item=Self::TestId> {
         1..=1
     }
 
@@ -71,6 +93,12 @@ pub(crate) fn run_tests() -> bool {
         crate::TaskType::Classic => {
             Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker)
             // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
+        }
+        crate::TaskType::RunTwice => {
+            Tester::new_run_twice(tl, PRINT_LIMIT, path.to_string(), run, default_mixer, default_checker)
+            // Tester::new_run_twice(tl, PRINT_LIMIT, path.to_string(), run, mix, default_checker)
+            // Tester::new_run_twice(tl, PRINT_LIMIT, path.to_string(), run, default_mixer, check)
+            // Tester::new_run_twice(tl, PRINT_LIMIT, path.to_string(), run, mix, check)
         }
     };
     let passed = tester.test_samples();

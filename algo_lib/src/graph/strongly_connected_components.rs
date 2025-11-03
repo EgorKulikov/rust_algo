@@ -11,6 +11,7 @@ pub struct StronglyConnectedComponents {
 
 pub trait StronglyConnectedComponentsTrait {
     fn strongly_connected_components(&self) -> StronglyConnectedComponents;
+    fn strongly_connected_component_colors(&self) -> Vec<usize>;
 }
 
 impl<E: EdgeTrait> StronglyConnectedComponentsTrait for Graph<E> {
@@ -75,5 +76,53 @@ impl<E: EdgeTrait> StronglyConnectedComponentsTrait for Graph<E> {
             color,
             condensed: res,
         }
+    }
+
+    fn strongly_connected_component_colors(&self) -> Vec<usize> {
+        assert!(!E::REVERSABLE);
+        let n = self.vertex_count();
+        let mut order = Vec::with_capacity(n);
+        let mut color = vec![0; n];
+        let mut visited = BitSet::new(n);
+        for i in 0..n {
+            if !visited[i] {
+                let mut first_dfs = RecursiveFunction::new(|f, vert| {
+                    if visited[vert] {
+                        return;
+                    }
+                    visited.set(vert);
+                    for e in self[vert].iter() {
+                        f.call(e.to());
+                    }
+                    order.push(vert);
+                });
+                first_dfs.call(i);
+            }
+        }
+        visited.fill(false);
+        let mut index = 0usize;
+        let mut gt = Graph::new(n);
+        for i in 0..n {
+            for e in self[i].iter() {
+                gt.add_edge(Edge::new(e.to(), i));
+            }
+        }
+        for i in (0..n).rev() {
+            if !visited[order[i]] {
+                let mut second_dfs = RecursiveFunction::new(|f, vert| {
+                    if visited[vert] {
+                        return;
+                    }
+                    color[vert] = index;
+                    visited.set(vert);
+                    for e in gt[vert].iter() {
+                        f.call(e.to());
+                    }
+                });
+                second_dfs.call(order[i]);
+                index += 1;
+            }
+        }
+        color
     }
 }

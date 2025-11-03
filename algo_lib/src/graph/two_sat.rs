@@ -1,7 +1,5 @@
 use crate::graph::edges::edge::Edge;
-use crate::graph::strongly_connected_components::{
-    StronglyConnectedComponents, StronglyConnectedComponentsTrait,
-};
+use crate::graph::strongly_connected_components::StronglyConnectedComponentsTrait;
 use crate::graph::Graph;
 use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
 
@@ -74,8 +72,12 @@ impl TwoSat {
         a * 2 + val as usize
     }
 
+    pub fn clear(&mut self) {
+        self.graph.clear();
+    }
+
     pub fn solve(&self) -> Option<Vec<bool>> {
-        let StronglyConnectedComponents { color, .. } = self.graph.strongly_connected_components();
+        let color = self.graph.strongly_connected_component_colors();
         let n = self.n;
         for i in 0..n {
             if color[i * 2] == color[i * 2 + 1] {

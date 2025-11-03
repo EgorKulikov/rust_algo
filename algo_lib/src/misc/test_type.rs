@@ -4,7 +4,13 @@ pub enum TestType {
     MultiEof,
 }
 
+pub enum LegacyTaskType {
+    Classic,
+    Interactive,
+}
+
 pub enum TaskType {
     Classic,
     Interactive,
+    RunTwice,
 }

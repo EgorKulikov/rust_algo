@@ -46,6 +46,7 @@ pub(crate) fn run_single_test_classic<T: TestSet>(
                 (
                     Outcome::TimeLimit {
                         duration,
+                        second_duration: None,
                         input_exhausted: is_exhausted,
                     },
                     output,
@@ -54,6 +55,7 @@ pub(crate) fn run_single_test_classic<T: TestSet>(
                 (
                     Outcome::OK {
                         duration,
+                        second_duration: None,
                         input_exhausted: is_exhausted,
                     },
                     output,
@@ -63,7 +65,7 @@ pub(crate) fn run_single_test_classic<T: TestSet>(
         Err(err) => (process_error(err), Vec::new()),
     };
     if test_set.print_details() || !matches!(outcome, Outcome::OK { .. }) {
-        print_output(tester.trim(&output), true);
+        print_output(tester.trim(&output), true, 0);
     }
     if test_set.print_details() && matches!(outcome, Outcome::WrongAnswer { .. }) {
         print_diff(test_set, test_id);
