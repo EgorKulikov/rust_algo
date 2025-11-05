@@ -18,21 +18,25 @@ impl TwoSat {
     }
 
     pub fn add_or(&mut self, a: usize, a_val: bool, b: usize, b_val: bool) {
-        self.add_implication(a, !a_val, b, b_val);
-        self.add_implication(b, !b_val, a, a_val);
+        self.add_edge(a, !a_val, b, b_val);
+        self.add_edge(b, !b_val, a, a_val);
     }
 
     pub fn add_implication(&mut self, a: usize, a_val: bool, b: usize, b_val: bool) {
+        self.add_or(a, !a_val, b, b_val);
+    }
+
+    fn add_edge(&mut self, a: usize, a_val: bool, b: usize, b_val: bool) {
         self.graph
             .add_edge(Edge::new(Self::id(a, a_val), Self::id(b, b_val)));
     }
 
     pub fn set_true(&mut self, a: usize) {
-        self.add_implication(a, false, a, true);
+        self.add_edge(a, false, a, true);
     }
 
     pub fn set_false(&mut self, a: usize) {
-        self.add_implication(a, true, a, false);
+        self.add_edge(a, true, a, false);
     }
 
     pub fn max_one(&mut self, r: &[(usize, bool)]) {

@@ -11,6 +11,7 @@ pub static TASK_TYPE: TaskType = TaskType::$INTERACTIVE;
 
 pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
     let mut pre_calc = ();
+    // output.set_bool_output(BoolOutput::YesNo);
 
     match TEST_TYPE {
         TestType::Single => solve(&mut input, &mut output, 1, &mut pre_calc),

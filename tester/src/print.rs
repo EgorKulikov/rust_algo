@@ -3,10 +3,10 @@ use crate::Outcome;
 use std::fmt::Display;
 use std::time::Duration;
 
-const BLUE: &str = "\x1B[36m";
+pub(crate) const BLUE: &str = "\x1B[36m";
 const RED: &str = "\x1B[31m";
 const GREEN: &str = "\x1B[32m";
-const DEF: &str = "\x1B[0m";
+pub(crate) const DEF: &str = "\x1B[0m";
 
 pub(crate) fn start_test_set(name: &str) {
     println!("=====================================================");

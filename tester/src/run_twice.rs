@@ -3,8 +3,6 @@ use crate::test_set::TestSet;
 use crate::{process_error, Outcome, Tester};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
-use algo_lib::string::str::StrReader;
-use std::cell::Cell;
 
 pub(crate) fn run_single_test_run_twice<T: TestSet>(
     tester: &Tester,
@@ -25,6 +23,7 @@ pub(crate) fn run_single_test_run_twice<T: TestSet>(
         (output, res, is_exhausted)
     }) {
         Ok((output, duration, is_exhausted)) => {
+            test_set.save_first_output(test_id, &output);
             let input = *input;
             let mut new_input = Vec::new();
             let mut new_expected = Vec::new();
@@ -82,9 +81,14 @@ pub(crate) fn run_single_test_run_twice<T: TestSet>(
     if test_set.print_details() || !matches!(outcome, Outcome::OK { .. }) {
         print_output(tester.trim(&output), true, 1);
     }
+    if test_set.print_details() {
+        println!("{}Input #2:{}", crate::print::BLUE, crate::print::DEF);
+        println!("{}", String::from_utf8_lossy(new_input.as_slice()));
+    }
     if !matches!(outcome, Outcome::OK { .. }) && !matches!(outcome, Outcome::TimeLimit { .. }) {
         return outcome;
     }
+    test_set.save_second_input(test_id, &new_input);
     let (mut second_outcome, output) = match std::panic::catch_unwind(|| {
         let input = new_input.as_slice();
         let started = std::time::Instant::now();
@@ -188,124 +192,4 @@ pub(crate) fn run_single_test_run_twice<T: TestSet>(
         _ => unreachable!(),
     }
     second_outcome
-}
-
-pub fn default_mixer(
-    _input: Input,
-    mut output: Input,
-    expected: Option<Input>,
-    mut new_input: Output,
-    mut new_expected: Output,
-) -> Result<bool, String> {
-    new_input.print_line(2);
-    while !output.is_exhausted() {
-        new_input.print_line(output.read_line());
-    }
-    if let Some(mut expected) = expected {
-        while !expected.is_exhausted() {
-            new_expected.print_line(expected.read_line());
-        }
-        Ok(true)
-    } else {
-        Ok(false)
-    }
-}
-
-thread_local! {
-    pub static EPS: Cell<f64> = Cell::new(1e-9);
-}
-
-pub fn default_checker_eps_rel(
-    _input: Input,
-    expected: Option<Input>,
-    mut actual: Input,
-) -> Result<(), String> {
-    if expected.is_none() {
-        return Ok(());
-    }
-    let mut expected = expected.unwrap();
-    let mut token_num = 0;
-    loop {
-        let expected_token = expected.next_token();
-        let actual_token = actual.next_token();
-        if expected_token != actual_token {
-            if expected_token.is_none() {
-                return Err(format!("Expected has only {} tokens", token_num));
-            } else if actual_token.is_none() {
-                return Err(format!("Actual has only {} tokens", token_num));
-            } else {
-                let expected_token = String::from_utf8(expected_token.unwrap()).unwrap();
-                let actual_token =
-                    String::from_utf8(actual_token.as_ref().unwrap().clone()).unwrap();
-                let mut failed = true;
-                if let Ok(expected_token) = expected_token.parse::<f64>() {
-                    if let Ok(actual_token) = actual_token.parse::<f64>() {
-                        let by = expected_token.abs().max(1.);
-                        // 1.73
-                        if (expected_token - actual_token).abs() < EPS.with(|eps| eps.get()) * by {
-                            failed = false;
-                        }
-                    }
-                }
-                if failed {
-                    return Err(format!(
-                        "Token #{} differs, expected {}, actual {}",
-                        token_num, expected_token, actual_token,
-                    ));
-                }
-            }
-        }
-        token_num += 1;
-        if actual_token.is_none() {
-            break;
-        }
-    }
-    Ok(())
-}
-
-pub fn default_checker_eps_abs(
-    _input: Input,
-    expected: Option<Input>,
-    mut actual: Input,
-) -> Result<(), String> {
-    if expected.is_none() {
-        return Ok(());
-    }
-    let mut expected = expected.unwrap();
-    let mut token_num = 0;
-    loop {
-        let expected_token = expected.next_token();
-        let actual_token = actual.next_token();
-        if expected_token != actual_token {
-            if expected_token.is_none() {
-                return Err(format!("Expected has only {} tokens", token_num));
-            } else if actual_token.is_none() {
-                return Err(format!("Actual has only {} tokens", token_num));
-            } else {
-                let expected_token = String::from_utf8(expected_token.unwrap()).unwrap();
-                let actual_token =
-                    String::from_utf8(actual_token.as_ref().unwrap().clone()).unwrap();
-                let mut failed = true;
-                if let Ok(expected_token) = expected_token.parse::<f64>() {
-                    if let Ok(actual_token) = actual_token.parse::<f64>() {
-                        // 1.73
-                        if (expected_token - actual_token).abs() < EPS.with(|eps| eps.get()) {
-                            failed = false;
-                        }
-                    }
-                }
-                if failed {
-                    return Err(format!(
-                        "Token #{} differs, expected {}, actual {}",
-                        token_num, expected_token, actual_token,
-                    ));
-                }
-            }
-        }
-        token_num += 1;
-        if actual_token.is_none() {
-            break;
-        }
-    }
-    Ok(())
 }

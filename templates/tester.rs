@@ -12,7 +12,6 @@ use algo_lib::string::str::StrReader;
 use tester::classic::default_checker;
 use tester::classic::EPS;
 use tester::interactive::std_interactor;
-use tester::run_twice::default_mixer;
 use tester::test_set::GeneratedTestSet;
 use tester::Tester;
 
@@ -95,9 +94,7 @@ pub(crate) fn run_tests() -> bool {
             // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
         }
         crate::TaskType::RunTwice => {
-            Tester::new_run_twice(tl, PRINT_LIMIT, path.to_string(), run, default_mixer, default_checker)
-            // Tester::new_run_twice(tl, PRINT_LIMIT, path.to_string(), run, mix, default_checker)
-            // Tester::new_run_twice(tl, PRINT_LIMIT, path.to_string(), run, default_mixer, check)
+            Tester::new_run_twice(tl, PRINT_LIMIT, path.to_string(), run, mix, default_checker)
             // Tester::new_run_twice(tl, PRINT_LIMIT, path.to_string(), run, mix, check)
         }
     };
