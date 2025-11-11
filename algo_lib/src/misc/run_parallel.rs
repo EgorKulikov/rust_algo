@@ -52,7 +52,7 @@ where
                 while input_locked.load(Ordering::Relaxed) {
                     yield_now();
                 }
-                input.lock().unwrap();
+                drop(input.lock().unwrap());
                 while free_slots.load(Ordering::Relaxed) == 0 {
                     yield_now();
                 }
@@ -67,5 +67,6 @@ where
             output.write_all(&res).unwrap();
         }
     });
-    input.lock().unwrap().check_empty()
+    let res = input.lock().unwrap().check_empty();
+    res
 }
