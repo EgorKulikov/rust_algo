@@ -30,7 +30,7 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
     }
     output.flush();
     match TASK_TYPE {
-        TaskType::Classic | TaskType::RunTwice => input.is_empty(),
-        TaskType::Interactive => true,
+        TaskType::Classic => input.is_empty(),
+        TaskType::Interactive | TaskType::RunTwice => true,
     }
 }

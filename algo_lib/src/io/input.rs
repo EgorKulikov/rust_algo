@@ -143,6 +143,13 @@ impl Input {
         self.is_exhausted()
     }
 
+    pub fn check_empty(&mut self) -> bool {
+        match self.input {
+            InputSource::Slice => self.is_empty(),
+            _ => true,
+        }
+    }
+
     pub fn read<T: Readable>(&mut self) -> T {
         T::read(self)
     }

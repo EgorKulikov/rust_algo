@@ -2,7 +2,7 @@ use crate::io::input::Input;
 use crate::io::output::Output;
 use std::io::Write;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex, MutexGuard, TryLockError};
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread::{available_parallelism, scope, yield_now, Builder};
 
 pub fn run_parallel<P>(
@@ -31,7 +31,7 @@ where
             input_locked.store(true, Ordering::Relaxed);
             let il = &input_locked;
             let fs = &free_slots;
-            let builder = Builder::new().stack_size(1_000_000_000);
+            let builder = Builder::new().stack_size(1 << 30);
             let handle = builder.spawn_scoped(s, move || {
                 let lock = inp.lock().unwrap();
                 il.store(false, Ordering::Relaxed);
@@ -52,16 +52,7 @@ where
                 while input_locked.load(Ordering::Relaxed) {
                     yield_now();
                 }
-                while let Err(err) = input.try_lock() {
-                    match err {
-                        TryLockError::Poisoned(poison) => {
-                            panic!("Poisoned lock: {:?}", poison);
-                        }
-                        TryLockError::WouldBlock => {
-                            yield_now();
-                        }
-                    }
-                }
+                input.lock().unwrap();
                 while free_slots.load(Ordering::Relaxed) == 0 {
                     yield_now();
                 }
@@ -76,6 +67,5 @@ where
             output.write_all(&res).unwrap();
         }
     });
-    let res = input.lock().unwrap().is_empty();
-    res
+    input.lock().unwrap().check_empty()
 }
