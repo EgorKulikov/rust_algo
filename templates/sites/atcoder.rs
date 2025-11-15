@@ -10,6 +10,7 @@ pub static TEST_TYPE: TestType = TestType::Single;
 pub static TASK_TYPE: TaskType = TaskType::$INTERACTIVE;
 
 pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
+    eprint!("\x1B[33m\x1B[03m");
     let mut pre_calc = ();
     output.set_bool_output(BoolOutput::YesNo);
 
@@ -29,6 +30,7 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
             }
         }
     }
+    eprint!("\x1B[0m");
     output.flush();
     input.check_empty()
 }

@@ -12,8 +12,10 @@ fn solve(mut input: MutexGuard<Input>, out: &mut Output, test_case: usize, _data
 pub static TASK_TYPE: TaskType = TaskType::Classic;
 
 pub(crate) fn run(input: Input, mut output: Output) -> bool {
+    eprint!("\x1B[33m\x1B[03m");
     let pre_calc = ();
     let is_exhausted = run_parallel(input, &mut output, true, pre_calc, solve);
+    eprint!("\x1B[0m");
     output.flush();
     is_exhausted
 }

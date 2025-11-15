@@ -10,6 +10,7 @@ pub static TEST_TYPE: TestType = TestType::MultiNumber;
 pub static TASK_TYPE: TaskType = TaskType::$INTERACTIVE;
 
 pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
+    eprint!("\x1B[33m\x1B[03m");
     let mut pre_calc = ();
 
     match TEST_TYPE {
@@ -28,6 +29,7 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
             }
         }
     }
+    eprint!("\x1B[0m");
     output.flush();
     match TASK_TYPE {
         TaskType::Classic => input.is_empty(),

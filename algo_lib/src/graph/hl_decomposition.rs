@@ -8,17 +8,28 @@ pub struct HLDecomposition {
     pub id: Vec<usize>,
     pub pos: Vec<usize>,
     pub parent: Vec<usize>,
+    pub root: usize,
 }
 
 impl HLDecomposition {
     pub fn iter(&self, range: impl RangeBounds<usize>) -> HLIter<'_> {
-        let Bound::Included(&source) = range.start_bound() else {
-            panic!("HLDecomposition::iter: source must be included")
+        let source = match range.start_bound() {
+            Bound::Included(x) => *x,
+            Bound::Excluded(x) => self.parent[*x],
+            Bound::Unbounded => panic!("HLDecomposition::iter: source must not be unbounded"),
         };
+        if source == self.id.len() {
+            return HLIter {
+                decomposition: self,
+                current_vert: 0,
+                dest_vert: 0,
+                include_dest: false,
+            };
+        }
         let (destination, included) = match range.end_bound() {
             Bound::Included(dest) => (*dest, true),
             Bound::Excluded(dest) => (*dest, false),
-            Bound::Unbounded => panic!("HLDecomposition::iter: destination must be included"),
+            Bound::Unbounded => (self.root, true),
         };
         HLIter {
             decomposition: self,
@@ -92,7 +103,7 @@ impl<E: BidirectionalEdgeTrait> HLDecompositionTrait for Graph<E> {
         let mut id = vec![0; n];
         let mut pos = vec![0; n];
         let mut size = vec![0u32; n];
-        let mut parent = vec![root; n];
+        let mut parent = vec![n; n];
         let mut calc_size = RecursiveFunction2::new(|f, vert, last| {
             size[vert] = 1;
             parent[vert] = last;
@@ -132,6 +143,7 @@ impl<E: BidirectionalEdgeTrait> HLDecompositionTrait for Graph<E> {
             id,
             pos,
             parent,
+            root,
         }
     }
 }
