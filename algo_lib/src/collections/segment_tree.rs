@@ -259,8 +259,41 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
     ) -> Option<R> {
         let (from, to) = clamp(&range, self.n);
         if from < to {
-            self.do_binary_search_in(self.nodes.len() - 1, 0, self.n, from, to, &mut accept, calc)
-                .ok()
+            self.do_binary_search_in(
+                self.nodes.len() - 1,
+                0,
+                self.n,
+                from,
+                to,
+                &mut accept,
+                calc,
+                SearchDirection::LTR,
+            )
+            .ok()
+        } else {
+            None
+        }
+    }
+
+    pub fn binary_search_in_rtl<R>(
+        &mut self,
+        range: impl RangeBounds<usize>,
+        mut accept: impl FnMut(&Node) -> bool,
+        calc: impl FnOnce(&Node, usize) -> R,
+    ) -> Option<R> {
+        let (from, to) = clamp(&range, self.n);
+        if from < to {
+            self.do_binary_search_in(
+                self.nodes.len() - 1,
+                0,
+                self.n,
+                from,
+                to,
+                &mut accept,
+                calc,
+                SearchDirection::RTL,
+            )
+            .ok()
         } else {
             None
         }
@@ -275,6 +308,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         to: usize,
         accept: &mut impl FnMut(&Node) -> bool,
         calc: C,
+        direction: SearchDirection,
     ) -> Result<R, C> {
         if left >= from && right <= to {
             if accept(&self.nodes[root]) {
@@ -282,11 +316,20 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
                     root,
                     left,
                     right,
-                    |left, _, _| {
-                        if accept(left) {
-                            Direction::Left
-                        } else {
-                            Direction::Right
+                    |left, right, _| match direction {
+                        SearchDirection::LTR => {
+                            if accept(left) {
+                                Direction::Left
+                            } else {
+                                Direction::Right
+                            }
+                        }
+                        SearchDirection::RTL => {
+                            if accept(right) {
+                                Direction::Right
+                            } else {
+                                Direction::Left
+                            }
                         }
                     },
                     calc,
@@ -300,13 +343,21 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
             let left_child = root - 2 * (right - mid);
             let right_child = root - 1;
             when! {
-                to <= mid => self.do_binary_search_in(left_child, left, mid, from, to, accept, calc),
-                from >= mid => self.do_binary_search_in(right_child, mid, right, from, to, accept, calc),
+                to <= mid => self.do_binary_search_in(left_child, left, mid, from, to, accept, calc, direction),
+                from >= mid => self.do_binary_search_in(right_child, mid, right, from, to, accept, calc, direction),
                 else => {
-                    let res = self.do_binary_search_in(left_child, left, mid, from, to, accept, calc);
+                    let res = match direction {
+                        SearchDirection::LTR => self.do_binary_search_in(left_child, left, mid, from, to, accept, calc, direction),
+                        SearchDirection::RTL => self.do_binary_search_in(right_child, mid, right, from, to, accept, calc, direction),
+                    };
                     match res {
                         res @ Ok(_) => res,
-                        Err(calc) => self.do_binary_search_in(right_child, mid, right, from, to, accept, calc)
+                        Err(calc) => {
+                            match direction {
+                                SearchDirection::LTR => self.do_binary_search_in(right_child, mid, right, from, to, accept, calc, direction),
+                                SearchDirection::RTL => self.do_binary_search_in(left_child, left, mid, from, to, accept, calc, direction),
+                            }
+                        }
                     }
                 },
             }
@@ -329,6 +380,31 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
                 to,
                 &mut accept,
                 calc,
+                SearchDirection::LTR,
+            )
+            .ok()
+        } else {
+            None
+        }
+    }
+
+    pub fn binary_search_in_mut_rtl<R>(
+        &mut self,
+        range: impl RangeBounds<usize>,
+        mut accept: impl FnMut(&Node) -> bool,
+        calc: impl FnOnce(&mut Node, usize) -> R,
+    ) -> Option<R> {
+        let (from, to) = clamp(&range, self.n);
+        if from < to {
+            self.do_binary_search_in_mut(
+                self.nodes.len() - 1,
+                0,
+                self.n,
+                from,
+                to,
+                &mut accept,
+                calc,
+                SearchDirection::RTL,
             )
             .ok()
         } else {
@@ -345,6 +421,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         to: usize,
         accept: &mut impl FnMut(&Node) -> bool,
         calc: C,
+        direction: SearchDirection,
     ) -> Result<R, C> {
         if left >= from && right <= to {
             if accept(&self.nodes[root]) {
@@ -352,11 +429,20 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
                     root,
                     left,
                     right,
-                    |_, left, _, _| {
-                        if accept(left) {
-                            Direction::Left
-                        } else {
-                            Direction::Right
+                    |_, left, right, _| match direction {
+                        SearchDirection::LTR => {
+                            if accept(left) {
+                                Direction::Left
+                            } else {
+                                Direction::Right
+                            }
+                        }
+                        SearchDirection::RTL => {
+                            if accept(right) {
+                                Direction::Right
+                            } else {
+                                Direction::Left
+                            }
                         }
                     },
                     calc,
@@ -370,13 +456,19 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
             let left_child = root - 2 * (right - mid);
             let right_child = root - 1;
             let res = when! {
-                to <= mid => self.do_binary_search_in_mut(left_child, left, mid, from, to, accept, calc),
-                from >= mid => self.do_binary_search_in_mut(right_child, mid, right, from, to, accept, calc),
+                to <= mid => self.do_binary_search_in_mut(left_child, left, mid, from, to, accept, calc, direction),
+                from >= mid => self.do_binary_search_in_mut(right_child, mid, right, from, to, accept, calc, direction),
                 else => {
-                    let res = self.do_binary_search_in_mut(left_child, left, mid, from, to, accept, calc);
+                    let res = match direction {
+                        SearchDirection::LTR => self.do_binary_search_in_mut(left_child, left, mid, from, to, accept, calc, direction),
+                        SearchDirection::RTL => self.do_binary_search_in_mut(right_child, mid, right, from, to, accept, calc, direction),
+                    };
                     match res {
                         res @ Ok(_) => res,
-                        Err(calc) => self.do_binary_search_in_mut(right_child, mid, right, from, to, accept, calc)
+                        Err(calc) => match direction {
+                            SearchDirection::LTR => self.do_binary_search_in_mut(right_child, mid, right, from, to, accept, calc, direction),
+                            SearchDirection::RTL => self.do_binary_search_in_mut(left_child, left, mid, from, to, accept, calc, direction),
+                        }
                     }
                 },
             };
@@ -518,4 +610,10 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         self.do_push_down(root, root - 1);
         self.nodes[root].reset_delta();
     }
+}
+
+#[derive(Clone, Copy)]
+pub enum SearchDirection {
+    LTR,
+    RTL,
 }

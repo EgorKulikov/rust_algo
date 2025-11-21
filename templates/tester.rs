@@ -17,13 +17,14 @@ use tester::Tester;
 
 const PRINT_LIMIT: usize = 1000;
 
-fn interact(mut sol_input: Input, mut sol_output: Output, mut input: Input) -> Result<(), String> {
+fn interact(mut sol: Input, mut out: Output, mut input: Input) -> Result<(), String> {
     Ok(())
 }
 
 fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
     Ok(())
 }
+
 fn mix(mut input: Input,
        mut output: Input,
        expected: Option<Input>,
