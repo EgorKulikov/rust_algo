@@ -4,7 +4,7 @@ use algo_lib::collections::btree_ext::BTreeExt;
 use algo_lib::collections::min_max::MinimMaxim;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
-use algo_lib::misc::test_type::{LegacyTaskType, TestType};
+use algo_lib::misc::test_type::{TaskType, LegacyTestType};
 use std::collections::BTreeSet;
 
 type PreCalc = ();
@@ -59,21 +59,21 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     out.print_line_iter(ans.into_iter().skip(1));
 }
 
-pub static TEST_TYPE: TestType = TestType::MultiNumber;
-pub static TASK_TYPE: LegacyTaskType = LegacyTaskType::Classic;
+pub static TEST_TYPE: LegacyTestType = LegacyTestType::MultiNumber;
+pub static TASK_TYPE: TaskType = TaskType::Classic;
 
 pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
     let mut pre_calc = ();
 
     match TEST_TYPE {
-        TestType::Single => solve(&mut input, &mut output, 1, &mut pre_calc),
-        TestType::MultiNumber => {
+        LegacyTestType::Single => solve(&mut input, &mut output, 1, &mut pre_calc),
+        LegacyTestType::MultiNumber => {
             let t = input.read();
             for i in 1..=t {
                 solve(&mut input, &mut output, i, &mut pre_calc);
             }
         }
-        TestType::MultiEof => {
+        LegacyTestType::MultiEof => {
             let mut i = 1;
             while input.peek().is_some() {
                 solve(&mut input, &mut output, i, &mut pre_calc);
@@ -83,11 +83,11 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
     }
     output.flush();
     match TASK_TYPE {
-        LegacyTaskType::Classic => {
+        TaskType::Classic => {
             input.skip_whitespace();
             input.peek().is_none()
         }
-        LegacyTaskType::Interactive => true,
+        TaskType::Interactive => true,
     }
 }
 
@@ -138,7 +138,7 @@ mod tester {
         let path = "./triangle_count_hard";
         let time_limit = 1000;
         let tester = match TASK_TYPE {
-            crate::LegacyTaskType::Interactive => {
+            crate::TaskType::Interactive => {
                 Tester::new_interactive(
                     time_limit,
                     PRINT_LIMIT,
@@ -148,7 +148,7 @@ mod tester {
                 )
                 //Tester::new_interactive(time_limit, PRINT_LIMIT, path.to_string(), run, interact)
             }
-            crate::LegacyTaskType::Classic => {
+            crate::TaskType::Classic => {
                 Tester::new_classic(
                     time_limit,
                     PRINT_LIMIT,

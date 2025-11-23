@@ -25,15 +25,11 @@ pub(crate) fn run_single_test_classic<T: TestSet>(
         Ok((output, duration, is_exhausted)) => {
             test_set.save_output(test_id, &output);
             let input = *input;
-            let checker_result = if let Some(expected) = expected {
-                (checker)(
-                    Input::slice(input),
-                    Some(Input::slice(expected)),
-                    Input::slice(output.as_slice()),
-                )
-            } else {
-                (checker)(Input::slice(input), None, Input::slice(output.as_slice()))
-            };
+            let checker_result = (checker)(
+                Input::slice(input),
+                expected.map(Input::slice),
+                Input::slice(output.as_slice()),
+            );
             if let Err(checker_output) = checker_result {
                 (
                     Outcome::WrongAnswer {
@@ -65,7 +61,7 @@ pub(crate) fn run_single_test_classic<T: TestSet>(
         Err(err) => (process_error(err), Vec::new()),
     };
     if test_set.print_details() || !matches!(outcome, Outcome::OK { .. }) {
-        print_output(tester.trim(&output), true, 0);
+        print_output(tester.trim(&output), true);
     }
     if test_set.print_details() && matches!(outcome, Outcome::WrongAnswer { .. }) {
         print_diff(test_set, test_id);
@@ -109,100 +105,71 @@ pub fn default_checker(
 }
 
 thread_local! {
-    pub static EPS: Cell<f64> = Cell::new(1e-9);
+    pub static EPS: Cell<f64> = const { Cell::new(1e-9) };
+}
+
+fn default_checker_eps(
+    expected: Option<Input>,
+    mut actual: Input,
+    check_real: impl Fn(f64, f64) -> bool,
+) -> Result<(), String> {
+    if expected.is_none() {
+        return Ok(());
+    }
+    let mut expected = expected.unwrap();
+    let mut token_num = 0;
+    loop {
+        let expected_token = expected.next_token();
+        let actual_token = actual.next_token();
+        if expected_token != actual_token {
+            match (expected_token.as_ref(), actual_token.as_ref()) {
+                (None, _) => return Err(format!("Expected has only {} tokens", token_num)),
+                (_, None) => return Err(format!("Actual has only {} tokens", token_num)),
+                (Some(expected_token), Some(actual_token)) => {
+                    let expected_token = String::from_utf8(expected_token.clone()).unwrap();
+                    let actual_token = String::from_utf8(actual_token.clone()).unwrap();
+                    let mut failed = true;
+                    if let Ok(expected) = expected_token.parse::<f64>() {
+                        if let Ok(actual) = actual_token.parse::<f64>() {
+                            if check_real(expected, actual) {
+                                failed = false;
+                            }
+                        }
+                    }
+                    if failed {
+                        return Err(format!(
+                            "Token #{} differs, expected {}, actual {}",
+                            token_num, expected_token, actual_token,
+                        ));
+                    }
+                }
+            }
+        }
+        token_num += 1;
+        if actual_token.is_none() {
+            break;
+        }
+    }
+    Ok(())
 }
 
 pub fn default_checker_eps_rel(
     _input: Input,
     expected: Option<Input>,
-    mut actual: Input,
+    actual: Input,
 ) -> Result<(), String> {
-    if expected.is_none() {
-        return Ok(());
-    }
-    let mut expected = expected.unwrap();
-    let mut token_num = 0;
-    loop {
-        let expected_token = expected.next_token();
-        let actual_token = actual.next_token();
-        if expected_token != actual_token {
-            if expected_token.is_none() {
-                return Err(format!("Expected has only {} tokens", token_num));
-            } else if actual_token.is_none() {
-                return Err(format!("Actual has only {} tokens", token_num));
-            } else {
-                let expected_token = String::from_utf8(expected_token.unwrap()).unwrap();
-                let actual_token =
-                    String::from_utf8(actual_token.as_ref().unwrap().clone()).unwrap();
-                let mut failed = true;
-                if let Ok(expected_token) = expected_token.parse::<f64>() {
-                    if let Ok(actual_token) = actual_token.parse::<f64>() {
-                        let by = expected_token.abs().max(1.);
-                        // 1.73
-                        if (expected_token - actual_token).abs() < EPS.with(|eps| eps.get()) * by {
-                            failed = false;
-                        }
-                    }
-                }
-                if failed {
-                    return Err(format!(
-                        "Token #{} differs, expected {}, actual {}",
-                        token_num, expected_token, actual_token,
-                    ));
-                }
-            }
-        }
-        token_num += 1;
-        if actual_token.is_none() {
-            break;
-        }
-    }
-    Ok(())
+    default_checker_eps(expected, actual, |expected, actual| {
+        let by = expected.abs().max(1.);
+        (expected - actual).abs() < EPS.with(|eps| eps.get()) * by
+    })
 }
 
 pub fn default_checker_eps_abs(
     _input: Input,
     expected: Option<Input>,
-    mut actual: Input,
+    actual: Input,
 ) -> Result<(), String> {
-    if expected.is_none() {
-        return Ok(());
-    }
-    let mut expected = expected.unwrap();
-    let mut token_num = 0;
-    loop {
-        let expected_token = expected.next_token();
-        let actual_token = actual.next_token();
-        if expected_token != actual_token {
-            if expected_token.is_none() {
-                return Err(format!("Expected has only {} tokens", token_num));
-            } else if actual_token.is_none() {
-                return Err(format!("Actual has only {} tokens", token_num));
-            } else {
-                let expected_token = String::from_utf8(expected_token.unwrap()).unwrap();
-                let actual_token =
-                    String::from_utf8(actual_token.as_ref().unwrap().clone()).unwrap();
-                let mut failed = true;
-                if let Ok(expected_token) = expected_token.parse::<f64>() {
-                    if let Ok(actual_token) = actual_token.parse::<f64>() {
-                        // 1.73
-                        if (expected_token - actual_token).abs() < EPS.with(|eps| eps.get()) {
-                            failed = false;
-                        }
-                    }
-                }
-                if failed {
-                    return Err(format!(
-                        "Token #{} differs, expected {}, actual {}",
-                        token_num, expected_token, actual_token,
-                    ));
-                }
-            }
-        }
-        token_num += 1;
-        if actual_token.is_none() {
-            break;
-        }
-    }
-    Ok(())
+    default_checker_eps(expected, actual, |expected, actual| {
+        (expected - actual).abs() < EPS.with(|eps| eps.get())
+    })
 }

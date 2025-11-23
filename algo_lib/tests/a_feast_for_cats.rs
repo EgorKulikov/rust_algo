@@ -8,9 +8,9 @@ use algo_lib::graph::Graph;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::{BoolOutput, Output};
 use algo_lib::misc::extensions::do_with::DoWith;
-use algo_lib::misc::test_type::LegacyTaskType;
+use algo_lib::misc::test_type::TaskType;
 
-use algo_lib::misc::test_type::TestType;
+use algo_lib::misc::test_type::LegacyTestType;
 
 type PreCalc = ();
 
@@ -36,22 +36,22 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     out.print_line(total <= m);
 }
 
-pub static TEST_TYPE: TestType = TestType::MultiNumber;
-pub static TASK_TYPE: LegacyTaskType = LegacyTaskType::Classic;
+pub static TEST_TYPE: LegacyTestType = LegacyTestType::MultiNumber;
+pub static TASK_TYPE: TaskType = TaskType::Classic;
 
 pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
     let mut pre_calc = ();
     output.set_bool_output(BoolOutput::Custom("yes", "no"));
 
     match TEST_TYPE {
-        TestType::Single => solve(&mut input, &mut output, 1, &mut pre_calc),
-        TestType::MultiNumber => {
+        LegacyTestType::Single => solve(&mut input, &mut output, 1, &mut pre_calc),
+        LegacyTestType::MultiNumber => {
             let t = input.read();
             for i in 1..=t {
                 solve(&mut input, &mut output, i, &mut pre_calc);
             }
         }
-        TestType::MultiEof => {
+        LegacyTestType::MultiEof => {
             let mut i = 1;
             while input.peek().is_some() {
                 solve(&mut input, &mut output, i, &mut pre_calc);
@@ -61,8 +61,8 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
     }
     output.flush();
     match TASK_TYPE {
-        LegacyTaskType::Classic => input.is_empty(),
-        LegacyTaskType::Interactive => true,
+        TaskType::Classic => input.is_empty(),
+        TaskType::Interactive => true,
     }
 }
 
@@ -136,11 +136,11 @@ mod tester {
         let path = "./a_feast_for_cats";
         let tl = 6000;
         let tester = match TASK_TYPE {
-            crate::LegacyTaskType::Interactive => {
+            crate::TaskType::Interactive => {
                 Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)
                 // Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, interact)
             }
-            crate::LegacyTaskType::Classic => {
+            crate::TaskType::Classic => {
                 Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker)
                 // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
             }

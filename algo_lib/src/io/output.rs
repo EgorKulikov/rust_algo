@@ -38,7 +38,7 @@ enum OutputDest<'s> {
     Stdout(StdoutLock<'static>),
     File(File),
     Buf(&'s mut Vec<u8>),
-    Delegate(Box<dyn Write + 's>),
+    Delegate(Box<dyn Write + 'static>),
 }
 
 pub struct Output<'s> {
@@ -53,10 +53,6 @@ pub struct Output<'s> {
 impl<'s> Output<'s> {
     pub fn buf(buf: &'s mut Vec<u8>) -> Self {
         Self::new(OutputDest::Buf(buf))
-    }
-
-    pub fn delegate(delegate: impl Write + 'static) -> Self {
-        Self::new(OutputDest::Delegate(Box::new(delegate)))
     }
 
     fn new(output: OutputDest<'s>) -> Self {
@@ -78,6 +74,10 @@ impl Output<'static> {
 
     pub fn file(file: File) -> Self {
         Self::new(OutputDest::File(file))
+    }
+
+    pub fn delegate(delegate: impl Write + 'static) -> Self {
+        Self::new(OutputDest::Delegate(Box::new(delegate)))
     }
 }
 

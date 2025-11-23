@@ -224,6 +224,18 @@ impl<T: Readable, const SIZE: usize> Readable for [T; SIZE] {
     }
 }
 
+impl Read for Input {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        for (i, c) in buf.iter_mut().enumerate() {
+            match self.get() {
+                Some(b) => *c = b,
+                None => return Ok(i),
+            }
+        }
+        Ok(buf.len())
+    }
+}
+
 macro_rules! read_integer {
     ($($t:ident)+) => {$(
         impl Readable for $t {

@@ -5,8 +5,7 @@ use std::path::Path;
 use std::time::Duration;
 
 use crate::classic::run_single_test_classic;
-use crate::interactive::run_single_test_interactive;
-use crate::run_twice::run_single_test_run_twice;
+use crate::interactive::{run_single_test_interactive, SolutionRunner};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 #[cfg(not(feature = "test"))]
@@ -16,7 +15,6 @@ use test_set::{GeneratedTestSet, SampleTests, TestSet};
 pub mod classic;
 pub mod interactive;
 mod print;
-pub mod run_twice;
 pub mod test_set;
 
 pub enum Outcome {
@@ -44,11 +42,7 @@ pub enum Runner {
         checker: fn(Input, Option<Input>, Input) -> Result<(), String>,
     },
     Interactive {
-        interactor: fn(Input, Output, Input) -> Result<(), String>,
-    },
-    RunTwice {
-        mixer: fn(Input, Input, Option<Input>, Output, Output) -> Result<bool, String>,
-        checker: fn(Input, Option<Input>, Input) -> Result<(), String>,
+        interactor: fn(Input, Option<Input>, SolutionRunner) -> Result<(), String>,
     },
 }
 
@@ -82,7 +76,7 @@ impl Tester {
         print_limit: usize,
         task_folder: String,
         solution: fn(Input, Output) -> bool,
-        interactor: fn(Input, Output, Input) -> Result<(), String>,
+        interactor: fn(Input, Option<Input>, SolutionRunner) -> Result<(), String>,
     ) -> Self {
         Self {
             time_limit,
@@ -90,23 +84,6 @@ impl Tester {
             task_folder,
             solution,
             runner: Runner::Interactive { interactor },
-        }
-    }
-
-    pub fn new_run_twice(
-        time_limit: u64,
-        print_limit: usize,
-        task_folder: String,
-        solution: fn(Input, Output) -> bool,
-        mixer: fn(Input, Input, Option<Input>, Output, Output) -> Result<bool, String>,
-        checker: fn(Input, Option<Input>, Input) -> Result<(), String>,
-    ) -> Self {
-        Self {
-            time_limit,
-            print_limit,
-            task_folder,
-            solution,
-            runner: Runner::RunTwice { mixer, checker },
         }
     }
 
@@ -226,9 +203,6 @@ impl Tester {
                 expected,
                 test_set.print_details(),
             ),
-            Runner::RunTwice { mixer, checker } => {
-                run_single_test_run_twice(self, mixer, checker, input, expected, test_set, test_id)
-            }
         }
     }
 

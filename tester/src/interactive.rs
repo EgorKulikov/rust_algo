@@ -1,86 +1,119 @@
 use crate::print::print_interacting;
-use crate::{process_error, Outcome, Tester};
+use crate::{Outcome, Tester};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::string::str::StrReader;
 use std::io::{Read, Write};
 use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
+use std::thread::JoinHandle;
 use std::time::Instant;
+
+pub struct SolutionRunner {
+    handle: Option<JoinHandle<()>>,
+    print_limit: usize,
+    solution: fn(Input, Output) -> bool,
+}
+
+impl SolutionRunner {
+    pub fn run(&mut self) -> (Input, Output<'static>) {
+        self.join();
+        let (snd1, rcv1) = std::sync::mpsc::channel();
+        let (snd2, rcv2) = std::sync::mpsc::channel();
+        let pl = self.print_limit;
+        let sol = self.solution;
+        self.handle = Some(thread::spawn(move || {
+            let read_delegate = ReadDelegate::new(rcv2);
+            let write_delegate = WriteDelegate::new(snd1, "> ", pl);
+            sol(
+                Input::delegate(read_delegate),
+                Output::delegate(write_delegate),
+            );
+        }));
+        let read_delegate = ReadDelegate::new(rcv1);
+        let write_delegate = WriteDelegate::new(snd2, "< ", self.print_limit);
+        (
+            Input::delegate(read_delegate),
+            Output::delegate(write_delegate),
+        )
+    }
+
+    pub fn join(&mut self) {
+        if let Some(handle) = self.handle.take() {
+            handle.join().unwrap();
+        }
+    }
+
+    pub fn is_finished(&self) -> bool {
+        self.handle.as_ref().is_none_or(|h| h.is_finished())
+    }
+}
+
+impl Drop for SolutionRunner {
+    fn drop(&mut self) {
+        self.join();
+    }
+}
 
 pub(crate) fn run_single_test_interactive(
     tester: &Tester,
-    interactor: fn(Input, Output, Input) -> Result<(), String>,
+    interactor: fn(Input, Option<Input>, SolutionRunner) -> Result<(), String>,
     input: &[u8],
-    _expected: Option<&[u8]>,
+    expected: Option<&[u8]>,
     print_details: bool,
 ) -> Outcome {
     print_interacting(print_details);
-    let (snd1, rcv1) = std::sync::mpsc::channel();
-    let (snd2, rcv2) = std::sync::mpsc::channel();
 
     let start = Instant::now();
     let solution = tester.solution;
     let print_limit = if print_details { tester.print_limit } else { 0 };
-    let handle = thread::spawn(move || {
-        let read_delegate = ReadDelegate::new(rcv2);
-        let write_delegate = WriteDelegate::new(snd1, "> ", print_limit);
-        solution(
-            Input::delegate(read_delegate),
-            Output::delegate(write_delegate),
-        );
-    });
-
-    let read_delegate = ReadDelegate::new(rcv1);
-    let write_delegate = WriteDelegate::new(snd2, "< ", print_limit);
-    let result = (interactor)(
-        Input::delegate(read_delegate),
-        Output::delegate(write_delegate),
-        Input::slice(input),
-    );
+    let runner = SolutionRunner {
+        handle: None,
+        print_limit,
+        solution,
+    };
+    let result = (interactor)(Input::slice(input), expected.map(Input::slice), runner);
     match result {
-        Ok(()) => match handle.join() {
-            Ok(()) => {
-                let duration = start.elapsed();
-                if duration.as_millis() as u64 > tester.time_limit {
-                    Outcome::TimeLimit {
-                        duration,
-                        second_duration: None,
-                        input_exhausted: true,
-                    }
-                } else {
-                    Outcome::OK {
-                        duration,
-                        second_duration: None,
-                        input_exhausted: true,
-                    }
+        Ok(()) => {
+            let duration = start.elapsed();
+            if duration.as_millis() as u64 > tester.time_limit {
+                Outcome::TimeLimit {
+                    duration,
+                    second_duration: None,
+                    input_exhausted: true,
+                }
+            } else {
+                Outcome::OK {
+                    duration,
+                    second_duration: None,
+                    input_exhausted: true,
                 }
             }
-            Err(err) => process_error(err),
-        },
-        Err(err) => {
-            let _ = handle.join();
-            Outcome::WrongAnswer {
-                checker_output: err,
-                input_exhausted: false,
-            }
         }
+        Err(err) => Outcome::WrongAnswer {
+            checker_output: err,
+            input_exhausted: false,
+        },
     }
 }
 
 pub fn std_interactor(
     _sol_input: Input,
-    mut sol_output: Output,
-    _input: Input,
+    _expected: Option<Input>,
+    mut runner: SolutionRunner,
 ) -> Result<(), String> {
+    let (mut _sol, mut out) = runner.run();
     let mut input = Input::stdin();
     while !input.is_exhausted() {
         let line = input.read_line();
-        if line.as_slice() == b"###" {
+        if runner.is_finished() {
             break;
         }
-        sol_output.print_line(line);
-        sol_output.flush();
+        if line.as_slice() == b"@@@" {
+            (_sol, out) = runner.run();
+        }
+        out.print_line(line);
+        out.flush();
     }
     Ok(())
 }
@@ -104,7 +137,10 @@ impl ReadDelegate {
 impl Read for ReadDelegate {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         if self.cur_at == self.cur_buf.len() {
-            self.cur_buf = self.rcv.recv().unwrap();
+            self.cur_buf = match self.rcv.recv() {
+                Ok(v) => v,
+                Err(_) => return Ok(0),
+            };
             self.cur_at = 0;
         }
         let to_read = std::cmp::min(buf.len(), self.cur_buf.len() - self.cur_at);

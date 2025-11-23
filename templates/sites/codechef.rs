@@ -29,6 +29,9 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
                 i += 1;
             }
         }
+        _ => {
+            unreachable!();
+        }
     }
     eprint!("\x1B[0m");
     output.flush();

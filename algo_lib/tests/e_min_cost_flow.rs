@@ -8,7 +8,7 @@ use algo_lib::graph::min_cost_flow::{CostAndFlow, MinCostFlow};
 use algo_lib::graph::Graph;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
-use algo_lib::misc::test_type::{LegacyTaskType, TestType};
+use algo_lib::misc::test_type::{TaskType, LegacyTestType};
 
 type PreCalc = ();
 
@@ -40,21 +40,21 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     out.print_table(&ans);
 }
 
-pub static TEST_TYPE: TestType = TestType::Single;
-pub static TASK_TYPE: LegacyTaskType = LegacyTaskType::Classic;
+pub static TEST_TYPE: LegacyTestType = LegacyTestType::Single;
+pub static TASK_TYPE: TaskType = TaskType::Classic;
 
 pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
     let mut pre_calc = ();
 
     match TEST_TYPE {
-        TestType::Single => solve(&mut input, &mut output, 1, &mut pre_calc),
-        TestType::MultiNumber => {
+        LegacyTestType::Single => solve(&mut input, &mut output, 1, &mut pre_calc),
+        LegacyTestType::MultiNumber => {
             let t = input.read();
             for i in 1..=t {
                 solve(&mut input, &mut output, i, &mut pre_calc);
             }
         }
-        TestType::MultiEof => {
+        LegacyTestType::MultiEof => {
             let mut i = 1;
             while input.peek().is_some() {
                 solve(&mut input, &mut output, i, &mut pre_calc);
@@ -64,11 +64,11 @@ pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
     }
     output.flush();
     match TASK_TYPE {
-        LegacyTaskType::Classic => {
+        TaskType::Classic => {
             input.skip_whitespace();
             input.peek().is_none()
         }
-        LegacyTaskType::Interactive => true,
+        TaskType::Interactive => true,
     }
 }
 
@@ -119,7 +119,7 @@ mod tester {
         let path = "./e_min_cost_flow";
         let time_limit = 5000;
         let tester = match TASK_TYPE {
-            crate::LegacyTaskType::Interactive => {
+            crate::TaskType::Interactive => {
                 Tester::new_interactive(
                     time_limit,
                     PRINT_LIMIT,
@@ -129,7 +129,7 @@ mod tester {
                 )
                 //Tester::new_interactive(time_limit, PRINT_LIMIT, path.to_string(), run, interact)
             }
-            crate::LegacyTaskType::Classic => {
+            crate::TaskType::Classic => {
                 Tester::new_classic(
                     time_limit,
                     PRINT_LIMIT,

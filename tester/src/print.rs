@@ -52,13 +52,9 @@ pub(crate) fn start_test<TestId: Display>(
     }
 }
 
-pub(crate) fn print_output(output: &[u8], print_details: bool, output_index: usize) {
+pub(crate) fn print_output(output: &[u8], print_details: bool) {
     if print_details && !output.is_empty() {
-        print!("{}Output", BLUE);
-        if output_index != 0 {
-            print!(" #{}", output_index);
-        }
-        println!(":{}", DEF);
+        println!("{}Output: {}", BLUE, DEF);
         println!("{}", String::from_utf8_lossy(output));
     }
 }

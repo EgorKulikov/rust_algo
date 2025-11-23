@@ -16,8 +16,6 @@ pub(crate) trait TestSet {
     fn output(&self, test: &Self::TestId, input: &[u8]) -> Option<Vec<u8>>;
     fn print_details(&self) -> bool;
     fn save_output(&self, _test: &Self::TestId, _output: &[u8]) {}
-    fn save_first_output(&self, _test: &Self::TestId, _output: &[u8]) {}
-    fn save_second_input(&self, _test: &Self::TestId, _output: &[u8]) {}
     fn output_diff(&self, _test: &Self::TestId) {}
 }
 
@@ -95,30 +93,6 @@ impl TestSet for SampleTests {
         #[cfg(not(feature = "test"))]
         {
             let file = format!("tasks/{}/tests/{}.out", self.task_folder, test);
-            std::fs::write(file, output).unwrap();
-        }
-        #[cfg(feature = "test")]
-        {
-            let _ = (test, output);
-        }
-    }
-
-    fn save_first_output(&self, test: &Self::TestId, output: &[u8]) {
-        #[cfg(not(feature = "test"))]
-        {
-            let file = format!("tasks/{}/tests/{}.out1", self.task_folder, test);
-            std::fs::write(file, output).unwrap();
-        }
-        #[cfg(feature = "test")]
-        {
-            let _ = (test, output);
-        }
-    }
-
-    fn save_second_input(&self, test: &Self::TestId, output: &[u8]) {
-        #[cfg(not(feature = "test"))]
-        {
-            let file = format!("tasks/{}/tests/{}.in2", self.task_folder, test);
             std::fs::write(file, output).unwrap();
         }
         #[cfg(feature = "test")]
