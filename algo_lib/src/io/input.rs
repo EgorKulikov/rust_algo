@@ -38,7 +38,8 @@ macro_rules! read_impl {
 }
 
 impl Input {
-    const DEFAULT_BUF_SIZE: usize = 4096;
+    const DEFAULT_BUF_SIZE: usize = 1 << 18;
+    const FIX_EOL: bool = false;
 
     pub fn slice(input: &[u8]) -> Self {
         Self {
@@ -84,12 +85,14 @@ impl Input {
         if self.refill_buffer() {
             let res = self.buf[self.at];
             self.at += 1;
-            if res == b'\r' {
-                self.eol = true;
-                if self.refill_buffer() && self.buf[self.at] == b'\n' {
-                    self.at += 1;
+            if Self::FIX_EOL {
+                if res == b'\r' {
+                    self.eol = true;
+                    if self.refill_buffer() && self.buf[self.at] == b'\n' {
+                        self.at += 1;
+                    }
+                    return Some(b'\n');
                 }
-                return Some(b'\n');
             }
             self.eol = res == b'\n';
             Some(res)
@@ -280,7 +283,40 @@ macro_rules! read_integer {
     )+};
 }
 
-read_integer!(i8 i16 i32 i64 i128 isize u16 u32 u64 u128 usize);
+macro_rules! read_unsigned {
+    ($($t:ident)+) => {$(
+        impl Readable for $t {
+            fn read(input: &mut Input) -> Self {
+                input.skip_whitespace();
+                let mut c = input.get().unwrap();
+                if c == b'+' {
+                    c = input.get().unwrap();
+                }
+                let mut res = 0;
+                loop {
+                    assert!(c.is_ascii_digit());
+                    res *= 10;
+                    let d = (c - b'0') as $t;
+                    res += d;
+                    match input.get() {
+                        None => break,
+                        Some(ch) => {
+                            if ch.is_ascii_whitespace() {
+                                break;
+                            } else {
+                                c = ch;
+                            }
+                        }
+                    }
+                }
+                res
+            }
+        }
+    )+};
+}
+
+read_integer!(i8 i16 i32 i64 i128 isize);
+read_unsigned!( u16 u32 u64 u128 usize);
 
 macro_rules! tuple_readable {
     ($($name:ident)+) => {

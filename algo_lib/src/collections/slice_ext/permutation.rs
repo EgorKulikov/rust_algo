@@ -1,7 +1,9 @@
 use crate::collections::slice_ext::next_permutation::NextPermutation;
+use std::mem::MaybeUninit;
 
 pub trait Permutation: NextPermutation {
     fn inv(&self) -> Vec<usize>;
+    unsafe fn unsafe_inv(&self) -> Vec<usize>;
     fn mul(&self, other: &Self) -> Vec<usize>;
 }
 
@@ -13,6 +15,18 @@ impl Permutation for [usize] {
         }
         debug_assert!(inv.iter().all(|&x| x < self.len()));
         inv
+    }
+
+    unsafe fn unsafe_inv(&self) -> Vec<usize> {
+        unsafe {
+            let mut res = MaybeUninit::new(Vec::with_capacity(self.len()));
+            (*res.as_mut_ptr()).set_len(self.len());
+            for i in 0..self.len() {
+                let ptr: *mut usize = (*res.as_mut_ptr()).as_mut_ptr();
+                ptr.add(self[i]).write(i);
+            }
+            res.assume_init()
+        }
     }
 
     fn mul(&self, other: &Self) -> Vec<usize> {
