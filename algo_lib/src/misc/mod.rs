@@ -17,5 +17,6 @@ pub mod test_type;
 pub mod time_tracker;
 pub mod transparent_wrapper;
 pub mod value;
+pub mod value_delta;
 pub mod value_ref;
 pub mod when;

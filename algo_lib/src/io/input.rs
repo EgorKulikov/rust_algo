@@ -85,14 +85,12 @@ impl Input {
         if self.refill_buffer() {
             let res = self.buf[self.at];
             self.at += 1;
-            if Self::FIX_EOL {
-                if res == b'\r' {
-                    self.eol = true;
-                    if self.refill_buffer() && self.buf[self.at] == b'\n' {
-                        self.at += 1;
-                    }
-                    return Some(b'\n');
+            if Self::FIX_EOL && res == b'\r' {
+                self.eol = true;
+                if self.refill_buffer() && self.buf[self.at] == b'\n' {
+                    self.at += 1;
                 }
+                return Some(b'\n');
             }
             self.eol = res == b'\n';
             Some(res)

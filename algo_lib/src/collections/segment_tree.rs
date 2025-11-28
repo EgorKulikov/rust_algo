@@ -1,6 +1,8 @@
 use crate::collections::bounds::clamp;
 use crate::misc::direction::Direction;
+use crate::misc::value_delta::ValueDeltaTrait;
 use crate::when;
+use std::marker::PhantomData;
 use std::ops::RangeBounds;
 
 #[allow(unused_variables)]
@@ -13,6 +15,79 @@ pub trait SegmentTreeNode: Default {
     fn update(&mut self, left_val: &Self, right_val: &Self) {}
     fn accumulate(&mut self, value: &Self) {}
     fn reset_delta(&mut self) {}
+}
+
+pub struct ValueDeltaNode<VDT: ValueDeltaTrait> {
+    pub v: VDT::V,
+    pub d: VDT::D,
+    phantom: PhantomData<VDT>,
+}
+
+impl<VDT: ValueDeltaTrait> ValueDeltaNode<VDT>
+where
+    VDT::D: Default,
+{
+    pub fn new(v: VDT::V) -> Self {
+        Self {
+            v,
+            d: VDT::D::default(),
+            phantom: PhantomData,
+        }
+    }
+}
+
+impl<VDT: ValueDeltaTrait> Clone for ValueDeltaNode<VDT>
+where
+    VDT::V: Clone,
+    VDT::D: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            v: self.v.clone(),
+            d: self.d.clone(),
+            phantom: PhantomData,
+        }
+    }
+}
+
+impl<VDT: ValueDeltaTrait> Copy for ValueDeltaNode<VDT>
+where
+    VDT::V: Copy,
+    VDT::D: Copy,
+{
+}
+
+impl<VDT: ValueDeltaTrait> Default for ValueDeltaNode<VDT>
+where
+    VDT::V: Default,
+    VDT::D: Default,
+{
+    fn default() -> Self {
+        Self::new(VDT::V::default())
+    }
+}
+
+impl<VDT: ValueDeltaTrait> SegmentTreeNode for ValueDeltaNode<VDT>
+where
+    VDT::V: Copy + Default,
+    VDT::D: Copy + Default,
+{
+    fn join(left: &Self, right: &Self) -> Self {
+        Self::new(VDT::join(left.v, right.v))
+    }
+
+    fn update(&mut self, left_val: &Self, right_val: &Self) {
+        self.v = VDT::join(left_val.v, right_val.v);
+    }
+
+    fn accumulate(&mut self, value: &Self) {
+        self.d = VDT::accumulate(self.d, value.d);
+        self.v = VDT::apply(self.v, value.d);
+    }
+
+    fn reset_delta(&mut self) {
+        self.d = VDT::D::default();
+    }
 }
 
 #[derive(Clone)]

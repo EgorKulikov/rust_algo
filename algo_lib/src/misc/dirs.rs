@@ -57,8 +57,9 @@ impl<V: ConstValueRef<[(isize, isize)]>> Iterator for DirectionsIter<V> {
 
     fn next(&mut self) -> Option<Self::Item> {
         while self.at < V::val().len() {
-            let n_row = (self.row as isize) + V::val()[self.at].0;
-            let n_col = (self.col as isize) + V::val()[self.at].1;
+            let (d_row, d_col) = V::val()[self.at];
+            let n_row = (self.row as isize) + d_row;
+            let n_col = (self.col as isize) + d_col;
             self.at += 1;
             if n_row >= 0 && (n_row as usize) < self.n && n_col >= 0 && (n_col as usize) < self.m {
                 return Some((n_row as usize, n_col as usize));

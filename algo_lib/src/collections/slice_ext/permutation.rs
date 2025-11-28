@@ -21,9 +21,9 @@ impl Permutation for [usize] {
         unsafe {
             let mut res = MaybeUninit::new(Vec::with_capacity(self.len()));
             (*res.as_mut_ptr()).set_len(self.len());
-            for i in 0..self.len() {
+            for (i, j) in self.iter().enumerate() {
                 let ptr: *mut usize = (*res.as_mut_ptr()).as_mut_ptr();
-                ptr.add(self[i]).write(i);
+                ptr.add(*j).write(i);
             }
             res.assume_init()
         }
