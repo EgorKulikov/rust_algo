@@ -670,9 +670,11 @@ impl<P: Payload> Tree<P> {
         self.rebuild().content.as_mut().map(|c| &mut c.payload)
     }
 
-    pub fn with_payload_mut(&mut self, f: impl FnOnce(&mut P)) {
+    pub fn with_payload_mut<R: Default>(&mut self, f: impl FnOnce(&mut P) -> R) -> R {
         if let Some(payload) = self.payload_mut() {
-            f(payload);
+            f(payload)
+        } else {
+            R::default()
         }
     }
 

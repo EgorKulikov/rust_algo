@@ -1,4 +1,5 @@
 use algo_lib::misc::test_type::TestType;
+use algo_lib::io::output::BoolOutput;
 
 type PreCalc = ();
 

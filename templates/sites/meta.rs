@@ -1,4 +1,5 @@
 use algo_lib::misc::run_parallel::run_parallel;
+use algo_lib::misc::test_type::TestType;
 use std::sync::MutexGuard;
 
 type PreCalc = ();
@@ -10,6 +11,7 @@ fn solve(mut input: MutexGuard<Input>, out: &mut Output, test_case: usize, _data
 }
 
 pub static TASK_TYPE: TaskType = TaskType::Classic;
+pub static TEST_TYPE: TestType = TestType::MultiNumber;
 
 pub(crate) fn run(input: Input, mut output: Output) -> bool {
     eprint!("\x1B[33m\x1B[03m");

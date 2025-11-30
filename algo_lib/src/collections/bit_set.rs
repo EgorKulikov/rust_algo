@@ -76,6 +76,13 @@ impl BitSet {
         true
     }
 
+    pub fn copy_to(&self, s: &mut Self) {
+        assert_eq!(self.len(), s.len());
+        for i in 0..self.data.len() {
+            s.data[i] = self.data[i];
+        }
+    }
+
     pub fn is_subset(&self, other: &Self) -> bool {
         other.is_superset(self)
     }
