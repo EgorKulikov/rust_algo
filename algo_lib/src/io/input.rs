@@ -39,7 +39,7 @@ macro_rules! read_impl {
 
 impl Input {
     const DEFAULT_BUF_SIZE: usize = 1 << 18;
-    const FIX_EOL: bool = false;
+    const FIX_EOL: bool = true;
 
     pub fn slice(input: &[u8]) -> Self {
         Self {

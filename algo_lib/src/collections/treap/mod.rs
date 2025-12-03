@@ -147,7 +147,9 @@ impl<P: Payload> Node<P> {
 
     fn with_gen(n: usize, f: impl FnMut(usize) -> P) -> TreapNode<P> {
         let mut res = Self::build(f, 0, n).0;
-        res.heapify();
+        if res.size != 0 {
+            res.heapify();
+        }
         res
     }
 
