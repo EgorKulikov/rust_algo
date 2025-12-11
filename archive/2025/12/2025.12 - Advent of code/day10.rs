@@ -1,0 +1,145 @@
+//{"name":"day12","group":"Manual","url":"","interactive":false,"timeLimit":2000,"tests":[{"input":"","output":""},{"input":"","output":""}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null}}
+
+use algo_lib::collections::iter_ext::iter_copied::ItersCopied;
+use algo_lib::collections::min_max::MinimMaxim;
+use algo_lib::collections::slice_ext::indices::Indices;
+use algo_lib::io::eol::EolVec;
+use algo_lib::io::input::Input;
+use algo_lib::io::output::Output;
+use algo_lib::misc::test_type::TaskType;
+use algo_lib::misc::test_type::TestType;
+use algo_lib::numbers::num_traits::bit_ops::BitOps;
+use algo_lib::string::str::Str;
+use algo_lib::{scan, str_scan};
+use good_lp::{
+    scip, Expression, ProblemVariables, Solution, SolverModel, VariableDefinition,
+};
+
+type PreCalc = ();
+
+fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut PreCalc) {
+    let mut ans = 0;
+    let mut ans2 = 0;
+
+    let mut at = 0;
+    while !input.is_empty() {
+        eprintln!("Processing case {}", at);
+        at += 1;
+        scan!(input, "[@] @\n", mask: Str, buttons: EolVec<Str>);
+        let mut b = Vec::new();
+        let mut target = Vec::new();
+        for mut s in buttons.unwrap() {
+            s.iter_mut().for_each(|x| {
+                if *x == b',' {
+                    *x = b' ';
+                }
+            });
+            if s[0] == b'{' {
+                str_scan!(&s, "{@}", cur: EolVec<usize>);
+                target = cur.unwrap();
+                continue;
+            }
+            str_scan!(&s, "(@)", cur: EolVec<usize>);
+            let mut res = 0;
+            for i in cur.unwrap() {
+                res.set_bit(i);
+            }
+            b.push(res);
+        }
+        let mut cost = vec![b.len() + 1; 1 << mask.len()];
+        cost[0] = 0;
+        for i in b.copy_iter() {
+            for m in usize::iter_all(mask.len()) {
+                let cand = cost[m] + 1;
+                cost[m ^ i].minim(cand);
+            }
+        }
+        let mut m = 0;
+        for i in mask.indices() {
+            if mask[i] == b'#' {
+                m.set_bit(i);
+            }
+        }
+        ans += cost[m];
+        let mut vars = ProblemVariables::new();
+        let mut v = Vec::new();
+        for i in b.indices() {
+            v.push(
+                vars.add(
+                    VariableDefinition::new()
+                        .integer()
+                        .name(&format!("x{}", i))
+                        .min(0),
+                ),
+            );
+        }
+        let mut sum = Expression::from(0);
+        for i in b.indices() {
+            sum += &v[i];
+        }
+        let mut problem = vars.minimise(sum).using(scip);
+        for i in mask.indices() {
+            let mut constraint = Expression::from(0);
+            for j in b.indices() {
+                if b[j].is_set(i) {
+                    constraint += &v[j];
+                }
+            }
+            problem = problem.with(constraint.eq(target[i] as i32));
+        }
+        let solution = problem.solve().unwrap();
+        for i in b.indices() {
+            ans2 += solution.value(v[i]) as usize;
+        }
+    }
+    out.print_line(ans);
+    out.print_line(ans2);
+}
+
+pub static TEST_TYPE: TestType = TestType::Single;
+pub static TASK_TYPE: TaskType = TaskType::Classic;
+
+pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
+    eprint!("\x1B[33m\x1B[03m");
+
+    let mut pre_calc = ();
+    // output.set_bool_output(BoolOutput::YesNo);
+
+    match TEST_TYPE {
+        TestType::Single => solve(&mut input, &mut output, 1, &mut pre_calc),
+        TestType::MultiNumber => {
+            let t = input.read();
+            for i in 1..=t {
+                solve(&mut input, &mut output, i, &mut pre_calc);
+            }
+        }
+        TestType::MultiEof => {
+            let mut i = 1;
+            while input.peek().is_some() {
+                solve(&mut input, &mut output, i, &mut pre_calc);
+                i += 1;
+            }
+        }
+        _ => {
+            unreachable!();
+        }
+    }
+    eprint!("\x1B[0m");
+    output.flush();
+    input.check_empty()
+}
+
+#[cfg(feature = "local")]
+mod tester;
+
+#[cfg(feature = "local")]
+fn main() {
+    tester::run_tests();
+}
+
+#[cfg(not(feature = "local"))]
+fn main() {
+    let input = algo_lib::io::input::Input::stdin();
+    let output = algo_lib::io::output::Output::stdout();
+    run(input, output);
+}

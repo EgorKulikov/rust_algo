@@ -190,8 +190,9 @@ impl Input {
         }
     }
 
-    pub fn is_eol(&self) -> bool {
-        self.eol
+    #[allow(clippy::wrong_self_convention)]
+    pub fn is_eol(&mut self) -> bool {
+        self.eol || self.is_exhausted()
     }
 }
 
