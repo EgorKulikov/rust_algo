@@ -1,8 +1,8 @@
 //{"name":"Minimum Cost Maximum Flow","group":"Kattis","url":"https://open.kattis.com/problems/mincostmaxflow","interactive":false,"timeLimit":6000,"tests":[{"input":"4 4 0 3\n0 1 4 10\n1 2 2 10\n0 2 4 30\n2 3 4 10\n","output":"4 140\n"},{"input":"2 1 0 1\n0 1 1000 100\n","output":"1000 100000\n"},{"input":"2 1 1 0\n0 1 1000 100\n","output":"0 0\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"MinimumCostMaximumFlow"}}}
 
 use algo_lib::graph::edges::weighted_flow_edge::WeightedFlowEdge;
-use algo_lib::graph::min_cost_flow::{CostAndFlow, MinCostFlow};
-use algo_lib::graph::Graph;
+use algo_lib::graph::min_cost_flow::MinCostFlow;
+use algo_lib::graph::{CostAndFlow, Graph};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::extensions::do_with::DoWith;

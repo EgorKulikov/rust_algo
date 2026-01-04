@@ -1,5 +1,5 @@
 use crate::print::print_interacting;
-use crate::{Outcome, Tester};
+use crate::{process_error, Outcome, Tester};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::string::str::StrReader;
@@ -40,7 +40,7 @@ impl SolutionRunner {
 
     pub fn join(&mut self) {
         if let Some(handle) = self.handle.take() {
-            handle.join().unwrap();
+            let _ = handle.join();
         }
     }
 
@@ -67,33 +67,35 @@ pub(crate) fn run_single_test_interactive(
     let start = Instant::now();
     let solution = tester.solution;
     let print_limit = if print_details { tester.print_limit } else { 0 };
-    let runner = SolutionRunner {
-        handle: None,
-        print_limit,
-        solution,
-    };
-    let result = (interactor)(Input::slice(input), expected.map(Input::slice), runner);
-    match result {
-        Ok(()) => {
-            let duration = start.elapsed();
-            if duration.as_millis() as u64 > tester.time_limit {
-                Outcome::TimeLimit {
-                    duration,
-                    second_duration: None,
-                    input_exhausted: true,
-                }
-            } else {
-                Outcome::OK {
-                    duration,
-                    second_duration: None,
-                    input_exhausted: true,
+    match std::panic::catch_unwind(|| {
+        let runner = SolutionRunner {
+            handle: None,
+            print_limit,
+            solution,
+        };
+        interactor(Input::slice(input), expected.map(Input::slice), runner)
+    }) {
+        Ok(res) => match res {
+            Ok(()) => {
+                let duration = start.elapsed();
+                if duration.as_millis() as u64 > tester.time_limit {
+                    Outcome::TimeLimit {
+                        duration,
+                        input_exhausted: true,
+                    }
+                } else {
+                    Outcome::OK {
+                        duration,
+                        input_exhausted: true,
+                    }
                 }
             }
-        }
-        Err(err) => Outcome::WrongAnswer {
-            checker_output: err,
-            input_exhausted: false,
+            Err(err) => Outcome::WrongAnswer {
+                checker_output: err,
+                input_exhausted: false,
+            },
         },
+        Err(err) => process_error(err),
     }
 }
 

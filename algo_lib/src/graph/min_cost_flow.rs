@@ -6,13 +6,8 @@ use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
 use crate::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
 use crate::graph::edges::weighted_flow_edge::WeightedFlowEdgeRaw;
 use crate::graph::flow_graph::FlowGraph;
-use crate::graph::Graph;
+use crate::graph::{CostAndFlow, Graph};
 use crate::numbers::num_traits::bit_ops::BitOps;
-
-pub struct CostAndFlow<C> {
-    pub cost: C,
-    pub flow: C,
-}
 
 pub trait MinCostFlow<C> {
     fn min_cost_flow(&mut self, source: usize, sink: usize) -> CostAndFlow<C>;

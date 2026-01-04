@@ -20,12 +20,10 @@ pub mod test_set;
 pub enum Outcome {
     OK {
         duration: Duration,
-        second_duration: Option<Duration>,
         input_exhausted: bool,
     },
     TimeLimit {
         duration: Duration,
-        second_duration: Option<Duration>,
         input_exhausted: bool,
     },
     WrongAnswer {
@@ -138,16 +136,8 @@ impl Tester {
                 test_set.print_details(),
             );
             let outcome = self.run_single_test(&input, expected.as_deref(), &test_set, &test);
-            if let Outcome::OK {
-                duration,
-                second_duration,
-                ..
-            } = outcome
-            {
+            if let Outcome::OK { duration, .. } = outcome {
                 max_time = max_time.max(duration);
-                if let Some(sd) = second_duration {
-                    max_time = max_time.max(sd);
-                }
             } else {
                 test_failed += 1;
                 if !test_set.print_details() {

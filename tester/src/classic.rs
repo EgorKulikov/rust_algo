@@ -42,7 +42,6 @@ pub(crate) fn run_single_test_classic<T: TestSet>(
                 (
                     Outcome::TimeLimit {
                         duration,
-                        second_duration: None,
                         input_exhausted: is_exhausted,
                     },
                     output,
@@ -51,7 +50,6 @@ pub(crate) fn run_single_test_classic<T: TestSet>(
                 (
                     Outcome::OK {
                         duration,
-                        second_duration: None,
                         input_exhausted: is_exhausted,
                     },
                     output,

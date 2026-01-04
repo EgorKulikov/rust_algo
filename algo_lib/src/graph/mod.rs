@@ -20,6 +20,7 @@ pub mod hl_decomposition;
 pub mod lca;
 pub mod max_flow;
 pub mod min_cost_flow;
+pub mod min_cost_flow_slow;
 pub mod minimal_spanning_tree;
 pub mod negative_distances;
 pub mod strongly_connected_components;
@@ -173,4 +174,9 @@ impl<P: Clone> Graph<BiEdge<P>> {
         }
         graph
     }
+}
+
+pub struct CostAndFlow<C> {
+    pub cost: C,
+    pub flow: C,
 }

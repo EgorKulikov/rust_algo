@@ -40,6 +40,10 @@ impl<T: Eq + Hash> MultiHashSet<T> {
         self.size
     }
 
+    pub fn num_distinct(&self) -> usize {
+        self.map.len()
+    }
+
     pub fn is_empty(&self) -> bool {
         self.size == 0
     }

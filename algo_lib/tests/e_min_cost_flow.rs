@@ -4,11 +4,11 @@ use algo_lib::collections::md_arr::arr2d::{Arr2d, Arr2dCharWrite, Arr2dRead};
 use algo_lib::graph::edges::edge_trait::EdgeTrait;
 use algo_lib::graph::edges::flow_edge_trait::FlowEdgeTrait;
 use algo_lib::graph::edges::weighted_flow_edge::WeightedFlowEdge;
-use algo_lib::graph::min_cost_flow::{CostAndFlow, MinCostFlow};
-use algo_lib::graph::Graph;
+use algo_lib::graph::min_cost_flow::MinCostFlow;
+use algo_lib::graph::{CostAndFlow, Graph};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
-use algo_lib::misc::test_type::{TaskType, LegacyTestType};
+use algo_lib::misc::test_type::{LegacyTestType, TaskType};
 
 type PreCalc = ();
 

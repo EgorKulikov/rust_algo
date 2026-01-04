@@ -73,7 +73,6 @@ pub(crate) fn end_test(outcome: Outcome, print_details: bool) {
     match outcome {
         Outcome::OK {
             duration,
-            second_duration,
             input_exhausted,
         } => {
             if print_details {
@@ -82,9 +81,6 @@ pub(crate) fn end_test(outcome: Outcome, print_details: bool) {
                     BLUE,
                     (duration.as_millis() as f64) / 1000.,
                 );
-                if let Some(sd) = second_duration {
-                    print!(" + {:.3}s", (sd.as_millis() as f64) / 1000.,);
-                }
                 println!("{}", DEF);
                 if !input_exhausted {
                     println!("{}Input not exhausted{}", RED, DEF);
@@ -96,7 +92,6 @@ pub(crate) fn end_test(outcome: Outcome, print_details: bool) {
         }
         Outcome::TimeLimit {
             duration,
-            second_duration,
             input_exhausted,
         } => {
             if print_details {
@@ -105,9 +100,6 @@ pub(crate) fn end_test(outcome: Outcome, print_details: bool) {
                     BLUE,
                     (duration.as_millis() as f64) / 1000.,
                 );
-                if let Some(sd) = second_duration {
-                    print!(" + {:.3}s", (sd.as_millis() as f64) / 1000.,);
-                }
                 println!("{}", DEF);
                 if !input_exhausted {
                     println!("{}Input not exhausted{}", RED, DEF);

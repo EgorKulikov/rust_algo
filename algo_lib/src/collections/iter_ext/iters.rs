@@ -63,9 +63,6 @@ pub trait Iters: IntoIterator + Sized {
     {
         self.into_iter().map(f)
     }
-    fn iter_all(self, f: impl FnMut(Self::Item) -> bool) -> bool {
-        self.into_iter().all(f)
-    }
     fn iter_any(self, f: impl FnMut(Self::Item) -> bool) -> bool {
         self.into_iter().any(f)
     }
