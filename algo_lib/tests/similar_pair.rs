@@ -2,7 +2,7 @@
 
 use algo_lib::collections::iter_ext::iters::Iters;
 use algo_lib::collections::payload::{OrdPayload, Payload};
-use algo_lib::collections::treap::Tree;
+use algo_lib::collections::treap::treap::Tree;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::graph::edges::edge_trait::EdgeTrait;
 use algo_lib::graph::Graph;

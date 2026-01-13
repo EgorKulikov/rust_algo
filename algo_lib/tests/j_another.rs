@@ -2,13 +2,13 @@
 
 use algo_lib::collections::payload::PurePayload;
 use algo_lib::collections::slice_ext::permutation::Permutation;
-use algo_lib::collections::treap::Tree;
+use algo_lib::collections::treap::treap::Tree;
 use algo_lib::collections::vec_ext::gen_vec::VecGen;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
-use algo_lib::misc::test_type::TaskType;
 use algo_lib::misc::test_type::LegacyTestType;
+use algo_lib::misc::test_type::TaskType;
 use std::iter::repeat;
 
 type PreCalc = ();

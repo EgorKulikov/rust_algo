@@ -1,7 +1,7 @@
 //{"name":"F - Insert","group":"AtCoder - Japan Registry Services (JPRS) Programming Contest 2025#1 (AtCoder Beginner Contest 392)","url":"https://atcoder.jp/contests/abc392/tasks/abc392_f","interactive":false,"timeLimit":2000,"tests":[{"input":"4\n1 1 2 1\n","output":"4 2 3 1\n"},{"input":"5\n1 2 3 4 5\n","output":"1 2 3 4 5\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null}}
 
 use algo_lib::collections::payload::PurePayload;
-use algo_lib::collections::treap::Tree;
+use algo_lib::collections::treap::treap::Tree;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
@@ -64,7 +64,6 @@ mod tester {
     use algo_lib::io::output::Output;
     use algo_lib::misc::random::Random;
     use tester::classic::default_checker;
-    use tester::classic::EPS;
     use tester::interactive::std_interactor;
     use tester::test_set::GeneratedTestSet;
     use tester::Tester;

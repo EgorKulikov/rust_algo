@@ -2,7 +2,7 @@
 
 use algo_lib::collections::default_map::DefaultTreeMap;
 use algo_lib::collections::treap::multi_payload::MultiPayload;
-use algo_lib::collections::treap::Tree;
+use algo_lib::collections::treap::treap::Tree;
 use algo_lib::collections::vec_ext::gen_vec::VecGen;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;

@@ -1,7 +1,7 @@
 //{"name":"Conga Line","group":"Kattis","url":"https://open.kattis.com/problems/congaline","interactive":false,"timeLimit":1000,"tests":[{"input":"3 6\namelia bubba\nkiryu coco\nollie udin\nPBBPFP\n","output":"bubba\ncoco\namelia\n\namelia\nbubba\nkiryu\ncoco\nollie\nudin\n"},{"input":"3 16\namelia bubba\nkiryu coco\nollie udin\nBRBPRFFPRBBBBBRP\n","output":"kiryu\nbubba\ncoco\n\nkiryu\nollie\nudin\nbubba\ncoco\namelia\n"},{"input":"3 22\namelia bubba\nkiryu coco\nollie udin\nBRBPRFFPRBBBBBRPCBBCFP\n","output":"kiryu\nbubba\ncoco\nollie\n\nollie\nudin\ncoco\nkiryu\namelia\nbubba\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null},"languages":{"java":{"taskClass":"CongaLine"}}}
 
 use algo_lib::collections::payload::PurePayload;
-use algo_lib::collections::treap::Tree;
+use algo_lib::collections::treap::treap::Tree;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::TaskType;

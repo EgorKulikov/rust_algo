@@ -1,5 +1,5 @@
 use crate::collections::treap::multi_payload::MultiPayload;
-use crate::collections::treap::Tree;
+use crate::collections::treap::treap::Tree;
 use std::iter::repeat;
 use std::ops::{Bound, RangeBounds};
 

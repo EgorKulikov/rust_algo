@@ -1,5 +1,5 @@
 use crate::collections::payload::{OrdPayload, Payload};
-use crate::collections::treap::Tree;
+use crate::collections::treap::treap::Tree;
 use std::ops::{Bound, Deref, DerefMut, RangeBounds};
 
 struct MapPayload<T, V> {

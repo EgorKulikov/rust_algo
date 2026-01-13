@@ -3,9 +3,9 @@ pub trait ConstValueRef<T: ?Sized + 'static> {
 }
 
 pub trait ValueRef<T: 'static> {
-    fn with<R, F: FnMut(&T) -> R>(f: F) -> R;
+    fn with<R, F: FnOnce(&T) -> R>(f: F) -> R;
     fn set(t: T);
-    fn with_mut<R, F: FnMut(&mut T) -> R>(f: F) -> R;
+    fn with_mut<R, F: FnOnce(&mut T) -> R>(f: F) -> R;
     fn is_init() -> bool;
 }
 
@@ -41,7 +41,7 @@ macro_rules! value_ref {
         $v struct $name {}
 
         impl $crate::misc::value_ref::ValueRef<$t> for $name {
-            fn with<R, F: FnMut(&$t) -> R>(mut f: F) -> R {
+            fn with<R, F: FnOnce(&$t) -> R>(f: F) -> R {
                 $name.with(|cell| f(cell.borrow().as_ref().unwrap()))
             }
 
@@ -49,7 +49,7 @@ macro_rules! value_ref {
                 $name.with(|cell| *cell.borrow_mut() = Some(t));
             }
 
-            fn with_mut<R, F: FnMut(&mut $t) -> R>(mut f: F) -> R {
+            fn with_mut<R, F: FnOnce(&mut $t) -> R>(f: F) -> R {
                 $name.with(|cell| f(cell.borrow_mut().as_mut().unwrap()))
             }
 

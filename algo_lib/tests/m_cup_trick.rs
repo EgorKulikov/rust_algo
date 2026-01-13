@@ -2,7 +2,7 @@
 
 use algo_lib::collections::bit_set::BitSet;
 use algo_lib::collections::payload::PurePayload;
-use algo_lib::collections::treap::Tree;
+use algo_lib::collections::treap::treap::Tree;
 // use algo_lib::collections::tree::Tree;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::io::input::Input;
