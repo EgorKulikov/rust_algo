@@ -61,12 +61,13 @@ impl<P> Node<P> {
         unsafe { &mut self.content.as_mut().unwrap_unchecked().payload }
     }
 
-    fn unreverse(&mut self) {
-        if self.reversed {
-            if let Some(content) = &mut self.content {
-                self.reversed = false;
-                swap(&mut content.left, &mut content.right);
+    fn reverse(&mut self) {
+        if let Some(content) = &mut self.content {
+            swap(&mut content.left, &mut content.right);
+            if content.left.size != 0 {
                 content.left.reversed ^= true;
+            }
+            if content.right.size != 0 {
                 content.right.reversed ^= true;
             }
         }
@@ -80,7 +81,10 @@ impl<P: Payload> Node<P> {
     }
 
     fn push_down(&mut self) {
-        self.unreverse();
+        if self.reversed {
+            self.reverse();
+            self.reversed = false;
+        }
         self.deref_mut().push_down();
     }
 
@@ -828,7 +832,7 @@ impl<P: Payload> Tree<P> {
     }
 
     pub fn reverse(&mut self) {
-        self.rebuild().reversed ^= true;
+        self.rebuild().reverse();
     }
 }
 
