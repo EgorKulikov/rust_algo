@@ -169,5 +169,7 @@ mod tester {
 }
 #[test]
 fn f_flip() {
-    assert!(tester::run_tests());
+    for _ in 0..100 {
+        assert!(tester::run_tests());
+    }
 }

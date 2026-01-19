@@ -63,26 +63,23 @@ impl<P> Node<P> {
 
     fn reverse(&mut self) {
         if let Some(content) = &mut self.content {
+            self.reversed ^= true;
             swap(&mut content.left, &mut content.right);
-            if content.left.size != 0 {
-                content.left.reversed ^= true;
-            }
-            if content.right.size != 0 {
-                content.right.reversed ^= true;
-            }
         }
     }
 }
 
 impl<P: Payload> Node<P> {
     fn update(&mut self) {
+        assert!(!self.reversed);
         self.size = 1 + self.left.size + self.right.size;
         self.deref_mut().update();
     }
 
     fn push_down(&mut self) {
         if self.reversed {
-            self.reverse();
+            self.left.reverse();
+            self.right.reverse();
             self.reversed = false;
         }
         self.deref_mut().push_down();
