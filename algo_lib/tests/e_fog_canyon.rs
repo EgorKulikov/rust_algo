@@ -17,7 +17,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let h = input.read_size_vec(n);
     struct Node(usize);
     impl Payload for Node {}
-    let nodes = Vec::with_gen_back(n, |i, nodes| {
+    let nodes = Vec::with_gen_suffix(n, |i, nodes| {
         let node = LinkCutNode::new(Node(i + 1));
         if i + h[i] < n {
             node.link(nodes[i + h[i]]);

@@ -32,7 +32,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     }
 
     let mut st = SegmentTree::<Node>::new(n);
-    let ans = Vec::with_gen_back(n, |i, _| {
+    let ans = Vec::with_gen_suffix(n, |i, _| {
         let mut rem = a[i];
         let res = st.binary_search(
             |_, right| {
@@ -91,7 +91,6 @@ mod tester {
     use algo_lib::io::output::Output;
     use algo_lib::misc::random::Random;
     use tester::classic::default_checker;
-    use tester::classic::EPS;
     use tester::interactive::std_interactor;
     use tester::test_set::GeneratedTestSet;
     use tester::Tester;

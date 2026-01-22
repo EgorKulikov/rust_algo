@@ -5,7 +5,7 @@ pub trait VecGen<T> {
     fn with_gen_prefix(n: usize, f: impl FnMut(usize, &Self) -> T) -> Vec<T>;
     fn gen_append(&mut self, n: usize, f: impl FnMut(usize, &Self) -> T);
 
-    fn with_gen_back(n: usize, f: impl FnMut(usize, &Self) -> T) -> Vec<T>
+    fn with_gen_suffix(n: usize, f: impl FnMut(usize, &Self) -> T) -> Vec<T>
     where
         T: Default;
 }
@@ -29,7 +29,7 @@ impl<T> VecGen<T> for Vec<T> {
         }
     }
 
-    fn with_gen_back(n: usize, mut f: impl FnMut(usize, &Self) -> T) -> Vec<T>
+    fn with_gen_suffix(n: usize, mut f: impl FnMut(usize, &Self) -> T) -> Vec<T>
     where
         T: Default,
     {
