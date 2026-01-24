@@ -168,7 +168,7 @@ impl<T> Arr2d<T> {
         &self.data
     }
 
-    pub fn indices(&self) -> impl Iterator<Item = (usize, usize)> {
+    pub fn indices(&self) -> impl DoubleEndedIterator<Item = (usize, usize)> {
         let m = self.d2();
         (0..self.d1).flat_map(move |i| (0..m).map(move |j| (i, j)))
     }
