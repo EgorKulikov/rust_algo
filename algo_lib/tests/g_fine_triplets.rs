@@ -127,7 +127,7 @@ mod tester {
 
     pub(crate) fn run_tests() -> bool {
         let path = "./g_fine_triplets";
-        let tl = 4000;
+        let tl = 10000;
         let tester = match TASK_TYPE {
             crate::TaskType::Interactive => {
                 Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, std_interactor)

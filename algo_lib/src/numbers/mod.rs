@@ -1,3 +1,4 @@
+pub mod combinations;
 pub mod fwht;
 pub mod gauss;
 pub mod gcd;
