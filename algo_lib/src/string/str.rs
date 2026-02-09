@@ -3,6 +3,7 @@ use crate::io::output::{Output, Writable};
 use crate::transparent_wrapper;
 use std::fmt::Display;
 use std::io::Write;
+use std::iter::FromIterator;
 use std::ops::{AddAssign, Deref, DerefMut};
 use std::str::from_utf8_unchecked;
 use std::vec::IntoIter;
