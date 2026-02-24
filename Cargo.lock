@@ -3,6 +3,15 @@
 version = 4
 
 [[package]]
+name = "a_typhoon_damage_survey"
+version = "0.1.0"
+dependencies = [
+ "algo_lib",
+ "rust_competitive_helper_util",
+ "tester",
+]
+
+[[package]]
 name = "aho-corasick"
 version = "1.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -19,10 +28,122 @@ dependencies = [
 ]
 
 [[package]]
+name = "b_factory_quality_inspection"
+version = "0.1.0"
+dependencies = [
+ "algo_lib",
+ "rust_competitive_helper_util",
+ "tester",
+]
+
+[[package]]
+name = "c_string_workshop"
+version = "0.1.0"
+dependencies = [
+ "algo_lib",
+ "rust_competitive_helper_util",
+ "tester",
+]
+
+[[package]]
+name = "c_team_formation"
+version = "0.1.0"
+dependencies = [
+ "algo_lib",
+ "rust_competitive_helper_util",
+ "tester",
+]
+
+[[package]]
+name = "d_distinguishable_distributions"
+version = "0.1.0"
+dependencies = [
+ "algo_lib",
+ "rust_competitive_helper_util",
+ "tester",
+]
+
+[[package]]
+name = "d_escape_from_the_maze"
+version = "0.1.0"
+dependencies = [
+ "algo_lib",
+ "rust_competitive_helper_util",
+ "tester",
+]
+
+[[package]]
 name = "diff"
 version = "0.1.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56254986775e3233ffa9c4d7d3faaf6d36a2c09d30b20687e9f88bc8bafc16c8"
+
+[[package]]
+name = "dissimilar"
+version = "1.0.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8975ffdaa0ef3661bfe02dbdcc06c9f829dfafe6a3c474de366a8d5e44276921"
+
+[[package]]
+name = "e_stone_crossing_game"
+version = "0.1.0"
+dependencies = [
+ "algo_lib",
+ "rust_competitive_helper_util",
+ "tester",
+]
+
+[[package]]
+name = "expect-test"
+version = "1.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63af43ff4431e848fb47472a920f14fa71c24de13255a5692e93d4e90302acb0"
+dependencies = [
+ "dissimilar",
+ "once_cell",
+]
+
+[[package]]
+name = "h_sweet_remainders_"
+version = "0.1.0"
+dependencies = [
+ "algo_lib",
+ "rust_competitive_helper_util",
+ "tester",
+]
+
+[[package]]
+name = "i_wooden_checker"
+version = "0.1.0"
+dependencies = [
+ "algo_lib",
+ "rust_competitive_helper_util",
+ "tester",
+]
+
+[[package]]
+name = "itoa"
+version = "1.0.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92ecc6618181def0457392ccd0ee51198e065e016d1d527a7ac1b6dc7c1f09d2"
+
+[[package]]
+name = "k_traversal_of_a_triangular_grid"
+version = "0.1.0"
+dependencies = [
+ "algo_lib",
+ "rust_competitive_helper_util",
+ "tester",
+]
+
+[[package]]
+name = "l_triangles"
+version = "0.1.0"
+dependencies = [
+ "algo_lib",
+ "rust_competitive_helper_util",
+ "tester",
+]
 
 [[package]]
 name = "main"
@@ -38,6 +159,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 
 [[package]]
+name = "once_cell"
+version = "1.21.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42f5e15c9953c5e4ccceeb2e7382a716482c34515315f7b03532b8b4e8393d2d"
+
+[[package]]
 name = "pretty_assertions"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -45,6 +172,34 @@ checksum = "3ae130e2f271fbc2ac3a40fb1d07180839cdbbe443c7a27e1e3c13c5cac0116d"
 dependencies = [
  "diff",
  "yansi",
+]
+
+[[package]]
+name = "prettyplease"
+version = "0.2.37"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "479ca8adacdd7ce8f1fb39ce9ecccbfe93a3f1344b3d0d97f20bc0196208f62b"
+dependencies = [
+ "proc-macro2",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "proc-macro2"
+version = "1.0.106"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934"
+dependencies = [
+ "unicode-ident",
+]
+
+[[package]]
+name = "quote"
+version = "1.0.44"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "21b2ebcf727b7760c461f091f9f0f539b77b8e87f2fd88131e7f1b433b3cece4"
+dependencies = [
+ "proc-macro2",
 ]
 
 [[package]]
@@ -84,6 +239,95 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust_competitive_helper_util"
+version = "0.1.0"
+dependencies = [
+ "expect-test",
+ "prettyplease",
+ "rustminify",
+ "serde",
+ "serde_json",
+ "syn 1.0.109",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "rustminify"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2cd48802ac21406f1324dd919bad11157662eaafeb449011d50bd7cbab889762"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "serde"
+version = "1.0.228"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
+dependencies = [
+ "serde_core",
+ "serde_derive",
+]
+
+[[package]]
+name = "serde_core"
+version = "1.0.228"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "41d385c7d4ca58e59fc732af25c3983b67ac852c1a25000afe1175de458b67ad"
+dependencies = [
+ "serde_derive",
+]
+
+[[package]]
+name = "serde_derive"
+version = "1.0.228"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d540f220d3187173da220f885ab66608367b6574e925011a9353e4badda91d79"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "serde_json"
+version = "1.0.149"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83fc039473c5595ace860d8c4fafa220ff474b3fc6bfdb4293327f1a37e94d86"
+dependencies = [
+ "itoa",
+ "memchr",
+ "serde",
+ "serde_core",
+ "zmij",
+]
+
+[[package]]
+name = "syn"
+version = "1.0.109"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72b64191b275b66ffe2469e8af2c1cfe3bafa67b529ead792a6d0160888b4237"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
+name = "syn"
+version = "2.0.117"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e665b8803e7b1d2a727f4023456bbbbe74da67099c585258af0ad9c5013b9b99"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
 name = "tester"
 version = "0.1.0"
 dependencies = [
@@ -92,7 +336,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "unicode-ident"
+version = "1.0.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75"
+
+[[package]]
 name = "yansi"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cfe53a6657fd280eaa890a3bc59152892ffa3e30101319d168b781ed6529b049"
+
+[[package]]
+name = "zmij"
+version = "1.0.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b8848ee67ecc8aedbaf3e4122217aff892639231befc6a1b58d29fff4c2cabaa"

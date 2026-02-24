@@ -55,6 +55,7 @@ impl<W: AdditionMonoid + Ord + Copy, E: WeightedEdgeTrait<W>> Distances<W> for G
     {
         let n = self.vertex_count();
         let mut res = vec![None; n];
+        res[source] = Some((W::zero(), 0, 0));
         let mut cur = vec![source];
         let mut next = Vec::new();
         let mut added_cur = BitSet::new(n);
