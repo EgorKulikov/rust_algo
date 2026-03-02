@@ -117,7 +117,7 @@ impl<T: PartialOrd> IndexedHeap<T> {
             None
         } else {
             let at = self.heap[0] as usize;
-            Some((self.pos[at].index(), self.pos[at].val()))
+            Some((at, self.pos[at].val()))
         }
     }
 
@@ -143,10 +143,10 @@ impl<T: PartialOrd> IndexedHeap<T> {
         } else {
             let pos = self.pos[el].index();
             let last = self.heap.pop().unwrap();
-            let val = self.pos[last as usize].take().1;
-            if self.is_empty() {
-                Some(val)
+            if last as usize == el {
+                Some(self.pos[el].take().1)
             } else {
+                let val = self.pos[last as usize].take().1;
                 let top_val = self.pos[el].take().1;
                 self.pos[last as usize].index = pos as u32;
                 self.pos[last as usize].value = Maybe::new(val);
@@ -206,5 +206,100 @@ impl<T: PartialOrd> IndexedHeap<T> {
         }
         self.heap[index] = v as u32;
         self.pos[v].set_index(index);
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn peek_returns_element_id() {
+        let mut heap = IndexedHeap::new(5);
+        heap.add_or_adjust(3, 10);
+        heap.add_or_adjust(1, 5);
+        heap.add_or_adjust(4, 20);
+        // Element 1 has the smallest value (5), so peek should return (1, &5)
+        let (id, val) = heap.peek().unwrap();
+        assert_eq!(id, 1);
+        assert_eq!(*val, 5);
+    }
+
+    #[test]
+    fn peek_after_adjust() {
+        let mut heap = IndexedHeap::new(5);
+        heap.add_or_adjust(0, 100);
+        heap.add_or_adjust(2, 50);
+        heap.add_or_adjust(4, 10);
+        let (id, _) = heap.peek().unwrap();
+        assert_eq!(id, 4);
+        // Now adjust element 0 to be the smallest
+        heap.add_or_adjust(0, 1);
+        let (id, val) = heap.peek().unwrap();
+        assert_eq!(id, 0);
+        assert_eq!(*val, 1);
+    }
+
+    #[test]
+    fn remove_last_element_in_heap_array() {
+        // This is the bug case: removing an element that happens to be
+        // at the last position in the internal heap array
+        let mut heap = IndexedHeap::new(5);
+        heap.add_or_adjust(0, 1);
+        heap.add_or_adjust(1, 2);
+        heap.add_or_adjust(2, 3);
+        // Internal heap array is likely [0, 1, 2] (min-heap by value)
+        // Remove element 2 which is at the last position
+        let val = heap.remove(2);
+        assert_eq!(val, Some(3));
+        assert_eq!(heap.len(), 2);
+        // Heap should still work correctly
+        let (id, val) = heap.pop().unwrap();
+        assert_eq!(id, 0);
+        assert_eq!(val, 1);
+        let (id, val) = heap.pop().unwrap();
+        assert_eq!(id, 1);
+        assert_eq!(val, 2);
+    }
+
+    #[test]
+    fn remove_single_element() {
+        let mut heap = IndexedHeap::new(3);
+        heap.add_or_adjust(1, 42);
+        assert_eq!(heap.remove(1), Some(42));
+        assert!(heap.is_empty());
+    }
+
+    #[test]
+    fn remove_middle_element() {
+        let mut heap = IndexedHeap::new(5);
+        heap.add_or_adjust(0, 10);
+        heap.add_or_adjust(1, 5);
+        heap.add_or_adjust(2, 20);
+        heap.add_or_adjust(3, 15);
+        // Remove element 1 (value 5, the min)
+        assert_eq!(heap.remove(1), Some(5));
+        // Remaining elements should pop in order: 0(10), 3(15), 2(20)
+        let (id, val) = heap.pop().unwrap();
+        assert_eq!((id, val), (0, 10));
+        let (id, val) = heap.pop().unwrap();
+        assert_eq!((id, val), (3, 15));
+        let (id, val) = heap.pop().unwrap();
+        assert_eq!((id, val), (2, 20));
+    }
+
+    #[test]
+    fn pop_consistency() {
+        let mut heap = IndexedHeap::new(4);
+        heap.add_or_adjust(0, 30);
+        heap.add_or_adjust(1, 10);
+        heap.add_or_adjust(2, 20);
+        heap.add_or_adjust(3, 5);
+        // Pop should return in ascending order (min-heap)
+        assert_eq!(heap.pop(), Some((3, 5)));
+        assert_eq!(heap.pop(), Some((1, 10)));
+        assert_eq!(heap.pop(), Some((2, 20)));
+        assert_eq!(heap.pop(), Some((0, 30)));
+        assert_eq!(heap.pop(), None);
     }
 }

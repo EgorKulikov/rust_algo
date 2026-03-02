@@ -57,7 +57,9 @@ impl<T: Base> Eq for Line<T> {}
 
 impl<T: Base> PartialEq for Line<T> {
     fn eq(&self, other: &Self) -> bool {
-        self.a * other.b == self.b * other.a && self.b * other.c == self.c * other.b
+        self.a * other.b == self.b * other.a
+            && self.b * other.c == self.c * other.b
+            && self.a * other.c == self.c * other.a
     }
 }
 
@@ -84,5 +86,71 @@ impl<T: Field + Base + IntoReal> Line<T> {
 impl<T: Base + PartialEq> Line<T> {
     pub fn contains(&self, p: Point<T>) -> bool {
         self.value(p) == T::zero()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn vertical_lines_different() {
+        // x = -2: 1*x + 0*y + 2 = 0
+        let l1: Line<i64> = Line::new(1, 0, 2);
+        // x = -3/2 scaled: 2*x + 0*y + 3 = 0
+        let l2: Line<i64> = Line::new(2, 0, 3);
+        assert!(l1 != l2, "distinct vertical lines should not be equal");
+    }
+
+    #[test]
+    fn vertical_lines_same() {
+        // x = -2: 1*x + 0*y + 2 = 0
+        let l1: Line<i64> = Line::new(1, 0, 2);
+        // same line scaled: 2*x + 0*y + 4 = 0
+        let l2: Line<i64> = Line::new(2, 0, 4);
+        assert!(l1 == l2, "same vertical line at different scale should be equal");
+    }
+
+    #[test]
+    fn horizontal_lines_different() {
+        // y = -1: 0*x + 1*y + 1 = 0
+        let l1: Line<i64> = Line::new(0, 1, 1);
+        // y = -2: 0*x + 1*y + 2 = 0
+        let l2: Line<i64> = Line::new(0, 1, 2);
+        assert!(l1 != l2, "distinct horizontal lines should not be equal");
+    }
+
+    #[test]
+    fn horizontal_lines_same() {
+        let l1: Line<i64> = Line::new(0, 1, 3);
+        let l2: Line<i64> = Line::new(0, 2, 6);
+        assert!(l1 == l2, "same horizontal line at different scale should be equal");
+    }
+
+    #[test]
+    fn general_lines_equal() {
+        // x + y + 1 = 0
+        let l1: Line<i64> = Line::new(1, 1, 1);
+        // 2x + 2y + 2 = 0 (same line, doubled)
+        let l2: Line<i64> = Line::new(2, 2, 2);
+        assert!(l1 == l2);
+    }
+
+    #[test]
+    fn general_lines_different() {
+        // x + y + 1 = 0
+        let l1: Line<i64> = Line::new(1, 1, 1);
+        // x + y + 2 = 0 (parallel but different)
+        let l2: Line<i64> = Line::new(1, 1, 2);
+        assert!(l1 != l2);
+    }
+
+    #[test]
+    fn parallel_not_equal() {
+        // 2x + 3y + 5 = 0
+        let l1: Line<i64> = Line::new(2, 3, 5);
+        // 2x + 3y + 7 = 0
+        let l2: Line<i64> = Line::new(2, 3, 7);
+        assert!(l1 != l2, "parallel lines with different offsets should not be equal");
     }
 }

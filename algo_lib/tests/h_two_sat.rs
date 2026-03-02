@@ -18,16 +18,16 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         for j in 0..i {
             let (c, d) = flags[j];
             if (a - c).abs() < dd {
-                two_sat.add_or(i, true, j, true);
+                two_sat.add_or(i, false, j, false);
             }
             if (a - d).abs() < dd {
-                two_sat.add_or(i, true, j, false);
-            }
-            if (b - c).abs() < dd {
                 two_sat.add_or(i, false, j, true);
             }
+            if (b - c).abs() < dd {
+                two_sat.add_or(i, true, j, false);
+            }
             if (b - d).abs() < dd {
-                two_sat.add_or(i, false, j, false);
+                two_sat.add_or(i, true, j, true);
             }
         }
     }
