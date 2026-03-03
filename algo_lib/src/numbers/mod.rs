@@ -1,4 +1,5 @@
 pub mod combinations;
+pub mod floor_sum;
 pub mod fwht;
 pub mod gauss;
 pub mod gcd;
