@@ -702,7 +702,7 @@ mod test {
     struct SumAdd;
     impl ValueDeltaTrait for SumAdd {
         type V = (i64, i64); // (sum, count)
-        type D = i64;        // additive delta
+        type D = i64; // additive delta
         fn join(v1: Self::V, v2: Self::V) -> Self::V {
             (v1.0 + v2.0, v1.1 + v2.1)
         }
@@ -717,10 +717,7 @@ mod test {
     type Node = ValueDeltaNode<SumAdd>;
 
     fn make_tree(vals: &[i64]) -> SegmentTree<Node> {
-        SegmentTree::with_gen(vals.len(), |i| {
-            let mut n = Node::new((vals[i], 1));
-            n
-        })
+        SegmentTree::with_gen(vals.len(), |i| Node::new((vals[i], 1)))
     }
 
     fn query_sum(tree: &mut SegmentTree<Node>, l: usize, r: usize) -> i64 {
@@ -752,9 +749,9 @@ mod test {
     #[test]
     fn lazy_multiple_overlapping_updates() {
         let mut tree = make_tree(&[0; 8]);
-        range_add(&mut tree, 0, 4, 1);  // [1,1,1,1,0,0,0,0]
-        range_add(&mut tree, 2, 6, 2);  // [1,1,3,3,2,2,0,0]
-        range_add(&mut tree, 4, 8, 3);  // [1,1,3,3,5,5,3,3]
+        range_add(&mut tree, 0, 4, 1); // [1,1,1,1,0,0,0,0]
+        range_add(&mut tree, 2, 6, 2); // [1,1,3,3,2,2,0,0]
+        range_add(&mut tree, 4, 8, 3); // [1,1,3,3,5,5,3,3]
 
         assert_eq!(query_sum(&mut tree, 0, 8), 24);
         assert_eq!(query_sum(&mut tree, 0, 2), 2);
@@ -783,8 +780,14 @@ mod test {
         let mut tree = make_tree(&arr);
 
         let ops: Vec<(usize, usize, i64)> = vec![
-            (0, 8, 5), (4, 12, 3), (8, 16, 7), (0, 16, 1),
-            (2, 5, -2), (10, 14, 4), (0, 1, 100), (15, 16, 50),
+            (0, 8, 5),
+            (4, 12, 3),
+            (8, 16, 7),
+            (0, 16, 1),
+            (2, 5, -2),
+            (10, 14, 4),
+            (0, 1, 100),
+            (15, 16, 50),
         ];
 
         for (l, r, v) in &ops {

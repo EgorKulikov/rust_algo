@@ -6,3 +6,7 @@ rust-version = "1.70.0"
 
 [dev-dependencies]
 tester = { path = "../tester", features = ["test"] }
+
+[[bench]]
+name = "optimizations"
+harness = false

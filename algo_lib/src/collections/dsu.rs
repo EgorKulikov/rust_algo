@@ -50,13 +50,17 @@ impl DSU {
     }
 
     pub fn find(&self, i: usize) -> usize {
-        if self.id[i].get() >= 0 {
-            let res = self.find(self.id[i].get() as usize);
-            self.id[i].set(res as i32);
-            res
-        } else {
-            i
+        let mut root = i;
+        while self.id[root].get() >= 0 {
+            root = self.id[root].get() as usize;
         }
+        let mut cur = i;
+        while cur != root {
+            let next = self.id[cur].get() as usize;
+            self.id[cur].set(root as i32);
+            cur = next;
+        }
+        root
     }
 
     pub fn clear(&mut self) {

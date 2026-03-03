@@ -249,7 +249,7 @@ macro_rules! mod_int {
 
         impl<V: Value<$t>> One for $name<V> {
             fn one() -> Self {
-                Self::new(1)
+                unsafe { Self::unchecked_new((V::val() > 1) as $t) }
             }
         }
 

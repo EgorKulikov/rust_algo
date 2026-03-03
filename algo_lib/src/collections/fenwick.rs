@@ -19,7 +19,7 @@ impl<T: AdditionMonoidWithSub + Copy> FenwickTree<T> {
         let mut result = T::zero();
         while to > 0 {
             to -= 1;
-            result += self.value[to];
+            result += unsafe { *self.value.get_unchecked(to) };
             to &= to + 1;
         }
         result
@@ -45,7 +45,7 @@ impl<T: AdditionMonoidWithSub + Copy> FenwickTree<T> {
 
     pub fn add(&mut self, mut at: usize, v: T) {
         while at < self.value.len() {
-            self.value[at] += v;
+            unsafe { *self.value.get_unchecked_mut(at) += v };
             at |= at + 1;
         }
     }

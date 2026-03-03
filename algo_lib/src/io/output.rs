@@ -82,7 +82,7 @@ impl Output<'static> {
 }
 
 impl Output<'_> {
-    const DEFAULT_BUF_SIZE: usize = 4096;
+    const DEFAULT_BUF_SIZE: usize = 1 << 16;
 
     pub fn flush(&mut self) {
         if self.at != 0 {
@@ -249,17 +249,43 @@ impl Writable for () {
     fn write(&self, _output: &mut Output) {}
 }
 
-macro_rules! write_to_string {
+macro_rules! write_unsigned_int {
     ($($t:ident)+) => {$(
         impl Writable for $t {
             fn write(&self, output: &mut Output) {
-                self.to_string().write(output);
+                let mut n = *self;
+                if n == 0 {
+                    output.put(b'0');
+                    return;
+                }
+                let mut buf = [0u8; 40];
+                let mut pos = buf.len();
+                while n > 0 {
+                    pos -= 1;
+                    buf[pos] = b'0' + (n % 10) as u8;
+                    n /= 10;
+                }
+                output.write_all(&buf[pos..]).unwrap();
             }
         }
     )+};
 }
 
-write_to_string!(u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize);
+macro_rules! write_signed_int {
+    ($($t:ident)+) => {$(
+        impl Writable for $t {
+            fn write(&self, output: &mut Output) {
+                if *self < 0 {
+                    output.put(b'-');
+                }
+                self.unsigned_abs().write(output);
+            }
+        }
+    )+};
+}
+
+write_unsigned_int!(u16 u32 u64 u128 usize);
+write_signed_int!(i8 i16 i32 i64 i128 isize);
 
 macro_rules! tuple_writable {
     ($name0:ident $($name:ident: $id:tt )*) => {
