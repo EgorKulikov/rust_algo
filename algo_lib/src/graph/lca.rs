@@ -89,6 +89,25 @@ impl LCA {
         }
     }
 
+    pub fn path(&self, from: usize, to: usize) -> Vec<usize> {
+        let lca_vertex = self.lca(from, to);
+        let mut result = Vec::new();
+        let mut v = from;
+        while v != lca_vertex {
+            result.push(v);
+            v = self.parent[v] as usize;
+        }
+        result.push(lca_vertex);
+        let desc_start = result.len();
+        let mut v = to;
+        while v != lca_vertex {
+            result.push(v);
+            v = self.parent[v] as usize;
+        }
+        result[desc_start..].reverse();
+        result
+    }
+
     fn build_steps(&self) {
         unsafe {
             if self.ancestors.as_ref().is_some() {
@@ -246,5 +265,14 @@ mod test {
         assert!(lca.on_path(3, 4, 1));
         assert!(lca.on_path(3, 2, 1));
         assert!(!lca.on_path(3, 4, 2));
+    }
+
+    #[test]
+    fn path_vertices() {
+        let lca = make_tree().lca();
+        assert_eq!(lca.path(3, 4), vec![3, 1, 4]);
+        assert_eq!(lca.path(3, 2), vec![3, 1, 0, 2]);
+        assert_eq!(lca.path(0, 4), vec![0, 1, 4]);
+        assert_eq!(lca.path(3, 3), vec![3]);
     }
 }
