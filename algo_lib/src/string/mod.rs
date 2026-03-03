@@ -7,4 +7,5 @@ pub mod split;
 pub mod str;
 pub mod string_algorithms;
 pub mod suffix_array;
+pub mod suffix_automaton;
 pub mod trim;
