@@ -692,3 +692,165 @@ pub enum SearchDirection {
     LTR,
     RTL,
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::misc::value_delta::ValueDeltaTrait;
+
+    // Range-add, range-sum segment tree
+    struct SumAdd;
+    impl ValueDeltaTrait for SumAdd {
+        type V = (i64, i64); // (sum, count)
+        type D = i64;        // additive delta
+        fn join(v1: Self::V, v2: Self::V) -> Self::V {
+            (v1.0 + v2.0, v1.1 + v2.1)
+        }
+        fn accumulate(d1: Self::D, d2: Self::D) -> Self::D {
+            d1 + d2
+        }
+        fn apply(v: Self::V, d: Self::D) -> Self::V {
+            (v.0 + d * v.1, v.1)
+        }
+    }
+
+    type Node = ValueDeltaNode<SumAdd>;
+
+    fn make_tree(vals: &[i64]) -> SegmentTree<Node> {
+        SegmentTree::with_gen(vals.len(), |i| {
+            let mut n = Node::new((vals[i], 1));
+            n
+        })
+    }
+
+    fn query_sum(tree: &mut SegmentTree<Node>, l: usize, r: usize) -> i64 {
+        tree.query(l..r).v.0
+    }
+
+    fn range_add(tree: &mut SegmentTree<Node>, l: usize, r: usize, val: i64) {
+        let delta = Node {
+            v: (0, 0),
+            d: val,
+            phantom: std::marker::PhantomData,
+        };
+        tree.update(l..r, &delta);
+    }
+
+    #[test]
+    fn lazy_range_add_range_sum() {
+        let mut tree = make_tree(&[1, 2, 3, 4, 5]);
+        assert_eq!(query_sum(&mut tree, 0, 5), 15);
+        assert_eq!(query_sum(&mut tree, 1, 4), 9);
+
+        range_add(&mut tree, 1, 4, 10); // [1, 12, 13, 14, 5]
+        assert_eq!(query_sum(&mut tree, 0, 5), 45);
+        assert_eq!(query_sum(&mut tree, 1, 4), 39);
+        assert_eq!(query_sum(&mut tree, 0, 1), 1);
+        assert_eq!(query_sum(&mut tree, 4, 5), 5);
+    }
+
+    #[test]
+    fn lazy_multiple_overlapping_updates() {
+        let mut tree = make_tree(&[0; 8]);
+        range_add(&mut tree, 0, 4, 1);  // [1,1,1,1,0,0,0,0]
+        range_add(&mut tree, 2, 6, 2);  // [1,1,3,3,2,2,0,0]
+        range_add(&mut tree, 4, 8, 3);  // [1,1,3,3,5,5,3,3]
+
+        assert_eq!(query_sum(&mut tree, 0, 8), 24);
+        assert_eq!(query_sum(&mut tree, 0, 2), 2);
+        assert_eq!(query_sum(&mut tree, 2, 4), 6);
+        assert_eq!(query_sum(&mut tree, 4, 6), 10);
+        assert_eq!(query_sum(&mut tree, 6, 8), 6);
+    }
+
+    #[test]
+    fn lazy_single_element_updates() {
+        let mut tree = make_tree(&[0; 4]);
+        for i in 0..4 {
+            range_add(&mut tree, i, i + 1, (i + 1) as i64);
+        }
+        // [1, 2, 3, 4]
+        assert_eq!(query_sum(&mut tree, 0, 4), 10);
+        for i in 0..4 {
+            assert_eq!(query_sum(&mut tree, i, i + 1), (i + 1) as i64);
+        }
+    }
+
+    #[test]
+    fn lazy_stress_vs_naive() {
+        let n = 16;
+        let mut arr = vec![0i64; n];
+        let mut tree = make_tree(&arr);
+
+        let ops: Vec<(usize, usize, i64)> = vec![
+            (0, 8, 5), (4, 12, 3), (8, 16, 7), (0, 16, 1),
+            (2, 5, -2), (10, 14, 4), (0, 1, 100), (15, 16, 50),
+        ];
+
+        for (l, r, v) in &ops {
+            range_add(&mut tree, *l, *r, *v);
+            for i in *l..*r {
+                arr[i] += v;
+            }
+        }
+
+        // Verify all possible subranges
+        for l in 0..n {
+            for r in l + 1..=n {
+                let expected: i64 = arr[l..r].iter().sum();
+                let actual = query_sum(&mut tree, l, r);
+                assert_eq!(actual, expected, "mismatch for range [{}..{})", l, r);
+            }
+        }
+    }
+
+    // Range-assign, range-sum (non-commutative: assign overrides add)
+    struct SumAssign;
+    impl ValueDeltaTrait for SumAssign {
+        type V = (i64, i64); // (sum, count)
+        type D = Option<i64>; // assign delta (None = no-op)
+        fn join(v1: Self::V, v2: Self::V) -> Self::V {
+            (v1.0 + v2.0, v1.1 + v2.1)
+        }
+        fn accumulate(d1: Self::D, d2: Self::D) -> Self::D {
+            // d2 (parent) overrides d1 (child) if present
+            d2.or(d1)
+        }
+        fn apply(v: Self::V, d: Self::D) -> Self::V {
+            match d {
+                Some(val) => (val * v.1, v.1),
+                None => v,
+            }
+        }
+    }
+
+    type AssignNode = ValueDeltaNode<SumAssign>;
+
+    #[test]
+    fn lazy_assign_then_query() {
+        let mut tree: SegmentTree<AssignNode> =
+            SegmentTree::with_gen(8, |_| AssignNode::new((0, 1)));
+
+        // Assign 5 to [0..4]
+        let delta = AssignNode {
+            v: (0, 0),
+            d: Some(5),
+            phantom: std::marker::PhantomData,
+        };
+        tree.update(0..4, &delta);
+
+        // Assign 3 to [2..6]
+        let delta = AssignNode {
+            v: (0, 0),
+            d: Some(3),
+            phantom: std::marker::PhantomData,
+        };
+        tree.update(2..6, &delta);
+
+        // Expected: [5,5,3,3,3,3,0,0]
+        assert_eq!(tree.query(0..8).v.0, 22);
+        assert_eq!(tree.query(0..2).v.0, 10);
+        assert_eq!(tree.query(2..6).v.0, 12);
+        assert_eq!(tree.query(6..8).v.0, 0);
+    }
+}

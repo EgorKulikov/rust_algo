@@ -302,3 +302,108 @@ impl From<Vec<bool>> for BitSet {
         res
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn iter_chunk_boundary() {
+        // Bits at positions 63 and 64 (boundary between chunk 0 and chunk 1)
+        let mut bs = BitSet::new(128);
+        bs.set(63);
+        bs.set(64);
+        let bits: Vec<usize> = bs.iter().collect();
+        assert_eq!(bits, vec![63, 64]);
+    }
+
+    #[test]
+    fn iter_non_multiple_of_64() {
+        // len=65, set bits at 0, 63, 64
+        let mut bs = BitSet::new(65);
+        bs.set(0);
+        bs.set(63);
+        bs.set(64);
+        let bits: Vec<usize> = bs.iter().collect();
+        assert_eq!(bits, vec![0, 63, 64]);
+    }
+
+    #[test]
+    fn iter_all_set_non_multiple() {
+        // len=100, all bits set
+        let mut bs = BitSet::new(100);
+        bs.fill(true);
+        let bits: Vec<usize> = bs.iter().collect();
+        assert_eq!(bits.len(), 100);
+        for (i, &b) in bits.iter().enumerate() {
+            assert_eq!(b, i, "expected bit {} but got {}", i, b);
+        }
+    }
+
+    #[test]
+    fn iter_last_bit_of_partial_chunk() {
+        // len=65, only bit 64 set (first bit of second chunk, last valid bit)
+        let mut bs = BitSet::new(65);
+        bs.set(64);
+        let bits: Vec<usize> = bs.iter().collect();
+        assert_eq!(bits, vec![64]);
+    }
+
+    #[test]
+    fn iter_empty_chunks_between() {
+        // Set bits in chunk 0 and chunk 2, chunk 1 empty
+        let mut bs = BitSet::new(200);
+        bs.set(5);
+        bs.set(130);
+        let bits: Vec<usize> = bs.iter().collect();
+        assert_eq!(bits, vec![5, 130]);
+    }
+
+    #[test]
+    fn iter_single_bit_each_chunk() {
+        // One bit per chunk for 4 chunks
+        let mut bs = BitSet::new(256);
+        bs.set(0);
+        bs.set(64);
+        bs.set(128);
+        bs.set(192);
+        let bits: Vec<usize> = bs.iter().collect();
+        assert_eq!(bits, vec![0, 64, 128, 192]);
+    }
+
+    #[test]
+    fn iter_len_1() {
+        let mut bs = BitSet::new(1);
+        bs.set(0);
+        let bits: Vec<usize> = bs.iter().collect();
+        assert_eq!(bits, vec![0]);
+    }
+
+    #[test]
+    fn iter_len_64_all_set() {
+        let mut bs = BitSet::new(64);
+        bs.fill(true);
+        let bits: Vec<usize> = bs.iter().collect();
+        assert_eq!(bits.len(), 64);
+        for i in 0..64 {
+            assert_eq!(bits[i], i);
+        }
+    }
+
+    #[test]
+    fn iter_empty() {
+        let bs = BitSet::new(100);
+        let bits: Vec<usize> = bs.iter().collect();
+        assert!(bits.is_empty());
+    }
+
+    #[test]
+    fn count_ones_matches_iter() {
+        let mut bs = BitSet::new(200);
+        for i in (0..200).step_by(3) {
+            bs.set(i);
+        }
+        let iter_count = bs.iter().count();
+        assert_eq!(iter_count, bs.count_ones());
+    }
+}
