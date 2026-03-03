@@ -215,3 +215,37 @@ impl<'a, T> IntoIterator for &'a SuffixArray<T> {
         self.sorted_suffixes.iter().cloned()
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::SuffixArray;
+
+    #[test]
+    fn sorted_order() {
+        let sa = SuffixArray::new(b"banana");
+        // Sorted: \0, a\0, ana\0, anana\0, banana\0, na\0, nana\0
+        assert_eq!(sa[0], 6);
+        assert_eq!(sa[1], 5);
+        assert_eq!(sa[2], 3);
+        assert_eq!(sa[3], 1);
+        assert_eq!(sa[4], 0);
+        assert_eq!(sa[5], 4);
+        assert_eq!(sa[6], 2);
+    }
+
+    #[test]
+    fn lcp_query() {
+        let sa = SuffixArray::new(b"banana");
+        // lcp("ana\0", "anana\0") = 3
+        assert_eq!(sa.lcp(2, 3), 3);
+        // lcp("a\0", "ana\0") = 1
+        assert_eq!(sa.lcp(1, 2), 1);
+    }
+
+    #[test]
+    fn find_pattern() {
+        let sa = SuffixArray::new(b"banana");
+        // "an" matches suffixes at sorted positions 2 and 3
+        assert_eq!(sa.find(b"an"), (2, 4));
+    }
+}

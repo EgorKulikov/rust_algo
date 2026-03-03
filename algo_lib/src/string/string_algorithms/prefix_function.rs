@@ -24,3 +24,23 @@ impl<S: Slicelike + ?Sized> PrefixFunction for S
         res
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::PrefixFunction;
+
+    #[test]
+    fn prefix_of_abcabcd() {
+        assert_eq!(b"abcabcd".prefix_function(), vec![0, 0, 0, 1, 2, 3, 0]);
+    }
+
+    #[test]
+    fn prefix_of_aabaaab() {
+        assert_eq!(b"aabaaab".prefix_function(), vec![0, 1, 0, 1, 2, 2, 3]);
+    }
+
+    #[test]
+    fn prefix_single() {
+        assert_eq!(b"x".prefix_function(), vec![0]);
+    }
+}

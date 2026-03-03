@@ -52,3 +52,29 @@ impl<E: EdgeTrait> CutPointSearch for Graph<E> {
         ans
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::CutPointSearch;
+    use crate::graph::Graph;
+
+    #[test]
+    fn path_interior_cut_points() {
+        let graph = Graph::with_biedges(4, &[(0, 1), (1, 2), (2, 3)]);
+        let mut cp = graph.cut_points();
+        cp.sort();
+        assert_eq!(cp, vec![1, 2]);
+    }
+
+    #[test]
+    fn triangle_no_cut_points() {
+        let graph = Graph::with_biedges(3, &[(0, 1), (1, 2), (2, 0)]);
+        assert!(graph.cut_points().is_empty());
+    }
+
+    #[test]
+    fn star_center() {
+        let graph = Graph::with_biedges(4, &[(0, 1), (0, 2), (0, 3)]);
+        assert_eq!(graph.cut_points(), vec![0]);
+    }
+}

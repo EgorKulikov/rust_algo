@@ -203,3 +203,48 @@ impl<E: BidirectionalEdgeTrait> LCATrait for Graph<E> {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::LCATrait;
+    use crate::graph::edges::bi_edge::BiEdge;
+    use crate::graph::Graph;
+
+    //        0
+    //       / \
+    //      1   2
+    //     / \
+    //    3   4
+    fn make_tree() -> Graph<BiEdge<()>> {
+        Graph::with_biedges(5, &[(0, 1), (0, 2), (1, 3), (1, 4)])
+    }
+
+    #[test]
+    fn lca_basic() {
+        let lca = make_tree().lca();
+        assert_eq!(lca.lca(3, 4), 1);
+        assert_eq!(lca.lca(3, 2), 0);
+    }
+
+    #[test]
+    fn path_length() {
+        let lca = make_tree().lca();
+        assert_eq!(lca.path_length(3, 4), 2);
+        assert_eq!(lca.path_length(3, 2), 3);
+    }
+
+    #[test]
+    fn root_parent_none() {
+        let lca = make_tree().lca();
+        assert_eq!(lca.parent(0), None);
+        assert_eq!(lca.parent(1), Some(0));
+    }
+
+    #[test]
+    fn on_path() {
+        let lca = make_tree().lca();
+        assert!(lca.on_path(3, 4, 1));
+        assert!(lca.on_path(3, 2, 1));
+        assert!(!lca.on_path(3, 4, 2));
+    }
+}

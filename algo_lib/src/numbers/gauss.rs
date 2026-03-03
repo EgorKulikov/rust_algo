@@ -98,3 +98,48 @@ pub fn invert<T: Field + Copy>(mat: &Arr2d<T>) -> Option<Arr2d<T>> {
     }
     Some(Arr2d::with_gen(mat.d1(), n, |i, j| m[(i, j + n)]))
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::collections::md_arr::arr2d::Arr2d;
+    use crate::numbers::matrix::Matrix;
+    use crate::numbers::mod_int::ModInt7;
+
+    #[test]
+    fn det_2x2() {
+        let mut mat = Arr2d::with_gen(2, 2, |i, j| {
+            ModInt7::from([[3usize, 8], [4, 6]][i][j])
+        });
+        let d = det(&mut mat);
+        // det = 3*6 - 8*4 = -14
+        assert_eq!(d, ModInt7::from(999_999_993usize));
+    }
+
+    #[test]
+    fn det_singular() {
+        let mut mat = Arr2d::with_gen(2, 2, |i, j| {
+            ModInt7::from([[1usize, 2], [2, 4]][i][j])
+        });
+        assert_eq!(det(&mut mat), ModInt7::from(0usize));
+    }
+
+    #[test]
+    fn invert_2x2() {
+        let mat = Arr2d::with_gen(2, 2, |i, j| {
+            ModInt7::from([[1usize, 2], [3, 4]][i][j])
+        });
+        let inv = invert(&mat).unwrap();
+        let a = Matrix::from(mat);
+        let b = Matrix::from(inv);
+        assert!(a.mult(&b) == Matrix::ident(2));
+    }
+
+    #[test]
+    fn invert_singular_none() {
+        let mat = Arr2d::with_gen(2, 2, |i, j| {
+            ModInt7::from([[1usize, 2], [2, 4]][i][j])
+        });
+        assert!(invert(&mat).is_none());
+    }
+}

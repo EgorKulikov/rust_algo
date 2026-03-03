@@ -141,3 +141,30 @@ impl<T> From<Arr2d<T>> for Matrix<T> {
         Self(a)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::Matrix;
+
+    #[test]
+    fn multiply_2x2() {
+        let a = Matrix::new(&[&[1i64, 2], &[3, 4]]);
+        let b = Matrix::new(&[&[5i64, 6], &[7, 8]]);
+        let c = a.mult(&b);
+        assert!(c == Matrix::new(&[&[19i64, 22], &[43, 50]]));
+    }
+
+    #[test]
+    fn power_identity() {
+        let id = Matrix::<i64>::ident(3);
+        assert!(id.power(100) == Matrix::ident(3));
+    }
+
+    #[test]
+    fn power_fib() {
+        let m = Matrix::new(&[&[1i64, 1], &[1, 0]]);
+        let r = m.power(10);
+        // [[1,1],[1,0]]^10 = [[fib(11), fib(10)], [fib(10), fib(9)]]
+        assert!(r == Matrix::new(&[&[89i64, 55], &[55, 34]]));
+    }
+}

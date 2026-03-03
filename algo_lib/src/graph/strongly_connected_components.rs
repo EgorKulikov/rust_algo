@@ -126,3 +126,39 @@ impl<E: EdgeTrait> StronglyConnectedComponentsTrait for Graph<E> {
         color
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::StronglyConnectedComponentsTrait;
+    use crate::graph::Graph;
+
+    #[test]
+    fn triangle_single_scc() {
+        let graph = Graph::with_edges(3, &[(0, 1), (1, 2), (2, 0)]);
+        let scc = graph.strongly_connected_components();
+        assert_eq!(scc.color[0], scc.color[1]);
+        assert_eq!(scc.color[1], scc.color[2]);
+        assert_eq!(scc.condensed.vertex_count(), 1);
+    }
+
+    #[test]
+    fn two_sccs() {
+        // Cycle 0->1->2->0 plus pendant 2->3
+        let graph = Graph::with_edges(4, &[(0, 1), (1, 2), (2, 0), (2, 3)]);
+        let scc = graph.strongly_connected_components();
+        assert_eq!(scc.color[0], scc.color[1]);
+        assert_eq!(scc.color[0], scc.color[2]);
+        assert_ne!(scc.color[0], scc.color[3]);
+        assert_eq!(scc.condensed.vertex_count(), 2);
+    }
+
+    #[test]
+    fn dag_all_singletons() {
+        let graph = Graph::with_edges(3, &[(0, 1), (1, 2)]);
+        let scc = graph.strongly_connected_components();
+        assert_ne!(scc.color[0], scc.color[1]);
+        assert_ne!(scc.color[1], scc.color[2]);
+        assert_ne!(scc.color[0], scc.color[2]);
+        assert_eq!(scc.condensed.vertex_count(), 3);
+    }
+}

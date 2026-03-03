@@ -28,3 +28,52 @@ impl<T: SemiRingWithSub + DivAssign + From<usize> + Copy> FWHT for [T] {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::FWHT;
+    use crate::numbers::mod_int::ModIntF;
+
+    #[test]
+    fn roundtrip() {
+        let original = vec![
+            ModIntF::from(3usize),
+            ModIntF::from(1usize),
+            ModIntF::from(4usize),
+            ModIntF::from(1usize),
+        ];
+        let mut a = original.clone();
+        a.fwht(false);
+        a.fwht(true);
+        assert_eq!(a, original);
+    }
+
+    #[test]
+    fn xor_convolution() {
+        let mut a = vec![
+            ModIntF::from(1usize),
+            ModIntF::from(2usize),
+            ModIntF::from(0usize),
+            ModIntF::from(0usize),
+        ];
+        let mut b = vec![
+            ModIntF::from(3usize),
+            ModIntF::from(0usize),
+            ModIntF::from(1usize),
+            ModIntF::from(0usize),
+        ];
+        a.fwht(false);
+        b.fwht(false);
+        let mut c: Vec<_> = a.iter().zip(b.iter()).map(|(&x, &y)| x * y).collect();
+        c.fwht(true);
+        assert_eq!(
+            c,
+            vec![
+                ModIntF::from(3usize),
+                ModIntF::from(6usize),
+                ModIntF::from(1usize),
+                ModIntF::from(2usize),
+            ]
+        );
+    }
+}

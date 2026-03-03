@@ -49,3 +49,23 @@ where
         res
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::Palindromes;
+
+    #[test]
+    fn odd_abacaba() {
+        assert_eq!(b"abacaba".odd_palindromes(), vec![1, 2, 1, 4, 1, 2, 1]);
+    }
+
+    #[test]
+    fn even_abba() {
+        assert_eq!(b"abba".even_palindromes(), vec![0, 0, 2, 0]);
+    }
+
+    #[test]
+    fn odd_single() {
+        assert_eq!(b"z".odd_palindromes(), vec![1]);
+    }
+}

@@ -34,3 +34,23 @@ impl<T, F: Fn(&T, &T) -> T> SparseTable<T, F> {
         )
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::SparseTable;
+
+    #[test]
+    fn min_query() {
+        let st = SparseTable::new(vec![3, 1, 4, 1, 5, 9, 2, 6], |a: &i32, b: &i32| *a.min(b));
+        assert_eq!(st.query(0..8), 1);
+        assert_eq!(st.query(4..8), 2);
+        assert_eq!(st.query(0..2), 1);
+        assert_eq!(st.query(2..5), 1);
+    }
+
+    #[test]
+    fn single_element() {
+        let st = SparseTable::new(vec![42], |a: &i32, b: &i32| *a.min(b));
+        assert_eq!(st.query(0..1), 42);
+    }
+}

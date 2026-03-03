@@ -51,3 +51,38 @@ impl<T: Copy, F: Fn(T, T) -> T> SlidingWindow<T, F> {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::SlidingWindow;
+
+    #[test]
+    fn sliding_sum() {
+        let mut sw = SlidingWindow::new(3, |a: i64, b: i64| a + b);
+        for v in 1..=3 {
+            sw.push(v);
+        }
+        assert_eq!(sw.get(), 6); // 1+2+3
+        sw.push(4);
+        assert_eq!(sw.get(), 9); // 2+3+4
+        sw.push(5);
+        assert_eq!(sw.get(), 12); // 3+4+5
+        sw.push(6);
+        assert_eq!(sw.get(), 15); // 4+5+6
+    }
+
+    #[test]
+    fn sliding_min() {
+        let mut sw = SlidingWindow::new(3, |a: i64, b: i64| a.min(b));
+        for &v in &[5i64, 3, 8] {
+            sw.push(v);
+        }
+        assert_eq!(sw.get(), 3); // min(5,3,8)
+        sw.push(1);
+        assert_eq!(sw.get(), 1); // min(3,8,1)
+        sw.push(7);
+        assert_eq!(sw.get(), 1); // min(8,1,7)
+        sw.push(2);
+        assert_eq!(sw.get(), 1); // min(1,7,2)
+    }
+}

@@ -31,3 +31,23 @@ where
         res
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::ZAlgorithm;
+
+    #[test]
+    fn z_of_aabxaa() {
+        assert_eq!(b"aabxaa".z_algorithm(), vec![0, 1, 0, 0, 2, 1]);
+    }
+
+    #[test]
+    fn z_of_aaaaa() {
+        assert_eq!(b"aaaaa".z_algorithm(), vec![0, 4, 3, 2, 1]);
+    }
+
+    #[test]
+    fn z_single_char() {
+        assert_eq!(b"a".z_algorithm(), vec![0]);
+    }
+}

@@ -11,3 +11,17 @@ pub fn combinations_table<T: AdditionMonoid + One + Copy>(n: usize) -> Arr2d<T> 
     }
     res
 }
+
+#[cfg(test)]
+mod test {
+    use super::combinations_table;
+
+    #[test]
+    fn pascal() {
+        let c = combinations_table::<i64>(10);
+        assert_eq!(c[(5, 2)], 10);
+        assert_eq!(c[(10, 3)], 120);
+        assert_eq!(c[(0, 0)], 1);
+        assert_eq!(c[(7, 0)], 1);
+    }
+}

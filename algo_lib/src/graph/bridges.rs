@@ -49,3 +49,31 @@ impl<E: EdgeTrait> BridgeSearch for Graph<E> {
         ans
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::BridgeSearch;
+    use crate::graph::Graph;
+
+    #[test]
+    fn path_all_bridges() {
+        let graph = Graph::with_biedges(4, &[(0, 1), (1, 2), (2, 3)]);
+        assert_eq!(graph.bridges().len(), 3);
+    }
+
+    #[test]
+    fn cycle_no_bridges() {
+        let graph = Graph::with_biedges(3, &[(0, 1), (1, 2), (2, 0)]);
+        assert_eq!(graph.bridges().len(), 0);
+    }
+
+    #[test]
+    fn mixed() {
+        // Triangle 0-1-2 plus pendant 2-3
+        let graph = Graph::with_biedges(4, &[(0, 1), (1, 2), (2, 0), (2, 3)]);
+        let bridges = graph.bridges();
+        assert_eq!(bridges.len(), 1);
+        let (a, b) = bridges[0];
+        assert!((a == 2 && b == 3) || (a == 3 && b == 2));
+    }
+}
