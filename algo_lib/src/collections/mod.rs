@@ -1,3 +1,4 @@
+pub mod array_map;
 pub mod bit_set;
 pub mod bounds;
 pub mod btree_ext;

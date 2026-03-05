@@ -1,3 +1,4 @@
+pub mod debug;
 pub mod eol;
 pub mod input;
 pub mod input_iter;

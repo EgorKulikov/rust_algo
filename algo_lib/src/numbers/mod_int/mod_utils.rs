@@ -54,8 +54,15 @@ impl<T: IntegerSemiRing + Copy, M: BaseModInt<T> + From<usize>> Combinations<M, 
         }
     }
 
+    // n - slots, k - items
     pub fn comb_with_rep(&self, n: usize, k: usize) -> M {
-        self.c(n + k - 1, k)
+        if n == 0 && k == 0 {
+            M::one()
+        } else if n == 0 {
+            M::zero()
+        } else {
+            self.c(n + k - 1, n - 1)
+        }
     }
 
     pub fn c_inv(&self, n: usize, k: usize) -> M {
