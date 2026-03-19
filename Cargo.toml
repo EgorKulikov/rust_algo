@@ -1,6 +1,16 @@
 [workspace]
 resolver = "2"
 members = [
+    "tasks/going_to_the_movie",
+    "tasks/catch_the_plane",
+    "tasks/interval_less_query",
+    "tasks/roads_renewal",
+    "tasks/fruit_feast",
+    "tasks/add_all",
+    "tasks/reduce_to_one",
+    "tasks/pair_sum_divisibility",
+    "tasks/corona2020",
+    "tasks/weighing",
     "algo_lib",
     "main",
     "tester",

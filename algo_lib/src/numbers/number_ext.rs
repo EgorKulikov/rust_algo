@@ -28,7 +28,7 @@ pub fn num_digs<S: IntegerSemiRing + Copy>(mut copy: S) -> usize {
         copy /= ten;
         res += 1;
     }
-    res
+    res.max(1)
 }
 
 pub fn sum_digs<S: IntegerSemiRing + Copy>(mut copy: S) -> S {

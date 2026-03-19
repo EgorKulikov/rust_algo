@@ -1,0 +1,3 @@
+open_task_command = ["rustrover.cmd", "--line", "$LINE", "--column", "$COLUMN", "$FILE"]
+input_file_extension = ".in"
+output_file_extension = ".ans"
