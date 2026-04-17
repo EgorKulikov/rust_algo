@@ -15,6 +15,8 @@ fn main() {
 
 #[cfg(not(feature = "local"))]
 fn main() {
+    #[cfg(debug_assertions)]
+    eprintln!("Library code is available at https://github.com/EgorKulikov/rust_algo");
 $INPUT
 $OUTPUT
     run(input, output);

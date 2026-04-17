@@ -5,26 +5,44 @@ use crate::graph::Graph;
 use crate::numbers::num_traits::algebra::{AdditionMonoid, One};
 use std::mem::swap;
 
+fn build_path_from_dist<W: Copy>(
+    source: usize,
+    mut destination: usize,
+    dist: Vec<Option<(W, usize, usize)>>,
+) -> Option<(W, Vec<(usize, usize)>)> {
+    dist[destination].map(|(w, ..)| {
+        let mut path = Vec::new();
+        while destination != source {
+            let (_, from, edge) = dist[destination].unwrap();
+            path.push((from, edge));
+            destination = from;
+        }
+        path.reverse();
+        (w, path)
+    })
+}
+
 pub trait Distances<W: AdditionMonoid + Ord + Copy> {
     fn distances_from(&self, source: usize) -> Vec<Option<(W, usize, usize)>>;
 
-    fn distance(&self, source: usize, mut destination: usize) -> Option<(W, Vec<(usize, usize)>)> {
-        let dist = self.distances_from(source);
-        dist[destination].map(|(w, ..)| {
-            let mut path = Vec::new();
-            while destination != source {
-                let (_, from, edge) = dist[destination].unwrap();
-                path.push((from, edge));
-                destination = from;
-            }
-            path.reverse();
-            (w, path)
-        })
+    fn distance(&self, source: usize, destination: usize) -> Option<(W, Vec<(usize, usize)>)> {
+        build_path_from_dist(source, destination, self.distances_from(source))
     }
 
     fn zero_one_distances_from(&self, source: usize) -> Vec<Option<(W, usize, usize)>>
     where
         W: One;
+
+    fn zero_one_distance(
+        &self,
+        source: usize,
+        destination: usize,
+    ) -> Option<(W, Vec<(usize, usize)>)>
+    where
+        W: One,
+    {
+        build_path_from_dist(source, destination, self.zero_one_distances_from(source))
+    }
 }
 
 impl<W: AdditionMonoid + Ord + Copy, E: WeightedEdgeTrait<W>> Distances<W> for Graph<E> {
