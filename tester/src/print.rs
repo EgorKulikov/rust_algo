@@ -13,7 +13,30 @@ pub(crate) fn start_test_set(name: &str) {
     println!("{}Test set: {}{}", BLUE, name, DEF);
 }
 
-pub(crate) fn end_test_set(test_failed: usize, test_total: usize, max_time: Duration) {
+fn print_score_summary(scores: &[i64]) {
+    if scores.is_empty() {
+        return;
+    }
+    let count = scores.len();
+    let sum: i64 = scores.iter().sum();
+    let mean = sum as f64 / count as f64;
+    let mut sorted: Vec<i64> = scores.to_vec();
+    sorted.sort_unstable();
+    let median = sorted[count / 2];
+    let min = *sorted.first().unwrap();
+    let max = *sorted.last().unwrap();
+    println!(
+        "{}=== Scores: count={} sum={} mean={:.2} median={} min={} max={} ==={}",
+        BLUE, count, sum, mean, median, min, max, DEF
+    );
+}
+
+pub(crate) fn end_test_set(
+    test_failed: usize,
+    test_total: usize,
+    max_time: Duration,
+    scores: &[Option<i64>],
+) {
     if test_failed == 0 {
         println!(
             "{}All {}{}{} tests passed, max time elapsed: {:.3}s{}",
@@ -30,6 +53,8 @@ pub(crate) fn end_test_set(test_failed: usize, test_total: usize, max_time: Dura
             RED, test_failed, test_total, BLUE, DEF
         );
     }
+    let scored: Vec<i64> = scores.iter().filter_map(|s| *s).collect();
+    print_score_summary(&scored);
 }
 
 pub(crate) fn start_test<TestId: Display>(

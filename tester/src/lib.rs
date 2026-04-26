@@ -126,6 +126,7 @@ impl Tester {
         let mut test_total = 0usize;
         print::start_test_set(test_set.name());
         let mut max_time = Duration::default();
+        let mut scores: Vec<Option<i64>> = Vec::new();
         for test in test_set.tests() {
             test_total += 1;
             let input = test_set.input(&test);
@@ -137,8 +138,9 @@ impl Tester {
                 test_set.print_details(),
             );
             let outcome = self.run_single_test(&input, expected.as_deref(), &test_set, &test);
-            if let Outcome::OK { duration, .. } = outcome {
+            if let Outcome::OK { duration, score, .. } = outcome {
                 max_time = max_time.max(duration);
+                scores.push(score);
             } else {
                 test_failed += 1;
                 if !test_set.print_details() {
@@ -172,7 +174,7 @@ impl Tester {
             }
             print::end_test(outcome, test_set.print_details());
         }
-        print::end_test_set(test_failed, test_total, max_time);
+        print::end_test_set(test_failed, test_total, max_time, &scores);
         test_failed == 0
     }
 
