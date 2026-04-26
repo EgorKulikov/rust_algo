@@ -107,16 +107,16 @@ use tester::Tester;
 
 const PRINT_LIMIT: usize = 1000;
 
-fn interact(mut input: Input, expected: Option<Input>, mut runner: SolutionRunner) -> Result<(), String> {
+fn interact(mut input: Input, expected: Option<Input>, mut runner: SolutionRunner) -> Result<Option<i64>, String> {
     let (mut sol, mut out) = runner.run();
-    Ok(())
+    Ok(None)
 }
 
 fn run_twice(
     mut input: Input,
     expected: Option<Input>,
     mut runner: SolutionRunner,
-) -> Result<(), String> {
+) -> Result<Option<i64>, String> {
     let (mut sol, mut out) = runner.run();
     input.read_line();
     out.print_line("first");
@@ -152,8 +152,8 @@ fn run_twice(
     // check(Input::slice(&input_vec), expected, Input::slice(&ans))
 }
 
-fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
-    Ok(())
+fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<Option<i64>, String> {
+    Ok(None)
 }
 
 struct StressTest;

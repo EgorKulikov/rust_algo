@@ -177,7 +177,7 @@ mod tester {
         Ok(())
     }
 
-    fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
+    fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<Option<i64>, String> {
         let n = input.read_size();
         let m = input.read_size();
         let edges = input.read_size_pair_vec(m).dec();
@@ -207,7 +207,7 @@ mod tester {
                 return Err("Output is better than expected".to_string());
             }
         }
-        Ok(())
+        Ok(None)
     }
 
     struct StressTest;

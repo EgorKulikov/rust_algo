@@ -245,7 +245,7 @@ mod tester {
         mut input: Input,
         mut expected: Option<Input>,
         mut output: Input,
-    ) -> Result<(), String> {
+    ) -> Result<Option<i64>, String> {
         let t = input.read_size();
         for test in 1..=t {
             let n = input.read_size();
@@ -306,7 +306,7 @@ mod tester {
                 ));
             }
         }
-        Ok(())
+        Ok(None)
     }
 
     struct StressTest;
