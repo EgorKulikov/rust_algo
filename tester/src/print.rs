@@ -74,6 +74,7 @@ pub(crate) fn end_test(outcome: Outcome, print_details: bool) {
         Outcome::OK {
             duration,
             input_exhausted,
+            score: _,
         } => {
             if print_details {
                 print!(

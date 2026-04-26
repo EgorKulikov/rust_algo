@@ -7,7 +7,7 @@ use std::cell::Cell;
 
 pub(crate) fn run_single_test_classic<T: TestSet>(
     tester: &Tester,
-    checker: fn(Input, Option<Input>, Input) -> Result<(), String>,
+    checker: fn(Input, Option<Input>, Input) -> Result<Option<i64>, String>,
     input: &[u8],
     expected: Option<&[u8]>,
     test_set: &T,
@@ -47,10 +47,12 @@ pub(crate) fn run_single_test_classic<T: TestSet>(
                     output,
                 )
             } else {
+                let score = checker_result.unwrap();
                 (
                     Outcome::OK {
                         duration,
                         input_exhausted: is_exhausted,
+                        score,
                     },
                     output,
                 )
@@ -71,9 +73,9 @@ pub fn default_checker(
     _input: Input,
     expected: Option<Input>,
     mut actual: Input,
-) -> Result<(), String> {
+) -> Result<Option<i64>, String> {
     if expected.is_none() {
-        return Ok(());
+        return Ok(None);
     }
     let mut expected = expected.unwrap();
     let mut token_num = 0;
@@ -99,7 +101,7 @@ pub fn default_checker(
             break;
         }
     }
-    Ok(())
+    Ok(None)
 }
 
 thread_local! {
@@ -110,9 +112,9 @@ fn default_checker_eps(
     expected: Option<Input>,
     mut actual: Input,
     check_real: impl Fn(f64, f64) -> bool,
-) -> Result<(), String> {
+) -> Result<Option<i64>, String> {
     if expected.is_none() {
-        return Ok(());
+        return Ok(None);
     }
     let mut expected = expected.unwrap();
     let mut token_num = 0;
@@ -148,14 +150,14 @@ fn default_checker_eps(
             break;
         }
     }
-    Ok(())
+    Ok(None)
 }
 
 pub fn default_checker_eps_rel(
     _input: Input,
     expected: Option<Input>,
     actual: Input,
-) -> Result<(), String> {
+) -> Result<Option<i64>, String> {
     default_checker_eps(expected, actual, |expected, actual| {
         let by = expected.abs().max(1.);
         (expected - actual).abs() < EPS.with(|eps| eps.get()) * by
@@ -166,7 +168,7 @@ pub fn default_checker_eps_abs(
     _input: Input,
     expected: Option<Input>,
     actual: Input,
-) -> Result<(), String> {
+) -> Result<Option<i64>, String> {
     default_checker_eps(expected, actual, |expected, actual| {
         (expected - actual).abs() < EPS.with(|eps| eps.get())
     })

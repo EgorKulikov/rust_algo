@@ -21,6 +21,7 @@ pub enum Outcome {
     OK {
         duration: Duration,
         input_exhausted: bool,
+        score: Option<i64>,
     },
     TimeLimit {
         duration: Duration,
@@ -37,10 +38,10 @@ pub enum Outcome {
 
 pub enum Runner {
     Classic {
-        checker: fn(Input, Option<Input>, Input) -> Result<(), String>,
+        checker: fn(Input, Option<Input>, Input) -> Result<Option<i64>, String>,
     },
     Interactive {
-        interactor: fn(Input, Option<Input>, SolutionRunner) -> Result<(), String>,
+        interactor: fn(Input, Option<Input>, SolutionRunner) -> Result<Option<i64>, String>,
     },
 }
 
@@ -58,7 +59,7 @@ impl Tester {
         print_limit: usize,
         task_folder: String,
         solution: fn(Input, Output) -> bool,
-        checker: fn(Input, Option<Input>, Input) -> Result<(), String>,
+        checker: fn(Input, Option<Input>, Input) -> Result<Option<i64>, String>,
     ) -> Self {
         Self {
             time_limit,
@@ -74,7 +75,7 @@ impl Tester {
         print_limit: usize,
         task_folder: String,
         solution: fn(Input, Output) -> bool,
-        interactor: fn(Input, Option<Input>, SolutionRunner) -> Result<(), String>,
+        interactor: fn(Input, Option<Input>, SolutionRunner) -> Result<Option<i64>, String>,
     ) -> Self {
         Self {
             time_limit,

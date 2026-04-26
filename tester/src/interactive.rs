@@ -57,7 +57,7 @@ impl Drop for SolutionRunner {
 
 pub(crate) fn run_single_test_interactive(
     tester: &Tester,
-    interactor: fn(Input, Option<Input>, SolutionRunner) -> Result<(), String>,
+    interactor: fn(Input, Option<Input>, SolutionRunner) -> Result<Option<i64>, String>,
     input: &[u8],
     expected: Option<&[u8]>,
     print_details: bool,
@@ -76,7 +76,7 @@ pub(crate) fn run_single_test_interactive(
         interactor(Input::slice(input), expected.map(Input::slice), runner)
     }) {
         Ok(res) => match res {
-            Ok(()) => {
+            Ok(score) => {
                 let duration = start.elapsed();
                 if duration.as_millis() as u64 > tester.time_limit {
                     Outcome::TimeLimit {
@@ -87,6 +87,7 @@ pub(crate) fn run_single_test_interactive(
                     Outcome::OK {
                         duration,
                         input_exhausted: true,
+                        score,
                     }
                 }
             }
@@ -103,7 +104,7 @@ pub fn std_interactor(
     _sol_input: Input,
     _expected: Option<Input>,
     mut runner: SolutionRunner,
-) -> Result<(), String> {
+) -> Result<Option<i64>, String> {
     let (mut _sol, mut out) = runner.run();
     let mut input = Input::stdin();
     while !input.is_exhausted() {
@@ -117,7 +118,7 @@ pub fn std_interactor(
         out.print_line(line);
         out.flush();
     }
-    Ok(())
+    Ok(None)
 }
 
 struct ReadDelegate {
