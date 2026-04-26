@@ -74,8 +74,12 @@ pub(crate) fn end_test(outcome: Outcome, print_details: bool) {
         Outcome::OK {
             duration,
             input_exhausted,
-            score: _,
+            score,
         } => {
+            let score_suffix = match score {
+                Some(s) => format!(" [score={}]", s),
+                None => String::new(),
+            };
             if print_details {
                 print!(
                     "{}Time elapsed: {:.3}s",
@@ -86,9 +90,9 @@ pub(crate) fn end_test(outcome: Outcome, print_details: bool) {
                 if !input_exhausted {
                     println!("{}Input not exhausted{}", RED, DEF);
                 }
-                println!("{}Verdict: {}OK{}", BLUE, GREEN, DEF);
+                println!("{}Verdict: {}OK{}{}", BLUE, GREEN, score_suffix, DEF);
             } else {
-                println!("{}OK{}", GREEN, DEF);
+                println!("{}OK{}{}", GREEN, score_suffix, DEF);
             }
         }
         Outcome::TimeLimit {
