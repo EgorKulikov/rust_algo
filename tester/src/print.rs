@@ -22,7 +22,7 @@ fn print_score_summary(scores: &[i64]) {
     let mean = sum as f64 / count as f64;
     let mut sorted: Vec<i64> = scores.to_vec();
     sorted.sort_unstable();
-    let median = sorted[count / 2];
+    let median = sorted[(count - 1) / 2];
     let min = *sorted.first().unwrap();
     let max = *sorted.last().unwrap();
     println!(

@@ -18,6 +18,10 @@ mod print;
 pub mod test_set;
 
 pub enum Outcome {
+    /// `score` is `Some(n)` when the test passed with a numeric score (e.g.,
+    /// for a heuristic problem) and `None` when the test passed with no score
+    /// (binary checker). Aggregate stats in `Tester::test` are computed only
+    /// over tests with `Some(_)` scores.
     OK {
         duration: Duration,
         input_exhausted: bool,
@@ -54,6 +58,13 @@ pub struct Tester {
 }
 
 impl Tester {
+    /// Construct a classic-mode tester.
+    ///
+    /// `checker` returns `Ok(None)` when the test passes without a score,
+    /// `Ok(Some(n))` when it passes with score `n`, or `Err(msg)` when the
+    /// answer is wrong (terminates the test set with that message). Heuristic
+    /// problems that should keep running on invalid output return
+    /// `Ok(Some(0))` instead of `Err`.
     pub fn new_classic(
         time_limit: u64,
         print_limit: usize,
@@ -70,6 +81,11 @@ impl Tester {
         }
     }
 
+    /// Construct an interactive-mode tester.
+    ///
+    /// `interactor` returns `Ok(None)` when the test passes without a score,
+    /// `Ok(Some(n))` when it passes with score `n`, or `Err(msg)` when the
+    /// session is wrong (terminates the test set with that message).
     pub fn new_interactive(
         time_limit: u64,
         print_limit: usize,

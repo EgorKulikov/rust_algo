@@ -7,7 +7,6 @@ use crate::{run, TASK_TYPE, TEST_TYPE, TestType};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use std::ops::Range;
-use tester::classic::default_checker;
 use tester::interactive::std_interactor;
 use tester::test_set::GeneratedTestSet;
 use tester::Tester;
@@ -40,17 +39,18 @@ fn check(mut input: Input, _: Option<Input>, mut output: Input) -> Result<Option
     match scoring::parse_output(&parsed_input, &mut output) {
         Ok(turns) => {
             let (score, err, turns_to_goal) = scoring::compute_score(&parsed_input, &turns);
+            let err_suffix = if err.is_empty() {
+                String::new()
+            } else {
+                format!(" ERR: {}", err)
+            };
             eprintln!(
-                "score={} turns={} {}",
+                "score={} turns={}{}",
                 score,
                 turns_to_goal
                     .map(|t| t.to_string())
                     .unwrap_or_else(|| "-".to_string()),
-                if err.is_empty() {
-                    String::new()
-                } else {
-                    format!("ERR: {}", err)
-                }
+                err_suffix
             );
             Ok(Some(score))
         }
