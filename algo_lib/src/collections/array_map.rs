@@ -1,7 +1,7 @@
 use crate::collections::vec_ext::gen_vec::VecGen;
 use crate::numbers::num_traits::algebra::{AdditionMonoidWithSub, One};
 use std::fmt::Debug;
-use std::ops::{Index, IndexMut, RangeBounds};
+use std::ops::{Deref, Index, IndexMut, RangeBounds};
 
 pub struct ArrayMap<I, T> {
     data: Vec<T>,
@@ -37,6 +37,20 @@ where
             data: Vec::with_gen(size, |i| f(from + I::try_from(i).ok().unwrap())),
             base: from,
         }
+    }
+}
+
+impl<T, I> AsRef<[T]> for ArrayMap<I, T> {
+    fn as_ref(&self) -> &[T] {
+        &self.data
+    }
+}
+
+impl<T, I> Deref for ArrayMap<I, T> {
+    type Target = [T];
+
+    fn deref(&self) -> &Self::Target {
+        &self.data
     }
 }
 
