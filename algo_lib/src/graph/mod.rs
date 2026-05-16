@@ -28,42 +28,57 @@ pub mod strongly_connected_components;
 pub mod topological_sort;
 pub mod two_sat;
 
-/// Linked-list graph storage.
+/// Storage layout for `Graph<E>`.
 ///
-/// Each vertex `v` owns a singly-linked list of edges, threaded through the
-/// global `next` array (indexed by edge id). `first[v]` is the head; iteration
-/// is LIFO (most-recently-added first), matching the layout used in
-/// `tasks/b_cloud_ascending_platform`. `u32::MAX` denotes "no edge".
+/// Currently only one variant exists; Task 5 will add `TwoD` for dense graphs.
+///
+/// The `Linked` variant uses a singly-linked list per vertex, threaded through
+/// the global `next` array (indexed by edge id). `first[v]` is the head;
+/// iteration is LIFO (most-recently-added first). `u32::MAX` denotes "no edge".
 ///
 /// Logical (user-visible) edge count is derived from `edges.len()` — divided
 /// by 2 for undirected edge types (which store two entries per logical edge).
 #[derive(Clone)]
+enum Storage<E: EdgeTrait> {
+    Linked {
+        first: Vec<u32>,
+        next: Vec<u32>,
+        edges: Vec<E>,
+        degree: Vec<u32>,
+    },
+}
+
+#[derive(Clone)]
 pub struct Graph<E: EdgeTrait> {
-    first: Vec<u32>,
-    next: Vec<u32>,
-    edges: Vec<E>,
-    degree: Vec<u32>,
+    storage: Storage<E>,
 }
 
 impl<E: EdgeTrait> Graph<E> {
     pub fn new(vertex_count: usize) -> Self {
         Self {
-            first: vec![u32::MAX; vertex_count],
-            next: Vec::new(),
-            edges: Vec::new(),
-            degree: vec![0u32; vertex_count],
+            storage: Storage::Linked {
+                first: vec![u32::MAX; vertex_count],
+                next: Vec::new(),
+                edges: Vec::new(),
+                degree: vec![0u32; vertex_count],
+            },
         }
     }
 
     fn push_one(&mut self, from: usize, mut edge: E) -> usize {
-        let id = self.edges.len();
-        edge.set_id(self.edge_count());
-        self.edges.push(edge);
-        // LIFO prepend: new edge becomes head, points at the previous head.
-        self.next.push(self.first[from]);
-        self.first[from] = id as u32;
-        self.degree[from] += 1;
-        id
+        let logical_count = self.edge_count();
+        match &mut self.storage {
+            Storage::Linked { first, next, edges, degree } => {
+                let id = edges.len();
+                edge.set_id(logical_count);
+                edges.push(edge);
+                // LIFO prepend: new edge becomes head, points at the previous head.
+                next.push(first[from]);
+                first[from] = id as u32;
+                degree[from] += 1;
+                id
+            }
+        }
     }
 
     pub fn add_edge(&mut self, (from, edge): (usize, E)) -> usize {
@@ -71,10 +86,18 @@ impl<E: EdgeTrait> Graph<E> {
         assert!(to < self.vertex_count());
         let direct_id = self.push_one(from, edge);
         if E::REVERSABLE {
-            let mut rev_edge = self.edges[direct_id].reverse_edge(from);
-            let rev_id = self.edges.len();
-            // Cross-link forward <-> reverse via global edge ids.
-            self.edges[direct_id].set_reverse_id(rev_id);
+            let mut rev_edge = match &self.storage {
+                Storage::Linked { edges, .. } => edges[direct_id].reverse_edge(from),
+            };
+            let rev_id = match &self.storage {
+                Storage::Linked { edges, .. } => edges.len(),
+            };
+            match &mut self.storage {
+                Storage::Linked { edges, .. } => {
+                    // Cross-link forward <-> reverse via global edge ids.
+                    edges[direct_id].set_reverse_id(rev_id);
+                }
+            }
             rev_edge.set_reverse_id(direct_id);
             self.push_one(to, rev_edge);
         }
@@ -82,35 +105,48 @@ impl<E: EdgeTrait> Graph<E> {
     }
 
     pub fn add_vertices(&mut self, cnt: usize) {
-        self.first.resize(self.first.len() + cnt, u32::MAX);
-        self.degree.resize(self.degree.len() + cnt, 0);
+        match &mut self.storage {
+            Storage::Linked { first, degree, .. } => {
+                let n = first.len();
+                first.resize(n + cnt, u32::MAX);
+                degree.resize(degree.len() + cnt, 0);
+            }
+        }
     }
 
     pub fn clear(&mut self) {
-        self.edges.clear();
-        self.next.clear();
-        for f in self.first.iter_mut() {
-            *f = u32::MAX;
-        }
-        for d in self.degree.iter_mut() {
-            *d = 0;
+        match &mut self.storage {
+            Storage::Linked { first, next, edges, degree } => {
+                edges.clear();
+                next.clear();
+                for f in first.iter_mut() {
+                    *f = u32::MAX;
+                }
+                for d in degree.iter_mut() {
+                    *d = 0;
+                }
+            }
         }
     }
 
     pub fn vertex_count(&self) -> usize {
-        self.first.len()
+        match &self.storage {
+            Storage::Linked { first, .. } => first.len(),
+        }
     }
 
     pub fn edge_count(&self) -> usize {
-        if E::REVERSABLE {
-            self.edges.len() / 2
-        } else {
-            self.edges.len()
+        match &self.storage {
+            Storage::Linked { edges, .. } => {
+                if E::REVERSABLE { edges.len() / 2 } else { edges.len() }
+            }
         }
     }
 
     pub fn degrees(&self) -> Vec<usize> {
-        self.degree.iter().map(|&d| d as usize).collect()
+        match &self.storage {
+            Storage::Linked { degree, .. } => degree.iter().map(|&d| d as usize).collect(),
+        }
     }
 
     /// Iterator over `(from, &edge)` pairs covering every stored edge entry
@@ -121,41 +157,53 @@ impl<E: EdgeTrait> Graph<E> {
 
     /// Adjacency view for vertex `v`.
     pub fn adj(&self, v: usize) -> AdjView<'_, E> {
-        AdjView {
-            graph: self,
-            head: self.first[v],
-            len: self.degree[v],
+        match &self.storage {
+            Storage::Linked { first, degree, .. } => AdjView {
+                graph: self,
+                head: first[v],
+                len: degree[v],
+            },
         }
     }
 
     /// Mutable adjacency view for vertex `v`.
     pub fn adj_mut(&mut self, v: usize) -> AdjViewMut<'_, E> {
-        let head = self.first[v];
+        let head = match &self.storage {
+            Storage::Linked { first, .. } => first[v],
+        };
         AdjViewMut { graph: self, head }
     }
 
     /// Head edge id for vertex `v`'s adjacency list, or `u32::MAX` if empty.
     pub fn head_edge(&self, v: usize) -> u32 {
-        self.first[v]
+        match &self.storage {
+            Storage::Linked { first, .. } => first[v],
+        }
     }
 
     /// Edge access by (vertex, cursor). In the current Linked storage the
     /// cursor is a global edge id and the vertex is ignored; the parameter
     /// is there so future storage variants can use it.
     pub fn edge_at(&self, _v: usize, cursor: u32) -> &E {
-        &self.edges[cursor as usize]
+        match &self.storage {
+            Storage::Linked { edges, .. } => &edges[cursor as usize],
+        }
     }
 
     /// Mutable counterpart of `edge_at`.
     pub fn edge_at_mut(&mut self, _v: usize, cursor: u32) -> &mut E {
-        &mut self.edges[cursor as usize]
+        match &mut self.storage {
+            Storage::Linked { edges, .. } => &mut edges[cursor as usize],
+        }
     }
 
     /// Advance a cursor in `v`'s adjacency list. Returns the next cursor or
     /// `u32::MAX` at the end. As with `edge_at`, the vertex is currently
     /// unused.
     pub fn step_edge(&self, _v: usize, cursor: u32) -> u32 {
-        self.next[cursor as usize]
+        match &self.storage {
+            Storage::Linked { next, .. } => next[cursor as usize],
+        }
     }
 }
 
@@ -260,9 +308,13 @@ impl<'a, E: EdgeTrait> Iterator for AdjIter<'a, E> {
             return None;
         }
         let id = self.cur as usize;
-        let edge = &self.graph.edges[id];
-        self.cur = self.graph.next[id];
-        Some(edge)
+        match &self.graph.storage {
+            Storage::Linked { edges, next, .. } => {
+                let edge = &edges[id];
+                self.cur = next[id];
+                Some(edge)
+            }
+        }
     }
 }
 
@@ -278,9 +330,13 @@ impl<'a, E: EdgeTrait> Iterator for AdjIterWithId<'a, E> {
             return None;
         }
         let id = self.cur as usize;
-        let edge = &self.graph.edges[id];
-        self.cur = self.graph.next[id];
-        Some((id, edge))
+        match &self.graph.storage {
+            Storage::Linked { edges, next, .. } => {
+                let edge = &edges[id];
+                self.cur = next[id];
+                Some((id, edge))
+            }
+        }
     }
 }
 
@@ -319,10 +375,14 @@ impl<'a, E: EdgeTrait> Iterator for AdjIterMut<'a, E> {
         // visited at most once, so the yielded `&mut E` references do not
         // alias.
         unsafe {
-            let edges_ptr = (*self.graph).edges.as_mut_ptr();
-            let next_ptr = (*self.graph).next.as_ptr();
-            self.cur = *next_ptr.add(id);
-            Some(&mut *edges_ptr.add(id))
+            match &mut (*self.graph).storage {
+                Storage::Linked { edges, next, .. } => {
+                    let edges_ptr = edges.as_mut_ptr();
+                    let next_ptr = next.as_ptr();
+                    self.cur = *next_ptr.add(id);
+                    Some(&mut *edges_ptr.add(id))
+                }
+            }
         }
     }
 }
