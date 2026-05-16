@@ -17,7 +17,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let m = input.read_size();
     let table = input.read_char_table(n, m);
 
-    let mut graph = Graph::new(n * m);
+    let mut graph = Graph::new_legacy(n * m);
     for i in 0..n {
         for j in 0..m {
             let steps = table[i][j] as usize - '0' as usize;

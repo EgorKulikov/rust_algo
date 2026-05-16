@@ -13,7 +13,7 @@ impl TwoSat {
     pub fn new(n: usize) -> Self {
         Self {
             n,
-            graph: Graph::new(n * 2),
+            graph: Graph::new_legacy(n * 2),
         }
     }
 

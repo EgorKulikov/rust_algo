@@ -19,7 +19,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let t = input.read_size();
     let edges = input.read_vec::<(usize, usize, i64, i64)>(m);
 
-    let mut graph = Graph::new(n).do_with(|graph| {
+    let mut graph = Graph::new_legacy(n).do_with(|graph| {
         for (u, v, c, w) in edges {
             graph.add_edge(WeightedFlowEdge::new(u, v, w, c));
         }

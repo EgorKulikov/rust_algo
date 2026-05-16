@@ -30,21 +30,31 @@ pub mod two_sat;
 
 /// Storage layout for `Graph<E>`.
 ///
-/// Currently only one variant exists; Task 5 will add `TwoD` for dense graphs.
+/// `Linked` is the classical sparse-graph representation: a singly-linked list
+/// per vertex, threaded through the global `next` array (indexed by edge id).
+/// `first[v]` is the head; iteration is LIFO (most-recently-added first).
+/// `u32::MAX` denotes "no edge". Logical (user-visible) edge count is derived
+/// from `edges.len()` -- divided by 2 for undirected edge types (which store
+/// two entries per logical edge).
 ///
-/// The `Linked` variant uses a singly-linked list per vertex, threaded through
-/// the global `next` array (indexed by edge id). `first[v]` is the head;
-/// iteration is LIFO (most-recently-added first). `u32::MAX` denotes "no edge".
-///
-/// Logical (user-visible) edge count is derived from `edges.len()` — divided
-/// by 2 for undirected edge types (which store two entries per logical edge).
+/// `TwoD` is the dense `Vec<Vec<E>>` representation: each vertex owns its
+/// adjacency directly as a contiguous slice. The cursor used by
+/// `edge_at(v, cursor)` is a position within `edges[v]`. `edge_count` tracks
+/// the logical edge count (not divided -- each `add_edge` increments by one
+/// regardless of `REVERSABLE`).
 #[derive(Clone)]
-enum Storage<E: EdgeTrait> {
+pub enum Storage<E: EdgeTrait> {
+    #[doc(hidden)]
     Linked {
         first: Vec<u32>,
         next: Vec<u32>,
         edges: Vec<E>,
         degree: Vec<u32>,
+    },
+    #[doc(hidden)]
+    TwoD {
+        edges: Vec<Vec<E>>,
+        edge_count: usize,
     },
 }
 
@@ -54,7 +64,8 @@ pub struct Graph<E: EdgeTrait> {
 }
 
 impl<E: EdgeTrait> Graph<E> {
-    pub fn new(vertex_count: usize) -> Self {
+    /// Construct a sparse linked-list-backed graph with `vertex_count` vertices.
+    pub fn new_linked(vertex_count: usize) -> Self {
         Self {
             storage: Storage::Linked {
                 first: vec![u32::MAX; vertex_count],
@@ -65,7 +76,37 @@ impl<E: EdgeTrait> Graph<E> {
         }
     }
 
-    fn push_one(&mut self, from: usize, mut edge: E) -> usize {
+    /// Construct a dense `Vec<Vec<E>>`-backed graph with `vertex_count` vertices.
+    pub fn new_2d(vertex_count: usize) -> Self {
+        Self {
+            storage: Storage::TwoD {
+                edges: (0..vertex_count).map(|_| Vec::new()).collect(),
+                edge_count: 0,
+            },
+        }
+    }
+
+    /// Auto-selecting constructor. `expected_edge_count` is a hint: if
+    /// `m >= K * n` the dense `TwoD` storage is chosen, else the sparse
+    /// `Linked` storage. `K` is tuned empirically (see Task 7's bench sweep).
+    pub fn new(vertex_count: usize, expected_edge_count: usize) -> Self {
+        const K: usize = 8; // placeholder; tuned in Task 7
+        if expected_edge_count >= K.saturating_mul(vertex_count) {
+            Self::new_2d(vertex_count)
+        } else {
+            Self::new_linked(vertex_count)
+        }
+    }
+
+    /// Temporary alias for `new_linked`. Removed in Task 6's call-site sweep.
+    #[deprecated(note = "Use Graph::new_linked, Graph::new_2d, or Graph::new(n, m).")]
+    pub fn new_legacy(vertex_count: usize) -> Self {
+        Self::new_linked(vertex_count)
+    }
+
+    /// Helper used by `add_edge`'s Linked arm. Pushes a single edge entry,
+    /// returning the global edge id of the new entry.
+    fn push_one_linked(&mut self, from: usize, mut edge: E) -> usize {
         let logical_count = self.edge_count();
         match &mut self.storage {
             Storage::Linked { first, next, edges, degree } => {
@@ -78,27 +119,64 @@ impl<E: EdgeTrait> Graph<E> {
                 degree[from] += 1;
                 id
             }
+            Storage::TwoD { .. } => unreachable!("push_one_linked called on TwoD storage"),
         }
     }
 
     pub fn add_edge(&mut self, (from, edge): (usize, E)) -> usize {
         let to = edge.to();
         assert!(to < self.vertex_count());
-        let direct_id = self.push_one(from, edge);
-        if E::REVERSABLE {
-            let mut rev_edge = match &mut self.storage {
-                Storage::Linked { edges, .. } => {
-                    let rev_id = edges.len();
-                    let rev_edge = edges[direct_id].reverse_edge(from);
-                    // Cross-link forward <-> reverse via global edge ids.
-                    edges[direct_id].set_reverse_id(rev_id);
-                    rev_edge
+        match &self.storage {
+            Storage::Linked { .. } => {
+                let direct_id = self.push_one_linked(from, edge);
+                if E::REVERSABLE {
+                    let mut rev_edge = match &mut self.storage {
+                        Storage::Linked { edges, .. } => {
+                            let rev_id = edges.len();
+                            let rev_edge = edges[direct_id].reverse_edge(from);
+                            // Cross-link forward <-> reverse via global edge ids.
+                            edges[direct_id].set_reverse_id(rev_id);
+                            rev_edge
+                        }
+                        Storage::TwoD { .. } => unreachable!(),
+                    };
+                    rev_edge.set_reverse_id(direct_id);
+                    self.push_one_linked(to, rev_edge);
                 }
-            };
-            rev_edge.set_reverse_id(direct_id);
-            self.push_one(to, rev_edge);
+                direct_id
+            }
+            Storage::TwoD { .. } => {
+                let mut edge = edge;
+                let (direct_pos, logical_id) = match &mut self.storage {
+                    Storage::TwoD { edges, edge_count } => {
+                        let direct_pos = edges[from].len();
+                        let logical_id = *edge_count;
+                        edge.set_id(logical_id);
+                        edges[from].push(edge);
+                        (direct_pos, logical_id)
+                    }
+                    Storage::Linked { .. } => unreachable!(),
+                };
+                match &mut self.storage {
+                    Storage::TwoD { edges, edge_count } => {
+                        if E::REVERSABLE {
+                            // `rev_pos` is computed AFTER the direct push, so when
+                            // `from == to` (self-loop) it correctly accounts for
+                            // the direct entry already in `edges[to]`.
+                            let rev_pos = edges[to].len();
+                            let mut rev_edge = edges[from][direct_pos].reverse_edge(from);
+                            rev_edge.set_id(logical_id);
+                            edges[from][direct_pos].set_reverse_id(rev_pos);
+                            rev_edge.set_reverse_id(direct_pos);
+                            edges[to].push(rev_edge);
+                        }
+                        *edge_count += 1;
+                    }
+                    Storage::Linked { .. } => unreachable!(),
+                }
+                direct_pos
+            }
         }
-        direct_id
     }
 
     pub fn add_vertices(&mut self, cnt: usize) {
@@ -107,6 +185,11 @@ impl<E: EdgeTrait> Graph<E> {
                 let n = first.len();
                 first.resize(n + cnt, u32::MAX);
                 degree.resize(degree.len() + cnt, 0);
+            }
+            Storage::TwoD { edges, .. } => {
+                for _ in 0..cnt {
+                    edges.push(Vec::new());
+                }
             }
         }
     }
@@ -123,12 +206,19 @@ impl<E: EdgeTrait> Graph<E> {
                     *d = 0;
                 }
             }
+            Storage::TwoD { edges, edge_count } => {
+                for v in edges.iter_mut() {
+                    v.clear();
+                }
+                *edge_count = 0;
+            }
         }
     }
 
     pub fn vertex_count(&self) -> usize {
         match &self.storage {
             Storage::Linked { first, .. } => first.len(),
+            Storage::TwoD { edges, .. } => edges.len(),
         }
     }
 
@@ -137,12 +227,14 @@ impl<E: EdgeTrait> Graph<E> {
             Storage::Linked { edges, .. } => {
                 if E::REVERSABLE { edges.len() / 2 } else { edges.len() }
             }
+            Storage::TwoD { edge_count, .. } => *edge_count,
         }
     }
 
     pub fn degrees(&self) -> Vec<usize> {
         match &self.storage {
             Storage::Linked { degree, .. } => degree.iter().map(|&d| d as usize).collect(),
+            Storage::TwoD { edges, .. } => edges.iter().map(|v| v.len()).collect(),
         }
     }
 
@@ -156,34 +248,67 @@ impl<E: EdgeTrait> Graph<E> {
     pub fn adj(&self, v: usize) -> AdjView<'_, E> {
         match &self.storage {
             Storage::Linked { first, degree, .. } => AdjView {
-                graph: self,
-                head: first[v],
-                len: degree[v],
+                inner: AdjViewInner::Linked {
+                    storage: &self.storage,
+                    head: first[v],
+                    len: degree[v],
+                },
+            },
+            Storage::TwoD { edges, .. } => AdjView {
+                inner: AdjViewInner::Slice(&edges[v]),
             },
         }
     }
 
     /// Mutable adjacency view for vertex `v`.
     pub fn adj_mut(&mut self, v: usize) -> AdjViewMut<'_, E> {
-        let head = match &self.storage {
-            Storage::Linked { first, .. } => first[v],
-        };
-        AdjViewMut { graph: self, head }
+        // Borrow choreography: the Linked arm needs to capture `head` (a
+        // Copy u32 from `first[v]`) AND then build an `AdjViewMut` carrying
+        // `self as *mut _`. Reading `head` is fine because the immutable
+        // borrow of `self.storage` ends (NLL) before we re-borrow `self` as
+        // a raw pointer. The TwoD arm conversely needs `&mut self.storage`
+        // to grab `&mut edges[v]`. Splitting on the storage type via a small
+        // discriminant lets each arm take the borrow shape it needs without
+        // overlap.
+        let is_linked = matches!(self.storage, Storage::Linked { .. });
+        if is_linked {
+            let head = match &self.storage {
+                Storage::Linked { first, .. } => first[v],
+                Storage::TwoD { .. } => unreachable!(),
+            };
+            AdjViewMut {
+                inner: AdjViewMutInner::Linked {
+                    graph: self as *mut _,
+                    head,
+                },
+            }
+        } else {
+            match &mut self.storage {
+                Storage::TwoD { edges, .. } => AdjViewMut {
+                    inner: AdjViewMutInner::Slice(&mut edges[v]),
+                },
+                Storage::Linked { .. } => unreachable!(),
+            }
+        }
     }
 
     /// Head edge id for vertex `v`'s adjacency list, or `u32::MAX` if empty.
     pub fn head_edge(&self, v: usize) -> u32 {
         match &self.storage {
             Storage::Linked { first, .. } => first[v],
+            Storage::TwoD { edges, .. } => {
+                if edges[v].is_empty() { u32::MAX } else { 0 }
+            }
         }
     }
 
-    /// Edge access by (vertex, cursor). In the current Linked storage the
-    /// cursor is a global edge id and the vertex is ignored; the parameter
-    /// is there so future storage variants can use it.
+    /// Edge access by (vertex, cursor). For Linked storage the cursor is a
+    /// global edge id and the vertex is ignored. For TwoD storage the cursor
+    /// is a position within `edges[v]`.
     pub fn edge_at(&self, _v: usize, cursor: u32) -> &E {
         match &self.storage {
             Storage::Linked { edges, .. } => &edges[cursor as usize],
+            Storage::TwoD { edges, .. } => &edges[_v][cursor as usize],
         }
     }
 
@@ -191,15 +316,19 @@ impl<E: EdgeTrait> Graph<E> {
     pub fn edge_at_mut(&mut self, _v: usize, cursor: u32) -> &mut E {
         match &mut self.storage {
             Storage::Linked { edges, .. } => &mut edges[cursor as usize],
+            Storage::TwoD { edges, .. } => &mut edges[_v][cursor as usize],
         }
     }
 
     /// Advance a cursor in `v`'s adjacency list. Returns the next cursor or
-    /// `u32::MAX` at the end. As with `edge_at`, the vertex is currently
-    /// unused.
+    /// `u32::MAX` at the end.
     pub fn step_edge(&self, _v: usize, cursor: u32) -> u32 {
         match &self.storage {
             Storage::Linked { next, .. } => next[cursor as usize],
+            Storage::TwoD { edges, .. } => {
+                let nxt = cursor + 1;
+                if (nxt as usize) < edges[_v].len() { nxt } else { u32::MAX }
+            }
         }
     }
 }
@@ -238,42 +367,68 @@ impl<E: BidirectionalEdgeTrait> Graph<E> {
 
 /// Immutable view over a vertex's adjacency list.
 pub struct AdjView<'a, E: EdgeTrait> {
-    graph: &'a Graph<E>,
-    head: u32,
-    len: u32,
+    inner: AdjViewInner<'a, E>,
+}
+
+enum AdjViewInner<'a, E: EdgeTrait> {
+    Linked {
+        storage: &'a Storage<E>,
+        head: u32,
+        len: u32,
+    },
+    Slice(&'a [E]),
 }
 
 impl<'a, E: EdgeTrait> AdjView<'a, E> {
     pub fn iter(&self) -> AdjIter<'a, E> {
-        AdjIter {
-            graph: self.graph,
-            cur: self.head,
+        match &self.inner {
+            AdjViewInner::Linked { storage, head, .. } => AdjIter::Linked {
+                storage: *storage,
+                cur: *head,
+            },
+            AdjViewInner::Slice(s) => AdjIter::Slice(s.iter()),
         }
     }
 
-    /// Iterator yielding `(edge_id, &edge)`.
+    /// Iterator yielding `(cursor, &edge)`.
     pub fn iter_with_id(&self) -> AdjIterWithId<'a, E> {
-        AdjIterWithId {
-            graph: self.graph,
-            cur: self.head,
+        match &self.inner {
+            AdjViewInner::Linked { storage, head, .. } => AdjIterWithId::Linked {
+                storage: *storage,
+                cur: *head,
+            },
+            AdjViewInner::Slice(s) => AdjIterWithId::Slice {
+                iter: s.iter().enumerate(),
+            },
         }
     }
 
     pub fn len(&self) -> usize {
-        self.len as usize
+        match &self.inner {
+            AdjViewInner::Linked { len, .. } => *len as usize,
+            AdjViewInner::Slice(s) => s.len(),
+        }
     }
 
     pub fn is_empty(&self) -> bool {
-        self.len == 0
+        self.len() == 0
     }
 
-    /// O(i) walk; only intended for code that previously did `g[v][i]`.
+    /// O(i) walk for Linked; O(1) for TwoD.
     pub fn get(&self, i: usize) -> Option<&'a E> {
-        self.iter().nth(i)
+        match &self.inner {
+            AdjViewInner::Linked { .. } => self.iter().nth(i),
+            AdjViewInner::Slice(s) => s.get(i),
+        }
     }
 
     pub fn head_id(&self) -> u32 {
-        self.head
+        match &self.inner {
+            AdjViewInner::Linked { head, .. } => *head,
+            AdjViewInner::Slice(s) => {
+                if s.is_empty() { u32::MAX } else { 0 }
+            }
+        }
     }
 }
 
@@ -293,46 +448,70 @@ impl<'a, E: EdgeTrait> IntoIterator for AdjView<'a, E> {
     }
 }
 
-pub struct AdjIter<'a, E: EdgeTrait> {
-    graph: &'a Graph<E>,
-    cur: u32,
+pub enum AdjIter<'a, E: EdgeTrait> {
+    Linked {
+        storage: &'a Storage<E>,
+        cur: u32,
+    },
+    Slice(std::slice::Iter<'a, E>),
 }
 
 impl<'a, E: EdgeTrait> Iterator for AdjIter<'a, E> {
     type Item = &'a E;
     fn next(&mut self) -> Option<Self::Item> {
-        if self.cur == u32::MAX {
-            return None;
-        }
-        let id = self.cur as usize;
-        match &self.graph.storage {
-            Storage::Linked { edges, next, .. } => {
-                let edge = &edges[id];
-                self.cur = next[id];
-                Some(edge)
+        match self {
+            AdjIter::Linked { storage, cur } => {
+                if *cur == u32::MAX {
+                    return None;
+                }
+                match storage {
+                    Storage::Linked { edges, next, .. } => {
+                        let id = *cur as usize;
+                        let e = &edges[id];
+                        *cur = next[id];
+                        Some(e)
+                    }
+                    Storage::TwoD { .. } => {
+                        unreachable!("AdjIter::Linked never holds TwoD storage")
+                    }
+                }
             }
+            AdjIter::Slice(it) => it.next(),
         }
     }
 }
 
-pub struct AdjIterWithId<'a, E: EdgeTrait> {
-    graph: &'a Graph<E>,
-    cur: u32,
+pub enum AdjIterWithId<'a, E: EdgeTrait> {
+    Linked {
+        storage: &'a Storage<E>,
+        cur: u32,
+    },
+    Slice {
+        iter: std::iter::Enumerate<std::slice::Iter<'a, E>>,
+    },
 }
 
 impl<'a, E: EdgeTrait> Iterator for AdjIterWithId<'a, E> {
     type Item = (usize, &'a E);
     fn next(&mut self) -> Option<Self::Item> {
-        if self.cur == u32::MAX {
-            return None;
-        }
-        let id = self.cur as usize;
-        match &self.graph.storage {
-            Storage::Linked { edges, next, .. } => {
-                let edge = &edges[id];
-                self.cur = next[id];
-                Some((id, edge))
+        match self {
+            AdjIterWithId::Linked { storage, cur } => {
+                if *cur == u32::MAX {
+                    return None;
+                }
+                match storage {
+                    Storage::Linked { edges, next, .. } => {
+                        let id = *cur as usize;
+                        let e = &edges[id];
+                        *cur = next[id];
+                        Some((id, e))
+                    }
+                    Storage::TwoD { .. } => {
+                        unreachable!("AdjIterWithId::Linked never holds TwoD storage")
+                    }
+                }
             }
+            AdjIterWithId::Slice { iter } => iter.next(),
         }
     }
 }
@@ -340,53 +519,76 @@ impl<'a, E: EdgeTrait> Iterator for AdjIterWithId<'a, E> {
 /// Mutable adjacency view over a vertex's edges. Only `iter_mut` is offered;
 /// for `.len()` / `.is_empty()` use the immutable `adj(v)` view instead.
 pub struct AdjViewMut<'a, E: EdgeTrait> {
-    graph: &'a mut Graph<E>,
-    head: u32,
+    inner: AdjViewMutInner<'a, E>,
 }
 
+enum AdjViewMutInner<'a, E: EdgeTrait> {
+    Linked {
+        graph: *mut Graph<E>,
+        head: u32,
+    },
+    Slice(&'a mut [E]),
+}
+
+// PhantomData isn't strictly necessary here because `Slice` carries the
+// lifetime, but the Linked variant needs to tie its raw pointer to `'a`.
 impl<'a, E: EdgeTrait> AdjViewMut<'a, E> {
     pub fn iter_mut(&mut self) -> AdjIterMut<'_, E> {
-        AdjIterMut {
-            graph: self.graph,
-            cur: self.head,
-            _marker: PhantomData,
+        match &mut self.inner {
+            AdjViewMutInner::Linked { graph, head } => AdjIterMut::Linked {
+                graph: *graph,
+                cur: *head,
+                _marker: PhantomData,
+            },
+            AdjViewMutInner::Slice(s) => AdjIterMut::Slice(s.iter_mut()),
         }
     }
 }
 
-pub struct AdjIterMut<'a, E: EdgeTrait> {
-    graph: *mut Graph<E>,
-    cur: u32,
-    _marker: PhantomData<&'a mut E>,
+pub enum AdjIterMut<'a, E: EdgeTrait> {
+    Linked {
+        graph: *mut Graph<E>,
+        cur: u32,
+        _marker: PhantomData<&'a mut E>,
+    },
+    Slice(std::slice::IterMut<'a, E>),
 }
 
 impl<'a, E: EdgeTrait> Iterator for AdjIterMut<'a, E> {
     type Item = &'a mut E;
     fn next(&mut self) -> Option<Self::Item> {
-        if self.cur == u32::MAX {
-            return None;
-        }
-        let id = self.cur as usize;
-        // SAFETY: we hold an exclusive borrow of the graph for `'a`, and each
-        // call advances `cur` along the linked list — every edge index is
-        // visited at most once, so the yielded `&mut E` references do not
-        // alias.
-        unsafe {
-            match &mut (*self.graph).storage {
-                Storage::Linked { edges, next, .. } => {
-                    let edges_ptr = edges.as_mut_ptr();
-                    let next_ptr = next.as_ptr();
-                    self.cur = *next_ptr.add(id);
-                    Some(&mut *edges_ptr.add(id))
+        match self {
+            AdjIterMut::Linked { graph, cur, .. } => {
+                if *cur == u32::MAX {
+                    return None;
+                }
+                let id = *cur as usize;
+                // SAFETY: we hold an exclusive borrow of the graph for `'a`,
+                // and each call advances `cur` along the linked list -- every
+                // edge index is visited at most once, so the yielded `&mut E`
+                // references do not alias.
+                unsafe {
+                    match &mut (**graph).storage {
+                        Storage::Linked { edges, next, .. } => {
+                            let edges_ptr = edges.as_mut_ptr();
+                            let next_ptr = next.as_ptr();
+                            *cur = *next_ptr.add(id);
+                            Some(&mut *edges_ptr.add(id))
+                        }
+                        Storage::TwoD { .. } => {
+                            unreachable!("AdjIterMut::Linked never holds TwoD storage")
+                        }
+                    }
                 }
             }
+            AdjIterMut::Slice(it) => it.next(),
         }
     }
 }
 
 impl Graph<Edge<()>> {
     pub fn with_edges(n: usize, edges: &[(usize, usize)]) -> Self {
-        let mut graph = Self::new(n);
+        let mut graph = Self::new_linked(n);
         for &(from, to) in edges {
             graph.add_edge(Edge::new(from, to));
         }
@@ -396,7 +598,7 @@ impl Graph<Edge<()>> {
 
 impl<P: Clone> Graph<Edge<P>> {
     pub fn with_edges_with_payload(n: usize, edges: &[(usize, usize, P)]) -> Self {
-        let mut graph = Self::new(n);
+        let mut graph = Self::new_linked(n);
         for (from, to, p) in edges.iter() {
             graph.add_edge(Edge::with_payload(*from, *to, p.clone()));
         }
@@ -406,7 +608,7 @@ impl<P: Clone> Graph<Edge<P>> {
 
 impl Graph<BiEdge<()>> {
     pub fn with_biedges(n: usize, edges: &[(usize, usize)]) -> Self {
-        let mut graph = Self::new(n);
+        let mut graph = Self::new_linked(n);
         for &(from, to) in edges {
             graph.add_edge(BiEdge::new(from, to));
         }
@@ -416,7 +618,7 @@ impl Graph<BiEdge<()>> {
 
 impl<P: Clone> Graph<BiEdge<P>> {
     pub fn with_biedges_with_payload(n: usize, edges: &[(usize, usize, P)]) -> Self {
-        let mut graph = Self::new(n);
+        let mut graph = Self::new_linked(n);
         for (from, to, p) in edges.iter() {
             graph.add_edge(BiEdge::with_payload(*from, *to, p.clone()));
         }

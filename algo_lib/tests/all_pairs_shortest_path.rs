@@ -23,7 +23,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let edges = input.read_vec::<(usize, usize, i64)>(m);
     let queries = input.read_size_pair_vec(q);
 
-    let graph = Graph::new(n).do_with(|graph| {
+    let graph = Graph::new_legacy(n).do_with(|graph| {
         for (u, v, w) in edges {
             graph.add_edge(WeightedEdge::new(u, v, w));
         }

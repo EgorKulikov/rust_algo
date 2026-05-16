@@ -17,7 +17,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let k = input.read_long();
     let a = input.read_long_table(n, n);
 
-    let mut graph = Graph::new(2 * n + 2);
+    let mut graph = Graph::new_legacy(2 * n + 2);
     let source = 2 * n;
     let sink = 2 * n + 1;
     for i in 0..n {

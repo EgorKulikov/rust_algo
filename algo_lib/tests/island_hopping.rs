@@ -20,7 +20,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let n = input.read_size();
     let p: Vec<Point<Real>> = input.read_vec(n);
 
-    let graph = Graph::new(n).do_with(|g| {
+    let graph = Graph::new_legacy(n).do_with(|g| {
         for i in 0..n {
             for j in i + 1..n {
                 let dist = p[i].dist_point(p[j]);

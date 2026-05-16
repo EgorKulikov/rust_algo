@@ -33,7 +33,7 @@ macro_rules! min_cost_flow {
                 let mut p = vec![0; n + 1];
                 p[n] = inf;
 
-                let mut graph = Graph::new(n + 1);
+                let mut graph = Graph::new_legacy(n + 1);
                 // (from, or_graph_edge_id, graph_edge_id)
                 let mut corresponding: Vec<(usize, usize, usize)> = Vec::new();
                 let mut max_capacity = 0;
