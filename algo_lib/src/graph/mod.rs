@@ -86,18 +86,15 @@ impl<E: EdgeTrait> Graph<E> {
         assert!(to < self.vertex_count());
         let direct_id = self.push_one(from, edge);
         if E::REVERSABLE {
-            let mut rev_edge = match &self.storage {
-                Storage::Linked { edges, .. } => edges[direct_id].reverse_edge(from),
-            };
-            let rev_id = match &self.storage {
-                Storage::Linked { edges, .. } => edges.len(),
-            };
-            match &mut self.storage {
+            let mut rev_edge = match &mut self.storage {
                 Storage::Linked { edges, .. } => {
+                    let rev_id = edges.len();
+                    let rev_edge = edges[direct_id].reverse_edge(from);
                     // Cross-link forward <-> reverse via global edge ids.
                     edges[direct_id].set_reverse_id(rev_id);
+                    rev_edge
                 }
-            }
+            };
             rev_edge.set_reverse_id(direct_id);
             self.push_one(to, rev_edge);
         }
