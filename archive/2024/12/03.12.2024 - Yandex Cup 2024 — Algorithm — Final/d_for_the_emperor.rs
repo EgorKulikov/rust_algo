@@ -116,7 +116,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         //     out.print_line(-1);
         //     return;
         // }
-        let mut graph = Graph::new_linked(2 * condensed.vertex_count() + 2);
+        let mut graph = Graph::new(2 * condensed.vertex_count() + 2);
         let source = 2 * condensed.vertex_count();
         let sink = 2 * condensed.vertex_count() + 1;
         for i in 0..condensed.vertex_count() {

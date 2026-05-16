@@ -32,7 +32,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let mut right = n * m;
     while left < right {
         let mid = (left + right) / 2;
-        let mut graph = Graph::new_linked(n + m + 2);
+        let mut graph = Graph::new(n + m + 2);
         let source = n + m;
         let sink = n + m + 1;
         for i in 0..n {

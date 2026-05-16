@@ -33,7 +33,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     weights.dedup();
     let mut f = Vec::with_capacity(weights.len());
     for &d in &weights {
-        let mut graph = Graph::new_linked(n);
+        let mut graph = Graph::new(n);
         for &(u, v, w) in &edges {
             graph.add_edge(u - 1, BiWeightedEdge::new(v - 1, ((w - d).abs(), w)));
         }

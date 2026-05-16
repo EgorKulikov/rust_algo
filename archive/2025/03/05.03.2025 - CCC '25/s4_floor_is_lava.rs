@@ -35,7 +35,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         vertices[i].sort();
         vertices[i].dedup();
     }
-    let mut graph = Graph::new_linked(id.len());
+    let mut graph = Graph::new(id.len());
     for i in 0..n {
         for (x, y) in vertices[i].consecutive_iter_copy() {
             graph.add_edge(BiWeightedEdge::new(id.get((i, x)), id.get((i, y)), y - x));

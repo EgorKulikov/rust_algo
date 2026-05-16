@@ -36,7 +36,7 @@ fn solve(input: &mut Input, output: &mut Output, _data: &PreCalc) {
         }
 
         fn solve(&mut self) {
-            let mut graph = Graph::new_linked(self.n);
+            let mut graph = Graph::new(self.n);
             for i in 0..self.n - 1 {
                 graph.add_edge(self.p[i], Edge::new(i + 1));
             }

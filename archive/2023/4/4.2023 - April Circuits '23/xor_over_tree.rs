@@ -34,7 +34,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     }
 
     fn score(a: &[i64], ans: &[(usize, usize)]) -> i64 {
-        let mut graph = Graph::new_linked(a.len());
+        let mut graph = Graph::new(a.len());
         for &(u, v) in ans {
             graph.add_edge(u - 1, BiEdge::new(v - 1));
         }

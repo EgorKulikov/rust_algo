@@ -17,7 +17,7 @@ fn solve(input: &mut Input, _test_case: usize) {
         out_line!(0);
         return;
     }
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for (a, b) in edges {
         graph.add_edge(a, BiEdge::new(b));
     }

@@ -15,7 +15,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let mut a = input.read_vec::<Str>(n);
 
     a.push(vec![b'A'; l].into());
-    let mut graph = Graph::new_linked(n + 1);
+    let mut graph = Graph::new(n + 1);
     for i in 0..=n {
         for j in 0..i {
             let mut dist = 0;

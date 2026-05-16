@@ -21,7 +21,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let edges: Vec<(usize, usize, usize)> = input.read_vec(m);
 
     let mut dsu = DSU::new(n);
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for &(u, v, t) in &edges {
         if dsu.join(u - 1, v - 1) {
             graph.add_edge(u - 1, BiWeightedEdge::new(v - 1, 1i32.shl(t - 1)));

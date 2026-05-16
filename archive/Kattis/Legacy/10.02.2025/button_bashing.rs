@@ -17,7 +17,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let t = input.read_size();
     let b = input.read_int_vec(n);
 
-    let mut graph = Graph::new_linked(3601);
+    let mut graph = Graph::new(3601);
     for i in 0..=3600 {
         for j in b.copy_iter() {
             let to = (i + j).min(3600).max(0);

@@ -21,7 +21,7 @@ fn solve(input: &mut Input, _test_case: usize) {
         }
     }
 
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for i in 0..n {
         for j in 0..i {
             let d1 = d[(i, i)] - d[(i, j)];

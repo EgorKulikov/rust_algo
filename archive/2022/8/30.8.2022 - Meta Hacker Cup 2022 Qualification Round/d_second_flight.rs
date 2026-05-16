@@ -35,7 +35,7 @@ fn solve(input: &mut Input) {
         fn solve(&mut self) {
             const BUBEN: usize = 500;
 
-            let mut graph = Graph::new_linked(self.n);
+            let mut graph = Graph::new(self.n);
             let mut edges = DefaultMap::new();
             let mut ans = DefaultMap::new();
             for &(a, b, c) in &self.edges {

@@ -22,7 +22,7 @@ fn solve(input: &mut Input, out: &mut Output, test_case: usize, _data: &mut PreC
         id.get(a);
         id.get(b);
     }
-    let mut graph = Graph::new_linked(id.len());
+    let mut graph = Graph::new(id.len());
     for (a, b) in &edges {
         graph.add_edge(Edge::new(id.get(a), id.get(b)));
     }

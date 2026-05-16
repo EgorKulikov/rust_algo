@@ -25,7 +25,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let m = input.read_size();
     let edges = input.read_size_pair_vec(m).dec();
 
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for (u, v) in edges.copy_iter() {
         graph.add_edge(BiEdgeWithId::new(u, v));
     }

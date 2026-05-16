@@ -99,7 +99,7 @@ fn solve(input: &mut Input, _test_case: usize) {
         }
         i += 1;
     }
-    let mut graph = Graph::new_linked(state.len());
+    let mut graph = Graph::new(state.len());
     for (i, &e) in edge.iter().enumerate() {
         if let Some(id) = e {
             graph.add_edge(i, Edge::new(id));

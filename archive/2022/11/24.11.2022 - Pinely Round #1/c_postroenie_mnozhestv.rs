@@ -15,7 +15,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let n = input.read_usize();
     let b = input.read_table::<char>(n, n);
 
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for i in 0..n {
         for j in 0..n {
             if b[(i, j)] == '1' {

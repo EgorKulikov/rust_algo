@@ -23,7 +23,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
 
     let Compressed { arrs: [b], .. } = compress([&a]);
     let a = b.clone().sorted();
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     // let mut dsu = DSU::new(n);
     let mut total = 0;
     for i in 0..n {

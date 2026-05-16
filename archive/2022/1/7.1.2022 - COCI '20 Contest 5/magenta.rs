@@ -18,7 +18,7 @@ fn solve(input: &mut Input) {
     let mut b = input.read_usize() - 1;
     let edges: Vec<(usize, usize, String)> = input.read_vec(n - 1);
 
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for (u, v, color) in edges {
         graph.add_edge(
             u - 1,

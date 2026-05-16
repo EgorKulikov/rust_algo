@@ -23,7 +23,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let c = input.read_size() - 1;
     let d = input.read_size() - 1;
 
-    let mut graph = Graph::new_linked(h * w);
+    let mut graph = Graph::new(h * w);
     for i in 0..h {
         for j in 0..w {
             for (r, c) in D4::iter(i, j, h, w) {

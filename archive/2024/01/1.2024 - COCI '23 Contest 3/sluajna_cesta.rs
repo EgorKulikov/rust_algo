@@ -23,7 +23,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc
     let p = input.read_size_vec(n - 1).dec();
     let v = input.read_vec::<Mod>(n);
 
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for (i, p) in p.into_iter().enumerate() {
         graph.add_edge(Edge::new(p, i + 1));
     }

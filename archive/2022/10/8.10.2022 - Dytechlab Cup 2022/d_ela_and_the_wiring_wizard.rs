@@ -13,7 +13,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let m = input.read_usize();
     let edges = input.read_vec::<(usize, usize, usize)>(m);
 
-    let mut g = Graph::new_linked(n);
+    let mut g = Graph::new(n);
     for &(u, v, _) in &edges {
         g.add_edge(u - 1, BiWeightedEdge::new(v - 1, 1usize));
     }

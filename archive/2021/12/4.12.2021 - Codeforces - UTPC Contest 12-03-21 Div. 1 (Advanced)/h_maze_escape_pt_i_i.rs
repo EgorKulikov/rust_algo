@@ -18,8 +18,8 @@ fn solve(input: &mut Input, _test_case: usize) {
     let c = input.read();
     let maze = input.read_table::<char>(r, c);
 
-    let mut graph = Graph::new_linked(r * c);
-    let mut gt = Graph::new_linked(r * c);
+    let mut graph = Graph::new(r * c);
+    let mut gt = Graph::new(r * c);
     let id = |i, j| i * c + j;
     for i in 0..r {
         for j in 0..c {

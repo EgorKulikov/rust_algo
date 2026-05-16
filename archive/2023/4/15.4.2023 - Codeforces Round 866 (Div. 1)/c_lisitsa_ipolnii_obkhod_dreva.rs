@@ -18,7 +18,7 @@ fn solve(input: &mut Input, _test_case: usize) {
         out_line!(1, 2);
         return;
     }
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for (u, v) in edges {
         graph.add_edge(u, BiEdge::new(v));
     }
@@ -43,7 +43,7 @@ fn solve(input: &mut Input, _test_case: usize) {
         out_line!(false);
         return;
     }
-    let mut ans = Graph::new_linked(n);
+    let mut ans = Graph::new(n);
     let mut dfs = RecursiveFunction2::new(|f, vert: usize, prev: usize| {
         let mut last = prev;
         let mut big = None;

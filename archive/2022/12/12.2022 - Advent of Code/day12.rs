@@ -22,7 +22,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let m = s[0].len();
     // let mut start = None;
     let mut finish = None;
-    let mut graph = Graph::new_linked(n * m);
+    let mut graph = Graph::new(n * m);
     for i in 0..n {
         for j in 0..m {
             if s[i][j] == b'S' {

@@ -38,7 +38,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     }
     // let mut missing = BTreeSet::new();
     let mut min_pos = vec![0; n + 1];
-    // let mut graph = Graph::new_linked(n + 1);
+    // let mut graph = Graph::new(n + 1);
     // let mut in_deg = vec![0; n + 1];
     for i in 0..n {
         if c_inv[a[i]] == n {

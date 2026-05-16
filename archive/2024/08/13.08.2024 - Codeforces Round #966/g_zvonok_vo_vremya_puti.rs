@@ -20,7 +20,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let edges = input.read_vec::<(usize, usize, i64, i64)>(m).dec();
 
     let mut ans = None;
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for &(u, v, l1, _) in &edges {
         graph.add_edge(BiWeightedEdge::new(u, v, l1));
     }
@@ -28,7 +28,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     if dist[0].unwrap().0 <= t0 - t2 {
         ans.maxim(t0 - dist[0].unwrap().0);
     }
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for &(u, v, _, l2) in &edges {
         graph.add_edge(BiWeightedEdge::new(u, v, l2));
     }
@@ -42,7 +42,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     if dist[0].unwrap().0 <= t0 {
         ans.maxim(t0 - dist[0].unwrap().0);
     }
-    let mut graph = Graph::new_linked(n + 1);
+    let mut graph = Graph::new(n + 1);
     for &(u, v, l1, _) in &edges {
         graph.add_edge(BiWeightedEdge::new(u, v, l1));
     }

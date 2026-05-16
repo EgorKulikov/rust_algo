@@ -82,7 +82,7 @@ pub static TASK_TYPE: TaskType = TaskType::Classic;
 pub(crate) fn run(mut input: Input, mut output: Output) -> bool {
     let mut res = vec![Vec::new(); 8];
     for n in 4..=7 {
-        let mut graph = Graph::new_linked(n);
+        let mut graph = Graph::new(n);
         for i in 1..n {
             graph.add_edge(BiWeightedEdge::new(i - 1, i, 1));
         }

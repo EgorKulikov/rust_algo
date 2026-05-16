@@ -49,7 +49,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         }
     }
 
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for i in 1..n {
         graph.add_edge(Edge::new(p[i - 1], i));
     }

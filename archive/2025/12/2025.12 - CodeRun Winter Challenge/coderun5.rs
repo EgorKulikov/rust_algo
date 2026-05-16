@@ -18,7 +18,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let xyz = input.read_vec::<(i64, i64, i64)>(n);
 
     let (x, y, z) = xyz.detuple();
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for x in [x, y, z] {
         let order = (0..n).collect::<Vec<_>>().sorted_by_key(|&i| x[i]);
         for i in 1..n {

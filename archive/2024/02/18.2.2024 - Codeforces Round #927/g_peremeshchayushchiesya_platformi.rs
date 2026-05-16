@@ -20,7 +20,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc
     let s = input.read_long_vec(n);
     let edges = input.read_size_pair_vec(m).dec();
 
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for (a, b) in edges {
         let delta = (l[b] - l[a] + h) % h;
         let step = (s[a] - s[b] + h) % h;

@@ -24,7 +24,7 @@ fn solve(input: &mut Input, _test_case: usize) {
         requirements.push(access.column(i).map(|&c| c == '1').collect_vec().into());
     }
 
-    let mut graph = Graph::new_linked(2 * m + 2);
+    let mut graph = Graph::new(2 * m + 2);
     for i in 0..m {
         graph.add_edge(2 * m, FlowEdge::new(i, 1));
         graph.add_edge(m + i, FlowEdge::new(2 * m + 1, 1));

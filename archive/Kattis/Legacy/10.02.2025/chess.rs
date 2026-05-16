@@ -13,7 +13,7 @@ use algo_lib::output;
 type PreCalc = ();
 
 fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut PreCalc) {
-    let mut graph = Graph::new_linked(64);
+    let mut graph = Graph::new(64);
     for i in 0..8 {
         for j in 0..8 {
             for k in 1..(8 - i).min(8 - j) {

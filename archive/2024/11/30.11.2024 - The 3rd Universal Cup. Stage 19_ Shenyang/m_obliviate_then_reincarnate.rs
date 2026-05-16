@@ -22,7 +22,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let q = input.read_size();
     let edges = input.read_long_pair_vec(m);
 
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for (a, b) in edges {
         let a1 = ((a % (n as i64) + n as i64) % (n as i64)) as usize;
         let b1 = ((b % (n as i64) + n as i64) % (n as i64)) as usize;

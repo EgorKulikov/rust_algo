@@ -27,7 +27,7 @@ fn solve(input: &mut Input, _test_case: usize) {
             right.push(i);
         }
     }
-    let mut graph = Graph::new_linked(n + 2);
+    let mut graph = Graph::new(n + 2);
     for i in 0..left.len() {
         graph.add_edge(n, FlowEdge::new(i, 1));
     }

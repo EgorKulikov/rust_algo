@@ -27,7 +27,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let mut ec = 0;
     let n = data.len();
     let m = data[0].len();
-    let mut graph = Graph::new_linked(n * m);
+    let mut graph = Graph::new(n * m);
     for i in 0..n {
         for j in 0..m {
             if data[i][j] == b'S' {

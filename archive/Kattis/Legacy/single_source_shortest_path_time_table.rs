@@ -26,7 +26,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         return;
     }
 
-    let graph = Graph::new_linked(n).do_with(|g| {
+    let graph = Graph::new(n).do_with(|g| {
         for (u, v, t0, p, d) in edges {
             g.add_edge(Edge::with_payload(u, v, (t0, p, d)));
         }

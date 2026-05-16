@@ -36,7 +36,7 @@ fn main() {
         }
     };
 
-    let mut graph = Graph::new_linked(9usize.pow(8));
+    let mut graph = Graph::new(9usize.pow(8));
     for i in 0..graph.vertex_count() {
         if i % 1000000 == 0 {
             println!("{}", i);

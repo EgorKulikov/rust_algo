@@ -18,7 +18,7 @@ fn solve(input: &mut Input, _test_case: usize) {
         out_line!(0);
         return;
     }
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for &(u, v, t) in &edges {
         graph.add_edge(u, BiWeightedEdge::new(v, t));
     }
@@ -28,7 +28,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     } else {
         (f - 1) / 12 * 24 + if f % 12 == 0 { 12 } else { f % 12 }
     };
-    let mut graph = Graph::new_linked(n * 13);
+    let mut graph = Graph::new(n * 13);
     for (u, v, t) in edges {
         for j in 0..=12 - t {
             graph.add_edge(u * 13 + j, WeightedEdge::new(v * 13 + j + t, t));

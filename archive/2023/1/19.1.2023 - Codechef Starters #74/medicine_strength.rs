@@ -16,7 +16,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let m = input.read_size();
     let edges = input.read_size_pair_vec(n).dec_by_one();
 
-    let mut graph = Graph::new_linked(m);
+    let mut graph = Graph::new(m);
     for (u, v) in edges {
         graph.add_edge(u, Edge::new(v));
     }

@@ -29,7 +29,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             bs[s] = true;
         }
     });
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for (u, v) in edges {
         graph.add_edge(BiEdgeWithId::new(u, v));
     }

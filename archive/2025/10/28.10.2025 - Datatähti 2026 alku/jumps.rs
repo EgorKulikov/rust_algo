@@ -19,7 +19,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let q = input.read_size();
     let g = input.read_char_table(n, m);
 
-    let mut graph = Graph::new_linked(n + m);
+    let mut graph = Graph::new(n + m);
     for (i, j) in g.indices() {
         if g[(i, j)] == b'.' {
             graph.add_edge(BiWeightedEdge::new(i, n + j, 1));

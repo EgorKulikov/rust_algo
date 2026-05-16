@@ -15,7 +15,7 @@ fn solve(input: &mut Input) {
     let k: i64 = input.read();
     let a: Arr2d<i64> = input.read_table(n, n);
 
-    let mut graph = Graph::new_linked(2 * n + 2);
+    let mut graph = Graph::new(2 * n + 2);
     for i in 0..n {
         graph.add_edge(2 * n, WeightedFlowEdge::new(i, 0i64, k));
         graph.add_edge(n + i, WeightedFlowEdge::new(2 * n + 1, 0i64, k));

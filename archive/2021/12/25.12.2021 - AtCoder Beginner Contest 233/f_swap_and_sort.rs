@@ -19,7 +19,7 @@ fn solve(input: &mut Input) {
     let op = input.read_vec::<(usize, usize)>(m).dec_by_one();
 
     let mut dsu = DSU::new(n);
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for (i, (a, b)) in op.into_iter().enumerate() {
         if dsu.join(a, b) {
             graph.add_edge(a, BiWeightedEdge::new(b, i + 1));

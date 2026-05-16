@@ -40,7 +40,7 @@ fn solve(input: &mut Input, _test_case: usize) {
         return;
     }
     let any = any.unwrap();
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for (mut x, mut y) in edges {
         if can_change[x] {
             x = any;

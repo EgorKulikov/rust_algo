@@ -19,7 +19,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc
     let m = input.read_size();
     let edges = input.read_vec::<(usize, usize, usize)>(m);
 
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for (u, v, c) in edges {
         graph.add_edge(u - 1, BiWeightedEdge::new(v - 1, c));
     }

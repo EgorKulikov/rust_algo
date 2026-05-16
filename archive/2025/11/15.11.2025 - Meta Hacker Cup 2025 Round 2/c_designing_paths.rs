@@ -28,7 +28,7 @@ fn solve(mut input: MutexGuard<Input>, out: &mut Output, test_case: usize, _data
     }
     drop(input);
 
-    let mut graph = Graph::new_linked(n + total_length);
+    let mut graph = Graph::new(n + total_length);
     let mut at = n;
     for path in paths {
         for i in 1..path.len() {

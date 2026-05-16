@@ -17,7 +17,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let edges = input.read_vec::<(usize, usize, i64)>(n - 1);
     let w = input.read_long_vec(n);
 
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for (u, v, w) in edges {
         graph.add_edge(u - 1, BiWeightedEdge::new(v - 1, w));
     }

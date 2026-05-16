@@ -23,7 +23,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         out.print_line([1, 3]);
         return;
     }
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for i in 0..n - 2 {
         graph.add_edge(BiEdgeWithId::new(i, i + 2));
     }

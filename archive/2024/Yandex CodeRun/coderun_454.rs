@@ -25,7 +25,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         }
     }
 
-    let mut graph = Graph::new_linked(2 * m);
+    let mut graph = Graph::new(2 * m);
     for r in r {
         if r.is_empty() {
             continue;

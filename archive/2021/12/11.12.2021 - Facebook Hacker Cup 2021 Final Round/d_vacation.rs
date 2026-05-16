@@ -32,7 +32,7 @@ fn solve(input: &mut Input) {
         }
 
         fn solve(&mut self) {
-            let mut graph = Graph::new_linked(self.n);
+            let mut graph = Graph::new(self.n);
             let n = self.n;
             for i in 1..n {
                 graph.add_edge(i, BiEdge::new(self.p[i - 1]));

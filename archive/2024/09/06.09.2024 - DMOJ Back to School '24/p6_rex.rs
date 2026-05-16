@@ -28,7 +28,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let q = input.read_size();
     let t = input.read_size_vec(k).dec().sorted();
     let p = input.read_size_vec(n - 1).dec();
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for i in 0..n - 1 {
         graph.add_edge(BiEdge::new(i + 1, p[i]));
     }

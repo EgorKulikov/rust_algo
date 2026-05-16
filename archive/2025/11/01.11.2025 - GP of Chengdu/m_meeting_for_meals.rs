@@ -26,7 +26,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let a = input.read_size_vec(k).dec();
     let edges = input.read_vec::<(usize, usize, i64)>(m).dec();
 
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for (u, v, w) in edges {
         graph.add_edge(BiWeightedEdge::new(u, v, w));
     }

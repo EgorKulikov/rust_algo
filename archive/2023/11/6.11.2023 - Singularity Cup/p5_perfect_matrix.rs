@@ -38,7 +38,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc
         c[(j + n, n + m + 3)] += b[(j, 0)];
     }
     c[(n + m + 1, n + m)] = i64::MAX / 2;
-    let mut graph = Graph::new_linked(n + m + 4);
+    let mut graph = Graph::new(n + m + 4);
     for i in 0..n + m + 4 {
         for j in 0..n + m + 4 {
             if c[(i, j)] != 0 {
@@ -51,7 +51,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc
         out.print_line(-1);
         return;
     }*/
-    let mut graph = Graph::new_linked(n + m + 2);
+    let mut graph = Graph::new(n + m + 2);
     for i in 0..n {
         for j in 0..m {
             graph.add_edge(i, FlowEdge::with_payload(j + n, r[(i, j)], l[(i, j)]));

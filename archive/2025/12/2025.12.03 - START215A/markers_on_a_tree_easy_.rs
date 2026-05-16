@@ -24,7 +24,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     x[0] = b'1';
     x[n - 1] = b'1';
     let mut val = DefaultHashMap::new(0);
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for i in 0..n - 1 {
         graph.add_edge(BiEdge::new(p[i], i + 1));
     }

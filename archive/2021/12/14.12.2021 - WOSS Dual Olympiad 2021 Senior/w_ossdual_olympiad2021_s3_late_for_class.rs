@@ -28,7 +28,7 @@ fn solve(input: &mut Input, _test_case: usize) {
         }
     }
 
-    let mut graph = Graph::new_linked(r * c);
+    let mut graph = Graph::new(r * c);
     for i in 0..r {
         for j in 0..c {
             let cur = grid[(i, j)];

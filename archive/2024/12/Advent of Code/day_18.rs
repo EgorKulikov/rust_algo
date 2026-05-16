@@ -31,7 +31,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         for (x, y) in data.copy_take(p1) {
             map[(x, y)] = true;
         }
-        let mut graph = Graph::new_linked(n * n);
+        let mut graph = Graph::new(n * n);
         for i in 0..n {
             for j in 0..n {
                 if map[(i, j)] {
@@ -55,7 +55,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             for (x, y) in data.copy_take(i) {
                 map[(x, y)] = true;
             }
-            let mut graph = Graph::new_linked(n * n);
+            let mut graph = Graph::new(n * n);
             for i in 0..n {
                 for j in 0..n {
                     if map[(i, j)] {

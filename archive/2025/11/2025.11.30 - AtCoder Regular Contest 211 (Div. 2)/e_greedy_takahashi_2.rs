@@ -27,7 +27,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     }
     let mut set = (0..n - 1).collect::<BTreeSet<_>>();
     let mut min = n - 1;
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     #[derive(Default, Copy, Clone)]
     struct Node {
         last: usize,

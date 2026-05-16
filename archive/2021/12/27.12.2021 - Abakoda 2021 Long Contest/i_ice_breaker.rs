@@ -18,7 +18,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     for name in names {
         id.get(name);
     }
-    let mut graph: Graph<WeightedEdge<u32>> = Graph::new_linked(n + m);
+    let mut graph: Graph<WeightedEdge<u32>> = Graph::new(n + m);
     for i in 0..m {
         let club: Vec<String> = input.read();
         for name in club {

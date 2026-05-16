@@ -18,7 +18,7 @@ fn solve(input: &mut Input, _test_case: usize) {
 
     let mut processed = BitSet::new(n);
     let mut rem_edges = vec![0; n];
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     let mut answer = vec![None; n];
     for (u, v) in edges {
         if u == n - 1 {

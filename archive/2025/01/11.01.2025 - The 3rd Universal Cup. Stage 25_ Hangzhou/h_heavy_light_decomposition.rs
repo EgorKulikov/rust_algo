@@ -24,7 +24,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let mut heavy = vec![n; n];
     let base = chains[0].0;
     let base_len = chains[0].1 - chains[0].0 + 1;
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for (x, y) in chains {
         let cur_len = y - x + 1;
         if x != base {

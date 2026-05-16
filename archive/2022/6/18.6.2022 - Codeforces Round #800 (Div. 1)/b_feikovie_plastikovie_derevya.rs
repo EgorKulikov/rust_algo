@@ -14,7 +14,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let p = input.read_usize_vec(n - 1).dec_by_one();
     let limits = input.read_long_pair_vec(n);
 
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for (i, p) in p.into_iter().enumerate() {
         graph.add_edge(p, Edge::new(i + 1));
     }

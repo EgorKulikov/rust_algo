@@ -47,7 +47,7 @@ fn solve(input: &mut Input, out: &mut Output, test_case: usize, _data: &mut PreC
             c = nc;
         }
     }
-    let mut graph = Graph::new_linked(l * n * m);
+    let mut graph = Graph::new(l * n * m);
     for t in 0..l {
         for (r, c) in g.indices() {
             if g[(r, c)] == b'X' || forbidden.contains(&(t, (r, c))) {

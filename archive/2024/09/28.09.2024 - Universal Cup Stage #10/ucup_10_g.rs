@@ -119,7 +119,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         }
         last_y = obj.y;
     }
-    let mut graph = Graph::new_linked(hor_gap_id + ver_gap_id + 3);
+    let mut graph = Graph::new(hor_gap_id + ver_gap_id + 3);
     let source = hor_gap_id + ver_gap_id;
     let sink = source + 1;
     let real_source = sink + 1;

@@ -15,7 +15,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc
     let a = input.read_long_vec(n);
     let p = input.read_size_vec(n - 1).dec();
 
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for i in 0..n - 1 {
         graph.add_edge(BiEdge::new(p[i], i + 1));
     }

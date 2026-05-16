@@ -29,7 +29,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         return;
     }
     for _ in 0..2 {
-        let mut flow_graph = Graph::new_linked(2 * n + 2);
+        let mut flow_graph = Graph::new(2 * n + 2);
         let source = 2 * n;
         let sink = 2 * n + 1;
         for (u, v) in edges.copy_iter() {

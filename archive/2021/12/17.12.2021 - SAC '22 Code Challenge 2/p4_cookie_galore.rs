@@ -14,7 +14,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let m = input.read();
     let map = input.read_table::<char>(n, m);
 
-    let mut graph = Graph::new_linked(n * m);
+    let mut graph = Graph::new(n * m);
     for i in 0..n {
         for j in 0..m {
             for (r, c) in D4::iter(i, j, n, m) {

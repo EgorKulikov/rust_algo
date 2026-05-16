@@ -21,7 +21,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let w = input.read_size();
     let parts = Vec::gen(n, |_, _| input.read_int_vec(h * w));
 
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     let mut s = Vec::with_capacity(n);
     for i in 0..n {
         s.push(parts[i].copy_sum());

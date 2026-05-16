@@ -20,7 +20,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let n = input.read_size();
     let p = input.read_size_vec(n - 1).dec();
 
-    let graph = Graph::new_linked(n).do_with(|g| {
+    let graph = Graph::new(n).do_with(|g| {
         p.enumerate().for_each(|(i, x)| {
             g.add_edge(BiEdge::new(x, i + 1));
         })

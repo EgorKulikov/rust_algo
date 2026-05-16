@@ -42,7 +42,7 @@ fn main() {
     }
 
     let n = id.len();
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for (u, v) in edges {
         graph.add_edge(u, BiEdge::new(v));
     }

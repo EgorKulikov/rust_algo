@@ -19,7 +19,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let q = input.read_size();
     let s = input.read_size() - 1;
 
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     let mut outgoing = FxHashMap::default();
     let mut rec = RecursiveFunction2::new(|rec, f: usize, t: usize| -> usize {
         if f + 1 == t {

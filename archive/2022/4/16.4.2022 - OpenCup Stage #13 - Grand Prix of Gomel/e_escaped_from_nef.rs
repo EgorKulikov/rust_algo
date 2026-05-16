@@ -21,7 +21,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let m = input.read_usize();
     let edges = input.read_usize_pair_vec(m).dec_by_one();
 
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     for &(u, v) in &edges {
         graph.add_edge(u, WeightedEdge::new(v, 1));
         graph.add_edge(v, WeightedEdge::new(u, -1));
@@ -69,7 +69,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     }
     let (c, (id,)) = compress!(id);
     let nn = c.len();
-    let mut graph = Graph::new_linked(nn);
+    let mut graph = Graph::new(nn);
     let weight = id.qty_bound(nn);
     for &(u, v) in &edges {
         if id[u] != id[v] {
@@ -129,7 +129,7 @@ fn solve(input: &mut Input, _test_case: usize) {
         on_stack.set(vert, false);
     });
     dfs.call(0, 0, 0);
-    let mut graph = Graph::new_linked(nn);
+    let mut graph = Graph::new(nn);
     for (u, v) in edges {
         if id[u] != id[v] {
             graph.add_edge(id[u], Edge::new(id[v]));

@@ -17,7 +17,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc
     let c = input.read_long_vec(n);
     let a = input.read_long_table(n, m);
 
-    let mut graph = Graph::new_linked(n * (m + 1));
+    let mut graph = Graph::new(n * (m + 1));
     for j in 0..m {
         let mut vals = a.column(j).copied().collect_vec();
         vals.sort();

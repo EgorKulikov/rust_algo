@@ -16,7 +16,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let n = input.read_size();
     let edges = input.read_vec::<(usize, usize, i64, i64)>(n - 1).dec();
 
-    let mut graph = Graph::new_linked(n);
+    let mut graph = Graph::new(n);
     let mut incoming = vec![0; n];
     for (u, v, x, y) in edges {
         if x < y {
