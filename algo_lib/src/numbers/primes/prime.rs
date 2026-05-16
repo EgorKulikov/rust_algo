@@ -27,17 +27,17 @@ pub fn is_prime(n: impl Primitive<u64>) -> bool {
         if a == Mod::zero() {
             continue;
         }
-        if a.power(d) == Mod::one() {
+        let mut pw = a.power(d);
+        if pw == Mod::one() {
             continue;
         }
-        let mut dd = d;
         let mut good = true;
         for _ in 0..s {
-            if a.power(dd) == -Mod::one() {
+            if pw == -Mod::one() {
                 good = false;
                 break;
             }
-            dd *= 2;
+            pw *= pw;
         }
         if good {
             return false;

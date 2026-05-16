@@ -7,6 +7,24 @@ pub struct FenwickTree<T> {
     value: Vec<T>,
 }
 
+/// Walk each cell into its Fenwick parent (`p = i | (i+1)`), applying `op`.
+/// Used by both the bottom-up build (forward `+=`) and its inverse
+/// (right-to-left `-=`) — they're the same walk in opposite directions.
+fn parent_walk<T, F>(value: &mut [T], indices: impl Iterator<Item = usize>, mut op: F)
+where
+    T: Copy,
+    F: FnMut(&mut T, T),
+{
+    let n = value.len();
+    for i in indices {
+        let p = i | (i + 1);
+        if p < n {
+            let v = value[i];
+            op(&mut value[p], v);
+        }
+    }
+}
+
 impl<T: AdditionMonoidWithSub + Copy> FenwickTree<T> {
     pub fn new(size: usize) -> Self {
         Self {
@@ -51,7 +69,11 @@ impl<T: AdditionMonoidWithSub + Copy> FenwickTree<T> {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = T> + '_ {
-        self.value.iter().enumerate().map(|(i, _)| self.get(i..=i))
+        // Inverse of `From<&[T]>`: same parent walk, reversed, subtracting.
+        let mut work = self.value.clone();
+        let n = work.len();
+        parent_walk(&mut work, (0..n).rev(), |x, v| *x -= v);
+        work.into_iter()
     }
 
     pub fn clear(&mut self) {
@@ -61,10 +83,11 @@ impl<T: AdditionMonoidWithSub + Copy> FenwickTree<T> {
 
 impl<T: AdditionMonoidWithSub + Copy> From<&[T]> for FenwickTree<T> {
     fn from(slice: &[T]) -> Self {
-        let mut result = Self::new(slice.len());
-        for (i, &v) in slice.iter().enumerate() {
-            result.add(i, v);
-        }
-        result
+        // O(n) bottom-up build: copy the input, then propagate each cell's
+        // value into its Fenwick parent. n-1 additions total.
+        let mut value: Vec<T> = slice.to_vec();
+        let n = value.len();
+        parent_walk(&mut value, 0..n, |x, v| *x += v);
+        Self { value }
     }
 }
