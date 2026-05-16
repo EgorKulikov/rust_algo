@@ -153,6 +153,25 @@ impl<E: EdgeTrait> Graph<E> {
     pub fn next_edge(&self, id: usize) -> u32 {
         self.next[id]
     }
+
+    /// Edge access by (vertex, cursor). In the current Linked storage the
+    /// cursor is a global edge id and the vertex is ignored; the parameter
+    /// is there so future storage variants can use it.
+    pub fn edge_at(&self, _v: usize, cursor: u32) -> &E {
+        &self.edges[cursor as usize]
+    }
+
+    /// Mutable counterpart of `edge_at`.
+    pub fn edge_at_mut(&mut self, _v: usize, cursor: u32) -> &mut E {
+        &mut self.edges[cursor as usize]
+    }
+
+    /// Advance a cursor in `v`'s adjacency list. Returns the next cursor or
+    /// `u32::MAX` at the end. As with `edge_at`, the vertex is currently
+    /// unused.
+    pub fn step_edge(&self, _v: usize, cursor: u32) -> u32 {
+        self.next[cursor as usize]
+    }
 }
 
 impl<E: BidirectionalEdgeTrait> Graph<E> {
