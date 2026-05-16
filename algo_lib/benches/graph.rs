@@ -5,9 +5,14 @@
 //! Compare:        cargo bench --bench graph -- --baseline pre
 
 use algo_lib::graph::all_distances::AllDistances;
+use algo_lib::graph::block_cut_tree::BlockCutTreeBuild;
+use algo_lib::graph::bridges::BridgeSearch;
+use algo_lib::graph::cut_points::CutPointSearch;
 use algo_lib::graph::distances::Distances;
 use algo_lib::graph::edge_distances::EdgeAlgos;
 use algo_lib::graph::negative_distances::NegativeDistances;
+use algo_lib::graph::strongly_connected_components::StronglyConnectedComponentsTrait;
+use algo_lib::graph::two_sat::TwoSat;
 use algo_lib::graph::edges::bi_edge::BiEdge;
 use algo_lib::graph::edges::bi_weighted_edge::BiWeightedEdge;
 use algo_lib::graph::edges::edge::Edge;
@@ -301,11 +306,92 @@ fn bench_all_distances(c: &mut Criterion) {
     });
 }
 
+fn bench_scc(c: &mut Criterion) {
+    let g = er_sparse_directed(100_000, 5);
+    c.bench_function("scc/er_sparse_directed/n=1e5", |b| {
+        b.iter(|| {
+            let r = g.strongly_connected_components();
+            black_box(r);
+        });
+    });
+}
+
+fn bench_bridges(c: &mut Criterion) {
+    let g = er_sparse_bi(100_000, 6);
+    c.bench_function("bridges/er_sparse_bi/n=1e5", |b| {
+        b.iter(|| {
+            let r = g.bridges();
+            black_box(r);
+        });
+    });
+}
+
+fn bench_cut_points(c: &mut Criterion) {
+    let g = er_sparse_bi(100_000, 7);
+    c.bench_function("cut_points/er_sparse_bi/n=1e5", |b| {
+        b.iter(|| {
+            let r = g.cut_points();
+            black_box(r);
+        });
+    });
+}
+
+fn bench_block_cut_tree(c: &mut Criterion) {
+    let g = er_sparse_bi(100_000, 8);
+    c.bench_function("block_cut_tree/er_sparse_bi/n=1e5", |b| {
+        b.iter(|| {
+            let r = g.block_cut_tree();
+            black_box(r);
+        });
+    });
+}
+
+fn bench_two_sat(c: &mut Criterion) {
+    // 10⁵ variables, ~2·10⁵ random clauses. The clause list is built ONCE
+    // (deterministic from the seed), then each iter rebuilds a fresh TwoSat
+    // by replaying the same clauses. This keeps the input identical across
+    // batches so timing is stable.
+    let n = 100_000;
+    let m = 200_000;
+    let mut rng = ChaCha20Rng::seed_from_u64(9);
+    let clauses: Vec<(usize, bool, usize, bool)> = (0..m)
+        .map(|_| {
+            (
+                rng.gen_range(0..n),
+                rng.gen_bool(0.5),
+                rng.gen_range(0..n),
+                rng.gen_bool(0.5),
+            )
+        })
+        .collect();
+    c.bench_function("two_sat/n=1e5/m=2e5", |b| {
+        b.iter_batched(
+            || {
+                let mut ts = TwoSat::new(n);
+                for &(a, av, bx, bv) in &clauses {
+                    ts.add_or(a, av, bx, bv);
+                }
+                ts
+            },
+            |ts| {
+                let r = ts.solve();
+                black_box(r);
+            },
+            criterion::BatchSize::SmallInput,
+        );
+    });
+}
+
 criterion_group!(
     graph_benches,
     bench_dijkstra,
     bench_edge_distances,
     bench_negative_distances,
     bench_all_distances,
+    bench_scc,
+    bench_bridges,
+    bench_cut_points,
+    bench_block_cut_tree,
+    bench_two_sat,
 );
 criterion_main!(graph_benches);
