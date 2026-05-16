@@ -463,6 +463,50 @@ fn bench_hl_build(c: &mut Criterion) {
     });
 }
 
+fn bench_lca_query(c: &mut Criterion) {
+    let g = random_tree(100_000, 21);
+    let lca = g.lca();
+    let n = 100_000;
+    let q = 100_000;
+    let mut rng = ChaCha20Rng::seed_from_u64(30);
+    let queries: Vec<(usize, usize)> = (0..q)
+        .map(|_| (rng.gen_range(0..n), rng.gen_range(0..n)))
+        .collect();
+    c.bench_function("lca/query/n=1e5/q=1e5", |b| {
+        b.iter(|| {
+            let mut acc = 0usize;
+            for &(u, v) in &queries {
+                acc = acc.wrapping_add(lca.lca(u, v));
+            }
+            black_box(acc);
+        });
+    });
+}
+
+fn bench_hl_query(c: &mut Criterion) {
+    let g = random_tree(100_000, 22);
+    let hld = g.hl_decomposition();
+    let root = hld.root;
+    let n = 100_000;
+    let q = 100_000;
+    let mut rng = ChaCha20Rng::seed_from_u64(31);
+    let starts: Vec<usize> = (0..q).map(|_| rng.gen_range(0..n)).collect();
+    c.bench_function("hl_decomposition/path_iter/n=1e5/q=1e5", |b| {
+        b.iter(|| {
+            let mut acc = 0usize;
+            for &u in &starts {
+                for part in hld.iter(u..=root) {
+                    acc = acc
+                        .wrapping_add(part.id)
+                        .wrapping_add(part.pos_from)
+                        .wrapping_add(part.pos_to);
+                }
+            }
+            black_box(acc);
+        });
+    });
+}
+
 criterion_group!(
     graph_benches,
     bench_dijkstra,
@@ -481,5 +525,7 @@ criterion_group!(
     bench_central_decomposition,
     bench_lca_build,
     bench_hl_build,
+    bench_lca_query,
+    bench_hl_query,
 );
 criterion_main!(graph_benches);
