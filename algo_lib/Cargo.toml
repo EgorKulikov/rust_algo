@@ -6,7 +6,14 @@ rust-version = "1.70.0"
 
 [dev-dependencies]
 tester = { path = "../tester", features = ["test"] }
+criterion = { version = "0.5", features = ["html_reports"] }
+rand = "0.8"
+rand_chacha = "0.3"
 
 [[bench]]
 name = "optimizations"
+harness = false
+
+[[bench]]
+name = "graph"
 harness = false
