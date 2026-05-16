@@ -8,12 +8,17 @@ use algo_lib::graph::all_distances::AllDistances;
 use algo_lib::graph::block_cut_tree::BlockCutTreeBuild;
 use algo_lib::graph::bridges::BridgeSearch;
 use algo_lib::graph::cut_points::CutPointSearch;
+use algo_lib::graph::dfs_order::DFSOrderTrait;
 use algo_lib::graph::distances::Distances;
 use algo_lib::graph::edge_distances::EdgeAlgos;
+use algo_lib::graph::euler_path::EulerPath;
+use algo_lib::graph::minimal_spanning_tree::MinimalSpanningTree;
 use algo_lib::graph::negative_distances::NegativeDistances;
 use algo_lib::graph::strongly_connected_components::StronglyConnectedComponentsTrait;
+use algo_lib::graph::topological_sort::TopologicalSort;
 use algo_lib::graph::two_sat::TwoSat;
 use algo_lib::graph::edges::bi_edge::BiEdge;
+use algo_lib::graph::edges::bi_edge::BiEdgeWithId;
 use algo_lib::graph::edges::bi_weighted_edge::BiWeightedEdge;
 use algo_lib::graph::edges::edge::Edge;
 use algo_lib::graph::edges::flow_edge::FlowEdge;
@@ -248,15 +253,15 @@ fn dense_bipartite_mcmf(
 }
 
 /// Two random Hamiltonian cycles superimposed (degree 4 everywhere → Eulerian).
-fn two_hamiltonians(n: usize, seed: u64) -> Graph<BiEdge<()>> {
+fn two_hamiltonians(n: usize, seed: u64) -> Graph<BiEdgeWithId<()>> {
     use rand::seq::SliceRandom;
     let mut rng = ChaCha20Rng::seed_from_u64(seed);
-    let mut g: Graph<BiEdge<()>> = Graph::new(n);
+    let mut g: Graph<BiEdgeWithId<()>> = Graph::new(n);
     for _ in 0..2 {
         let mut perm: Vec<usize> = (0..n).collect();
         perm.shuffle(&mut rng);
         for i in 0..n {
-            g.add_edge(BiEdge::new(perm[i], perm[(i + 1) % n]));
+            g.add_edge(BiEdgeWithId::new(perm[i], perm[(i + 1) % n]));
         }
     }
     g
@@ -382,6 +387,46 @@ fn bench_two_sat(c: &mut Criterion) {
     });
 }
 
+fn bench_dfs_order(c: &mut Criterion) {
+    let g = er_sparse_bi(100_000, 10);
+    c.bench_function("dfs_order/er_sparse_bi/n=1e5", |b| {
+        b.iter(|| {
+            let r = g.dfs_order();
+            black_box(r);
+        });
+    });
+}
+
+fn bench_topological_sort(c: &mut Criterion) {
+    let g = dag_sparse(100_000, 11);
+    c.bench_function("topological_sort/dag_sparse/n=1e5", |b| {
+        b.iter(|| {
+            let r = g.topological_sort();
+            black_box(r);
+        });
+    });
+}
+
+fn bench_euler_path(c: &mut Criterion) {
+    let g = two_hamiltonians(100_000, 12);
+    c.bench_function("euler_path/two_hams/n=1e5", |b| {
+        b.iter(|| {
+            let r = g.euler_path();
+            black_box(r);
+        });
+    });
+}
+
+fn bench_mst(c: &mut Criterion) {
+    let g = er_sparse_weighted(100_000, 13);
+    c.bench_function("mst/er_sparse_weighted/n=1e5", |b| {
+        b.iter(|| {
+            let r = g.minimal_spanning_tree();
+            black_box(r);
+        });
+    });
+}
+
 criterion_group!(
     graph_benches,
     bench_dijkstra,
@@ -393,5 +438,9 @@ criterion_group!(
     bench_cut_points,
     bench_block_cut_tree,
     bench_two_sat,
+    bench_dfs_order,
+    bench_topological_sort,
+    bench_euler_path,
+    bench_mst,
 );
 criterion_main!(graph_benches);
