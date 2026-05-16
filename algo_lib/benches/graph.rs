@@ -20,6 +20,9 @@ use algo_lib::graph::negative_distances::NegativeDistances;
 use algo_lib::graph::strongly_connected_components::StronglyConnectedComponentsTrait;
 use algo_lib::graph::topological_sort::TopologicalSort;
 use algo_lib::graph::two_sat::TwoSat;
+use algo_lib::graph::fast_max_flow::FastMaxFlow;
+use algo_lib::graph::flow_with_demand::FlowWithDemand;
+use algo_lib::graph::max_flow::MaxFlow;
 use algo_lib::graph::edges::bi_edge::BiEdge;
 use algo_lib::graph::edges::bi_edge::BiEdgeWithId;
 use algo_lib::graph::edges::bi_weighted_edge::BiWeightedEdge;
@@ -28,7 +31,7 @@ use algo_lib::graph::edges::flow_edge::FlowEdge;
 use algo_lib::graph::edges::weighted_edge::WeightedEdge;
 use algo_lib::graph::edges::weighted_flow_edge::WeightedFlowEdge;
 use algo_lib::graph::Graph;
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion};
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 
@@ -223,6 +226,36 @@ fn dense_bipartite_flow(
         for j in 0..right {
             let c = rng.gen_range(1u64..=100);
             g.add_edge(FlowEdge::new(i, left + j, c));
+        }
+    }
+    (g, source, sink)
+}
+
+/// Like `dense_bipartite_flow` but with non-zero lower bounds (demands) on
+/// each edge so that `flow_with_demand` has something non-trivial to do.
+/// Returns `Graph<FlowEdge<u64, u64>>` (payload = lower bound = demand).
+fn dense_bipartite_flow_with_demand(
+    left: usize,
+    right: usize,
+    seed: u64,
+) -> (Graph<FlowEdge<u64, u64>>, usize, usize) {
+    let mut rng = ChaCha20Rng::seed_from_u64(seed);
+    let n = left + right + 2;
+    let source = left + right;
+    let sink = left + right + 1;
+    let mut g: Graph<FlowEdge<u64, u64>> = Graph::new(n);
+    for i in 0..left {
+        // demand = 0, cap = 1
+        g.add_edge(FlowEdge::with_payload(source, i, 1, 0));
+    }
+    for j in 0..right {
+        g.add_edge(FlowEdge::with_payload(left + j, sink, 1, 0));
+    }
+    for i in 0..left {
+        for j in 0..right {
+            let cap: u64 = rng.gen_range(2u64..=100);
+            let demand: u64 = rng.gen_range(0u64..=1); // small demand so feasibility likely
+            g.add_edge(FlowEdge::with_payload(i, left + j, cap, demand));
         }
     }
     (g, source, sink)
@@ -507,6 +540,48 @@ fn bench_hl_query(c: &mut Criterion) {
     });
 }
 
+fn bench_max_flow(c: &mut Criterion) {
+    let (g0, source, sink) = dense_bipartite_flow(500, 500, 40);
+    c.bench_function("max_flow/dinic/bipartite_500x500", |b| {
+        b.iter_batched(
+            || g0.clone(),
+            |mut g| {
+                let f = g.max_flow(source, sink);
+                black_box(f);
+            },
+            BatchSize::SmallInput,
+        );
+    });
+}
+
+fn bench_fast_max_flow(c: &mut Criterion) {
+    let (g0, source, sink) = dense_bipartite_flow(500, 500, 41);
+    c.bench_function("max_flow/lct_dinic/bipartite_500x500", |b| {
+        b.iter_batched(
+            || g0.clone(),
+            |mut g| {
+                let f = g.fast_max_flow(source, sink);
+                black_box(f);
+            },
+            BatchSize::SmallInput,
+        );
+    });
+}
+
+fn bench_flow_with_demand(c: &mut Criterion) {
+    let (g0, source, sink) = dense_bipartite_flow_with_demand(500, 500, 42);
+    c.bench_function("flow_with_demand/bipartite_500x500", |b| {
+        b.iter_batched(
+            || g0.clone(),
+            |mut g| {
+                let ok = g.flow_with_demand(source, sink);
+                black_box(ok);
+            },
+            BatchSize::SmallInput,
+        );
+    });
+}
+
 criterion_group!(
     graph_benches,
     bench_dijkstra,
@@ -527,5 +602,8 @@ criterion_group!(
     bench_hl_build,
     bench_lca_query,
     bench_hl_query,
+    bench_max_flow,
+    bench_fast_max_flow,
+    bench_flow_with_demand,
 );
 criterion_main!(graph_benches);
