@@ -4,7 +4,10 @@
 //! Save baseline:  cargo bench --bench graph -- --save-baseline pre
 //! Compare:        cargo bench --bench graph -- --baseline pre
 
+use algo_lib::graph::all_distances::AllDistances;
 use algo_lib::graph::distances::Distances;
+use algo_lib::graph::edge_distances::EdgeAlgos;
+use algo_lib::graph::negative_distances::NegativeDistances;
 use algo_lib::graph::edges::bi_edge::BiEdge;
 use algo_lib::graph::edges::bi_weighted_edge::BiWeightedEdge;
 use algo_lib::graph::edges::edge::Edge;
@@ -268,5 +271,41 @@ fn bench_dijkstra(c: &mut Criterion) {
     });
 }
 
-criterion_group!(graph_benches, bench_dijkstra);
+fn bench_edge_distances(c: &mut Criterion) {
+    let g = er_sparse_01(100_000, 2);
+    c.bench_function("edge_distances/01_BFS/n=1e5", |b| {
+        b.iter(|| {
+            let d = g.edge_distances(black_box(0));
+            black_box(d);
+        });
+    });
+}
+
+fn bench_negative_distances(c: &mut Criterion) {
+    let g = er_sparse_weighted_directed(2_000, 3);
+    c.bench_function("bellman_ford/er_sparse/n=2000", |b| {
+        b.iter(|| {
+            let d = g.negative_distances_from(black_box(0));
+            black_box(d);
+        });
+    });
+}
+
+fn bench_all_distances(c: &mut Criterion) {
+    let g = er_dense_weighted_directed(500, 4);
+    c.bench_function("floyd_warshall/er_dense/n=500", |b| {
+        b.iter(|| {
+            let d = g.all_distances();
+            black_box(d);
+        });
+    });
+}
+
+criterion_group!(
+    graph_benches,
+    bench_dijkstra,
+    bench_edge_distances,
+    bench_negative_distances,
+    bench_all_distances,
+);
 criterion_main!(graph_benches);
