@@ -15,7 +15,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let m = input.read_usize();
     let a = input.read_table::<usize>(n, m);
 
-    let mut graph = Graph::new(n << m);
+    let mut graph = Graph::new_linked(n << m);
     let mut mask = vec![0; n];
     for i in 0..n {
         for j in 0..n {

@@ -28,7 +28,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc
         }
     }
 
-    let mut graph = Graph::new(n + 2);
+    let mut graph = Graph::new_linked(n + 2);
     for &(f, t, w) in &edges {
         graph.add_edge(f, WeightedEdge::new(t, w));
     }

@@ -27,7 +27,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc
         sz.push((s1, s2));
     }
 
-    let mut graph = Graph::new(m + 8);
+    let mut graph = Graph::new_linked(m + 8);
     for (pos, (i, j)) in sz.into_iter().enumerate() {
         graph.add_edge(FlowEdge::new(m + 6, pos, 1));
         graph.add_edge(FlowEdge::new(pos, m + i, 1));

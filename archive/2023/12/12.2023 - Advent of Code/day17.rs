@@ -20,7 +20,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc
         let encode = |i: usize, j: usize, d: usize, r: usize| {
             i * m * 4 * (max_moves + 1) + j * 4 * (max_moves + 1) + d * (max_moves + 1) + r
         };
-        let mut graph = Graph::new(n * m * 4 * (max_moves + 1));
+        let mut graph = Graph::new_linked(n * m * 4 * (max_moves + 1));
         for i in 0..n {
             for j in 0..m {
                 for d in 0..4 {

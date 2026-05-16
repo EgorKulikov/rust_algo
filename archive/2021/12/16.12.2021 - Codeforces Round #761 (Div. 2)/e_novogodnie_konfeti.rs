@@ -23,7 +23,7 @@ fn solve(input: &mut Input, _test_case: usize) {
             i = i.next_power_of_two() - i;
         }
     }
-    let mut graph = Graph::new(id.len());
+    let mut graph = Graph::new_linked(id.len());
     for i in id.by_id() {
         if i != 0 {
             graph.add_edge(id.get(i), BiEdge::new(id.get(i.next_power_of_two() - i)));

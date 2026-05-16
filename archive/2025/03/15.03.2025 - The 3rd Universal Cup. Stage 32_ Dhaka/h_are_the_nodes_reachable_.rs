@@ -52,7 +52,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             0
         }
     });
-    let graph = Graph::new(n).do_with(|g| {
+    let graph = Graph::new_linked(n).do_with(|g| {
         for (u, v) in edges {
             g.add_edge(Edge::new(v, u));
         }

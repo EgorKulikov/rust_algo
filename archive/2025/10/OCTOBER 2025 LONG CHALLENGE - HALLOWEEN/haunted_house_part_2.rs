@@ -49,7 +49,7 @@ fn solve(input: &mut Input, out: &mut Output, test_case: usize, _data: &mut PreC
             c = nc;
         }
     }
-    let mut graph = Graph::new(l * n * m * (b + 1) * s);
+    let mut graph = Graph::new_linked(l * n * m * (b + 1) * s);
     let id = |t, r, c, bb, ss| (t * n * m + r * m + c) * (b + 1) * s + bb * s + ss;
     for t in 0..l {
         for (r, c) in g.indices() {

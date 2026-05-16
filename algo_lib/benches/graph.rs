@@ -77,7 +77,7 @@ use rand_chacha::ChaCha20Rng;
 fn er_sparse_weighted(n: usize, seed: u64) -> Graph<BiWeightedEdge<u64, ()>> {
     let mut rng = ChaCha20Rng::seed_from_u64(seed);
     let m = 2 * n;
-    let mut g: Graph<BiWeightedEdge<u64, ()>> = Graph::new(n);
+    let mut g: Graph<BiWeightedEdge<u64, ()>> = Graph::new_linked(n);
     for _ in 0..m {
         let u = rng.gen_range(0..n);
         let mut v = rng.gen_range(0..n);
@@ -94,7 +94,7 @@ fn er_sparse_weighted(n: usize, seed: u64) -> Graph<BiWeightedEdge<u64, ()>> {
 fn er_sparse_bi(n: usize, seed: u64) -> Graph<BiEdge<()>> {
     let mut rng = ChaCha20Rng::seed_from_u64(seed);
     let m = 2 * n;
-    let mut g: Graph<BiEdge<()>> = Graph::new(n);
+    let mut g: Graph<BiEdge<()>> = Graph::new_linked(n);
     for _ in 0..m {
         let u = rng.gen_range(0..n);
         let mut v = rng.gen_range(0..n);
@@ -110,7 +110,7 @@ fn er_sparse_bi(n: usize, seed: u64) -> Graph<BiEdge<()>> {
 fn er_sparse_directed(n: usize, seed: u64) -> Graph<Edge<()>> {
     let mut rng = ChaCha20Rng::seed_from_u64(seed);
     let m = 2 * n;
-    let mut g: Graph<Edge<()>> = Graph::new(n);
+    let mut g: Graph<Edge<()>> = Graph::new_linked(n);
     for _ in 0..m {
         let u = rng.gen_range(0..n);
         let mut v = rng.gen_range(0..n);
@@ -126,7 +126,7 @@ fn er_sparse_directed(n: usize, seed: u64) -> Graph<Edge<()>> {
 fn dag_sparse(n: usize, seed: u64) -> Graph<Edge<()>> {
     let mut rng = ChaCha20Rng::seed_from_u64(seed);
     let m = 2 * n;
-    let mut g: Graph<Edge<()>> = Graph::new(n);
+    let mut g: Graph<Edge<()>> = Graph::new_linked(n);
     for _ in 0..m {
         let a = rng.gen_range(0..n);
         let b = rng.gen_range(0..n);
@@ -143,7 +143,7 @@ fn dag_sparse(n: usize, seed: u64) -> Graph<Edge<()>> {
 fn er_sparse_01(n: usize, seed: u64) -> Graph<BiWeightedEdge<u32, ()>> {
     let mut rng = ChaCha20Rng::seed_from_u64(seed);
     let m = 2 * n;
-    let mut g: Graph<BiWeightedEdge<u32, ()>> = Graph::new(n);
+    let mut g: Graph<BiWeightedEdge<u32, ()>> = Graph::new_linked(n);
     for _ in 0..m {
         let u = rng.gen_range(0..n);
         let mut v = rng.gen_range(0..n);
@@ -160,7 +160,7 @@ fn er_sparse_01(n: usize, seed: u64) -> Graph<BiWeightedEdge<u32, ()>> {
 fn er_sparse_weighted_directed(n: usize, seed: u64) -> Graph<WeightedEdge<i64, ()>> {
     let mut rng = ChaCha20Rng::seed_from_u64(seed);
     let m = 2 * n;
-    let mut g: Graph<WeightedEdge<i64, ()>> = Graph::new(n);
+    let mut g: Graph<WeightedEdge<i64, ()>> = Graph::new_linked(n);
     for _ in 0..m {
         let u = rng.gen_range(0..n);
         let mut v = rng.gen_range(0..n);
@@ -177,7 +177,7 @@ fn er_sparse_weighted_directed(n: usize, seed: u64) -> Graph<WeightedEdge<i64, (
 fn er_dense_weighted_directed(n: usize, seed: u64) -> Graph<WeightedEdge<u64, ()>> {
     let mut rng = ChaCha20Rng::seed_from_u64(seed);
     let m = (n * n) / 4;
-    let mut g: Graph<WeightedEdge<u64, ()>> = Graph::new(n);
+    let mut g: Graph<WeightedEdge<u64, ()>> = Graph::new_linked(n);
     for _ in 0..m {
         let u = rng.gen_range(0..n);
         let mut v = rng.gen_range(0..n);
@@ -193,7 +193,7 @@ fn er_dense_weighted_directed(n: usize, seed: u64) -> Graph<WeightedEdge<u64, ()
 /// Uniform-random labelled tree via Prüfer sequence.
 fn random_tree(n: usize, seed: u64) -> Graph<BiEdge<()>> {
     let mut rng = ChaCha20Rng::seed_from_u64(seed);
-    let mut g: Graph<BiEdge<()>> = Graph::new(n);
+    let mut g: Graph<BiEdge<()>> = Graph::new_linked(n);
     if n <= 1 {
         return g;
     }
@@ -231,7 +231,7 @@ fn random_tree(n: usize, seed: u64) -> Graph<BiEdge<()>> {
 /// Long path 0—1—2—…—n-1 as BiEdge graph.
 #[allow(dead_code)]
 fn path(n: usize) -> Graph<BiEdge<()>> {
-    let mut g: Graph<BiEdge<()>> = Graph::new(n);
+    let mut g: Graph<BiEdge<()>> = Graph::new_linked(n);
     for i in 0..n.saturating_sub(1) {
         g.add_edge(BiEdge::new(i, i + 1));
     }
@@ -248,7 +248,7 @@ fn dense_bipartite_flow(
     let n = left + right + 2;
     let source = left + right;
     let sink = left + right + 1;
-    let mut g: Graph<FlowEdge<u64, ()>> = Graph::new(n);
+    let mut g: Graph<FlowEdge<u64, ()>> = Graph::new_linked(n);
     for i in 0..left {
         g.add_edge(FlowEdge::new(source, i, 1));
     }
@@ -278,7 +278,7 @@ fn dense_bipartite_flow_with_demand(
     let n = left + right + 2;
     let source = left + right;
     let sink = left + right + 1;
-    let mut g: Graph<FlowEdge<u64, u64>> = Graph::new(n);
+    let mut g: Graph<FlowEdge<u64, u64>> = Graph::new_linked(n);
     for i in 0..left {
         // demand = 0, cap = 1
         g.add_edge(FlowEdge::with_payload(source, i, 1, 0));
@@ -306,7 +306,7 @@ fn dense_bipartite_mcmf(
     let n = left + right + 2;
     let source = left + right;
     let sink = left + right + 1;
-    let mut g: Graph<WeightedFlowEdge<i64, i64, ()>> = Graph::new(n);
+    let mut g: Graph<WeightedFlowEdge<i64, i64, ()>> = Graph::new_linked(n);
     for i in 0..left {
         g.add_edge(WeightedFlowEdge::new(source, i, 0, 1));
     }
@@ -327,7 +327,7 @@ fn dense_bipartite_mcmf(
 fn two_hamiltonians(n: usize, seed: u64) -> Graph<BiEdgeWithId<()>> {
     use rand::seq::SliceRandom;
     let mut rng = ChaCha20Rng::seed_from_u64(seed);
-    let mut g: Graph<BiEdgeWithId<()>> = Graph::new(n);
+    let mut g: Graph<BiEdgeWithId<()>> = Graph::new_linked(n);
     for _ in 0..2 {
         let mut perm: Vec<usize> = (0..n).collect();
         perm.shuffle(&mut rng);

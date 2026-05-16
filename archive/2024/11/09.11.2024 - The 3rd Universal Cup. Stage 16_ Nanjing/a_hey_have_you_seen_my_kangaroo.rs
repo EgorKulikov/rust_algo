@@ -26,7 +26,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let s = input.read_str();
     let a = input.read_char_table(n, m);
 
-    let mut graph = Graph::new(n * m);
+    let mut graph = Graph::new_linked(n * m);
     let mut is_root = BitSet::new(n * m);
     let mut x = vec![None; n * m];
 

@@ -32,7 +32,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc
             id.get(f);
             id.get(t);
         }
-        let mut graph = Graph::new(id.len());
+        let mut graph = Graph::new_linked(id.len());
         for (f, t) in &edges {
             let f = id.get(f);
             let t = id.get(t);

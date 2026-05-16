@@ -18,7 +18,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let a = input.read_long_vec(n);
     let edges = input.read_size_pair_vec(m).dec_by_one();
 
-    let mut graph = Graph::new(n);
+    let mut graph = Graph::new_linked(n);
     for &(u, v) in &edges {
         graph.add_edge(u, BiEdge::new(v));
     }
@@ -37,7 +37,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     for i in 0..n {
         a_cond[dsu.get(i)] += a[i];
     }
-    let mut graph_cond = Graph::new(n);
+    let mut graph_cond = Graph::new_linked(n);
     for &(u, v) in &bridges {
         let u = dsu.get(u);
         let v = dsu.get(v);

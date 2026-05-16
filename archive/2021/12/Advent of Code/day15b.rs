@@ -35,7 +35,7 @@ fn main() {
 
     let n = map.len();
     let m = map[0].len();
-    let mut graph = Graph::new(n * m * 25);
+    let mut graph = Graph::new_linked(n * m * 25);
     for i in 0..(n * 5) {
         for j in 0..(m * 5) {
             for (r, c) in D4::iter(i, j, n * 5, m * 5) {

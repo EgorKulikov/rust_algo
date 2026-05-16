@@ -24,7 +24,7 @@ fn solve(input: &mut Input) {
     }
     let mut bad = vec![HashSet::new(); n];
     let mut white = BTreeSet::new();
-    let mut graph = Graph::new(n);
+    let mut graph = Graph::new_linked(n);
     for (u, v) in edges {
         graph.add_edge(u, BiEdge::new(v));
     }

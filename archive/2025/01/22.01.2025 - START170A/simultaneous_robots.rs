@@ -27,7 +27,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         return;
     }
 
-    let mut graph = Graph::new(n * m);
+    let mut graph = Graph::new_linked(n * m);
     for i in 0..n {
         for j in 0..m {
             if a[(i, j)] == b'#' {

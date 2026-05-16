@@ -22,7 +22,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     if n == 0 && m == 0 && q == 0 && s == 0 {
         return;
     }
-    let graph = Graph::new_legacy(n).do_with(|g| {
+    let graph = Graph::new_linked(n).do_with(|g| {
         for (u, v, w) in edges {
             g.add_edge(WeightedEdge::new(u, v, w));
         }

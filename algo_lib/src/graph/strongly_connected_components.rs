@@ -37,11 +37,11 @@ impl<E: EdgeTrait> StronglyConnectedComponentsTrait for Graph<E> {
             }
         }
         visited.fill(false);
-        let mut res = Graph::new_legacy(0);
+        let mut res = Graph::new_linked(0);
         let mut index = 0usize;
         let mut next = vec![n; n];
         let mut queue = Vec::with_capacity(n);
-        let mut gt = Graph::new_legacy(n);
+        let mut gt = Graph::new_linked(n);
         for i in 0..n {
             for e in self.adj(i).iter() {
                 gt.add_edge(Edge::new(e.to(), i));
@@ -101,7 +101,7 @@ impl<E: EdgeTrait> StronglyConnectedComponentsTrait for Graph<E> {
         }
         visited.fill(false);
         let mut index = 0usize;
-        let mut gt = Graph::new_legacy(n);
+        let mut gt = Graph::new_linked(n);
         for i in 0..n {
             for e in self.adj(i).iter() {
                 gt.add_edge(Edge::new(e.to(), i));

@@ -20,7 +20,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let edges = input.read_size_pair_vec(m).dec();
 
     let direct = Graph::from_edges(n, &edges);
-    let reverse = Graph::new(n).do_with(|g| {
+    let reverse = Graph::new_linked(n).do_with(|g| {
         for (u, v) in edges {
             g.add_edge(Edge::new(v, u));
         }

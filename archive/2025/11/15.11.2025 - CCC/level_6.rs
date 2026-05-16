@@ -152,7 +152,7 @@ fn solve(mut input: MutexGuard<Input>, out: &mut Output, _test_case: usize, _dat
     out.print_line(ans_x);
     out.print_line(ans_y);*/
 
-    let mut graph = Graph::new(0);
+    let mut graph = Graph::new_linked(0);
     let mut id = FxHashMap::default();
     let mut wh = Vec::new();
     let mut get_id = |graph: &mut Graph<WeightedEdge<i128, ()>>,

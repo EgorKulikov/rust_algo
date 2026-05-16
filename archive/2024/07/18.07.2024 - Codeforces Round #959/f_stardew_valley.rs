@@ -22,7 +22,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc
     let mut deg = vec![0; n];
     let mut dsu = DSU::new(n);
     let mut graph = vec![Vec::new(); n];
-    let mut extra_graph = Graph::new(n);
+    let mut extra_graph = Graph::new_linked(n);
     for &(u, v, t) in &edges {
         if t == 0 {
             if dsu.join(u, v) {

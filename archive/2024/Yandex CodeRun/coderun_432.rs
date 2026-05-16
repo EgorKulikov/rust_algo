@@ -18,7 +18,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let n = input.read_size();
     let a = input.read_long_table(n, n);
 
-    let mut graph = Graph::new(n);
+    let mut graph = Graph::new_linked(n);
     for i in 0..n {
         for j in 0..i {
             if a[(i, j)] != -1 {

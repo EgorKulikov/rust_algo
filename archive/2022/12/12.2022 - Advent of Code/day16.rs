@@ -40,7 +40,7 @@ fn solve(input: &mut Input, _test_case: usize) {
         input.skip_whitespace();
     }
 
-    let mut graph = Graph::new(valves.len());
+    let mut graph = Graph::new_linked(valves.len());
     let mut f = Vec::with_capacity(non_zero.len());
     for (i, (flow, tunnels)) in valves.into_iter().enumerate() {
         if flow != 0 {

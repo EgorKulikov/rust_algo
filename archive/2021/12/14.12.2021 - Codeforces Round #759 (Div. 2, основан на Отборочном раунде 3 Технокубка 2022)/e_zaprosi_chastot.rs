@@ -31,7 +31,7 @@ fn solve(input: &mut Input, _test_case: usize) {
                 for (i, (v, _, _)) in queries.iter().enumerate() {
                     by_vertex[*v - 1].push(i);
                 }
-                let mut graph = Graph::new(n);
+                let mut graph = Graph::new_linked(n);
                 for i in 1..n {
                     graph.add_edge(p[i - 1], Edge::new(i));
                 }

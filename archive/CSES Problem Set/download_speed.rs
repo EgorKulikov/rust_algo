@@ -17,7 +17,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let m = input.read_size();
     let edges = input.read_vec::<(usize, usize, i64)>(m).dec();
 
-    let mut graph = Graph::new(n);
+    let mut graph = Graph::new_linked(n);
     for (a, b, c) in edges {
         graph.add_edge(FlowEdge::new(a, b, c));
     }

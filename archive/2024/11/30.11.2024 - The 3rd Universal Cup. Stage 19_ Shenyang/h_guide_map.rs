@@ -41,8 +41,8 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             v1.push(i);
         }
     }
-    let mut g1 = Graph::new(v0.len());
-    let mut g2 = Graph::new(v1.len());
+    let mut g1 = Graph::new_linked(v0.len());
+    let mut g2 = Graph::new_linked(v1.len());
     for (u, v) in edges.copy_iter() {
         if dsu.get(u) == dsu.get(0) {
             g1.add_edge(BiEdge::new(v0.lower_bound(&u), v0.lower_bound(&v)));

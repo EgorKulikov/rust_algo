@@ -26,7 +26,7 @@ fn solve(mut input: MutexGuard<Input>, out: &mut Output, test_case: usize, _data
     let people = input.read_vec::<(isize, Str)>(n);
     drop(input);
 
-    let graph = Graph::new(n).do_with(|graph| {
+    let graph = Graph::new_linked(n).do_with(|graph| {
         for (i, &(p, _)) in people.iter().enumerate().skip(1) {
             graph.add_edge(Edge::new(p as usize - 1, i));
         }

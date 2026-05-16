@@ -31,7 +31,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             id.get(to.clone());
         }
     }
-    let mut graph = Graph::new(id.len());
+    let mut graph = Graph::new_linked(id.len());
     for (vert, to) in map {
         let vert = id.get(vert);
         for to in to.unwrap() {

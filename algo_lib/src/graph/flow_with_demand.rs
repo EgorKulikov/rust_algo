@@ -16,7 +16,7 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C, Payload
     FlowWithDemand<C> for Graph<E>
 {
     fn flow_with_demand(&mut self, source: usize, destination: usize) -> bool {
-        let mut flow_graph = Graph::new_legacy(self.vertex_count() + 2);
+        let mut flow_graph = Graph::new_linked(self.vertex_count() + 2);
         let mut demand = vec![C::zero(); self.vertex_count()];
         for i in 0..self.vertex_count() {
             for (j, e) in self.adj(i).iter_with_id() {

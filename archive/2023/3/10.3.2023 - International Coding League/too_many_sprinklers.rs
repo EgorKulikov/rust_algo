@@ -14,7 +14,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let r = input.read_int();
     let pos = input.read_int_pair_vec(n);
 
-    let mut graph = Graph::new(2 * n + 2);
+    let mut graph = Graph::new_linked(2 * n + 2);
     let source = 2 * n;
     let sink = 2 * n + 1;
     for i in 0..n {

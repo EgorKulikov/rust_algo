@@ -16,7 +16,7 @@ fn solve(input: &mut Input) {
     let m = input.read();
     let mut s: Arr2d<char> = input.read_table(n, m);
 
-    let mut graph = Graph::new(n * m + 2);
+    let mut graph = Graph::new_linked(n * m + 2);
     for i in 0..n {
         for j in ((i % 2)..m).step_by(2) {
             if s[(i, j)] == '.' {

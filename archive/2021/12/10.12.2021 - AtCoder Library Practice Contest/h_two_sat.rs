@@ -13,7 +13,7 @@ fn solve(input: &mut Input) {
     let d: i32 = input.read();
     let pos = input.read_table::<i32>(n, 2);
 
-    let mut graph = Graph::new(2 * n);
+    let mut graph = Graph::new_linked(2 * n);
     for i in 0..n {
         for j in 0..n {
             if i == j {

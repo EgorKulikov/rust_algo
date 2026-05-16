@@ -223,7 +223,7 @@ mod tester {
             let edges = input.read_size_pair_vec(n - 1).dec();
 
             let graph = Graph::with_biedges(n, &edges);
-            let mut moves = Graph::new_legacy(n);
+            let mut moves = Graph::new_linked(n);
             for i in 0..n {
                 let mut dfs = RecursiveFunction4::new(
                     |f, vert: usize, prev: usize, mut min: usize, mut max: usize| {

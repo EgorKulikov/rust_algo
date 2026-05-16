@@ -22,7 +22,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     }
     let mut s = input.read_char_table(h, w);
 
-    let mut graph = Graph::new(h * w + 2);
+    let mut graph = Graph::new_linked(h * w + 2);
     for i in 0..w {
         graph.add_edge(WeightedEdge::new(h * w, i, (s[(0, i)] - b'0') as i32));
         graph.add_edge(WeightedEdge::new((h - 1) * w + i, h * w + 1, 0));

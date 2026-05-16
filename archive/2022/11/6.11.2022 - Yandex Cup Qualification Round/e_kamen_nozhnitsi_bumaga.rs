@@ -21,7 +21,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let mut right = q;
     while left < right {
         let mid = (left + right + 1) / 2;
-        let mut graph = Graph::new(n);
+        let mut graph = Graph::new_linked(n);
         for &(mut u, mut v, c) in edges.iter().take(mid) {
             u -= 1;
             v -= 1;

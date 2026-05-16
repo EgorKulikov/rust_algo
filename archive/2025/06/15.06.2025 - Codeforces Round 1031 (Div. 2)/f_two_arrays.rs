@@ -20,7 +20,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let mut a = input.read_size_vec(n).dec();
     let mut b = input.read_size_vec(n).dec();
 
-    let mut graph = Graph::new(2 * n);
+    let mut graph = Graph::new_linked(2 * n);
     for i in 0..n {
         graph.add_edge(BiEdgeWithId::new(a[i], b[i]));
     }

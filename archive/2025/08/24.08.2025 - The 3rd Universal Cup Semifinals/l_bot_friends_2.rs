@@ -23,7 +23,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let mut a = input.read_long_vec(n);
     let edges: Vec<(usize, usize, i64)> = input.read_vec(m).dec();
 
-    let mut graph = Graph::new(n);
+    let mut graph = Graph::new_linked(n);
     for (u, v, w) in edges.copy_iter() {
         graph.add_edge(BiWeightedEdge::new(u, v, w));
     }
@@ -43,7 +43,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             }
         }
     }
-    let mut n_graph = Graph::new(n);
+    let mut n_graph = Graph::new_linked(n);
     for (u, v, w) in edges {
         n_graph.add_edge(BiWeightedEdge::new(u, v, w + a[u] + a[v]));
     }

@@ -24,7 +24,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     {
         let n = data.len();
         let m = data[0].len();
-        let mut graph = Graph::new(n * m * 4);
+        let mut graph = Graph::new_linked(n * m * 4);
         let mut start = 0;
         let mut end = 0;
         for i in 0..n {
@@ -87,8 +87,8 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     {
         let n = data.len();
         let m = data[0].len();
-        let mut graph = Graph::new(n * m * 4);
-        let mut graph_t = Graph::new(n * m * 4);
+        let mut graph = Graph::new_linked(n * m * 4);
+        let mut graph_t = Graph::new_linked(n * m * 4);
         let mut start = 0;
         let mut end = 0;
         for i in 0..n {

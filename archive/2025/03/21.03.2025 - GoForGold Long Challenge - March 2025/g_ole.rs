@@ -21,7 +21,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let mut prefix = Str::new();
     let mut num_primes = 0;
     for k in 0..=n / 2 {
-        let mut graph = Graph::new(2 * k + 2);
+        let mut graph = Graph::new_linked(2 * k + 2);
         let source = 2 * k;
         let sink = source + 1;
         for i in 0..k {

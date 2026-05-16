@@ -21,7 +21,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let k = input.read_size();
     let edges = input.read_vec::<(usize, usize, i32)>(m).dec();
 
-    let graph = Graph::new(n).do_with(|g| {
+    let graph = Graph::new_linked(n).do_with(|g| {
         for (u, v, w) in edges.copy_iter() {
             g.add_edge(Edge::with_payload(u, v, w));
         }

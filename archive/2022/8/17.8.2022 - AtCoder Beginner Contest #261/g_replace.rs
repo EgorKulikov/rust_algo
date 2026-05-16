@@ -18,7 +18,7 @@ fn solve(input: &mut Input) {
     let k = input.read_usize();
     let op = input.read_vec::<(char, Str)>(k);
 
-    let mut graph = Graph::new(26);
+    let mut graph = Graph::new_linked(26);
     let mut ops = Vec::new();
     for (c, s) in op {
         let id = (c as usize) - ('a' as usize);

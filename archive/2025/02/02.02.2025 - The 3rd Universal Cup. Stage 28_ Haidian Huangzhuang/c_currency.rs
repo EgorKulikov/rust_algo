@@ -23,7 +23,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let h2 = input.read_long_vec(n - 1);
     let constraints: Vec<(usize, usize, i64)> = input.read_vec(m).dec();
 
-    let mut graph = Graph::new(n + 3);
+    let mut graph = Graph::new_linked(n + 3);
     let source = n + 1;
     let sink = n + 2;
     let inf = i64::MAX as i128;

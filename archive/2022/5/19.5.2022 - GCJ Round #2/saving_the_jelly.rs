@@ -18,7 +18,7 @@ fn solve(input: &mut Input, test_case: usize) {
     let pos: Vec<Point<i64>> = input.read_vec(n);
     let candies: Vec<Point<i64>> = input.read_vec(n + 1);
 
-    let mut graph = Graph::new(2 * n + 2);
+    let mut graph = Graph::new_linked(2 * n + 2);
     for i in 0..n {
         graph.add_edge(2 * n, FlowEdge::new(i, 1));
         graph.add_edge(n + i, FlowEdge::new(2 * n + 1, 1));

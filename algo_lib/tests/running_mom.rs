@@ -25,7 +25,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
 
     let mut id = Id::new();
     id.add_pairs(edges.iter().cloned());
-    let graph = Graph::new_legacy(id.len()).do_with(|graph| {
+    let graph = Graph::new_linked(id.len()).do_with(|graph| {
         for (a, b) in edges {
             let a = id.get(a);
             let b = id.get(b);

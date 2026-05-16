@@ -22,7 +22,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let n = input.read_usize();
     let edges: Vec<(usize, usize, i32, i32)> = input.read_vec(n - 1);
 
-    let mut graph = Graph::new(n);
+    let mut graph = Graph::new_linked(n);
     for (i, j, x, y) in edges {
         graph.add_edge(i - 1, WeightedEdge::new(j - 1, Rational::new(x, y)));
         graph.add_edge(j - 1, WeightedEdge::new(i - 1, Rational::new(y, x)));

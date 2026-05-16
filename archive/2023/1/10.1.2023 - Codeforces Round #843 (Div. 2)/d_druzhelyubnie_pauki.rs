@@ -20,7 +20,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let pr = primes(lim);
     let d = divisor_table(lim);
 
-    let mut graph = Graph::new(n + pr.len());
+    let mut graph = Graph::new_linked(n + pr.len());
     for (i, a) in a.into_iter().enumerate() {
         let mut c = a;
         while c > 1 {

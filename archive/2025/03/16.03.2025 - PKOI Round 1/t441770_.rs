@@ -24,7 +24,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
 
     value!(Modulo: u32 = 754974721);
     type Mod = ModInt<Modulo>;
-    let graph = Graph::new(3 * n).do_with(|graph| {
+    let graph = Graph::new_linked(3 * n).do_with(|graph| {
         for (u, v, w) in edges {
             let w = Mod::new(w);
             graph.add_edge(WeightedEdge::new(u, v + n, w.val() as i64));

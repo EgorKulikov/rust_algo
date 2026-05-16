@@ -25,7 +25,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc
         return;
     }
     let mut dsu = DSU::new(n);
-    let mut graph = Graph::new(n);
+    let mut graph = Graph::new_linked(n);
     for (i, (u, v)) in edges.into_iter().enumerate() {
         if dsu.join(u, v) {
             graph.add_edge(BiEdge::with_payload(u, v, i));

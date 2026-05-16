@@ -17,7 +17,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let m = input.read_size();
     let segments = input.read_size_pair_vec(m);
 
-    let mut graph = Graph::new(m + 2).do_with(|graph| {
+    let mut graph = Graph::new_linked(m + 2).do_with(|graph| {
         for i in 0..m {
             if segments[i].0 % 2 == 0 {
                 graph.add_edge(FlowEdge::new(m, i, 1));

@@ -71,7 +71,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             if !is_incorrect[id] {
                 continue;
             }
-            let mut graph = Graph::new(100);
+            let mut graph = Graph::new_linked(100);
             for i in row.indices() {
                 for j in row.indices() {
                     if before[(row[i], row[j])] {

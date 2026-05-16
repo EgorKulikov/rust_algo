@@ -125,7 +125,7 @@ fn solve(input: &mut Input, _test_case: usize) {
         res
     };
     let _n = input.read_usize();
-    let mut graph = Graph::new(30);
+    let mut graph = Graph::new_linked(30);
     for i in 1..=27 {
         out_line!(i, i + 1);
         graph.add_edge(i - 1, BiEdge::new(i));

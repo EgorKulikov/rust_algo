@@ -12,7 +12,7 @@ type PreCalc = ();
 fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut PreCalc) {
     let n = input.read_size();
 
-    let mut graph = Graph::new(10000);
+    let mut graph = Graph::new_linked(10000);
     for i in 0..10000 {
         graph.add_edge(Edge::new(i, (i + 1) % 10000));
         let mut j = i;

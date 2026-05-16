@@ -17,7 +17,7 @@ fn solve(input: &mut Input) {
     let v = input.read_usize() - 1;
     let edges = input.read_vec::<(usize, usize, i64)>(m);
 
-    let mut graph = Graph::new(n);
+    let mut graph = Graph::new_linked(n);
     let mut rem = vec![0; n];
     let mut aoki = vec![0; n];
     let mut tako = vec![0; n];

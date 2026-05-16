@@ -96,12 +96,6 @@ impl<E: EdgeTrait> Graph<E> {
         }
     }
 
-    /// Temporary alias for `new_linked`. Removed in Task 6's call-site sweep.
-    #[deprecated(note = "Use Graph::new_linked, Graph::new_2d, or Graph::new(n, m).")]
-    pub fn new_legacy(vertex_count: usize) -> Self {
-        Self::new_linked(vertex_count)
-    }
-
     /// Helper used by `add_edge`'s Linked arm. Pushes a single edge entry,
     /// returning the global edge id of the new entry.
     fn push_one_linked(&mut self, from: usize, mut edge: E) -> usize {

@@ -25,7 +25,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         additional.push(t.iter().skip(2).map(|x| Str::from(*x)).collect::<Vec<_>>());
     }
 
-    let mut graph = Graph::new(n);
+    let mut graph = Graph::new_linked(n);
     for i in 0..n {
         for j in 0..n {
             if i != j && (additional[i].contains(&base[j]) || base[i] == base[j]) {

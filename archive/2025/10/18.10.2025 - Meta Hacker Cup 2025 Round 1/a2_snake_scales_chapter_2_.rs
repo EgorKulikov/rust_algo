@@ -17,7 +17,7 @@ fn solve(mut input: MutexGuard<Input>, out: &mut Output, test_case: usize, _data
     let n = input.read_size();
     let a = input.read_int_vec(n);
     drop(input);
-    let mut graph = Graph::new(n + 1);
+    let mut graph = Graph::new_linked(n + 1);
     for i in 1..n {
         graph.add_edge(BiWeightedEdge::new(i, i - 1, (a[i] - a[i - 1]).abs()));
     }

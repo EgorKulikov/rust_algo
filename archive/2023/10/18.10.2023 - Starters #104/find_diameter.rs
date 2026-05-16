@@ -16,7 +16,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc
     let n = input.read_size();
     let a = input.read_size_vec(n);
 
-    let mut graph = Graph::new(n);
+    let mut graph = Graph::new_linked(n);
     let mut order = (0..n).collect_vec();
     order.sort_by_key(|&i| a[i]);
     for i in 1..n {

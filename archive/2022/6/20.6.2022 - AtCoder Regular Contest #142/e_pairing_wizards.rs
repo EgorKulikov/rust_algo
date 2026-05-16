@@ -19,7 +19,7 @@ fn solve(input: &mut Input) {
     let m = input.read_usize();
     let edges = input.read_usize_pair_vec(m).dec_by_one();
 
-    let mut graph = Graph::new(n);
+    let mut graph = Graph::new_linked(n);
     for (u, v) in edges {
         graph.add_edge(u, BiEdge::new(v));
     }
@@ -69,7 +69,7 @@ fn solve(input: &mut Input) {
             }
         }
     }
-    let mut flow_graph = Graph::new(vert_count);
+    let mut flow_graph = Graph::new_linked(vert_count);
     for (f, t, cost) in edges {
         flow_graph.add_edge(f, FlowEdge::new(t, cost.into_i64()));
     }

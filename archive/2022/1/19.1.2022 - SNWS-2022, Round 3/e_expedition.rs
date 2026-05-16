@@ -20,7 +20,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let y = input.read_usize();
     let edges = input.read_vec::<(usize, usize)>(m).dec_by_one();
 
-    let mut graph = Graph::new(n);
+    let mut graph = Graph::new_linked(n);
     let set = edges.into_iter().collect::<HashSet<_>>();
     for u in 0..n {
         for v in 0..u {

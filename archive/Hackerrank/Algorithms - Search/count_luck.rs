@@ -19,7 +19,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let map = input.read_char_table(n, m);
     let k = input.read_size();
 
-    let mut graph = Graph::new(n * m);
+    let mut graph = Graph::new_linked(n * m);
     let mut start = 0;
     let mut end = 0;
     for i in 0..n {

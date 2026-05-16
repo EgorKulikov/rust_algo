@@ -18,7 +18,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let a = input.read_long_vec(n);
     let b = input.read_long_vec(m);
 
-    let mut graph = Graph::new(n + m + 3);
+    let mut graph = Graph::new_linked(n + m + 3);
     let source = n + m;
     let sink = n + m + 1;
     let special_sink = n + m + 2;

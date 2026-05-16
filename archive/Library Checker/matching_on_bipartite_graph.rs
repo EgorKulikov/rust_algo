@@ -20,7 +20,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let m = input.read_size();
     let edges = input.read_size_pair_vec(m);
 
-    let mut graph = Graph::new(l + r + 2);
+    let mut graph = Graph::new_linked(l + r + 2);
     let source = l + r;
     let sink = l + r + 1;
     for (u, v) in edges {

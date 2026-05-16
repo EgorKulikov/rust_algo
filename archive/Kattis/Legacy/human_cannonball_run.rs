@@ -24,7 +24,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         p.push(e);
     });
 
-    let mut graph = Graph::new(n + 2);
+    let mut graph = Graph::new_linked(n + 2);
     for i in 0..n + 2 {
         for j in 0..n + 2 {
             if i != j {

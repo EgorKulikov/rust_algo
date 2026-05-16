@@ -30,7 +30,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         data.push((c1, c2));
     }
 
-    let mut graph = Graph::new(id.len());
+    let mut graph = Graph::new_linked(id.len());
     for (c1, c2) in data {
         let c1 = id.get(c1);
         let c2 = id.get(c2);

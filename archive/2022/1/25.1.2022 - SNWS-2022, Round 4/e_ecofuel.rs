@@ -19,7 +19,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let mut right = u32::MAX / 2;
     while left < right {
         let mid = (left + right + 1) / 2;
-        let mut graph = Graph::new(n + 1);
+        let mut graph = Graph::new_linked(n + 1);
         graph.add_edge(n, FlowEdge::new(f, mid));
         graph.add_edge(n, FlowEdge::new(c, mid));
         for &(u, v, x) in &edges {

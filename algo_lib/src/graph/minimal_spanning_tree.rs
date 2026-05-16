@@ -20,7 +20,7 @@ impl<W: Ord + Copy, E: WeightedEdgeTrait<W> + BidirectionalEdgeTrait> MinimalSpa
             }
         }
         edges.sort_by_key(|(_, e)| e.weight());
-        let mut res = Graph::new_legacy(self.vertex_count());
+        let mut res = Graph::new_linked(self.vertex_count());
         let mut dsu = DSU::new(self.vertex_count());
         for (i, e) in edges {
             if dsu.union(i, e.to()) {

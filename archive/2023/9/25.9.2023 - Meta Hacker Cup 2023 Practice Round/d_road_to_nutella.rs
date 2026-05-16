@@ -88,7 +88,7 @@ fn solve(input: &mut Input, _data: &PreCalc) {
                     is_bad.set(id[i]);
                 }
             }
-            let mut graph = Graph::new(n);
+            let mut graph = Graph::new_linked(n);
             for (u, v) in bridges {
                 graph.add_edge(id[u], BiEdge::new(id[v]));
             }

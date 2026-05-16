@@ -29,7 +29,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         pos += lines[i].len();
         res
     });
-    let mut graph = Graph::new(pos);
+    let mut graph = Graph::new_linked(pos);
     for i in 0..l {
         for j in 1..lines[i].len() {
             graph.add_edge(WeightedEdge::new(start[i] + j - 1, start[i] + j, 2));

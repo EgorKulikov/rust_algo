@@ -40,7 +40,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc
     }
 
     let solve = |any_direction: bool| -> i64 {
-        let mut graph = Graph::new(crit.len());
+        let mut graph = Graph::new_linked(crit.len());
         for i in crit.indices() {
             for (mut r, mut c) in D4::iter(crit[i].0, crit[i].1, n, m) {
                 if lines[r][c] == b'#' {

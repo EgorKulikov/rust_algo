@@ -13,7 +13,7 @@ fn solve(input: &mut Input, test_case: usize) {
     let fun = input.read_long_vec(n);
     let p = input.read_usize_vec(n);
 
-    let mut graph = Graph::new(n);
+    let mut graph = Graph::new_linked(n);
     for (i, &p) in p.iter().enumerate() {
         if p != 0 {
             graph.add_edge(p - 1, Edge::new(i));

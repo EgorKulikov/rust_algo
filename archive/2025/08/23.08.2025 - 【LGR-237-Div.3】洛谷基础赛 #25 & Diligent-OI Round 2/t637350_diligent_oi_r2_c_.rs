@@ -40,7 +40,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             ans[i] = 0;
         }
     }
-    let mut wg = Graph::new(2 * condensed.vertex_count() + 1);
+    let mut wg = Graph::new_linked(2 * condensed.vertex_count() + 1);
     let root = 2 * condensed.vertex_count();
     for i in 0..condensed.vertex_count() {
         wg.add_edge(WeightedEdge::new(i, i + condensed.vertex_count(), 1));

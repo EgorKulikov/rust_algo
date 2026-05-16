@@ -17,7 +17,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let n = input.read_size();
     let parent = input.read_size_vec(n - 1).dec();
 
-    let mut graph = Graph::new(n);
+    let mut graph = Graph::new_linked(n);
     for i in 1..n {
         graph.add_edge(Edge::new(parent[i - 1], i));
     }

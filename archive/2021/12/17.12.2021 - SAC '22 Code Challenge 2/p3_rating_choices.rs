@@ -16,7 +16,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     let nodes: Vec<(usize, usize, usize, i64)> = input.read_vec((1 << n) - 1);
 
     let mut ans = vec![-1i64; 1 << (n + 1)];
-    let mut graph = Graph::new(1 << (n + 1));
+    let mut graph = Graph::new_linked(1 << (n + 1));
     for (u, v, w, d) in nodes {
         graph.add_edge(u, WeightedEdge::new(v, d));
         graph.add_edge(u, WeightedEdge::new(w, 0));

@@ -18,7 +18,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc
     let mut red = HashSet::new();
     let mut blue = HashSet::new();
     let mut next = Vec::new();
-    let mut graph = Graph::new(n);
+    let mut graph = Graph::new_linked(n);
     for (u, v, c) in edges {
         if c == 0 {
             red.insert((u, v));

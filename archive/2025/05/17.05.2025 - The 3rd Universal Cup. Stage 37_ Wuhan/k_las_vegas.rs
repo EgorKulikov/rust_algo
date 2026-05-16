@@ -57,7 +57,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let mut ans = vec![0; n];
     const X: i64 = 10_000_000_000_000;
     for w in 0..=n {
-        let mut graph = Graph::new(m + n + 3);
+        let mut graph = Graph::new_linked(m + n + 3);
         let source = m + 1;
         let sink = m + 2;
         for i in 0..m {

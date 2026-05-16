@@ -19,7 +19,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let n = input.read_size();
     let posts = input.read_size_vec(n).dec();
 
-    let mut graph = Graph::new(4usize.power(n));
+    let mut graph = Graph::new_linked(4usize.power(n));
     let powers = powers(4usize, n);
     let mut rec =
         RecursiveFunction3::new(|rec, step: usize, state: usize, smallest: [usize; 4]| {

@@ -14,7 +14,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc
     let n = input.read_size();
     let arrows = input.read_str_vec(2);
 
-    let mut graph = Graph::new(2 * n);
+    let mut graph = Graph::new_linked(2 * n);
     for i in 0..2 {
         for j in 0..n {
             for (r, mut c) in D4::iter(i, j, 2, n) {

@@ -17,7 +17,7 @@ fn solve(input: &mut Input, _test_case: usize) {
     // let xf = 300;
     // let yf = 300;
 
-    let mut graph = Graph::new(301 * 301);
+    let mut graph = Graph::new_linked(301 * 301);
     for i in 0..=300 {
         for j in 0..=300 {
             if i < 300 {

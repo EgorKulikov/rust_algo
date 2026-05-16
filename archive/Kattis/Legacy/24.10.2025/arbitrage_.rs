@@ -27,7 +27,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         cti.insert(s, i);
     }
     let r = input.read_size();
-    let mut graph = Graph::new(c);
+    let mut graph = Graph::new_linked(c);
     for _ in 0..r {
         scan!(input, "@ @ @:@", f: Str, t: Str, a: Real, b: Real);
         graph.add_edge(WeightedEdge::new(

@@ -18,7 +18,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let w = input.read_size();
     let s = input.read_char_table(h, w);
 
-    let mut graph = Graph::new(h * w + 26);
+    let mut graph = Graph::new_linked(h * w + 26);
     for (r, c) in s.indices() {
         if s[(r, c)] == b'#' {
             continue;

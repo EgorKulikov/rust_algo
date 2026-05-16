@@ -17,7 +17,7 @@ type PreCalc = ();
 
 fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut PreCalc) {
     let mut tt = TimeTracker::new();
-    let mut graph = Graph::new(2168612);
+    let mut graph = Graph::new_linked(2168612);
     let mut id = Id::new();
     for i in 0..=1_000_000 {
         id.get(i);

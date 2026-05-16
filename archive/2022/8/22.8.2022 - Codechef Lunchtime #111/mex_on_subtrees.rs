@@ -72,7 +72,7 @@ fn solve(input: &mut Input, _test_case: usize) {
         }
     }
 
-    let mut graph = Graph::new(n);
+    let mut graph = Graph::new_linked(n);
     for i in 0..n - 1 {
         if b[i + 1] > b[p[i]] {
             out_line!(-1);

@@ -12,7 +12,7 @@ fn solve(input: &mut Input) {
     let n = input.read_usize();
     let m = input.read_usize();
 
-    let mut graph = Graph::new(n);
+    let mut graph = Graph::new_linked(n);
     let mut id = Id::new();
     for _ in 0..m {
         let from = input.read_string();

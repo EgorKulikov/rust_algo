@@ -55,7 +55,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &PreCalc
             j = a[j];
         }
     }
-    let mut graph = Graph::new(n);
+    let mut graph = Graph::new_linked(n);
     for i in 0..n {
         if dsu.get(i) != dsu.get(a[i]) {
             graph.add_edge(Edge::new(dsu.get(a[i]), i));

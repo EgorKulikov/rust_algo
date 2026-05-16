@@ -40,7 +40,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             }
         }
     }
-    let mut graph = Graph::new(pts.len());
+    let mut graph = Graph::new_linked(pts.len());
     for i in pts.indices() {
         for j in 0..i {
             let mut diff = 0;
