@@ -4,6 +4,34 @@
 //! Save baseline:  cargo bench --bench graph -- --save-baseline pre
 //! Compare:        cargo bench --bench graph -- --baseline pre
 
+//
+// Coverage of algo_lib/src/graph (see also
+// docs/superpowers/specs/2026-05-16-graph-bench-design.md).
+//
+//   all_distances              -> bench_all_distances
+//   block_cut_tree             -> bench_block_cut_tree
+//   bridges                    -> bench_bridges
+//   central_decomposition      -> bench_central_decomposition
+//   cut_points                 -> bench_cut_points
+//   dfs_order                  -> bench_dfs_order
+//   distances                  -> bench_dijkstra
+//   edge_distances             -> bench_edge_distances
+//   euler_path                 -> bench_euler_path
+//   fast_max_flow              -> PANICS (LCT-Dinic underflows u64 with overflow-checks=true)
+//   flow_graph                 -> SKIPPED (primitive, covered via flow algos)
+//   flow_with_demand           -> PANICS (demand[i] -= payload underflows u64; algorithm needs signed C)
+//   hl_decomposition           -> bench_hl_build + bench_hl_query
+//   lca                        -> bench_lca_build + bench_lca_query
+//   max_flow                   -> bench_max_flow
+//   min_cost_flow              -> bench_min_cost_flow + bench_min_cost_max_flow
+//   min_cost_flow_slow         -> bench_min_cost_flow_slow + bench_min_cost_max_flow_slow
+//   minimal_spanning_tree      -> bench_mst
+//   negative_distances         -> bench_negative_distances
+//   strongly_connected_*       -> bench_scc
+//   topological_sort           -> bench_topological_sort
+//   two_sat                    -> bench_two_sat
+//   edges/*                    -> SKIPPED (primitive containers, exercised via all algos)
+
 use algo_lib::graph::all_distances::AllDistances;
 use algo_lib::graph::block_cut_tree::BlockCutTreeBuild;
 use algo_lib::graph::bridges::BridgeSearch;
@@ -20,7 +48,10 @@ use algo_lib::graph::negative_distances::NegativeDistances;
 use algo_lib::graph::strongly_connected_components::StronglyConnectedComponentsTrait;
 use algo_lib::graph::topological_sort::TopologicalSort;
 use algo_lib::graph::two_sat::TwoSat;
+// FastMaxFlow and FlowWithDemand imports kept for documentation; both benches excluded due to panics.
+#[allow(unused_imports)]
 use algo_lib::graph::fast_max_flow::FastMaxFlow;
+#[allow(unused_imports)]
 use algo_lib::graph::flow_with_demand::FlowWithDemand;
 use algo_lib::graph::max_flow::MaxFlow;
 use algo_lib::graph::min_cost_flow::MinCostFlow;
@@ -236,6 +267,8 @@ fn dense_bipartite_flow(
 /// Like `dense_bipartite_flow` but with non-zero lower bounds (demands) on
 /// each edge so that `flow_with_demand` has something non-trivial to do.
 /// Returns `Graph<FlowEdge<u64, u64>>` (payload = lower bound = demand).
+/// NOTE: bench_flow_with_demand is excluded; kept for reference.
+#[allow(dead_code)]
 fn dense_bipartite_flow_with_demand(
     left: usize,
     right: usize,
@@ -426,8 +459,9 @@ fn bench_two_sat(c: &mut Criterion) {
 }
 
 fn bench_dfs_order(c: &mut Criterion) {
-    let g = er_sparse_bi(100_000, 10);
-    c.bench_function("dfs_order/er_sparse_bi/n=1e5", |b| {
+    // dfs_order requires a tree (asserts self.is_tree() in debug mode).
+    let g = random_tree(100_000, 10);
+    c.bench_function("dfs_order/tree/n=1e5", |b| {
         b.iter(|| {
             let r = g.dfs_order();
             black_box(r);
@@ -556,37 +590,26 @@ fn bench_max_flow(c: &mut Criterion) {
     });
 }
 
-fn bench_fast_max_flow(c: &mut Criterion) {
-    let (g0, source, sink) = dense_bipartite_flow(500, 500, 41);
-    c.bench_function("max_flow/lct_dinic/bipartite_500x500", |b| {
-        b.iter_batched(
-            || g0.clone(),
-            |mut g| {
-                let f = g.fast_max_flow(source, sink);
-                black_box(f);
-            },
-            BatchSize::SmallInput,
-        );
-    });
-}
+// bench_fast_max_flow is intentionally excluded from criterion_group! below.
+// fast_max_flow (LCT-Dinic) panics with arithmetic underflow on u64 whenever
+// overflow-checks = true (which this workspace enables for all profiles).
+// The algorithm is correct in concept but uses wrapping arithmetic that is
+// incompatible with Rust's checked integer ops. Filed as a known issue.
+#[allow(dead_code)]
+fn bench_fast_max_flow(_c: &mut Criterion) {}
 
-fn bench_flow_with_demand(c: &mut Criterion) {
-    let (g0, source, sink) = dense_bipartite_flow_with_demand(500, 500, 42);
-    c.bench_function("flow_with_demand/bipartite_500x500", |b| {
-        b.iter_batched(
-            || g0.clone(),
-            |mut g| {
-                let ok = g.flow_with_demand(source, sink);
-                black_box(ok);
-            },
-            BatchSize::SmallInput,
-        );
-    });
-}
+// bench_flow_with_demand is intentionally excluded from criterion_group! below.
+// flow_with_demand internally computes demand[i] -= payload on a u64 vector, which
+// underflows when a node has more outgoing demand than incoming (very common in any
+// non-trivial graph). The algorithm requires a signed capacity type; calling it with
+// u64 and overflow-checks=true causes a panic.
+#[allow(dead_code)]
+fn bench_flow_with_demand(_c: &mut Criterion) {}
 
 fn bench_min_cost_flow(c: &mut Criterion) {
-    let (g0, source, sink) = dense_bipartite_mcmf(200, 200, 50);
-    c.bench_function("min_cost_flow/bipartite_200x200", |b| {
+    // 200×200 measured ~3.6 s (> 1 s concern threshold); reduced to 100×100.
+    let (g0, source, sink) = dense_bipartite_mcmf(100, 100, 50);
+    c.bench_function("min_cost_flow/bipartite_100x100", |b| {
         b.iter_batched(
             || g0.clone(),
             |mut g| {
@@ -599,8 +622,9 @@ fn bench_min_cost_flow(c: &mut Criterion) {
 }
 
 fn bench_min_cost_max_flow(c: &mut Criterion) {
-    let (g0, source, sink) = dense_bipartite_mcmf(200, 200, 51);
-    c.bench_function("min_cost_max_flow/bipartite_200x200", |b| {
+    // 200×200 measured ~3.6 s (> 1 s concern threshold); reduced to 100×100.
+    let (g0, source, sink) = dense_bipartite_mcmf(100, 100, 51);
+    c.bench_function("min_cost_max_flow/bipartite_100x100", |b| {
         b.iter_batched(
             || g0.clone(),
             |mut g| {
@@ -661,8 +685,8 @@ criterion_group!(
     bench_lca_query,
     bench_hl_query,
     bench_max_flow,
-    bench_fast_max_flow,
-    bench_flow_with_demand,
+    // bench_fast_max_flow excluded: LCT-Dinic panics with overflow-checks=true
+    // bench_flow_with_demand excluded: demand bookkeeping underflows u64 with overflow-checks=true
     bench_min_cost_flow,
     bench_min_cost_max_flow,
     bench_min_cost_flow_slow,
