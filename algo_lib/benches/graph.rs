@@ -5,7 +5,12 @@
 //! Compare:        cargo bench --bench graph -- --baseline pre
 
 use algo_lib::graph::distances::Distances;
+use algo_lib::graph::edges::bi_edge::BiEdge;
 use algo_lib::graph::edges::bi_weighted_edge::BiWeightedEdge;
+use algo_lib::graph::edges::edge::Edge;
+use algo_lib::graph::edges::flow_edge::FlowEdge;
+use algo_lib::graph::edges::weighted_edge::WeightedEdge;
+use algo_lib::graph::edges::weighted_flow_edge::WeightedFlowEdge;
 use algo_lib::graph::Graph;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rand::{Rng, SeedableRng};
@@ -29,6 +34,222 @@ fn er_sparse_weighted(n: usize, seed: u64) -> Graph<BiWeightedEdge<u64, ()>> {
         }
         let w = rng.gen_range(1u64..=1_000_000_000);
         g.add_edge(BiWeightedEdge::new(u, v, w));
+    }
+    g
+}
+
+/// Undirected ER, unweighted (`BiEdge`). `m = 2n` edges, no self-loops.
+fn er_sparse_bi(n: usize, seed: u64) -> Graph<BiEdge<()>> {
+    let mut rng = ChaCha20Rng::seed_from_u64(seed);
+    let m = 2 * n;
+    let mut g: Graph<BiEdge<()>> = Graph::new(n);
+    for _ in 0..m {
+        let u = rng.gen_range(0..n);
+        let mut v = rng.gen_range(0..n);
+        while v == u {
+            v = rng.gen_range(0..n);
+        }
+        g.add_edge(BiEdge::new(u, v));
+    }
+    g
+}
+
+/// Directed ER, unweighted. `m = 2n` edges.
+fn er_sparse_directed(n: usize, seed: u64) -> Graph<Edge<()>> {
+    let mut rng = ChaCha20Rng::seed_from_u64(seed);
+    let m = 2 * n;
+    let mut g: Graph<Edge<()>> = Graph::new(n);
+    for _ in 0..m {
+        let u = rng.gen_range(0..n);
+        let mut v = rng.gen_range(0..n);
+        while v == u {
+            v = rng.gen_range(0..n);
+        }
+        g.add_edge(Edge::new(u, v));
+    }
+    g
+}
+
+/// DAG: `m = 2n` directed edges from smaller to larger index.
+fn dag_sparse(n: usize, seed: u64) -> Graph<Edge<()>> {
+    let mut rng = ChaCha20Rng::seed_from_u64(seed);
+    let m = 2 * n;
+    let mut g: Graph<Edge<()>> = Graph::new(n);
+    for _ in 0..m {
+        let a = rng.gen_range(0..n);
+        let b = rng.gen_range(0..n);
+        if a == b {
+            continue;
+        }
+        let (u, v) = if a < b { (a, b) } else { (b, a) };
+        g.add_edge(Edge::new(u, v));
+    }
+    g
+}
+
+/// 0-1 weighted undirected ER for `edge_distances`.
+fn er_sparse_01(n: usize, seed: u64) -> Graph<BiWeightedEdge<u32, ()>> {
+    let mut rng = ChaCha20Rng::seed_from_u64(seed);
+    let m = 2 * n;
+    let mut g: Graph<BiWeightedEdge<u32, ()>> = Graph::new(n);
+    for _ in 0..m {
+        let u = rng.gen_range(0..n);
+        let mut v = rng.gen_range(0..n);
+        while v == u {
+            v = rng.gen_range(0..n);
+        }
+        let w = if rng.gen_bool(0.5) { 0u32 } else { 1u32 };
+        g.add_edge(BiWeightedEdge::new(u, v, w));
+    }
+    g
+}
+
+/// Directed weighted ER for Bellman-Ford.
+fn er_sparse_weighted_directed(n: usize, seed: u64) -> Graph<WeightedEdge<i64, ()>> {
+    let mut rng = ChaCha20Rng::seed_from_u64(seed);
+    let m = 2 * n;
+    let mut g: Graph<WeightedEdge<i64, ()>> = Graph::new(n);
+    for _ in 0..m {
+        let u = rng.gen_range(0..n);
+        let mut v = rng.gen_range(0..n);
+        while v == u {
+            v = rng.gen_range(0..n);
+        }
+        let w = rng.gen_range(-100i64..=1000i64);
+        g.add_edge(WeightedEdge::new(u, v, w));
+    }
+    g
+}
+
+/// Dense ER weighted (directed) for Floyd-Warshall. `m ≈ n²/4`.
+fn er_dense_weighted_directed(n: usize, seed: u64) -> Graph<WeightedEdge<u64, ()>> {
+    let mut rng = ChaCha20Rng::seed_from_u64(seed);
+    let m = (n * n) / 4;
+    let mut g: Graph<WeightedEdge<u64, ()>> = Graph::new(n);
+    for _ in 0..m {
+        let u = rng.gen_range(0..n);
+        let mut v = rng.gen_range(0..n);
+        while v == u {
+            v = rng.gen_range(0..n);
+        }
+        let w = rng.gen_range(1u64..=1_000_000);
+        g.add_edge(WeightedEdge::new(u, v, w));
+    }
+    g
+}
+
+/// Uniform-random labelled tree via Prüfer sequence.
+fn random_tree(n: usize, seed: u64) -> Graph<BiEdge<()>> {
+    let mut rng = ChaCha20Rng::seed_from_u64(seed);
+    let mut g: Graph<BiEdge<()>> = Graph::new(n);
+    if n <= 1 {
+        return g;
+    }
+    if n == 2 {
+        g.add_edge(BiEdge::new(0, 1));
+        return g;
+    }
+    let prufer: Vec<usize> = (0..n - 2).map(|_| rng.gen_range(0..n)).collect();
+    let mut degree = vec![1usize; n];
+    for &x in &prufer {
+        degree[x] += 1;
+    }
+    let mut ptr = 0usize;
+    while degree[ptr] != 1 {
+        ptr += 1;
+    }
+    let mut leaf = ptr;
+    for &v in &prufer {
+        g.add_edge(BiEdge::new(leaf, v));
+        degree[v] -= 1;
+        if degree[v] == 1 && v < ptr {
+            leaf = v;
+        } else {
+            ptr += 1;
+            while degree[ptr] != 1 {
+                ptr += 1;
+            }
+            leaf = ptr;
+        }
+    }
+    g.add_edge(BiEdge::new(leaf, n - 1));
+    g
+}
+
+/// Long path 0—1—2—…—n-1 as BiEdge graph.
+#[allow(dead_code)]
+fn path(n: usize) -> Graph<BiEdge<()>> {
+    let mut g: Graph<BiEdge<()>> = Graph::new(n);
+    for i in 0..n.saturating_sub(1) {
+        g.add_edge(BiEdge::new(i, i + 1));
+    }
+    g
+}
+
+/// Dense complete bipartite flow graph with random capacities in `1..=100`.
+fn dense_bipartite_flow(
+    left: usize,
+    right: usize,
+    seed: u64,
+) -> (Graph<FlowEdge<u64, ()>>, usize, usize) {
+    let mut rng = ChaCha20Rng::seed_from_u64(seed);
+    let n = left + right + 2;
+    let source = left + right;
+    let sink = left + right + 1;
+    let mut g: Graph<FlowEdge<u64, ()>> = Graph::new(n);
+    for i in 0..left {
+        g.add_edge(FlowEdge::new(source, i, 1));
+    }
+    for j in 0..right {
+        g.add_edge(FlowEdge::new(left + j, sink, 1));
+    }
+    for i in 0..left {
+        for j in 0..right {
+            let c = rng.gen_range(1u64..=100);
+            g.add_edge(FlowEdge::new(i, left + j, c));
+        }
+    }
+    (g, source, sink)
+}
+
+/// Like `dense_bipartite_flow` but with random per-edge costs.
+fn dense_bipartite_mcmf(
+    left: usize,
+    right: usize,
+    seed: u64,
+) -> (Graph<WeightedFlowEdge<i64, i64, ()>>, usize, usize) {
+    let mut rng = ChaCha20Rng::seed_from_u64(seed);
+    let n = left + right + 2;
+    let source = left + right;
+    let sink = left + right + 1;
+    let mut g: Graph<WeightedFlowEdge<i64, i64, ()>> = Graph::new(n);
+    for i in 0..left {
+        g.add_edge(WeightedFlowEdge::new(source, i, 0, 1));
+    }
+    for j in 0..right {
+        g.add_edge(WeightedFlowEdge::new(left + j, sink, 0, 1));
+    }
+    for i in 0..left {
+        for j in 0..right {
+            let cost = rng.gen_range(0i64..=100);
+            let cap = rng.gen_range(1i64..=100);
+            g.add_edge(WeightedFlowEdge::new(i, left + j, cost, cap));
+        }
+    }
+    (g, source, sink)
+}
+
+/// Two random Hamiltonian cycles superimposed (degree 4 everywhere → Eulerian).
+fn two_hamiltonians(n: usize, seed: u64) -> Graph<BiEdge<()>> {
+    use rand::seq::SliceRandom;
+    let mut rng = ChaCha20Rng::seed_from_u64(seed);
+    let mut g: Graph<BiEdge<()>> = Graph::new(n);
+    for _ in 0..2 {
+        let mut perm: Vec<usize> = (0..n).collect();
+        perm.shuffle(&mut rng);
+        for i in 0..n {
+            g.add_edge(BiEdge::new(perm[i], perm[(i + 1) % n]));
+        }
     }
     g
 }
