@@ -73,7 +73,7 @@ fn min_cost_flow_slow_impl<
         let mut v = sink;
         while v != source {
             let (from, edge) = prev[v].unwrap();
-            let e = graph.edge(edge);
+            let e = graph.edge_at(from, edge as u32);
             cur_flow.minim(e.capacity());
             v = from;
         }
@@ -83,7 +83,7 @@ fn min_cost_flow_slow_impl<
         let mut v = sink;
         while v != source {
             let (from, edge) = prev[v].unwrap();
-            let push_data = graph.edge(edge).push_flow(cur_flow);
+            let push_data = graph.edge_at(from, edge as u32).push_flow(cur_flow);
             graph.push_flow(push_data);
             v = from;
         }

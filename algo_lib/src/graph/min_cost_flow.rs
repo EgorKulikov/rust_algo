@@ -104,25 +104,25 @@ macro_rules! min_cost_flow {
 
                 let mut add_one =
                     |graph: &mut Graph<WeightedFlowEdgeRaw<C, C, Id, ()>>, from: usize, id: usize| {
-                        if graph.edge(id).capacity() > 0 {
-                            *graph.edge_mut(id).capacity_mut() += 1;
+                        if graph.edge_at(from, id as u32).capacity() > 0 {
+                            *graph.edge_at_mut(from, id as u32).capacity_mut() += 1;
                             return;
                         }
                         let mut u = from;
-                        let v = graph.edge(id).to();
-                        let cur_len = c(u, graph.edge(id), &p);
+                        let v = graph.edge_at(from, id as u32).to();
+                        let cur_len = c(u, graph.edge_at(from, id as u32), &p);
                         dijkstra(graph, &mut dis, &mut pre, &mut heap, &p, v);
-                        let e = graph.edge(id);
+                        let e = graph.edge_at(from, id as u32);
                         if dis[u] < inf && dis[u] + c(u, e, &p) < 0 {
                             let rev_id = e.reverse_id();
-                            *graph.edge_mut(rev_id).capacity_mut() += 1;
+                            *graph.edge_at_mut(v, rev_id as u32).capacity_mut() += 1;
                             while u != v {
-                                let push_data = graph.edge(pre[u].1).push_flow(1);
+                                let push_data = graph.edge_at(pre[u].0, pre[u].1 as u32).push_flow(1);
                                 graph.push_flow(push_data);
                                 u = pre[u].0;
                             }
                         } else {
-                            *graph.edge_mut(id).capacity_mut() += 1;
+                            *graph.edge_at_mut(from, id as u32).capacity_mut() += 1;
                         }
                         let mut max_dis = 0;
                         for i in dis.iter().take(n) {
@@ -152,27 +152,27 @@ macro_rules! min_cost_flow {
                         }
                     }
                     for (from, self_edge_id, graph_edge_id) in corresponding.iter() {
-                        if or_graph.edge(*self_edge_id).capacity().is_set(i) {
+                        if or_graph.edge_at(*from, *self_edge_id as u32).capacity().is_set(i) {
                             add_one(&mut graph, *from, *graph_edge_id);
-                            if graph.edge(back).capacity() == 1 {
-                                *graph.edge_mut(back).capacity_mut() += 1;
+                            if graph.edge_at(sink, back as u32).capacity() == 1 {
+                                *graph.edge_at_mut(sink, back as u32).capacity_mut() += 1;
                             }
                         }
                     }
                 }
 
                 let mut min_cost = 0;
-                let max_flow = graph.edge(back).flow(&graph);
-                for (_, self_edge_id, graph_edge_id) in corresponding {
+                let max_flow = graph.edge_at(sink, back as u32).flow(&graph);
+                for (from, self_edge_id, graph_edge_id) in corresponding {
                     let x_flow;
                     let x_weight;
                     {
-                        let x = graph.edge(graph_edge_id);
+                        let x = graph.edge_at(from, graph_edge_id as u32);
                         x_flow = x.flow(&graph);
                         x_weight = x.weight();
                     }
                     min_cost += x_flow * x_weight;
-                    let push_data = or_graph.edge(self_edge_id).push_flow(x_flow);
+                    let push_data = or_graph.edge_at(from, self_edge_id as u32).push_flow(x_flow);
                     or_graph.push_flow(push_data);
                 }
                 CostAndFlow {

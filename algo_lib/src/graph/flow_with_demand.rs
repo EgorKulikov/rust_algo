@@ -69,8 +69,8 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C, Payload
             for e in flow_graph.adj(i).iter() {
                 let (from, id) = *e.payload();
                 if from == i {
-                    let push = *self.edge(id).payload() + e.flow(&flow_graph);
-                    let push_data = self.edge(id).push_flow(push);
+                    let push = *self.edge_at(from, id as u32).payload() + e.flow(&flow_graph);
+                    let push_data = self.edge_at(from, id as u32).push_flow(push);
                     self.push_flow(push_data);
                 }
             }
