@@ -23,6 +23,8 @@ use algo_lib::graph::two_sat::TwoSat;
 use algo_lib::graph::fast_max_flow::FastMaxFlow;
 use algo_lib::graph::flow_with_demand::FlowWithDemand;
 use algo_lib::graph::max_flow::MaxFlow;
+use algo_lib::graph::min_cost_flow::MinCostFlow;
+use algo_lib::graph::min_cost_flow_slow::MinCostFlowSlow;
 use algo_lib::graph::edges::bi_edge::BiEdge;
 use algo_lib::graph::edges::bi_edge::BiEdgeWithId;
 use algo_lib::graph::edges::bi_weighted_edge::BiWeightedEdge;
@@ -582,6 +584,62 @@ fn bench_flow_with_demand(c: &mut Criterion) {
     });
 }
 
+fn bench_min_cost_flow(c: &mut Criterion) {
+    let (g0, source, sink) = dense_bipartite_mcmf(200, 200, 50);
+    c.bench_function("min_cost_flow/bipartite_200x200", |b| {
+        b.iter_batched(
+            || g0.clone(),
+            |mut g| {
+                let r = g.min_cost_flow(source, sink);
+                black_box(r);
+            },
+            BatchSize::SmallInput,
+        );
+    });
+}
+
+fn bench_min_cost_max_flow(c: &mut Criterion) {
+    let (g0, source, sink) = dense_bipartite_mcmf(200, 200, 51);
+    c.bench_function("min_cost_max_flow/bipartite_200x200", |b| {
+        b.iter_batched(
+            || g0.clone(),
+            |mut g| {
+                let r = g.min_cost_max_flow(source, sink);
+                black_box(r);
+            },
+            BatchSize::SmallInput,
+        );
+    });
+}
+
+fn bench_min_cost_flow_slow(c: &mut Criterion) {
+    let (g0, source, sink) = dense_bipartite_mcmf(200, 200, 52);
+    c.bench_function("min_cost_flow_slow/bipartite_200x200", |b| {
+        b.iter_batched(
+            || g0.clone(),
+            |mut g| {
+                let r = g.min_cost_flow_slow(source, sink);
+                black_box(r);
+            },
+            BatchSize::SmallInput,
+        );
+    });
+}
+
+fn bench_min_cost_max_flow_slow(c: &mut Criterion) {
+    let (g0, source, sink) = dense_bipartite_mcmf(200, 200, 53);
+    c.bench_function("min_cost_max_flow_slow/bipartite_200x200", |b| {
+        b.iter_batched(
+            || g0.clone(),
+            |mut g| {
+                let r = g.min_cost_max_flow_slow(source, sink);
+                black_box(r);
+            },
+            BatchSize::SmallInput,
+        );
+    });
+}
+
 criterion_group!(
     graph_benches,
     bench_dijkstra,
@@ -605,5 +663,9 @@ criterion_group!(
     bench_max_flow,
     bench_fast_max_flow,
     bench_flow_with_demand,
+    bench_min_cost_flow,
+    bench_min_cost_max_flow,
+    bench_min_cost_flow_slow,
+    bench_min_cost_max_flow_slow,
 );
 criterion_main!(graph_benches);
