@@ -31,46 +31,37 @@ pub mod two_sat;
 /// Linked-list graph storage.
 ///
 /// Each vertex `v` owns a singly-linked list of edges, threaded through the
-/// global `next` array (indexed by edge id). `first[v]` is the head, `last[v]`
-/// is the tail (for O(1) FIFO append), `u32::MAX` denotes "no edge".
+/// global `next` array (indexed by edge id). `first[v]` is the head; iteration
+/// is LIFO (most-recently-added first), matching the layout used in
+/// `tasks/b_cloud_ascending_platform`. `u32::MAX` denotes "no edge".
 ///
-/// `edge_count` counts logical (user-visible) edges; for an undirected edge
-/// type (`E::REVERSABLE == true`), `add_edge` stores two entries in `edges`
-/// but only increments `edge_count` by 1.
+/// Logical (user-visible) edge count is derived from `edges.len()` — divided
+/// by 2 for undirected edge types (which store two entries per logical edge).
 #[derive(Clone)]
 pub struct Graph<E: EdgeTrait> {
     first: Vec<u32>,
-    last: Vec<u32>,
     next: Vec<u32>,
     edges: Vec<E>,
     degree: Vec<u32>,
-    edge_count: usize,
 }
 
 impl<E: EdgeTrait> Graph<E> {
     pub fn new(vertex_count: usize) -> Self {
         Self {
             first: vec![u32::MAX; vertex_count],
-            last: vec![u32::MAX; vertex_count],
             next: Vec::new(),
             edges: Vec::new(),
             degree: vec![0u32; vertex_count],
-            edge_count: 0,
         }
     }
 
     fn push_one(&mut self, from: usize, mut edge: E) -> usize {
         let id = self.edges.len();
-        edge.set_id(self.edge_count);
+        edge.set_id(self.edge_count());
         self.edges.push(edge);
-        self.next.push(u32::MAX);
-        let last = self.last[from];
-        if last == u32::MAX {
-            self.first[from] = id as u32;
-        } else {
-            self.next[last as usize] = id as u32;
-        }
-        self.last[from] = id as u32;
+        // LIFO prepend: new edge becomes head, points at the previous head.
+        self.next.push(self.first[from]);
+        self.first[from] = id as u32;
         self.degree[from] += 1;
         id
     }
@@ -87,25 +78,19 @@ impl<E: EdgeTrait> Graph<E> {
             rev_edge.set_reverse_id(direct_id);
             self.push_one(to, rev_edge);
         }
-        self.edge_count += 1;
         direct_id
     }
 
     pub fn add_vertices(&mut self, cnt: usize) {
         self.first.resize(self.first.len() + cnt, u32::MAX);
-        self.last.resize(self.last.len() + cnt, u32::MAX);
         self.degree.resize(self.degree.len() + cnt, 0);
     }
 
     pub fn clear(&mut self) {
-        self.edge_count = 0;
         self.edges.clear();
         self.next.clear();
         for f in self.first.iter_mut() {
             *f = u32::MAX;
-        }
-        for l in self.last.iter_mut() {
-            *l = u32::MAX;
         }
         for d in self.degree.iter_mut() {
             *d = 0;
@@ -117,7 +102,11 @@ impl<E: EdgeTrait> Graph<E> {
     }
 
     pub fn edge_count(&self) -> usize {
-        self.edge_count
+        if E::REVERSABLE {
+            self.edges.len() / 2
+        } else {
+            self.edges.len()
+        }
     }
 
     pub fn degrees(&self) -> Vec<usize> {
@@ -142,12 +131,7 @@ impl<E: EdgeTrait> Graph<E> {
     /// Mutable adjacency view for vertex `v`.
     pub fn adj_mut(&mut self, v: usize) -> AdjViewMut<'_, E> {
         let head = self.first[v];
-        let len = self.degree[v];
-        AdjViewMut {
-            graph: self,
-            head,
-            len,
-        }
+        AdjViewMut { graph: self, head }
     }
 
     /// Returns a reference to the edge stored at the given global edge id.
@@ -173,7 +157,7 @@ impl<E: EdgeTrait> Graph<E> {
 
 impl<E: BidirectionalEdgeTrait> Graph<E> {
     pub fn is_tree(&self) -> bool {
-        if self.edge_count + 1 != self.vertex_count() {
+        if self.edge_count() + 1 != self.vertex_count() {
             false
         } else {
             self.is_connected()
@@ -296,12 +280,11 @@ impl<'a, E: EdgeTrait> Iterator for AdjIterWithId<'a, E> {
     }
 }
 
-/// Mutable adjacency view over a vertex's edges.
+/// Mutable adjacency view over a vertex's edges. Only `iter_mut` is offered;
+/// for `.len()` / `.is_empty()` use the immutable `adj(v)` view instead.
 pub struct AdjViewMut<'a, E: EdgeTrait> {
     graph: &'a mut Graph<E>,
     head: u32,
-    #[allow(dead_code)]
-    len: u32,
 }
 
 impl<'a, E: EdgeTrait> AdjViewMut<'a, E> {
@@ -311,14 +294,6 @@ impl<'a, E: EdgeTrait> AdjViewMut<'a, E> {
             cur: self.head,
             _marker: PhantomData,
         }
-    }
-
-    pub fn len(&self) -> usize {
-        self.len as usize
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.len == 0
     }
 }
 
