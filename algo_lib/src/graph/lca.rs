@@ -184,7 +184,7 @@ impl<E: BidirectionalEdgeTrait> LCATrait for Graph<E> {
             while index[vertex] != u32::MAX
                 && (parent[vertex] as usize) == self.edge(index[vertex] as usize).to()
             {
-                index[vertex] = self.next_edge(index[vertex] as usize);
+                index[vertex] = self.step_edge(vertex, index[vertex]);
             }
             if index[vertex] != u32::MAX {
                 stack[size] = vertex as u32;
@@ -195,7 +195,7 @@ impl<E: BidirectionalEdgeTrait> LCATrait for Graph<E> {
                 size += 1;
                 parent[to] = vertex as u32;
                 level[to] = level[vertex] + 1;
-                index[vertex] = self.next_edge(eid);
+                index[vertex] = self.step_edge(vertex, index[vertex]);
             }
         }
         let mut lca_arr = Arr2d::new(

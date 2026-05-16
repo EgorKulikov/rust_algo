@@ -31,7 +31,7 @@ impl<P: Clone> EulerPath for Graph<BiEdgeWithId<P>> {
         let mut ans = Vec::with_capacity(self.edge_count() + 1);
         while let Some(&v) = st.last() {
             while id[v] != u32::MAX && removed[self.edge(id[v] as usize).id()] {
-                id[v] = self.next_edge(id[v] as usize);
+                id[v] = self.step_edge(v, id[v]);
             }
             if id[v] == u32::MAX {
                 st.pop();
