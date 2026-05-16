@@ -134,24 +134,9 @@ impl<E: EdgeTrait> Graph<E> {
         AdjViewMut { graph: self, head }
     }
 
-    /// Returns a reference to the edge stored at the given global edge id.
-    pub fn edge(&self, id: usize) -> &E {
-        &self.edges[id]
-    }
-
-    /// Returns a mutable reference to the edge stored at the given global edge id.
-    pub fn edge_mut(&mut self, id: usize) -> &mut E {
-        &mut self.edges[id]
-    }
-
     /// Head edge id for vertex `v`'s adjacency list, or `u32::MAX` if empty.
     pub fn head_edge(&self, v: usize) -> u32 {
         self.first[v]
-    }
-
-    /// Next edge id in the adjacency list, after `id`. Returns `u32::MAX` at end.
-    pub fn next_edge(&self, id: usize) -> u32 {
-        self.next[id]
     }
 
     /// Edge access by (vertex, cursor). In the current Linked storage the
