@@ -7,11 +7,14 @@
 use algo_lib::graph::all_distances::AllDistances;
 use algo_lib::graph::block_cut_tree::BlockCutTreeBuild;
 use algo_lib::graph::bridges::BridgeSearch;
+use algo_lib::graph::central_decomposition::Decompose;
 use algo_lib::graph::cut_points::CutPointSearch;
 use algo_lib::graph::dfs_order::DFSOrderTrait;
 use algo_lib::graph::distances::Distances;
 use algo_lib::graph::edge_distances::EdgeAlgos;
 use algo_lib::graph::euler_path::EulerPath;
+use algo_lib::graph::hl_decomposition::HLDecompositionTrait;
+use algo_lib::graph::lca::LCATrait;
 use algo_lib::graph::minimal_spanning_tree::MinimalSpanningTree;
 use algo_lib::graph::negative_distances::NegativeDistances;
 use algo_lib::graph::strongly_connected_components::StronglyConnectedComponentsTrait;
@@ -427,6 +430,39 @@ fn bench_mst(c: &mut Criterion) {
     });
 }
 
+fn bench_central_decomposition(c: &mut Criterion) {
+    let g = random_tree(100_000, 20);
+    c.bench_function("central_decomposition/tree/n=1e5", |b| {
+        b.iter(|| {
+            let mut count = 0usize;
+            (&g).decompose(|center, _mask| {
+                count = count.wrapping_add(center);
+            });
+            black_box(count);
+        });
+    });
+}
+
+fn bench_lca_build(c: &mut Criterion) {
+    let g = random_tree(100_000, 21);
+    c.bench_function("lca/build/tree/n=1e5", |b| {
+        b.iter(|| {
+            let l = g.lca();
+            black_box(l);
+        });
+    });
+}
+
+fn bench_hl_build(c: &mut Criterion) {
+    let g = random_tree(100_000, 22);
+    c.bench_function("hl_decomposition/build/tree/n=1e5", |b| {
+        b.iter(|| {
+            let h = g.hl_decomposition();
+            black_box(h);
+        });
+    });
+}
+
 criterion_group!(
     graph_benches,
     bench_dijkstra,
@@ -442,5 +478,8 @@ criterion_group!(
     bench_topological_sort,
     bench_euler_path,
     bench_mst,
+    bench_central_decomposition,
+    bench_lca_build,
+    bench_hl_build,
 );
 criterion_main!(graph_benches);
