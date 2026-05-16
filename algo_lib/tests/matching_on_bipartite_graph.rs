@@ -97,8 +97,52 @@ mod tester {
         Ok(())
     }
 
-    fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
-        Ok(())
+    fn check(
+        mut input: Input,
+        mut expected: Option<Input>,
+        mut output: Input,
+    ) -> Result<Option<i64>, String> {
+        let l = input.read_size();
+        let r = input.read_size();
+        let m = input.read_size();
+        let edges = input.read_size_pair_vec(m);
+        let edge_set: std::collections::HashSet<(usize, usize)> = edges.into_iter().collect();
+
+        let our_k = output.read_size();
+        if let Some(exp) = expected.as_mut() {
+            let exp_k = exp.read_size();
+            if our_k != exp_k {
+                return Err(format!(
+                    "Matching size mismatch: expected {}, got {}",
+                    exp_k, our_k
+                ));
+            }
+        }
+
+        let mut used_left = vec![false; l];
+        let mut used_right = vec![false; r];
+        for i in 0..our_k {
+            let u = output.read_size();
+            let v = output.read_size();
+            if u >= l {
+                return Err(format!("Pair {}: left vertex {} >= L={}", i, u, l));
+            }
+            if v >= r {
+                return Err(format!("Pair {}: right vertex {} >= R={}", i, v, r));
+            }
+            if used_left[u] {
+                return Err(format!("Left vertex {} used twice", u));
+            }
+            if used_right[v] {
+                return Err(format!("Right vertex {} used twice", v));
+            }
+            if !edge_set.contains(&(u, v)) {
+                return Err(format!("Pair ({}, {}) is not an input edge", u, v));
+            }
+            used_left[u] = true;
+            used_right[v] = true;
+        }
+        Ok(None)
     }
 
     struct StressTest;
@@ -146,8 +190,7 @@ mod tester {
                 // Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, interact)
             }
             crate::TaskType::Classic => {
-                Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker)
-                // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
+                Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
             }
         };
         let passed = tester.test_samples();

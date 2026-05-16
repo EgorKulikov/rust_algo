@@ -125,8 +125,110 @@ mod tester {
         Ok(())
     }
 
-    fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
-        Ok(())
+    fn check(
+        mut input: Input,
+        mut expected: Option<Input>,
+        mut output: Input,
+    ) -> Result<Option<i64>, String> {
+        let n = input.read_size();
+        let m = input.read_size();
+        let mut orig = vec![vec![b'.'; m]; n];
+        for i in 0..n {
+            for j in 0..m {
+                orig[i][j] = input.read_char();
+            }
+        }
+
+        let our_k = output.read_size();
+        if let Some(exp) = expected.as_mut() {
+            let exp_k = exp.read_size();
+            if our_k != exp_k {
+                return Err(format!(
+                    "Max-flow value mismatch: expected {}, got {}",
+                    exp_k, our_k
+                ));
+            }
+        }
+
+        let mut ours = vec![vec![b'.'; m]; n];
+        for i in 0..n {
+            for j in 0..m {
+                ours[i][j] = output.read_char();
+            }
+        }
+
+        let mut count = 0usize;
+        for i in 0..n {
+            for j in 0..m {
+                let cell = ours[i][j];
+                if orig[i][j] == b'#' {
+                    if cell != b'#' {
+                        return Err(format!(
+                            "Cell ({},{}) was '#' in input, got '{}'",
+                            i, j, cell as char
+                        ));
+                    }
+                    continue;
+                }
+                if cell == b'#' {
+                    return Err(format!(
+                        "Cell ({},{}) was '.' in input, got '#'",
+                        i, j
+                    ));
+                }
+                match cell {
+                    b'>' => {
+                        if j + 1 >= m || ours[i][j + 1] != b'<' {
+                            return Err(format!(
+                                "'>' at ({},{}) without matching '<' to the right",
+                                i, j
+                            ));
+                        }
+                        count += 1;
+                    }
+                    b'v' => {
+                        if i + 1 >= n || ours[i + 1][j] != b'^' {
+                            return Err(format!(
+                                "'v' at ({},{}) without matching '^' below",
+                                i, j
+                            ));
+                        }
+                        count += 1;
+                    }
+                    b'<' => {
+                        if j == 0 || ours[i][j - 1] != b'>' {
+                            return Err(format!(
+                                "'<' at ({},{}) without matching '>' to the left",
+                                i, j
+                            ));
+                        }
+                    }
+                    b'^' => {
+                        if i == 0 || ours[i - 1][j] != b'v' {
+                            return Err(format!(
+                                "'^' at ({},{}) without matching 'v' above",
+                                i, j
+                            ));
+                        }
+                    }
+                    b'.' => {}
+                    _ => {
+                        return Err(format!(
+                            "Unexpected character '{}' at ({},{})",
+                            cell as char, i, j
+                        ));
+                    }
+                }
+            }
+        }
+
+        if count != our_k {
+            return Err(format!(
+                "Domino count mismatch: claimed K={}, found {}",
+                our_k, count
+            ));
+        }
+        Ok(None)
     }
 
     struct StressTest;
@@ -160,14 +262,7 @@ mod tester {
                 //Tester::new_interactive(time_limit, PRINT_LIMIT, path.to_string(), run, interact)
             }
             crate::TaskType::Classic => {
-                Tester::new_classic(
-                    time_limit,
-                    PRINT_LIMIT,
-                    path.to_string(),
-                    run,
-                    default_checker,
-                )
-                //Tester::new_classic(time_limit, PRINT_LIMIT, path.to_string(), run, check)
+                Tester::new_classic(time_limit, PRINT_LIMIT, path.to_string(), run, check)
             }
         };
         let passed = tester.test_samples();

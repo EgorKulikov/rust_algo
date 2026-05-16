@@ -93,8 +93,86 @@ mod tester {
         Ok(())
     }
 
-    fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
-        Ok(())
+    fn check(
+        mut input: Input,
+        mut expected: Option<Input>,
+        mut output: Input,
+    ) -> Result<Option<i64>, String> {
+        let n = input.read_size();
+        let m = input.read_size();
+        let s = input.read_size();
+        let t = input.read_size();
+        let mut caps: std::collections::HashMap<(usize, usize), i64> =
+            std::collections::HashMap::new();
+        for _ in 0..m {
+            let u = input.read_size();
+            let v = input.read_size();
+            let c: i64 = input.read();
+            *caps.entry((u, v)).or_insert(0) += c;
+        }
+
+        let our_n = output.read_size();
+        let our_flow: i64 = output.read();
+        let our_m = output.read_size();
+
+        if our_n != n {
+            return Err(format!("Output n: expected {}, got {}", n, our_n));
+        }
+        if let Some(exp) = expected.as_mut() {
+            let _ = exp.read_size();
+            let exp_flow: i64 = exp.read();
+            let _ = exp.read_size();
+            if our_flow != exp_flow {
+                return Err(format!(
+                    "Flow value mismatch: expected {}, got {}",
+                    exp_flow, our_flow
+                ));
+            }
+        }
+
+        let mut balance = vec![0i64; n];
+        for _ in 0..our_m {
+            let u = output.read_size();
+            let v = output.read_size();
+            let f: i64 = output.read();
+            if f < 0 {
+                return Err(format!("Edge ({}, {}) has negative flow {}", u, v, f));
+            }
+            let cap = caps.get(&(u, v)).copied().unwrap_or(0);
+            if cap == 0 {
+                return Err(format!("Edge ({}, {}) is not in input", u, v));
+            }
+            if f > cap {
+                return Err(format!(
+                    "Edge ({}, {}): flow {} exceeds capacity {}",
+                    u, v, f, cap
+                ));
+            }
+            balance[u] -= f;
+            balance[v] += f;
+        }
+
+        for v in 0..n {
+            if v == s || v == t {
+                continue;
+            }
+            if balance[v] != 0 {
+                return Err(format!("Vertex {} flow imbalance: {}", v, balance[v]));
+            }
+        }
+        if balance[s] != -our_flow {
+            return Err(format!(
+                "Source net out is {}, expected {}",
+                -balance[s], our_flow
+            ));
+        }
+        if balance[t] != our_flow {
+            return Err(format!(
+                "Sink net in is {}, expected {}",
+                balance[t], our_flow
+            ));
+        }
+        Ok(None)
     }
 
     struct StressTest;
@@ -138,8 +216,7 @@ mod tester {
                 // Tester::new_interactive(tl, PRINT_LIMIT, path.to_string(), run, interact)
             }
             crate::TaskType::Classic => {
-                Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, default_checker)
-                // Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
+                Tester::new_classic(tl, PRINT_LIMIT, path.to_string(), run, check)
             }
         };
         let passed = tester.test_samples();

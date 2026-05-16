@@ -104,8 +104,62 @@ mod tester {
         Ok(())
     }
 
-    fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<(), String> {
-        Ok(())
+    fn check(
+        mut input: Input,
+        mut expected: Option<Input>,
+        mut output: Input,
+    ) -> Result<Option<i64>, String> {
+        let n = input.read_size();
+        let dd: i32 = input.read();
+        let flags = input.read_int_pair_vec(n);
+
+        let our_verdict = output
+            .next_token()
+            .ok_or_else(|| "no output".to_string())
+            .and_then(|t| String::from_utf8(t).map_err(|e| e.to_string()))?;
+
+        if let Some(exp) = expected.as_mut() {
+            let exp_verdict = exp
+                .next_token()
+                .ok_or_else(|| "empty expected".to_string())
+                .and_then(|t| String::from_utf8(t).map_err(|e| e.to_string()))?;
+            if our_verdict != exp_verdict {
+                return Err(format!(
+                    "Verdict mismatch: expected '{}', got '{}'",
+                    exp_verdict, our_verdict
+                ));
+            }
+        }
+
+        match our_verdict.as_str() {
+            "No" => Ok(None),
+            "Yes" => {
+                let mut positions: Vec<i32> = Vec::with_capacity(n);
+                for i in 0..n {
+                    let p: i32 = output.read();
+                    if p != flags[i].0 && p != flags[i].1 {
+                        return Err(format!(
+                            "Pole {}: position {} is neither {} nor {}",
+                            i, p, flags[i].0, flags[i].1
+                        ));
+                    }
+                    positions.push(p);
+                }
+                for i in 0..n {
+                    for j in 0..i {
+                        let d = (positions[i] - positions[j]).abs();
+                        if d < dd {
+                            return Err(format!(
+                                "Poles {} (={}) and {} (={}) too close: distance {} < {}",
+                                j, positions[j], i, positions[i], d, dd
+                            ));
+                        }
+                    }
+                }
+                Ok(None)
+            }
+            other => Err(format!("Expected 'Yes' or 'No', got '{}'", other)),
+        }
     }
 
     struct StressTest;
@@ -139,14 +193,7 @@ mod tester {
                 //Tester::new_interactive(time_limit, PRINT_LIMIT, path.to_string(), run, interact)
             }
             crate::TaskType::Classic => {
-                Tester::new_classic(
-                    time_limit,
-                    PRINT_LIMIT,
-                    path.to_string(),
-                    run,
-                    default_checker,
-                )
-                //Tester::new_classic(time_limit, PRINT_LIMIT, path.to_string(), run, check)
+                Tester::new_classic(time_limit, PRINT_LIMIT, path.to_string(), run, check)
             }
         };
         let passed = tester.test_samples();
