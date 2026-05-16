@@ -44,7 +44,8 @@ fn min_cost_flow_slow_impl<
     }
     let mut heap = IndexedHeap::new(graph.vertex_count());
     let mut d = vec![C::zero(); graph.vertex_count()];
-    let mut prev = vec![None; graph.vertex_count()];
+    // prev[v] = Some((from, edge_id)) where edge_id is the global edge id.
+    let mut prev: Vec<Option<(usize, usize)>> = vec![None; graph.vertex_count()];
     let mut flow = C::zero();
     let mut cost = C::zero();
     loop {
@@ -52,7 +53,7 @@ fn min_cost_flow_slow_impl<
         d[source] = C::zero();
         heap.add_or_adjust(source, C::zero());
         while let Some((cur, dist)) = heap.pop() {
-            for (i, e) in graph[cur].iter().enumerate() {
+            for (i, e) in graph.adj(cur).iter_with_id() {
                 if e.capacity() != C::zero() {
                     let next = e.to();
                     let cost = e.weight() + adj[cur] - adj[next];
@@ -72,7 +73,7 @@ fn min_cost_flow_slow_impl<
         let mut v = sink;
         while v != source {
             let (from, edge) = prev[v].unwrap();
-            let e = &graph[from][edge];
+            let e = graph.edge(edge);
             cur_flow.minim(e.capacity());
             v = from;
         }
@@ -82,7 +83,8 @@ fn min_cost_flow_slow_impl<
         let mut v = sink;
         while v != source {
             let (from, edge) = prev[v].unwrap();
-            graph.push_flow(graph[from][edge].push_flow(cur_flow));
+            let push_data = graph.edge(edge).push_flow(cur_flow);
+            graph.push_flow(push_data);
             v = from;
         }
         for i in 0..graph.vertex_count() {

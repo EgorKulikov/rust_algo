@@ -144,7 +144,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let mut left_done = BitSet::new(hor_gap_id);
     let mut right_done = BitSet::new(ver_gap_id);
     for i in 0..hor_gap_id {
-        for e in &graph[i] {
+        for e in graph.adj(i).iter() {
             if e.to() != source && e.flow(&graph) == 1 {
                 to_remove.unset(*e.payload());
                 left_done.set(i);

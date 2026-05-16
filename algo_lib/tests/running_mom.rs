@@ -40,7 +40,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             good.set(i);
             continue;
         }
-        for e in &scc.condensed[i] {
+        for e in scc.condensed.adj(i).iter() {
             if good[e.to()] {
                 good.set(i);
                 break;

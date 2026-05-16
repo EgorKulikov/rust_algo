@@ -225,7 +225,7 @@ mod tester {
                         let mut ans = 0;
                         let mut dfs = RecursiveFunction2::new(|f, vert: usize, prev: usize| {
                             ans += a[vert];
-                            for e in &graph[vert] {
+                            for e in graph.adj(vert).iter() {
                                 if e.to() == prev {
                                     continue;
                                 }

@@ -35,7 +35,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let mut edges = Vec::with_capacity(n - 1);
     let mut weight = 0;
     for i in 0..n {
-        for e in &tree[i] {
+        for e in tree.adj(i).iter() {
             if e.to() > i {
                 edges.push((i, e.to()));
                 weight += e.weight();

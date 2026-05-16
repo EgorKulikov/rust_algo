@@ -21,7 +21,7 @@ impl<E: EdgeTrait> EdgeAlgos for Graph<E> {
         q.push_back(source);
         while !q.is_empty() {
             let cur = q.pop_front().unwrap();
-            for e in self[cur].iter() {
+            for e in self.adj(cur).iter() {
                 let next = e.to();
                 if dist[next] == u32::MAX {
                     dist[next] = dist[cur] + 1;

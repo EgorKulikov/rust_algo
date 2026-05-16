@@ -42,7 +42,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     for i in 0..n {
         for j in 0..m {
             if (i + j) % 2 == 0 {
-                for e in &graph[i * m + j] {
+                for e in graph.adj(i * m + j).iter() {
                     if e.to() < source && e.flow(&graph) == 1 {
                         let (r, c) = (e.to() / m, e.to() % m);
                         if r == i {

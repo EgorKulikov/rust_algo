@@ -50,11 +50,11 @@ impl<W: AdditionMonoid + Ord + Copy, E: WeightedEdgeTrait<W>> Distances<W> for G
         let n = self.vertex_count();
         let mut res = vec![None; n];
         let mut heap = IndexedHeap::new(n);
-        heap.add_or_adjust(source, (W::zero(), source, self[source].len()));
+        heap.add_or_adjust(source, (W::zero(), source, usize::MAX));
         while let Some((cur, dist)) = heap.pop() {
             res[cur] = Some(dist);
             let dist = dist.0;
-            for (i, e) in self[cur].iter().enumerate() {
+            for (i, e) in self.adj(cur).iter_with_id() {
                 let next = e.to();
                 if res[next].is_some() {
                     continue;
@@ -87,7 +87,7 @@ impl<W: AdditionMonoid + Ord + Copy, E: WeightedEdgeTrait<W>> Distances<W> for G
                     continue;
                 }
                 processed.set(v);
-                for (i, e) in self[v].iter().enumerate() {
+                for (i, e) in self.adj(v).iter_with_id() {
                     let to = e.to();
                     let w = e.weight();
                     if added_cur[to] {

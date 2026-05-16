@@ -27,7 +27,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let tree = graph.minimal_spanning_tree();
     let mut total = c as i32;
     for i in 0..c {
-        for e in &tree[i] {
+        for e in tree.adj(i).iter() {
             if e.to() < i {
                 total += e.weight();
             }

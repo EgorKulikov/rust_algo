@@ -25,7 +25,7 @@ impl<E: EdgeTrait> BridgeSearch for Graph<E> {
                     fup[vert] = timer;
                     timer += 1;
                     let mut first = true;
-                    for e in &self[vert] {
+                    for e in self.adj(vert).iter() {
                         if e.to() == prev && first {
                             first = false;
                             continue;

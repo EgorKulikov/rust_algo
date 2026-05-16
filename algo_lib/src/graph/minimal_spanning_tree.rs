@@ -13,7 +13,7 @@ impl<W: Ord + Copy, E: WeightedEdgeTrait<W> + BidirectionalEdgeTrait> MinimalSpa
     fn minimal_spanning_tree(&self) -> Graph<E> {
         let mut edges = Vec::with_capacity(self.edge_count());
         for i in 0..self.vertex_count() {
-            for e in &self[i] {
+            for e in self.adj(i).iter() {
                 if e.to() > i {
                     edges.push((i, e.clone()));
                 }

@@ -25,7 +25,7 @@ impl<E: EdgeTrait> CutPointSearch for Graph<E> {
                     tin[vert] = timer;
                     fup[vert] = timer;
                     timer += 1;
-                    for e in &self[vert] {
+                    for e in self.adj(vert).iter() {
                         if e.to() == prev {
                             continue;
                         }

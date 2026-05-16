@@ -31,7 +31,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let tree = graph.minimal_spanning_tree();
     let mut ans = Real(0.);
     for i in 0..n {
-        for e in &tree[i] {
+        for e in tree.adj(i).iter() {
             if e.to() < i {
                 ans += e.weight();
             }

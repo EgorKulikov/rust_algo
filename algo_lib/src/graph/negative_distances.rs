@@ -14,12 +14,12 @@ impl<W: SemiRing + Ord + Copy, E: WeightedEdgeTrait<W>> NegativeDistances<W> for
         res[source].minim(Distance::Finite {
             distance: W::zero(),
             from: source,
-            edge: self[source].len(),
+            edge: usize::MAX,
         });
         for _ in 0..self.vertex_count() {
             let mut updated = false;
             for i in 0..self.vertex_count() {
-                for (j, e) in self[i].iter().enumerate() {
+                for (j, e) in self.adj(i).iter_with_id() {
                     let next = e.to();
                     let edge = Distance::Finite {
                         distance: e.weight(),
@@ -36,7 +36,7 @@ impl<W: SemiRing + Ord + Copy, E: WeightedEdgeTrait<W>> NegativeDistances<W> for
         }
         let mut infinities = Vec::with_capacity(self.vertex_count());
         for i in 0..self.vertex_count() {
-            for (j, e) in self[i].iter().enumerate() {
+            for (j, e) in self.adj(i).iter_with_id() {
                 let next = e.to();
                 let edge = Distance::Finite {
                     distance: e.weight(),
@@ -51,7 +51,7 @@ impl<W: SemiRing + Ord + Copy, E: WeightedEdgeTrait<W>> NegativeDistances<W> for
             }
         }
         while let Some(inf) = infinities.pop() {
-            for e in &self[inf] {
+            for e in self.adj(inf).iter() {
                 let next = e.to();
                 if res[next] == Distance::Infinite {
                     continue;

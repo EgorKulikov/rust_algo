@@ -28,7 +28,7 @@ impl<E: EdgeTrait> StronglyConnectedComponentsTrait for Graph<E> {
                         return;
                     }
                     visited.set(vert);
-                    for e in self[vert].iter() {
+                    for e in self.adj(vert).iter() {
                         f.call(e.to());
                     }
                     order.push(vert);
@@ -43,7 +43,7 @@ impl<E: EdgeTrait> StronglyConnectedComponentsTrait for Graph<E> {
         let mut queue = Vec::with_capacity(n);
         let mut gt = Graph::new(n);
         for i in 0..n {
-            for e in self[i].iter() {
+            for e in self.adj(i).iter() {
                 gt.add_edge(Edge::new(e.to(), i));
             }
         }
@@ -60,7 +60,7 @@ impl<E: EdgeTrait> StronglyConnectedComponentsTrait for Graph<E> {
                     }
                     color[vert] = index;
                     visited.set(vert);
-                    for e in gt[vert].iter() {
+                    for e in gt.adj(vert).iter() {
                         f.call(e.to());
                     }
                 });
@@ -91,7 +91,7 @@ impl<E: EdgeTrait> StronglyConnectedComponentsTrait for Graph<E> {
                         return;
                     }
                     visited.set(vert);
-                    for e in self[vert].iter() {
+                    for e in self.adj(vert).iter() {
                         f.call(e.to());
                     }
                     order.push(vert);
@@ -103,7 +103,7 @@ impl<E: EdgeTrait> StronglyConnectedComponentsTrait for Graph<E> {
         let mut index = 0usize;
         let mut gt = Graph::new(n);
         for i in 0..n {
-            for e in self[i].iter() {
+            for e in self.adj(i).iter() {
                 gt.add_edge(Edge::new(e.to(), i));
             }
         }
@@ -115,7 +115,7 @@ impl<E: EdgeTrait> StronglyConnectedComponentsTrait for Graph<E> {
                     }
                     color[vert] = index;
                     visited.set(vert);
-                    for e in gt[vert].iter() {
+                    for e in gt.adj(vert).iter() {
                         f.call(e.to());
                     }
                 });

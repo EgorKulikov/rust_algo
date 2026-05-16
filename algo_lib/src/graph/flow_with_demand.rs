@@ -19,7 +19,7 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C, Payload
         let mut flow_graph = Graph::new(self.vertex_count() + 2);
         let mut demand = vec![C::zero(); self.vertex_count()];
         for i in 0..self.vertex_count() {
-            for (j, e) in self[i].iter().enumerate() {
+            for (j, e) in self.adj(i).iter_with_id() {
                 if e.capacity() != C::zero() {
                     flow_graph.add_edge(FlowEdge::with_payload(
                         i,
@@ -66,12 +66,12 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C, Payload
             return false;
         }
         for i in 0..self.vertex_count() {
-            for e in &flow_graph[i] {
+            for e in flow_graph.adj(i).iter() {
                 let (from, id) = *e.payload();
                 if from == i {
-                    self.push_flow(
-                        self[from][id].push_flow(*self[from][id].payload() + e.flow(&flow_graph)),
-                    );
+                    let push = *self.edge(id).payload() + e.flow(&flow_graph);
+                    let push_data = self.edge(id).push_flow(push);
+                    self.push_flow(push_data);
                 }
             }
         }

@@ -162,7 +162,11 @@ impl<E: BidirectionalEdgeTrait> LCATrait for Graph<E> {
         let mut order = vec![0u32; 2 * vertex_count - 1];
         let mut position = vec![vertex_count as u32; vertex_count];
         let mut level = vec![0; vertex_count];
-        let mut index = vec![0u32; vertex_count];
+        // `index[v]` is the current edge id at vertex `v` (u32::MAX = exhausted).
+        let mut index = vec![u32::MAX; vertex_count];
+        for v in 0..vertex_count {
+            index[v] = self.head_edge(v);
+        }
         let mut parent = vec![0; vertex_count];
         let mut stack = vec![0u32; vertex_count];
         stack[0] = root as u32;
@@ -177,20 +181,21 @@ impl<E: BidirectionalEdgeTrait> LCATrait for Graph<E> {
             }
             order[j] = vertex as u32;
             j += 1;
-            while (index[vertex] as usize) < self[vertex].len()
-                && (parent[vertex] as usize) == self[vertex][index[vertex] as usize].to()
+            while index[vertex] != u32::MAX
+                && (parent[vertex] as usize) == self.edge(index[vertex] as usize).to()
             {
-                index[vertex] += 1;
+                index[vertex] = self.next_edge(index[vertex] as usize);
             }
-            if (index[vertex] as usize) < self[vertex].len() {
+            if index[vertex] != u32::MAX {
                 stack[size] = vertex as u32;
                 size += 1;
-                let to = self[vertex][index[vertex] as usize].to();
+                let eid = index[vertex] as usize;
+                let to = self.edge(eid).to();
                 stack[size] = to as u32;
                 size += 1;
                 parent[to] = vertex as u32;
                 level[to] = level[vertex] + 1;
-                index[vertex] += 1;
+                index[vertex] = self.next_edge(eid);
             }
         }
         let mut lca_arr = Arr2d::new(

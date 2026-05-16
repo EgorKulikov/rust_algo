@@ -107,7 +107,7 @@ impl<E: BidirectionalEdgeTrait> HLDecompositionTrait for Graph<E> {
         let mut calc_size = RecursiveFunction2::new(|f, vert, last| {
             size[vert] = 1;
             parent[vert] = last;
-            for e in self[vert].iter() {
+            for e in self.adj(vert).iter() {
                 let next = e.to();
                 if next == last {
                     continue;
@@ -129,7 +129,7 @@ impl<E: BidirectionalEdgeTrait> HLDecompositionTrait for Graph<E> {
                     paths.push(vec![vert]);
                 }
             }
-            for e in self[vert].iter() {
+            for e in self.adj(vert).iter() {
                 let next = e.to();
                 if next == last {
                     continue;

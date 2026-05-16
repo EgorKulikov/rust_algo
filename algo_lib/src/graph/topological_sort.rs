@@ -13,7 +13,7 @@ impl<E: EdgeTrait> TopologicalSort for Graph<E> {
         let mut res = Vec::with_capacity(n);
         let mut degree = vec![0u32; n];
         for i in 0..n {
-            for e in self[i].iter() {
+            for e in self.adj(i).iter() {
                 degree[e.to()] += 1;
             }
         }
@@ -26,7 +26,7 @@ impl<E: EdgeTrait> TopologicalSort for Graph<E> {
         while !queue.is_empty() {
             let cur = queue.pop_front().unwrap();
             res.push(cur);
-            for e in self[cur].iter() {
+            for e in self.adj(cur).iter() {
                 let to = e.to();
                 degree[to] -= 1;
                 if degree[to] == 0 {

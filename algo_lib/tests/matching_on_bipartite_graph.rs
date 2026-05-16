@@ -34,7 +34,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
 
     out.print_line(graph.fast_max_flow(source, sink));
     for i in 0..l {
-        for e in &graph[i] {
+        for e in graph.adj(i).iter() {
             if e.capacity() == 0 && e.to() < l + r {
                 out.print_line((i, e.to() - l));
                 break;

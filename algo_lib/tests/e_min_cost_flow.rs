@@ -31,7 +31,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     out.print_line(-cost);
     let mut ans = Arr2d::new(n, n, b'.');
     for i in 0..n {
-        for e in &graph[i] {
+        for e in graph.adj(i).iter() {
             if e.to() < source && e.flow(&graph) == 1 {
                 ans[i][e.to() - n] = b'X';
             }

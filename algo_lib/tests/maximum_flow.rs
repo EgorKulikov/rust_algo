@@ -29,7 +29,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let flow = graph.max_flow(s, t);
     let edges = Vec::with_capacity(m).do_with(|edges| {
         for i in 0..n {
-            for e in &graph[i] {
+            for e in graph.adj(i).iter() {
                 if *e.payload() && e.flow(&graph) > 0 {
                     edges.push((i, e.to(), e.flow(&graph)));
                 }

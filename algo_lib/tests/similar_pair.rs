@@ -35,7 +35,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let mut dfs = RecursiveFunction2::new(|f, vert: usize, prev: usize| {
         let mut treap = Tree::new();
         treap.insert(Node(vert));
-        for e in &graph[vert] {
+        for e in graph.adj(vert).iter() {
             if e.to() == prev {
                 continue;
             }

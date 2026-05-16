@@ -16,7 +16,7 @@ impl<W: SemiRing + Ord + Copy, E: WeightedEdgeTrait<W>> AllDistances<W> for Grap
         let mut has_negative = false;
         for i in 0..n {
             res[(i, i)] = Distance::Finite(W::zero());
-            for e in self[i].iter() {
+            for e in self.adj(i).iter() {
                 res[(i, e.to())].minim(Distance::Finite(e.weight()));
                 if e.weight() < W::zero() {
                     has_negative = true;

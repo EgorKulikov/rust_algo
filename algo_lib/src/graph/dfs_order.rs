@@ -31,7 +31,11 @@ impl<E: BidirectionalEdgeTrait> DFSOrderTrait for Graph<E> {
         let count = self.vertex_count();
         let mut position = vec![0; count];
         let mut end = vec![0; count];
-        let mut edge = vec![0u32; count];
+        // `edge[v]` is the current edge id at vertex `v` (u32::MAX = exhausted).
+        let mut edge = vec![u32::MAX; count];
+        for v in 0..count {
+            edge[v] = self.head_edge(v);
+        }
         let mut stack = vec![0u32; count];
         let mut last = vec![0u32; count];
         let mut size = 1usize;
@@ -41,13 +45,14 @@ impl<E: BidirectionalEdgeTrait> DFSOrderTrait for Graph<E> {
         let mut index = 0usize;
         while size > 0 {
             let current = stack[size - 1] as usize;
-            let c_edge = &mut edge[current];
-            if *c_edge == self[current].len() as u32 {
+            let c_edge = edge[current];
+            if c_edge == u32::MAX {
                 end[current] = index + 1;
                 size -= 1;
             } else {
-                let next = self[current][*c_edge as usize].to();
-                *c_edge += 1;
+                let eid = c_edge as usize;
+                let next = self.edge(eid).to();
+                edge[current] = self.next_edge(eid);
                 if next == (last[current] as usize) {
                     continue;
                 }

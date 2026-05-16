@@ -38,7 +38,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         let mut treap = Tree::new();
         treap.insert(Node(a[vert]));
         let mut size = 1;
-        for e in &graph[vert] {
+        for e in graph.adj(vert).iter() {
             if e.to() == prev {
                 continue;
             }

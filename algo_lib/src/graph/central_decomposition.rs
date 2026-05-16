@@ -19,7 +19,7 @@ impl<E: BiEdgeTrait, F: FnMut(usize, &BitSet)> Decompose<F> for Graph<E> {
                     return 0;
                 }
                 sz[vert] = 1;
-                for e in &self[vert] {
+                for e in self.adj(vert).iter() {
                     if e.to() == prev {
                         continue;
                     }
@@ -32,7 +32,7 @@ impl<E: BiEdgeTrait, F: FnMut(usize, &BitSet)> Decompose<F> for Graph<E> {
             let mut last = vert;
             loop {
                 let mut found = false;
-                for e in &self[cur] {
+                for e in self.adj(cur).iter() {
                     if e.to() != last && 2 * sz[e.to()] >= total {
                         found = true;
                         last = cur;
@@ -46,7 +46,7 @@ impl<E: BiEdgeTrait, F: FnMut(usize, &BitSet)> Decompose<F> for Graph<E> {
             }
             f(cur, &closed);
             closed.set(cur);
-            for e in &self[cur] {
+            for e in self.adj(cur).iter() {
                 if !closed[e.to()] {
                     center_decomp.call(e.to());
                 }
@@ -134,7 +134,7 @@ mod test {
                 first_centroid = Some(v);
                 // Count subtree sizes by BFS from centroid, excluding closed vertices
                 let mut max_subtree = 0usize;
-                for e in &graph[v] {
+                for e in graph.adj(v).iter() {
                     if closed[e.to()] {
                         continue;
                     }
@@ -145,7 +145,7 @@ mod test {
                             continue;
                         }
                         size += 1;
-                        for e2 in &graph[u] {
+                        for e2 in graph.adj(u).iter() {
                             if e2.to() != prev && !closed[e2.to()] {
                                 stack.push((e2.to(), u));
                             }

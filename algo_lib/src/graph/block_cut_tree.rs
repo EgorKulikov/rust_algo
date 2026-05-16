@@ -44,7 +44,7 @@ impl<E: EdgeTrait> BlockCutTreeBuild for Graph<E> {
                     fup[vert] = timer;
                     timer += 1;
                     let mut children = 0u32;
-                    for e in &self[vert] {
+                    for e in self.adj(vert).iter() {
                         let to = e.to();
                         if to == prev {
                             continue;

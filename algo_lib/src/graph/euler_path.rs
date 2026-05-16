@@ -13,7 +13,7 @@ impl<P: Clone> EulerPath for Graph<BiEdgeWithId<P>> {
         let mut start = 0;
         let mut odd_count = 0;
         for i in 0..self.vertex_count() {
-            if self[i].len() % 2 == 1 {
+            if self.adj(i).len() % 2 == 1 {
                 odd_count += 1;
                 start = i;
             }
@@ -22,23 +22,27 @@ impl<P: Clone> EulerPath for Graph<BiEdgeWithId<P>> {
             return None;
         }
         let mut removed = BitSet::new(self.edge_count());
-        let mut id = vec![0; self.vertex_count()];
+        // `id[v]` is the current edge id at vertex `v` (u32::MAX = exhausted).
+        let mut id = vec![u32::MAX; self.vertex_count()];
+        for v in 0..self.vertex_count() {
+            id[v] = self.head_edge(v);
+        }
         let mut st = vec![start];
         let mut ans = Vec::with_capacity(self.edge_count() + 1);
         while let Some(&v) = st.last() {
-            while id[v] < self[v].len() && removed[self[v][id[v]].id()] {
-                id[v] += 1;
+            while id[v] != u32::MAX && removed[self.edge(id[v] as usize).id()] {
+                id[v] = self.next_edge(id[v] as usize);
             }
-            if id[v] == self[v].len() {
+            if id[v] == u32::MAX {
                 st.pop();
                 ans.push(v);
             } else {
-                let edge = &self[v][id[v]];
+                let edge = self.edge(id[v] as usize);
                 removed.set(edge.id());
                 st.push(edge.to());
             }
         }
         let len = ans.len();
-        ans.take_if(len == self.edge_count + 1)
+        ans.take_if(len == self.edge_count() + 1)
     }
 }

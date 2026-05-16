@@ -128,7 +128,7 @@ impl<
     }
 
     fn flow(&self, graph: &Graph<Self>) -> C {
-        graph[self.to as usize][self.reverse_id as usize].capacity
+        graph.edge(self.reverse_id as usize).capacity
     }
 }
 

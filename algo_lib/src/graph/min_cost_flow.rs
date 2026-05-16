@@ -34,11 +34,12 @@ macro_rules! min_cost_flow {
                 p[n] = inf;
 
                 let mut graph = Graph::new(n + 1);
-                let mut corresponding = Vec::new();
+                // (from, or_graph_edge_id, graph_edge_id)
+                let mut corresponding: Vec<(usize, usize, usize)> = Vec::new();
                 let mut max_capacity = 0;
                 let mut sum_weight = 0;
                 for i in 0..n {
-                    for (j, e) in or_graph[i].iter().enumerate() {
+                    for (j, e) in or_graph.adj(i).iter_with_id() {
                         if e.capacity() > 0 {
                             max_capacity.maxim(e.capacity());
                             sum_weight += e.weight().max(-e.weight());
@@ -66,6 +67,7 @@ macro_rules! min_cost_flow {
                 }
 
                 let mut dis = vec![0; n + 1];
+                // pre[v] = (from, global_edge_id_in_graph)
                 let mut pre = vec![(0usize, 0usize); n + 1];
                 let mut heap = IndexedHeap::new(n + 1);
 
@@ -86,7 +88,7 @@ macro_rules! min_cost_flow {
 
                     while let Some((u, w)) = heap.pop() {
                         assert!(w == dis[u]);
-                        for (i, e) in graph[u].iter().enumerate() {
+                        for (i, e) in graph.adj(u).iter_with_id() {
                             let v = e.to();
 
                             debug_assert!(e.capacity() <= 0 || c(u, e, p) >= 0);
@@ -102,25 +104,25 @@ macro_rules! min_cost_flow {
 
                 let mut add_one =
                     |graph: &mut Graph<WeightedFlowEdgeRaw<C, C, Id, ()>>, from: usize, id: usize| {
-                        if graph[from][id].capacity() > 0 {
-                            *graph[from][id].capacity_mut() += 1;
+                        if graph.edge(id).capacity() > 0 {
+                            *graph.edge_mut(id).capacity_mut() += 1;
                             return;
                         }
                         let mut u = from;
-                        let e = &graph[from][id];
-                        let v = e.to();
-                        let cur_len = c(u, e, &p);
+                        let v = graph.edge(id).to();
+                        let cur_len = c(u, graph.edge(id), &p);
                         dijkstra(graph, &mut dis, &mut pre, &mut heap, &p, v);
-                        let e = &graph[from][id];
+                        let e = graph.edge(id);
                         if dis[u] < inf && dis[u] + c(u, e, &p) < 0 {
                             let rev_id = e.reverse_id();
-                            *graph[v][rev_id].capacity_mut() += 1;
+                            *graph.edge_mut(rev_id).capacity_mut() += 1;
                             while u != v {
-                                graph.push_flow(graph[pre[u].0][pre[u].1].push_flow(1));
+                                let push_data = graph.edge(pre[u].1).push_flow(1);
+                                graph.push_flow(push_data);
                                 u = pre[u].0;
                             }
                         } else {
-                            *graph[from][id].capacity_mut() += 1;
+                            *graph.edge_mut(id).capacity_mut() += 1;
                         }
                         let mut max_dis = 0;
                         for i in dis.iter().take(n) {
@@ -145,26 +147,33 @@ macro_rules! min_cost_flow {
                 add_one(&mut graph, sink, back);
                 for i in (0..bits).rev() {
                     for j in 0..=n {
-                        for e in graph[j].iter_mut() {
+                        for e in graph.adj_mut(j).iter_mut() {
                             *e.capacity_mut() <<= 1;
                         }
                     }
                     for (from, self_edge_id, graph_edge_id) in corresponding.iter() {
-                        if or_graph[*from][*self_edge_id].capacity().is_set(i) {
+                        if or_graph.edge(*self_edge_id).capacity().is_set(i) {
                             add_one(&mut graph, *from, *graph_edge_id);
-                            if graph[sink][back].capacity() == 1 {
-                                *graph[sink][back].capacity_mut() += 1;
+                            if graph.edge(back).capacity() == 1 {
+                                *graph.edge_mut(back).capacity_mut() += 1;
                             }
                         }
                     }
                 }
 
                 let mut min_cost = 0;
-                let max_flow = graph[sink][back].flow(&graph);
-                for (from, self_edge_id, graph_edge_id) in corresponding {
-                    let x = &graph[from][graph_edge_id];
-                    min_cost += x.flow(&graph) * x.weight();
-                    or_graph.push_flow(or_graph[from][self_edge_id].push_flow(x.flow(&graph)));
+                let max_flow = graph.edge(back).flow(&graph);
+                for (_, self_edge_id, graph_edge_id) in corresponding {
+                    let x_flow;
+                    let x_weight;
+                    {
+                        let x = graph.edge(graph_edge_id);
+                        x_flow = x.flow(&graph);
+                        x_weight = x.weight();
+                    }
+                    min_cost += x_flow * x_weight;
+                    let push_data = or_graph.edge(self_edge_id).push_flow(x_flow);
+                    or_graph.push_flow(push_data);
                 }
                 CostAndFlow {
                     cost: min_cost,

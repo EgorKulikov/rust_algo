@@ -30,7 +30,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                 return;
             }
             min.minim(vert);
-            for e in &graph[vert] {
+            for e in graph.adj(vert).iter() {
                 if e.to() == prev {
                     continue;
                 }
@@ -50,7 +50,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                 let val = max_to[prev].max(vert + 1);
                 max_to[vert] = val;
             }
-            for e in &graph[vert] {
+            for e in graph.adj(vert).iter() {
                 if e.to() == prev {
                     continue;
                 }
@@ -68,7 +68,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             } else {
                 ans[vert].minim((max_to[vert] + max_to[s]) * (cur + 1));
             }
-            for e in &graph[vert] {
+            for e in graph.adj(vert).iter() {
                 if e.to() == prev {
                     continue;
                 }
@@ -230,7 +230,7 @@ mod tester {
                         min.minim(vert + 1);
                         max.maxim(vert + 1);
                         moves.add_edge(BiWeightedEdge::new(i, vert, min * max));
-                        for e in &graph[vert] {
+                        for e in graph.adj(vert).iter() {
                             if e.to() == prev {
                                 continue;
                             }

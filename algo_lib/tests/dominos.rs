@@ -25,7 +25,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let StronglyConnectedComponents { condensed, .. } = graph.strongly_connected_components();
     let has_in = BitSet::new(condensed.vertex_count()).do_with(|bs| {
         for i in 0..condensed.vertex_count() {
-            for e in &condensed[i] {
+            for e in condensed.adj(i).iter() {
                 bs.set(e.to());
             }
         }

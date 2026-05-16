@@ -26,8 +26,8 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let mat1 = Matrix::zero(2 * n, 2 * n).do_with(|mat| {
         for i in 0..n {
             mat[(i + n, i)] = Mod::one();
-            mat[(i, i + n)] = -Mod::from(graph[i].len()) + 1;
-            for e in &graph[i] {
+            mat[(i, i + n)] = -Mod::from(graph.adj(i).len()) + 1;
+            for e in graph.adj(i).iter() {
                 mat[(i, e.to())] = Mod::one();
             }
         }
@@ -35,8 +35,8 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let mat2 = Matrix::zero(2 * n, 2 * n).do_with(|mat| {
         for i in 0..n {
             mat[(i + n, i)] = Mod::one();
-            mat[(i, i + n)] = -Mod::from(graph[i].len());
-            for e in &graph[i] {
+            mat[(i, i + n)] = -Mod::from(graph.adj(i).len());
+            for e in graph.adj(i).iter() {
                 mat[(i, e.to())] = Mod::one();
             }
         }
