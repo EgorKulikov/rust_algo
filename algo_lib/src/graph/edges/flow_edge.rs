@@ -91,7 +91,7 @@ impl<C: AdditionMonoidWithSub + PartialOrd + Copy, Id: EdgeId, P: Default + Clon
     }
 
     fn flow(&self, graph: &Graph<Self>) -> C {
-        graph.edge(self.reverse_id as usize).capacity
+        graph.edge_at(self.to as usize, self.reverse_id).capacity
     }
 }
 

@@ -49,12 +49,12 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> MaxFlo
                     else => {
                         let mut total_pushed = C::zero();
                         while next_edge[source] != u32::MAX {
-                            let eid = next_edge[source] as usize;
-                            let edge = self.edge(eid);
+                            let eid = next_edge[source];
+                            let edge = self.edge_at(source, eid);
                             if edge.capacity() != C::zero() && dist[edge.to()] == dist[source] + 1 {
                                 let pushed = f.call(edge.to(), flow.min(edge.capacity()));
                                 if pushed != C::zero() {
-                                    let push_data = self.edge(eid).push_flow(pushed);
+                                    let push_data = self.edge_at(source, eid).push_flow(pushed);
                                     self.push_flow(push_data);
                                     flow -= pushed;
                                     total_pushed += pushed;
@@ -63,7 +63,7 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> MaxFlo
                                     }
                                 }
                             }
-                            next_edge[source] = self.next_edge(eid);
+                            next_edge[source] = self.step_edge(source, eid);
                         }
                         total_pushed
                     },

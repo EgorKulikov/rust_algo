@@ -106,15 +106,15 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> FastMa
                     continue;
                 }
                 while next_edge[i] != u32::MAX {
-                    let eid = next_edge[i] as usize;
-                    let edge = self.edge(eid);
+                    let eid = next_edge[i];
+                    let edge = self.edge_at(i, eid);
                     if edge.capacity() != C::zero() && dist[edge.to()] == dist[i] + 1 {
                         nodes[i].with_payload_mut(|p| p.self_val = edge.capacity());
                         nodes[i].link(nodes[edge.to()]);
                         incomming[edge.to()].push(i);
                         break;
                     }
-                    next_edge[i] = self.next_edge(eid);
+                    next_edge[i] = self.step_edge(i, eid);
                 }
             }
             loop {
@@ -141,12 +141,12 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> FastMa
                 queue.push(cur_id);
                 while let Some(cur_id) = queue.pop() {
                     if next_edge[cur_id] != u32::MAX {
-                        let eid = next_edge[cur_id] as usize;
+                        let eid = next_edge[cur_id];
                         let push_data =
-                            self.edge(eid).push_flow(nodes[cur_id].with_payload(|p| p.pushed));
+                            self.edge_at(cur_id, eid).push_flow(nodes[cur_id].with_payload(|p| p.pushed));
                         self.push_flow(push_data);
                         nodes[cur_id].cut();
-                        next_edge[cur_id] = self.next_edge(eid);
+                        next_edge[cur_id] = self.step_edge(cur_id, eid);
                     }
                     nodes[cur_id].with_payload_mut(|p| {
                         p.pushed = C::zero();
@@ -154,8 +154,8 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> FastMa
                     });
                     let mut found = false;
                     while next_edge[cur_id] != u32::MAX {
-                        let eid = next_edge[cur_id] as usize;
-                        let edge = self.edge(eid);
+                        let eid = next_edge[cur_id];
+                        let edge = self.edge_at(cur_id, eid);
                         if edge.capacity() != C::zero() && dist[edge.to()] == dist[cur_id] + 1 {
                             nodes[cur_id].with_payload_mut(|p| p.self_val = edge.capacity());
                             nodes[cur_id].link(nodes[edge.to()]);
@@ -163,7 +163,7 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> FastMa
                             found = true;
                             break;
                         }
-                        next_edge[cur_id] = self.next_edge(eid);
+                        next_edge[cur_id] = self.step_edge(cur_id, eid);
                     }
                     if found {
                         continue;
@@ -178,9 +178,9 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> FastMa
 
             for i in 0..n {
                 if next_edge[i] != u32::MAX {
-                    let eid = next_edge[i] as usize;
+                    let eid = next_edge[i];
                     let push_data =
-                        self.edge(eid).push_flow(nodes[i].with_payload(|p| p.pushed));
+                        self.edge_at(i, eid).push_flow(nodes[i].with_payload(|p| p.pushed));
                     self.push_flow(push_data);
                     nodes[i].cut();
                     nodes[i].with_payload_mut(|p| {

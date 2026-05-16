@@ -6,9 +6,11 @@ pub trait FlowEdgeTrait<C: AdditionMonoidWithSub + PartialOrd + Copy>: EdgeTrait
     fn capacity(&self) -> C;
     fn capacity_mut(&mut self) -> &mut C;
     fn flow(&self, graph: &Graph<Self>) -> C;
-    /// Returns `(rev_edge_id, flow)` — the global edge id of this edge's reverse,
-    /// plus the amount of flow to push.
-    fn push_flow(&self, flow: C) -> (usize, C) {
-        (self.reverse_id(), flow)
+    /// Returns `(to, reverse_id, flow)` — destination vertex of the direct
+    /// edge, the cursor at which the reverse lives in the destination's
+    /// adjacency (under the current Linked storage this is a global edge id),
+    /// and the amount of flow to push.
+    fn push_flow(&self, flow: C) -> (usize, usize, C) {
+        (self.to(), self.reverse_id(), flow)
     }
 }
