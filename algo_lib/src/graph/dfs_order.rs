@@ -50,8 +50,7 @@ impl<E: BidirectionalEdgeTrait> DFSOrderTrait for Graph<E> {
                 end[current] = index + 1;
                 size -= 1;
             } else {
-                let eid = c_edge as usize;
-                let next = self.edge(eid).to();
+                let next = self.edge_at(current, c_edge).to();
                 edge[current] = self.step_edge(current, c_edge);
                 if next == (last[current] as usize) {
                     continue;
