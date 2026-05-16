@@ -88,7 +88,7 @@ impl<E: EdgeTrait> Graph<E> {
     /// `m >= K * n` the dense `TwoD` storage is chosen, else the sparse
     /// `Linked` storage. `K` is tuned empirically (see Task 7's bench sweep).
     pub fn new(vertex_count: usize, expected_edge_count: usize) -> Self {
-        const K: usize = 8; // placeholder; tuned in Task 7
+        const K: usize = 4; // tuned empirically; see storage_sweep benches.
         if expected_edge_count >= K.saturating_mul(vertex_count) {
             Self::new_2d(vertex_count)
         } else {

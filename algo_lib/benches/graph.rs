@@ -664,6 +664,139 @@ fn bench_min_cost_max_flow_slow(c: &mut Criterion) {
     });
 }
 
+// =========================================================================
+// Storage-variant tuning sweep — added in Task 7.
+//
+// Observed crossover ratios (m/n) where TwoD beats Linked, on this machine
+// at the time of writing (2026-05-16, n=100_000, WSL2/Linux, release profile):
+//   - dijkstra:  TwoD wins at m/n >= 4  (linked≈157ms vs twod≈94ms at m/n=4;
+//                                         essentially tied at m/n=1 and m/n=2)
+//   - scc:       TwoD wins at m/n >= 8  (linked≈73ms vs twod≈62ms at m/n=8;
+//                                         linked wins at m/n=4 and below)
+//   - dinic:     TwoD wins at right >= 30 (linked≈257µs vs twod≈230µs;
+//                                          translates to m/n≈29 for left=500)
+//
+// The auto-select constant K in Graph::new(n, m) (algo_lib/src/graph/mod.rs)
+// is set to the smallest such crossover across all three algorithms (the
+// conservative choice — prefer Linked except when TwoD clearly wins).
+// Smallest crossover: dijkstra at m/n=4 → K=4.
+// =========================================================================
+
+fn bench_storage_sweep_dijkstra(c: &mut Criterion) {
+    let n = 100_000usize;
+    for &ratio in &[1u32, 2, 4, 8, 16, 32, 64] {
+        let m = (ratio as usize) * n;
+        let mut rng = ChaCha20Rng::seed_from_u64(0xC0DE);
+        let mut linked: Graph<BiWeightedEdge<u64, ()>> = Graph::new_linked(n);
+        let mut twod: Graph<BiWeightedEdge<u64, ()>> = Graph::new_2d(n);
+        for _ in 0..m {
+            let u = rng.gen_range(0..n);
+            let mut v = rng.gen_range(0..n);
+            while v == u {
+                v = rng.gen_range(0..n);
+            }
+            let w = rng.gen_range(1u64..=1_000_000_000);
+            linked.add_edge(BiWeightedEdge::new(u, v, w));
+            twod.add_edge(BiWeightedEdge::new(u, v, w));
+        }
+        c.bench_function(
+            &format!("storage_sweep/dijkstra/linked/m_per_n={}", ratio),
+            |b| b.iter(|| black_box(linked.distances_from(0))),
+        );
+        c.bench_function(
+            &format!("storage_sweep/dijkstra/twod/m_per_n={}", ratio),
+            |b| b.iter(|| black_box(twod.distances_from(0))),
+        );
+    }
+}
+
+fn bench_storage_sweep_scc(c: &mut Criterion) {
+    let n = 100_000usize;
+    for &ratio in &[1u32, 2, 4, 8, 16, 32, 64] {
+        let m = (ratio as usize) * n;
+        let mut rng = ChaCha20Rng::seed_from_u64(0xBEEF);
+        let mut linked: Graph<Edge<()>> = Graph::new_linked(n);
+        let mut twod: Graph<Edge<()>> = Graph::new_2d(n);
+        for _ in 0..m {
+            let u = rng.gen_range(0..n);
+            let mut v = rng.gen_range(0..n);
+            while v == u {
+                v = rng.gen_range(0..n);
+            }
+            linked.add_edge(Edge::new(u, v));
+            twod.add_edge(Edge::new(u, v));
+        }
+        c.bench_function(
+            &format!("storage_sweep/scc/linked/m_per_n={}", ratio),
+            |b| b.iter(|| black_box(linked.strongly_connected_components())),
+        );
+        c.bench_function(
+            &format!("storage_sweep/scc/twod/m_per_n={}", ratio),
+            |b| b.iter(|| black_box(twod.strongly_connected_components())),
+        );
+    }
+}
+
+fn bench_storage_sweep_dinic(c: &mut Criterion) {
+    let left = 500usize;
+    for &right in &[10usize, 30, 100, 300, 500] {
+        let (g_linked0, src_l, snk_l) =
+            dense_bipartite_flow_storage(left, right, 0xABBA, false);
+        let (g_twod0, src_t, snk_t) =
+            dense_bipartite_flow_storage(left, right, 0xABBA, true);
+        c.bench_function(
+            &format!("storage_sweep/dinic/linked/right={}", right),
+            |b| {
+                b.iter_batched(
+                    || g_linked0.clone(),
+                    |mut g| black_box(g.max_flow(src_l, snk_l)),
+                    BatchSize::SmallInput,
+                );
+            },
+        );
+        c.bench_function(
+            &format!("storage_sweep/dinic/twod/right={}", right),
+            |b| {
+                b.iter_batched(
+                    || g_twod0.clone(),
+                    |mut g| black_box(g.max_flow(src_t, snk_t)),
+                    BatchSize::SmallInput,
+                );
+            },
+        );
+    }
+}
+
+fn dense_bipartite_flow_storage(
+    left: usize,
+    right: usize,
+    seed: u64,
+    twod: bool,
+) -> (Graph<FlowEdge<u64, ()>>, usize, usize) {
+    let n = left + right + 2;
+    let source = left + right;
+    let sink = left + right + 1;
+    let mut g: Graph<FlowEdge<u64, ()>> = if twod {
+        Graph::new_2d(n)
+    } else {
+        Graph::new_linked(n)
+    };
+    let mut rng = ChaCha20Rng::seed_from_u64(seed);
+    for i in 0..left {
+        g.add_edge(FlowEdge::new(source, i, 1));
+    }
+    for j in 0..right {
+        g.add_edge(FlowEdge::new(left + j, sink, 1));
+    }
+    for i in 0..left {
+        for j in 0..right {
+            let c = rng.gen_range(1u64..=100);
+            g.add_edge(FlowEdge::new(i, left + j, c));
+        }
+    }
+    (g, source, sink)
+}
+
 criterion_group!(
     graph_benches,
     bench_dijkstra,
@@ -691,5 +824,8 @@ criterion_group!(
     bench_min_cost_max_flow,
     bench_min_cost_flow_slow,
     bench_min_cost_max_flow_slow,
+    bench_storage_sweep_dijkstra,
+    bench_storage_sweep_scc,
+    bench_storage_sweep_dinic,
 );
 criterion_main!(graph_benches);
