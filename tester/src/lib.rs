@@ -17,6 +17,36 @@ pub mod interactive;
 mod print;
 pub mod test_set;
 
+/// Absolute path of the cargo workspace root, located by walking up from the
+/// process's current working directory until a `Cargo.toml` with a
+/// `[workspace]` table is found. Cached on first call.
+///
+/// All on-disk paths the tester emits (`tasks/<task>/tests/...`,
+/// `tasks/<task>/tests/.failed_*`) are anchored here so that running a task's
+/// binary from a subdirectory (e.g. when an IDE invokes `cargo run` inside
+/// `tasks/<task>/`) still finds the right files.
+pub(crate) fn workspace_root() -> &'static str {
+    use std::sync::OnceLock;
+    static ROOT: OnceLock<String> = OnceLock::new();
+    ROOT.get_or_init(|| {
+        let start = std::env::current_dir().expect("current dir");
+        let mut dir = start.clone();
+        loop {
+            let manifest = dir.join("Cargo.toml");
+            if manifest.is_file() {
+                if let Ok(contents) = std::fs::read_to_string(&manifest) {
+                    if contents.contains("[workspace]") {
+                        return dir.to_string_lossy().into_owned();
+                    }
+                }
+            }
+            if !dir.pop() {
+                return start.to_string_lossy().into_owned();
+            }
+        }
+    })
+}
+
 pub enum Outcome {
     /// `score` is `Some(n)` when the test passed with a numeric score (e.g.,
     /// for a heuristic problem) and `None` when the test passed with no score
@@ -169,15 +199,22 @@ impl Tester {
                     print::end_test(outcome, true);
                     for i in (0..1000).rev() {
                         let in_file =
-                            format!("tasks/{}/tests/.failed_{:03}.in", self.task_folder, i);
+                            format!(
+                                "{}/tasks/{}/tests/.failed_{:03}.in",
+                                workspace_root(),
+                                self.task_folder,
+                                i
+                            );
                         if Path::new(&in_file).exists() {
                             continue;
                         }
                         File::create(in_file).unwrap().write_all(&input).unwrap();
                         if let Some(expected) = expected {
                             File::create(format!(
-                                "tasks/{}/tests/.failed_{:03}.ans",
-                                self.task_folder, i
+                                "{}/tasks/{}/tests/.failed_{:03}.ans",
+                                workspace_root(),
+                                self.task_folder,
+                                i
                             ))
                             .unwrap()
                             .write_all(&expected)
