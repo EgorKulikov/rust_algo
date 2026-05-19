@@ -44,6 +44,6 @@ pub fn iterate_with_base<T: Copy + IntegerSemiRing + Ord + MinMax>(
         i += 1;
         pw *= base;
     }
-    res.sort_by(|a, b| a.2.cmp(&b.2));
+    res.sort_by_key(|x| x.2);
     res
 }

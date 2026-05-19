@@ -110,7 +110,6 @@ mod tester {
     use crate::{run, TASK_TYPE};
     use algo_lib::io::input::Input;
     use algo_lib::io::output::Output;
-    use tester::classic::default_checker;
     use tester::interactive::std_interactor;
     use tester::test_set::GeneratedTestSet;
     use tester::Tester;

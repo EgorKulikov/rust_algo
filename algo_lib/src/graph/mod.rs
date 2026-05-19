@@ -101,7 +101,12 @@ impl<E: EdgeTrait> Graph<E> {
     fn push_one_linked(&mut self, from: usize, mut edge: E) -> usize {
         let logical_count = self.edge_count();
         match &mut self.storage {
-            Storage::Linked { first, next, edges, degree } => {
+            Storage::Linked {
+                first,
+                next,
+                edges,
+                degree,
+            } => {
                 let id = edges.len();
                 edge.set_id(logical_count);
                 edges.push(edge);
@@ -180,7 +185,12 @@ impl<E: EdgeTrait> Graph<E> {
 
     pub fn clear(&mut self) {
         match &mut self.storage {
-            Storage::Linked { first, next, edges, degree } => {
+            Storage::Linked {
+                first,
+                next,
+                edges,
+                degree,
+            } => {
                 edges.clear();
                 next.clear();
                 for f in first.iter_mut() {
@@ -209,7 +219,11 @@ impl<E: EdgeTrait> Graph<E> {
     pub fn edge_count(&self) -> usize {
         match &self.storage {
             Storage::Linked { edges, .. } => {
-                if E::REVERSABLE { edges.len() / 2 } else { edges.len() }
+                if E::REVERSABLE {
+                    edges.len() / 2
+                } else {
+                    edges.len()
+                }
             }
             Storage::TwoD { edge_count, .. } => *edge_count,
         }
@@ -273,7 +287,11 @@ impl<E: EdgeTrait> Graph<E> {
         match &self.storage {
             Storage::Linked { first, .. } => first[v],
             Storage::TwoD { edges, .. } => {
-                if edges[v].is_empty() { u32::MAX } else { 0 }
+                if edges[v].is_empty() {
+                    u32::MAX
+                } else {
+                    0
+                }
             }
         }
     }
@@ -303,7 +321,11 @@ impl<E: EdgeTrait> Graph<E> {
             Storage::Linked { next, .. } => next[cursor as usize],
             Storage::TwoD { edges, .. } => {
                 let nxt = cursor + 1;
-                if (nxt as usize) < edges[_v].len() { nxt } else { u32::MAX }
+                if (nxt as usize) < edges[_v].len() {
+                    nxt
+                } else {
+                    u32::MAX
+                }
             }
         }
     }
@@ -404,7 +426,11 @@ impl<'a, E: EdgeTrait> AdjView<'a, E> {
         match &self.inner {
             AdjViewInner::Linked { head, .. } => *head,
             AdjViewInner::Slice(s) => {
-                if s.is_empty() { u32::MAX } else { 0 }
+                if s.is_empty() {
+                    u32::MAX
+                } else {
+                    0
+                }
             }
         }
     }
@@ -431,10 +457,7 @@ pub struct AdjIter<'a, E: EdgeTrait> {
 }
 
 enum AdjIterInner<'a, E: EdgeTrait> {
-    Linked {
-        storage: &'a Storage<E>,
-        cur: u32,
-    },
+    Linked { storage: &'a Storage<E>, cur: u32 },
     Slice(std::slice::Iter<'a, E>),
 }
 
@@ -509,10 +532,7 @@ pub struct AdjViewMut<'a, E: EdgeTrait> {
 }
 
 enum AdjViewMutInner<'a, E: EdgeTrait> {
-    Linked {
-        graph: *mut Graph<E>,
-        head: u32,
-    },
+    Linked { graph: *mut Graph<E>, head: u32 },
     Slice(&'a mut [E]),
 }
 
