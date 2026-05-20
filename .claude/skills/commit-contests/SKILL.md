@@ -1,6 +1,6 @@
 ---
 name: commit-contests
-description: Commit uncommitted competitive-programming contests under archive/, one commit per contest, with message "(contest) <contest name>", then push.
+description: Commit uncommitted competitive-programming contests under archive/, one commit per contest, with message "(contest) <name>" — or, for the "Kattis" pseudo-contest, move into archive/Kattis/<date>/ and commit as "(archive) Kattis". Then push.
 ---
 
 # Commit Contests
@@ -49,13 +49,33 @@ archive/2026/05/2026.05.18 - Educational Codeforces Round 190 (Rated for Div. 2)
    if `git status` shows tracked-file modifications.
 
 4. **For each contest directory in order**, stage just that directory and
-   commit:
+   commit. Two cases:
+
+   **a. Regular contest** — name is anything other than exactly `Kattis`.
+   Stage in place and commit with `(contest) <name>`:
    ```bash
    git add "archive/YYYY/MM/<date> - <name>/"
    git commit -m "(contest) <name>" --quiet
    ```
-   Always quote the path — directory names contain spaces. The commit
-   message uses the contest name verbatim, including any parenthetical
+
+   **b. Kattis** — when `<name>` is exactly `Kattis`, the contents are
+   loose problem solutions that belong in the long-lived
+   `archive/Kattis/` pool, organized by date. Move first, then commit
+   with `(archive) Kattis`:
+   ```bash
+   mkdir -p "archive/Kattis"
+   # Move into archive/Kattis/<date>/ — `<date>` is the YYYY.MM.DD prefix
+   # taken from the source directory name.
+   git mv "archive/YYYY/MM/<date> - Kattis" "archive/Kattis/<date>"
+   # If the source directory is untracked (not in the index), `git mv`
+   # will refuse — fall back to a plain `mv` followed by `git add`:
+   #   mv "archive/YYYY/MM/<date> - Kattis" "archive/Kattis/<date>"
+   #   git add "archive/Kattis/<date>/"
+   git commit -m "(archive) Kattis" --quiet
+   ```
+
+   Always quote paths — directory names contain spaces. The contest-name
+   commit message uses the name verbatim, including any parenthetical
    suffix like `(Rated for Div. 2)`.
 
 5. **Push.**
@@ -68,6 +88,7 @@ archive/2026/05/2026.05.18 - Educational Codeforces Round 190 (Rated for Div. 2)
    ```
    e6af61e (contest) GP of Wulin
    15fa402 (contest) Educational Codeforces Round 190 (Rated for Div. 2)
+   84f1c20 (archive) Kattis
    ```
 
 ## Notes and pitfalls
