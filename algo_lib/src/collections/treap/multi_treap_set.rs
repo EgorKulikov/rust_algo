@@ -26,6 +26,10 @@ impl<T: Ord> MultiTreapSet<T> {
         self.root.payload().map_or(0, |p| p.total_size)
     }
 
+    pub fn distinct(&mut self) -> usize {
+        self.root.size()
+    }
+
     pub fn insert(&mut self, key: T) {
         let view = self.root.range(&key..=&key);
         if view.payload().is_some() {

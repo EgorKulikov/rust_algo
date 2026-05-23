@@ -228,6 +228,29 @@ impl<P: Payload> Node<P> {
             }
         }
     }
+
+    fn binary_search_with_size<
+        F: FnMut(&P, Option<&P>, Option<&P>, usize, usize) -> Option<Direction>,
+    >(
+        &mut self,
+        mut f: F,
+    ) {
+        if self.size != 0 {
+            self.push_down();
+            let direction = f(
+                &self.payload,
+                self.left.payload(),
+                self.right.payload(),
+                self.left.size(),
+                self.right.size(),
+            );
+            match direction {
+                Some(Direction::Left) => self.left.binary_search_with_size(f),
+                Some(Direction::Right) => self.right.binary_search_with_size(f),
+                None => {}
+            }
+        }
+    }
 }
 
 impl<P> Deref for Node<P> {
@@ -802,6 +825,13 @@ impl<P: Payload> Tree<P> {
 
     pub fn binary_search_size(&mut self, f: impl FnMut(usize, usize) -> Option<Direction>) {
         self.rebuild().binary_search_size(f);
+    }
+
+    pub fn binary_search_with_size(
+        &mut self,
+        f: impl FnMut(&P, Option<&P>, Option<&P>, usize, usize) -> Option<Direction>,
+    ) {
+        self.rebuild().binary_search_with_size(f);
     }
 
     pub fn range_index(&mut self, bounds: impl RangeBounds<usize>) -> &mut Self {

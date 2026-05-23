@@ -229,6 +229,13 @@ impl<E: EdgeTrait> Graph<E> {
         }
     }
 
+    pub fn degree(&self, v: usize) -> usize {
+        match &self.storage {
+            Storage::Linked { degree, .. } => degree[v] as usize,
+            Storage::TwoD { edges, .. } => edges[v].len(),
+        }
+    }
+
     pub fn degrees(&self) -> Vec<usize> {
         match &self.storage {
             Storage::Linked { degree, .. } => degree.iter().map(|&d| d as usize).collect(),

@@ -119,6 +119,10 @@ impl<T: Ord> MultiTreeSet<T> {
         self.size
     }
 
+    pub fn distinct(&self) -> usize {
+        self.map.len()
+    }
+
     pub fn is_empty(&self) -> bool {
         self.size == 0
     }
@@ -136,6 +140,14 @@ impl<T: Ord> MultiTreeSet<T> {
         } else {
             false
         }
+    }
+
+    pub fn get(&self, value: &T) -> usize {
+        self.map.get(value).cloned().unwrap_or(0)
+    }
+
+    pub fn contains(&self, value: &T) -> bool {
+        self.map.contains_key(value)
     }
 
     pub fn range(&self, range: impl RangeBounds<T>) -> impl Iterator<Item = &T> {
