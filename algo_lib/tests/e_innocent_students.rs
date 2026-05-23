@@ -4,7 +4,7 @@ use algo_lib::collections::multi_set::MultiTreeSet;
 use algo_lib::collections::segment_tree::{SegmentTree, SegmentTreeNode};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
-use algo_lib::misc::test_type::{TaskType, LegacyTestType};
+use algo_lib::misc::test_type::{LegacyTestType, TaskType};
 use std::cmp::Ordering;
 
 type PreCalc = ();
@@ -50,14 +50,14 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                                 .range_rev(..&x)
                                 .next()
                                 .copied()
-                                .map(|t| ((t - x).abs(), *node.values.get(&t).unwrap()))
+                                .map(|t| ((t - x).abs(), node.values.get(&t)))
                                 .unwrap_or((i32::MAX, 0));
                             let right = node
                                 .values
                                 .range(&x..)
                                 .next()
                                 .copied()
-                                .map(|t| ((t - x).abs(), *node.values.get(&t).unwrap()))
+                                .map(|t| ((t - x).abs(), node.values.get(&t)))
                                 .unwrap_or((i32::MAX, 0));
                             let res = join_results(left, right);
                             join_results(r, res)
