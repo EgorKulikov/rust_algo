@@ -261,6 +261,15 @@ impl<T: Writable> Writable for Vec<T> {
     }
 }
 
+impl Writable for f64 {
+    fn write(&self, output: &mut Output) {
+        match output.precision {
+            Some(p) => write!(output, "{:.*}", p, self).unwrap(),
+            None => write!(output, "{}", self).unwrap(),
+        }
+    }
+}
+
 impl Writable for () {
     fn write(&self, _output: &mut Output) {}
 }
