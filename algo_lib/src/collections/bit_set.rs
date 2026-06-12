@@ -42,6 +42,20 @@ impl BitSet {
         self.data[Self::index(at)].unset_bit(at & 63);
     }
 
+    pub fn get_and_set(&mut self, at: usize) -> bool {
+        assert!(at < self.len);
+        let res = self.data[Self::index(at)].is_set(at & 63);
+        self.data[Self::index(at)].set_bit(at & 63);
+        res
+    }
+
+    pub fn get_and_unset(&mut self, at: usize) -> bool {
+        assert!(at < self.len);
+        let res = self.data[Self::index(at)].is_set(at & 63);
+        self.data[Self::index(at)].unset_bit(at & 63);
+        res
+    }
+
     pub fn change(&mut self, at: usize, value: bool) {
         if value {
             self.set(at);
