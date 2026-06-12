@@ -15,6 +15,9 @@ pub trait SegmentTreeNode: Default {
     fn update(&mut self, left_val: &Self, right_val: &Self) {}
     fn accumulate(&mut self, value: &Self) {}
     fn reset_delta(&mut self) {}
+    /// Reverse the node's left↔right orientation — a node aggregating a directed segment flips
+    /// which end is "left". Default is a no-op (correct for symmetric aggregates).
+    fn swap(&mut self) {}
 }
 
 pub struct ValueDeltaNode<VDT: ValueDeltaTrait> {

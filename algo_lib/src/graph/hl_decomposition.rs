@@ -12,6 +12,24 @@ pub struct HLDecomposition {
 }
 
 impl HLDecomposition {
+    // Path ids are assigned in DFS preorder, so climbing from any vertex
+    // strictly decreases the path id — the endpoint on the larger id can
+    // never have the lca on its current path and is always safe to jump.
+    pub fn lca(&self, mut u: usize, mut v: usize) -> usize {
+        while self.id[u] != self.id[v] {
+            if self.id[u] > self.id[v] {
+                u = self.parent[self.paths[self.id[u]][0]];
+            } else {
+                v = self.parent[self.paths[self.id[v]][0]];
+            }
+        }
+        if self.pos[u] <= self.pos[v] {
+            u
+        } else {
+            v
+        }
+    }
+
     pub fn iter(&self, range: impl RangeBounds<usize>) -> HLIter<'_> {
         let source = match range.start_bound() {
             Bound::Included(x) => *x,
@@ -83,6 +101,35 @@ impl Iterator for HLIter<'_> {
                 pos_from: 0,
                 pos_to,
             })
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::graph::lca::LCATrait;
+
+    #[test]
+    fn lca_matches_lca_struct() {
+        // deterministic pseudo-random tree (no rand dependency)
+        let n = 50;
+        let mut seed = 12345u64;
+        let mut edges = Vec::new();
+        for v in 1..n {
+            seed = seed
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            let parent = (seed >> 33) as usize % v;
+            edges.push((parent, v));
+        }
+        let graph = Graph::with_biedges(n, &edges);
+        let hld = graph.hl_decomposition();
+        let lca = graph.lca();
+        for u in 0..n {
+            for v in 0..n {
+                assert_eq!(hld.lca(u, v), lca.lca(u, v), "lca of {} and {}", u, v);
+            }
         }
     }
 }

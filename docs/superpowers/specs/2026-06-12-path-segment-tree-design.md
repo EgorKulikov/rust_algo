@@ -17,17 +17,18 @@ directed segment flips which end is "left"; e.g. the contest `Node` swaps
 
 ## 2. `HLDecomposition` additions (`algo_lib/src/graph/hl_decomposition.rs`)
 
-- New `pub level: Vec<usize>` field, filled during the existing `calc_size`
-  DFS (`level[next] = level[vert] + 1`).
-- New method:
+New method:
 
 ```rust
 pub fn lca(&self, mut u: usize, mut v: usize) -> usize
 ```
 
-Classic HLD lca: while `id[u] != id[v]`, the endpoint whose path head
-(`paths[id][0]`) has the greater `level` jumps to `parent[head]`; once on the
-same path, the endpoint with smaller `pos` is the lca. O(log n) per query.
+HLD lca without levels: path ids are assigned in DFS preorder, so the parent
+of path `i`'s head always lies on a path with id `< i` — climbing strictly
+decreases the path id. Hence while `id[u] != id[v]`, the endpoint with the
+*greater* path id can never have the lca on its current path and safely jumps
+to `parent[paths[id][0]]`; once on the same path, the endpoint with smaller
+`pos` is the lca. O(log n) per query, no extra fields needed.
 
 Rationale: lets `PathSegmentTree` depend only on `HLDecomposition` +
 `SegmentTree`, cutting the sparse-table `LCA` dependency. The extra log factor
