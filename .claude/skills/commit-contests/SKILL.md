@@ -34,12 +34,7 @@ archive/2026/05/2026.05.18 - Educational Codeforces Round 190 (Rated for Div. 2)
    files are untracked or staged. Empty result → nothing to do; tell the
    user and stop.
 
-2. **Show the list and confirm.** Print the contest names (the part after
-   `<date> - `) to the user and ask whether they want all committed.
-   Skip this confirmation only if the user already approved a list in
-   their request.
-
-3. **Reset the index** so each contest commit can be staged in isolation:
+2. **Reset the index** so each contest commit can be staged in isolation:
    ```bash
    git reset --quiet
    ```
@@ -48,7 +43,7 @@ archive/2026/05/2026.05.18 - Educational Codeforces Round 190 (Rated for Div. 2)
    tree and will need re-staging by the user afterwards — mention this
    if `git status` shows tracked-file modifications.
 
-4. **For each contest directory in order**, stage just that directory and
+3. **For each contest directory in order**, stage just that directory and
    commit. Two cases:
 
    **a. Regular contest** — name is anything other than exactly `Kattis`.
@@ -78,12 +73,12 @@ archive/2026/05/2026.05.18 - Educational Codeforces Round 190 (Rated for Div. 2)
    commit message uses the name verbatim, including any parenthetical
    suffix like `(Rated for Div. 2)`.
 
-5. **Push.**
+4. **Push.**
    ```bash
    git push
    ```
 
-6. **Report.** Show the new commit hashes (one line each) and the push
+5. **Report.** Show the new commit hashes (one line each) and the push
    output. Example:
    ```
    e6af61e (contest) GP of Wulin
