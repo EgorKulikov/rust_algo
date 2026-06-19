@@ -1,3 +1,7 @@
 target/
 .idea/
 .vscode/
+.claude/scheduled_tasks.lock
+.dj_cookies.json
+.submitter_cookies.json
+main/task.json
