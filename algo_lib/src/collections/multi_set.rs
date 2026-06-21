@@ -83,7 +83,7 @@ impl<T: Hash + Eq> FromIterator<T> for MultiHashSet<T> {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct MultiTreeSet<T> {
     map: BTreeMap<T, usize>,
     size: usize,
