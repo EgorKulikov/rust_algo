@@ -11,6 +11,12 @@ impl TimeTracker {
         self.0.elapsed()
     }
 
+    pub fn silent_milestone(&mut self) -> u128 {
+        let res = self.elapsed().as_millis();
+        self.0 = Instant::now();
+        res
+    }
+
     pub fn disable(&mut self) {
         self.1 = false;
     }
