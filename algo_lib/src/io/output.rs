@@ -47,7 +47,9 @@ pub struct Output<'s> {
     at: usize,
     bool_output: BoolOutput,
     precision: Option<usize>,
+    prefix: Option<u8>,
     separator: u8,
+    suffix: Option<u8>,
 }
 
 impl<'s> Output<'s> {
@@ -62,7 +64,9 @@ impl<'s> Output<'s> {
             at: 0,
             bool_output: BoolOutput::YesNoCaps,
             precision: None,
+            prefix: None,
             separator: b' ',
+            suffix: None,
         }
     }
 }
@@ -127,6 +131,9 @@ impl Output<'_> {
     }
 
     pub fn print_iter<T: Writable, I: Iterator<Item = T>>(&mut self, iter: I) {
+        if let Some(p) = self.prefix {
+            self.put(p);
+        }
         let mut first = true;
         for e in iter {
             if first {
@@ -135,6 +142,9 @@ impl Output<'_> {
                 self.put(self.separator);
             }
             e.write(self);
+        }
+        if let Some(s) = self.suffix {
+            self.put(s);
         }
     }
 
@@ -167,6 +177,12 @@ impl Output<'_> {
     }
     pub fn set_separator(&mut self, separator: u8) {
         self.separator = separator;
+    }
+    pub fn set_prefix(&mut self, prefix: u8) {
+        self.prefix = Some(prefix);
+    }
+    pub fn set_suffix(&mut self, suffix: u8) {
+        self.suffix = Some(suffix);
     }
 }
 
@@ -242,6 +258,15 @@ impl<T: Writable + ?Sized> Writable for &T {
 impl<T: Writable> Writable for Vec<T> {
     fn write(&self, output: &mut Output) {
         self.as_slice().write(output);
+    }
+}
+
+impl Writable for f64 {
+    fn write(&self, output: &mut Output) {
+        match output.precision {
+            Some(p) => write!(output, "{:.*}", p, self).unwrap(),
+            None => write!(output, "{}", self).unwrap(),
+        }
     }
 }
 
