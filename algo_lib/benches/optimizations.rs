@@ -33,7 +33,11 @@ fn bench_int_output() {
                 .wrapping_mul(6364136223846793005)
                 .wrapping_add(1442695040888963407)
                 % 1_000_000_000_000;
-            if i % 3 == 0 { -v } else { v }
+            if i % 3 == 0 {
+                -v
+            } else {
+                v
+            }
         })
         .collect();
 
@@ -122,8 +126,15 @@ fn bench_dsu() {
     let n = 500_000usize;
     let ops: Vec<(usize, usize)> = (0..1_000_000)
         .map(|i| {
-            let a = (i as usize).wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407) % n;
-            let b = (i as usize).wrapping_add(1).wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407) % n;
+            let a = (i as usize)
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407)
+                % n;
+            let b = (i as usize)
+                .wrapping_add(1)
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407)
+                % n;
             (a, b)
         })
         .collect();
@@ -150,13 +161,25 @@ fn bench_fenwick() {
     let n = 1_000_000usize;
     let ops_add: Vec<(usize, i64)> = (0..1_000_000)
         .map(|i| {
-            let idx = (i as usize).wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407) % n;
-            let val = (i as i64).wrapping_mul(2862933555777941757).wrapping_add(3037000493) % 1_000_000;
+            let idx = (i as usize)
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407)
+                % n;
+            let val = (i as i64)
+                .wrapping_mul(2862933555777941757)
+                .wrapping_add(3037000493)
+                % 1_000_000;
             (idx, val)
         })
         .collect();
     let ops_query: Vec<usize> = (0..1_000_000)
-        .map(|i| (i as usize).wrapping_add(42).wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407) % (n + 1))
+        .map(|i| {
+            (i as usize)
+                .wrapping_add(42)
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407)
+                % (n + 1)
+        })
         .collect();
 
     bench("FenwickTree::add + get_to", 20, || {

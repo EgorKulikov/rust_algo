@@ -49,13 +49,6 @@ use algo_lib::graph::strongly_connected_components::StronglyConnectedComponentsT
 use algo_lib::graph::topological_sort::TopologicalSort;
 use algo_lib::graph::two_sat::TwoSat;
 // FastMaxFlow and FlowWithDemand imports kept for documentation; both benches excluded due to panics.
-#[allow(unused_imports)]
-use algo_lib::graph::fast_max_flow::FastMaxFlow;
-#[allow(unused_imports)]
-use algo_lib::graph::flow_with_demand::FlowWithDemand;
-use algo_lib::graph::max_flow::MaxFlow;
-use algo_lib::graph::min_cost_flow::MinCostFlow;
-use algo_lib::graph::min_cost_flow_slow::MinCostFlowSlow;
 use algo_lib::graph::edges::bi_edge::BiEdge;
 use algo_lib::graph::edges::bi_edge::BiEdgeWithId;
 use algo_lib::graph::edges::bi_weighted_edge::BiWeightedEdge;
@@ -63,6 +56,13 @@ use algo_lib::graph::edges::edge::Edge;
 use algo_lib::graph::edges::flow_edge::FlowEdge;
 use algo_lib::graph::edges::weighted_edge::WeightedEdge;
 use algo_lib::graph::edges::weighted_flow_edge::WeightedFlowEdge;
+#[allow(unused_imports)]
+use algo_lib::graph::fast_max_flow::FastMaxFlow;
+#[allow(unused_imports)]
+use algo_lib::graph::flow_with_demand::FlowWithDemand;
+use algo_lib::graph::max_flow::MaxFlow;
+use algo_lib::graph::min_cost_flow::MinCostFlow;
+use algo_lib::graph::min_cost_flow_slow::MinCostFlowSlow;
 use algo_lib::graph::Graph;
 use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion};
 use rand::{Rng, SeedableRng};
@@ -730,20 +730,17 @@ fn bench_storage_sweep_scc(c: &mut Criterion) {
             &format!("storage_sweep/scc/linked/m_per_n={}", ratio),
             |b| b.iter(|| black_box(linked.strongly_connected_components())),
         );
-        c.bench_function(
-            &format!("storage_sweep/scc/twod/m_per_n={}", ratio),
-            |b| b.iter(|| black_box(twod.strongly_connected_components())),
-        );
+        c.bench_function(&format!("storage_sweep/scc/twod/m_per_n={}", ratio), |b| {
+            b.iter(|| black_box(twod.strongly_connected_components()))
+        });
     }
 }
 
 fn bench_storage_sweep_dinic(c: &mut Criterion) {
     let left = 500usize;
     for &right in &[10usize, 30, 100, 300, 500] {
-        let (g_linked0, src_l, snk_l) =
-            dense_bipartite_flow_storage(left, right, 0xABBA, false);
-        let (g_twod0, src_t, snk_t) =
-            dense_bipartite_flow_storage(left, right, 0xABBA, true);
+        let (g_linked0, src_l, snk_l) = dense_bipartite_flow_storage(left, right, 0xABBA, false);
+        let (g_twod0, src_t, snk_t) = dense_bipartite_flow_storage(left, right, 0xABBA, true);
         c.bench_function(
             &format!("storage_sweep/dinic/linked/right={}", right),
             |b| {
@@ -754,16 +751,13 @@ fn bench_storage_sweep_dinic(c: &mut Criterion) {
                 );
             },
         );
-        c.bench_function(
-            &format!("storage_sweep/dinic/twod/right={}", right),
-            |b| {
-                b.iter_batched(
-                    || g_twod0.clone(),
-                    |mut g| black_box(g.max_flow(src_t, snk_t)),
-                    BatchSize::SmallInput,
-                );
-            },
-        );
+        c.bench_function(&format!("storage_sweep/dinic/twod/right={}", right), |b| {
+            b.iter_batched(
+                || g_twod0.clone(),
+                |mut g| black_box(g.max_flow(src_t, snk_t)),
+                BatchSize::SmallInput,
+            );
+        });
     }
 }
 
