@@ -4,7 +4,7 @@ use algo_lib::collections::md_arr::arr2d::{Arr2d, Arr2dRead};
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::dirs::D4;
-use algo_lib::misc::test_type::{TaskType, LegacyTestType};
+use algo_lib::misc::test_type::{LegacyTestType, TaskType};
 
 type PreCalc = ();
 

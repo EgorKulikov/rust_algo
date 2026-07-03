@@ -9,7 +9,7 @@ use algo_lib::graph::Graph;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::dirs::D4;
-use algo_lib::misc::test_type::{TaskType, LegacyTestType};
+use algo_lib::misc::test_type::{LegacyTestType, TaskType};
 
 type PreCalc = ();
 
@@ -170,10 +170,7 @@ mod tester {
                     continue;
                 }
                 if cell == b'#' {
-                    return Err(format!(
-                        "Cell ({},{}) was '.' in input, got '#'",
-                        i, j
-                    ));
+                    return Err(format!("Cell ({},{}) was '.' in input, got '#'", i, j));
                 }
                 match cell {
                     b'>' => {
@@ -187,10 +184,7 @@ mod tester {
                     }
                     b'v' => {
                         if i + 1 >= n || ours[i + 1][j] != b'^' {
-                            return Err(format!(
-                                "'v' at ({},{}) without matching '^' below",
-                                i, j
-                            ));
+                            return Err(format!("'v' at ({},{}) without matching '^' below", i, j));
                         }
                         count += 1;
                     }
@@ -204,10 +198,7 @@ mod tester {
                     }
                     b'^' => {
                         if i == 0 || ours[i - 1][j] != b'v' {
-                            return Err(format!(
-                                "'^' at ({},{}) without matching 'v' above",
-                                i, j
-                            ));
+                            return Err(format!("'^' at ({},{}) without matching 'v' above", i, j));
                         }
                     }
                     b'.' => {}

@@ -5,7 +5,7 @@ use algo_lib::graph::edges::edge::Edge;
 use algo_lib::graph::Graph;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
-use algo_lib::misc::test_type::{TaskType, LegacyTestType};
+use algo_lib::misc::test_type::{LegacyTestType, TaskType};
 
 type PreCalc = ();
 

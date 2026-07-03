@@ -3,7 +3,7 @@
 use algo_lib::graph::two_sat::TwoSat;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::{BoolOutput, Output};
-use algo_lib::misc::test_type::{TaskType, LegacyTestType};
+use algo_lib::misc::test_type::{LegacyTestType, TaskType};
 
 type PreCalc = ();
 

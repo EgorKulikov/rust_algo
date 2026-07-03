@@ -5,7 +5,7 @@ use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::memo::memoization_2d::Memoization2d;
 use algo_lib::misc::recursive_function::Callable2;
-use algo_lib::misc::test_type::{TaskType, LegacyTestType};
+use algo_lib::misc::test_type::{LegacyTestType, TaskType};
 use algo_lib::numbers::mod_int::ModInt;
 use algo_lib::numbers::num_traits::algebra::{One, Zero};
 use algo_lib::numbers::number_ext::Power;

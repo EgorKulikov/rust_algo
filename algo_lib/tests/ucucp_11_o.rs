@@ -7,7 +7,7 @@ use algo_lib::collections::md_arr::arr2d::Arr2d;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
-use algo_lib::misc::test_type::{TaskType, LegacyTestType};
+use algo_lib::misc::test_type::{LegacyTestType, TaskType};
 use std::collections::HashSet;
 use std::mem::swap;
 
@@ -177,7 +177,11 @@ mod tester {
         Ok(())
     }
 
-    fn check(mut input: Input, expected: Option<Input>, mut output: Input) -> Result<Option<i64>, String> {
+    fn check(
+        mut input: Input,
+        expected: Option<Input>,
+        mut output: Input,
+    ) -> Result<Option<i64>, String> {
         let n = input.read_size();
         let m = input.read_size();
         let edges = input.read_size_pair_vec(m).dec();

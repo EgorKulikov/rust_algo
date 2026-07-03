@@ -4,7 +4,7 @@ use algo_lib::collections::btree_ext::BTreeExt;
 use algo_lib::collections::min_max::MinimMaxim;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
-use algo_lib::misc::test_type::{TaskType, LegacyTestType};
+use algo_lib::misc::test_type::{LegacyTestType, TaskType};
 use std::collections::BTreeSet;
 
 type PreCalc = ();

@@ -5,8 +5,8 @@ use algo_lib::collections::slice_ext::permutation::Permutation;
 use algo_lib::collections::vec_ext::inc_dec::IncDec;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::{BoolOutput, Output};
-use algo_lib::misc::test_type::TaskType;
 use algo_lib::misc::test_type::LegacyTestType;
+use algo_lib::misc::test_type::TaskType;
 use std::collections::BTreeSet;
 use std::iter::once;
 
