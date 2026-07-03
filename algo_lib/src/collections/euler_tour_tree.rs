@@ -339,10 +339,7 @@ impl<P: Payload> EulerTourForest<P> {
     }
 
     pub fn with_node<R>(&self, u: usize, f: impl FnOnce(&P) -> R) -> R {
-        let (left, node, right) = self.nodes[u].self_raise();
-        let res = f(&node.payload);
-        TreapNode::merge(left, TreapNode::merge(node, right));
-        res
+        self.with_node_mut(u, |p| f(p))
     }
 
     pub fn with_node_mut<R>(&self, u: usize, f: impl FnOnce(&mut P) -> R) -> R {
@@ -353,8 +350,7 @@ impl<P: Payload> EulerTourForest<P> {
     }
 
     pub fn with_component<R>(&self, u: usize, f: impl FnOnce(&P) -> R) -> R {
-        let root = self.nodes[u].root();
-        f(&root.payload)
+        self.with_component_mut(u, |p| f(p))
     }
 
     pub fn with_component_mut<R>(&self, u: usize, f: impl FnOnce(&mut P) -> R) -> R {
@@ -363,11 +359,7 @@ impl<P: Payload> EulerTourForest<P> {
     }
 
     pub fn with_edge<R>(&self, u: usize, v: usize, f: impl FnOnce(&P) -> R) -> R {
-        let node = self.edges[&(u, v)];
-        let (left, node, right) = node.self_raise();
-        let res = f(&node.payload);
-        TreapNode::merge(left, TreapNode::merge(node, right));
-        res
+        self.with_edge_mut(u, v, |p| f(p))
     }
 
     pub fn with_edge_mut<R>(&self, u: usize, v: usize, f: impl FnOnce(&mut P) -> R) -> R {
@@ -379,11 +371,7 @@ impl<P: Payload> EulerTourForest<P> {
     }
 
     pub fn with_subtree<R>(&self, vert: usize, parent: usize, f: impl FnOnce(&P) -> R) -> R {
-        self.edges[&(parent, vert)].reroot_right();
-        let (left, mid, right) = self.edges[&(vert, parent)].self_raise();
-        let res = f(&left.payload);
-        TreapNode::merge(TreapNode::merge(left, mid), right);
-        res
+        self.with_subtree_mut(vert, parent, |p| f(p))
     }
 
     pub fn with_subtree_mut<R>(

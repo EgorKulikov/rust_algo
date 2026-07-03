@@ -5,8 +5,8 @@ pub trait PrefixFunction {
 }
 
 impl<S: Slicelike + ?Sized> PrefixFunction for S
-    where
-        S::Output: PartialEq + Sized,
+where
+    S::Output: PartialEq + Sized,
 {
     fn prefix_function(&self) -> Vec<usize> {
         let mut res = Vec::with_capacity(self.len());

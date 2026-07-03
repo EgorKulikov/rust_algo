@@ -120,19 +120,14 @@ impl<Node: SegmentTreeNode> PathSegmentTree<Node> {
     ) -> R {
         let (up, down) = self.parts(range);
         let mut res = init;
-        for part in up {
-            res = self.trees[part.id].for_each_with_init(
-                part.pos_from..=part.pos_to,
-                |r, node| f(r, node, PathDirection::Up),
-                res,
-            );
-        }
-        for part in down {
-            res = self.trees[part.id].for_each_with_init(
-                part.pos_from..=part.pos_to,
-                |r, node| f(r, node, PathDirection::Down),
-                res,
-            );
+        for (parts, dir) in [(up, PathDirection::Up), (down, PathDirection::Down)] {
+            for part in parts {
+                res = self.trees[part.id].for_each_with_init(
+                    part.pos_from..=part.pos_to,
+                    |r, node| f(r, node, dir),
+                    res,
+                );
+            }
         }
         res
     }
@@ -154,19 +149,14 @@ impl<Node: SegmentTreeNode> PathSegmentTree<Node> {
     ) -> R {
         let (up, down) = self.parts(range);
         let mut res = init;
-        for part in up {
-            res = self.trees[part.id].for_each_mut_with_init(
-                part.pos_from..=part.pos_to,
-                |r, node| f(r, node, PathDirection::Up),
-                res,
-            );
-        }
-        for part in down {
-            res = self.trees[part.id].for_each_mut_with_init(
-                part.pos_from..=part.pos_to,
-                |r, node| f(r, node, PathDirection::Down),
-                res,
-            );
+        for (parts, dir) in [(up, PathDirection::Up), (down, PathDirection::Down)] {
+            for part in parts {
+                res = self.trees[part.id].for_each_mut_with_init(
+                    part.pos_from..=part.pos_to,
+                    |r, node| f(r, node, dir),
+                    res,
+                );
+            }
         }
         res
     }
@@ -446,8 +436,9 @@ mod test {
     #[test]
     fn query_sum_all_pairs() {
         let g = graph();
-        let mut tree =
-            g.path_segment_tree_with_gen(true, |v| SumNode { sum: 1 + (v as i64) * 10 });
+        let mut tree = g.path_segment_tree_with_gen(true, |v| SumNode {
+            sum: 1 + (v as i64) * 10,
+        });
         for a in 0..N {
             for b in 0..N {
                 let expected: i64 = naive_path(a, b).iter().map(|&v| 1 + (v as i64) * 10).sum();
@@ -462,7 +453,13 @@ mod test {
         let mut tree = g.path_segment_tree_with_gen(true, |v| SeqNode { seq: vec![v] });
         for a in 0..N {
             for b in 0..N {
-                assert_eq!(tree.query(a..=b).seq, naive_path(a, b), "path {}..={}", a, b);
+                assert_eq!(
+                    tree.query(a..=b).seq,
+                    naive_path(a, b),
+                    "path {}..={}",
+                    a,
+                    b
+                );
             }
         }
     }
@@ -475,10 +472,8 @@ mod test {
             for b in 0..N {
                 // each non-lca vertex stands for the edge to its parent
                 let lca = naive_lca(a, b);
-                let expected: Vec<usize> = naive_path(a, b)
-                    .into_iter()
-                    .filter(|&v| v != lca)
-                    .collect();
+                let expected: Vec<usize> =
+                    naive_path(a, b).into_iter().filter(|&v| v != lca).collect();
                 assert_eq!(tree.query(a..=b).seq, expected, "path {}..={}", a, b);
             }
         }
@@ -501,8 +496,9 @@ mod test {
     #[test]
     fn for_each_directions() {
         let g = graph();
-        let mut tree =
-            g.path_segment_tree_with_gen(true, |v| SumNode { sum: 1 + (v as i64) * 10 });
+        let mut tree = g.path_segment_tree_with_gen(true, |v| SumNode {
+            sum: 1 + (v as i64) * 10,
+        });
         let val = |v: usize| 1 + (v as i64) * 10;
         for a in 0..N {
             for b in 0..N {
@@ -515,7 +511,13 @@ mod test {
                     PathDirection::Up => (acc.0 + node.sum, acc.1),
                     PathDirection::Down => (acc.0, acc.1 + node.sum),
                 });
-                assert_eq!((up, down), (up_expected, down_expected), "path {}..={}", a, b);
+                assert_eq!(
+                    (up, down),
+                    (up_expected, down_expected),
+                    "path {}..={}",
+                    a,
+                    b
+                );
             }
         }
     }
@@ -576,7 +578,9 @@ mod test {
                         (node.fwd, node.bwd),
                         expected,
                         "path {}..={}, vertex {}",
-                        a, b, v
+                        a,
+                        b,
+                        v
                     );
                 }
             }
@@ -604,7 +608,9 @@ mod test {
                         (node.fwd, node.bwd),
                         expected,
                         "path {}..={}, vertex {}",
-                        a, b, v
+                        a,
+                        b,
+                        v
                     );
                 }
             }

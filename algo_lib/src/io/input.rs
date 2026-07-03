@@ -52,28 +52,20 @@ impl Input {
     }
 
     pub fn stdin() -> Self {
-        Self {
-            input: InputSource::Stdin(std::io::stdin()),
-            buf: vec![0; Self::DEFAULT_BUF_SIZE],
-            at: 0,
-            buf_read: 0,
-            eol: true,
-        }
+        Self::new(InputSource::Stdin(std::io::stdin()))
     }
 
     pub fn file(file: File) -> Self {
-        Self {
-            input: InputSource::File(file),
-            buf: vec![0; Self::DEFAULT_BUF_SIZE],
-            at: 0,
-            buf_read: 0,
-            eol: true,
-        }
+        Self::new(InputSource::File(file))
     }
 
     pub fn delegate(reader: impl Read + Send + 'static) -> Self {
+        Self::new(InputSource::Delegate(Box::new(reader)))
+    }
+
+    fn new(input: InputSource) -> Self {
         Self {
-            input: InputSource::Delegate(Box::new(reader)),
+            input,
             buf: vec![0; Self::DEFAULT_BUF_SIZE],
             at: 0,
             buf_read: 0,
@@ -239,13 +231,15 @@ impl Read for Input {
 }
 
 macro_rules! read_integer {
-    ($($t:ident)+) => {$(
+    // `$signed` is a literal, so the sign handling const-folds away for
+    // unsigned types, keeping their hot loop free of the `sgn` branch.
+    ($signed: literal $($t:ident)+) => {$(
         impl Readable for $t {
             fn read(input: &mut Input) -> Self {
                 input.skip_whitespace();
                 let mut c = input.get().unwrap();
                 let sgn = match c {
-                    b'-' => {
+                    b'-' if $signed => {
                         c = input.get().unwrap();
                         true
                     }
@@ -260,20 +254,15 @@ macro_rules! read_integer {
                     assert!(c.is_ascii_digit());
                     res *= 10;
                     let d = (c - b'0') as $t;
-                    if sgn {
+                    if $signed && sgn {
                         res -= d;
                     } else {
                         res += d;
                     }
                     match input.get() {
                         None => break,
-                        Some(ch) => {
-                            if ch.is_ascii_whitespace() {
-                                break;
-                            } else {
-                                c = ch;
-                            }
-                        }
+                        Some(ch) if ch.is_ascii_whitespace() => break,
+                        Some(ch) => c = ch,
                     }
                 }
                 res
@@ -282,40 +271,8 @@ macro_rules! read_integer {
     )+};
 }
 
-macro_rules! read_unsigned {
-    ($($t:ident)+) => {$(
-        impl Readable for $t {
-            fn read(input: &mut Input) -> Self {
-                input.skip_whitespace();
-                let mut c = input.get().unwrap();
-                if c == b'+' {
-                    c = input.get().unwrap();
-                }
-                let mut res = 0;
-                loop {
-                    assert!(c.is_ascii_digit());
-                    res *= 10;
-                    let d = (c - b'0') as $t;
-                    res += d;
-                    match input.get() {
-                        None => break,
-                        Some(ch) => {
-                            if ch.is_ascii_whitespace() {
-                                break;
-                            } else {
-                                c = ch;
-                            }
-                        }
-                    }
-                }
-                res
-            }
-        }
-    )+};
-}
-
-read_integer!(i8 i16 i32 i64 i128 isize);
-read_unsigned!( u16 u32 u64 u128 usize);
+read_integer!(true i8 i16 i32 i64 i128 isize);
+read_integer!(false u16 u32 u64 u128 usize);
 
 macro_rules! tuple_readable {
     ($($name:ident)+) => {

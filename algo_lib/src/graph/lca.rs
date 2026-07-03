@@ -61,13 +61,14 @@ impl LCA {
     pub fn nth_ancestor(&self, mut vert: usize, index: usize) -> Option<usize> {
         self.build_steps();
         unsafe {
-            let height = self.ancestors.as_ref().as_ref().unwrap().d1();
+            let ancestors = self.ancestors.as_ref().as_ref().unwrap();
+            let height = ancestors.d1();
             if index >= (1 << height) {
                 return None;
             }
             for i in 0..height {
                 if index.is_set(i) {
-                    let pred = self.ancestors.as_ref().as_ref().unwrap()[(i, vert)];
+                    let pred = ancestors[(i, vert)];
                     if pred == -1 {
                         return None;
                     }

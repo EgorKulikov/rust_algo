@@ -147,11 +147,11 @@ impl<T: Ord, V> TreapMap<T, V> {
     }
 
     pub fn less(&mut self, key: &T) -> usize {
-        self.root.range(..key).size()
+        self.lower_bound(key)
     }
 
     pub fn less_or_eq(&mut self, key: &T) -> usize {
-        self.root.range(..=key).size()
+        self.upper_bound(key)
     }
 
     fn node_to_pair(node: &MapPayload<T, V>) -> (&T, &V) {

@@ -86,21 +86,18 @@ impl Output<'_> {
 
     pub fn flush(&mut self) {
         if self.at != 0 {
-            match &mut self.output {
-                OutputDest::Stdout(stdout) => {
-                    stdout.write_all(&self.buf[..self.at]).unwrap();
-                    stdout.flush().unwrap();
+            let dest: &mut dyn Write = match &mut self.output {
+                OutputDest::Stdout(stdout) => stdout,
+                OutputDest::File(file) => file,
+                OutputDest::Delegate(delegate) => delegate,
+                OutputDest::Buf(buf) => {
+                    buf.extend_from_slice(&self.buf[..self.at]);
+                    self.at = 0;
+                    return;
                 }
-                OutputDest::File(file) => {
-                    file.write_all(&self.buf[..self.at]).unwrap();
-                    file.flush().unwrap();
-                }
-                OutputDest::Buf(buf) => buf.extend_from_slice(&self.buf[..self.at]),
-                OutputDest::Delegate(delegate) => {
-                    delegate.write_all(&self.buf[..self.at]).unwrap();
-                    delegate.flush().unwrap();
-                }
-            }
+            };
+            dest.write_all(&self.buf[..self.at]).unwrap();
+            dest.flush().unwrap();
             self.at = 0;
         }
     }

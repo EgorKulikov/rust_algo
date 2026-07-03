@@ -127,17 +127,17 @@ impl<P: Payload> Node<P> {
         if self.left.size != 0 {
             self.left.heapify();
             if self.left.priority > self.priority {
-                let left_priority = self.left.priority;
-                self.left.priority = self.priority;
-                self.priority = left_priority;
+                let p = self.priority;
+                self.priority = self.left.priority;
+                self.left.priority = p;
             }
         }
         if self.right.size != 0 {
             self.right.heapify();
             if self.right.priority > self.priority {
-                let right_priority = self.right.priority;
-                self.right.priority = self.priority;
-                self.priority = right_priority;
+                let p = self.priority;
+                self.priority = self.right.priority;
+                self.right.priority = p;
             }
         }
     }
@@ -570,18 +570,14 @@ impl<P: Payload> Tree<P> {
     }
 
     pub fn with_gen(n: usize, f: impl FnMut(usize) -> P) -> Self {
-        Self::gen_impl(n, f)
+        Tree::Whole {
+            root: Node::with_gen(n, f),
+        }
     }
 
     pub fn single(p: P) -> Self {
         Tree::Whole {
             root: TreapNode::new(p),
-        }
-    }
-
-    fn gen_impl(n: usize, f: impl FnMut(usize) -> P) -> Self {
-        Tree::Whole {
-            root: Node::with_gen(n, f),
         }
     }
 

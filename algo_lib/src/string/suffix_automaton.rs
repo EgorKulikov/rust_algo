@@ -11,43 +11,31 @@ pub trait EdgeMap: Clone {
     fn iter(&self) -> impl Iterator<Item = (Self::Key, usize)> + '_;
 }
 
-impl<T: Ord + Copy> EdgeMap for BTreeMap<T, usize> {
-    type Key = T;
-    fn new() -> Self {
-        BTreeMap::new()
-    }
-    fn get(&self, key: &T) -> Option<usize> {
-        BTreeMap::get(self, key).copied()
-    }
-    fn contains_key(&self, key: &T) -> bool {
-        BTreeMap::contains_key(self, key)
-    }
-    fn insert(&mut self, key: T, value: usize) {
-        BTreeMap::insert(self, key, value);
-    }
-    fn iter(&self) -> impl Iterator<Item = (T, usize)> + '_ {
-        BTreeMap::iter(self).map(|(&k, &v)| (k, v))
-    }
+macro_rules! edge_map_impl {
+    ($map: ident, [$($bound: tt)+], $new: expr) => {
+        impl<T: $($bound)+ + Copy> EdgeMap for $map<T, usize> {
+            type Key = T;
+            fn new() -> Self {
+                $new
+            }
+            fn get(&self, key: &T) -> Option<usize> {
+                $map::get(self, key).copied()
+            }
+            fn contains_key(&self, key: &T) -> bool {
+                $map::contains_key(self, key)
+            }
+            fn insert(&mut self, key: T, value: usize) {
+                $map::insert(self, key, value);
+            }
+            fn iter(&self) -> impl Iterator<Item = (T, usize)> + '_ {
+                $map::iter(self).map(|(&k, &v)| (k, v))
+            }
+        }
+    };
 }
 
-impl<T: Hash + Eq + Copy> EdgeMap for FxHashMap<T, usize> {
-    type Key = T;
-    fn new() -> Self {
-        FxHashMap::default()
-    }
-    fn get(&self, key: &T) -> Option<usize> {
-        FxHashMap::get(self, key).copied()
-    }
-    fn contains_key(&self, key: &T) -> bool {
-        FxHashMap::contains_key(self, key)
-    }
-    fn insert(&mut self, key: T, value: usize) {
-        FxHashMap::insert(self, key, value);
-    }
-    fn iter(&self) -> impl Iterator<Item = (T, usize)> + '_ {
-        FxHashMap::iter(self).map(|(&k, &v)| (k, v))
-    }
-}
+edge_map_impl!(BTreeMap, [Ord], BTreeMap::new());
+edge_map_impl!(FxHashMap, [Hash + Eq], FxHashMap::default());
 
 pub type SuffixAutomatonTree<T> = SuffixAutomaton<BTreeMap<T, usize>>;
 pub type SuffixAutomatonHash<T> = SuffixAutomaton<FxHashMap<T, usize>>;

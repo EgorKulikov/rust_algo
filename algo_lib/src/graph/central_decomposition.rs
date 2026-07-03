@@ -92,10 +92,7 @@ mod test {
     fn centroid_caterpillar() {
         // Caterpillar: spine 0-1-2-3-4, with leaves 5,6 on node 2
         // Total 7 nodes. Centroid should be 2.
-        let graph = Graph::with_biedges(
-            7,
-            &[(0, 1), (1, 2), (2, 3), (3, 4), (2, 5), (2, 6)],
-        );
+        let graph = Graph::with_biedges(7, &[(0, 1), (1, 2), (2, 3), (3, 4), (2, 5), (2, 6)]);
         let mut first_centroid = None;
         graph.decompose(|v, _closed| {
             if first_centroid.is_none() {
@@ -159,7 +156,9 @@ mod test {
                 assert!(
                     max_subtree <= n / 2,
                     "centroid {} has subtree of size {}, exceeds n/2={}",
-                    v, max_subtree, n / 2
+                    v,
+                    max_subtree,
+                    n / 2
                 );
             }
         });

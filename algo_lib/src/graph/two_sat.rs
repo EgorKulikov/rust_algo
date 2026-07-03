@@ -82,14 +82,11 @@ impl TwoSat {
 
     pub fn solve(&self) -> Option<Vec<bool>> {
         let color = self.graph.strongly_connected_component_colors();
-        let n = self.n;
-        for i in 0..n {
+        let mut result = vec![false; self.n];
+        for i in 0..self.n {
             if color[i * 2] == color[i * 2 + 1] {
                 return None;
             }
-        }
-        let mut result = vec![false; n];
-        for i in 0..n {
             result[i] = color[i * 2] < color[i * 2 + 1];
         }
         Some(result)

@@ -108,7 +108,10 @@ mod test {
         let l1: Line<i64> = Line::new(1, 0, 2);
         // same line scaled: 2*x + 0*y + 4 = 0
         let l2: Line<i64> = Line::new(2, 0, 4);
-        assert!(l1 == l2, "same vertical line at different scale should be equal");
+        assert!(
+            l1 == l2,
+            "same vertical line at different scale should be equal"
+        );
     }
 
     #[test]
@@ -124,7 +127,10 @@ mod test {
     fn horizontal_lines_same() {
         let l1: Line<i64> = Line::new(0, 1, 3);
         let l2: Line<i64> = Line::new(0, 2, 6);
-        assert!(l1 == l2, "same horizontal line at different scale should be equal");
+        assert!(
+            l1 == l2,
+            "same horizontal line at different scale should be equal"
+        );
     }
 
     #[test]
@@ -151,6 +157,9 @@ mod test {
         let l1: Line<i64> = Line::new(2, 3, 5);
         // 2x + 3y + 7 = 0
         let l2: Line<i64> = Line::new(2, 3, 7);
-        assert!(l1 != l2, "parallel lines with different offsets should not be equal");
+        assert!(
+            l1 != l2,
+            "parallel lines with different offsets should not be equal"
+        );
     }
 }

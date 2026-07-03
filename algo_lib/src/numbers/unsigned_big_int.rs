@@ -145,9 +145,13 @@ impl<'a> SubAssign<&'a Self> for UBigInt {
                 at += 1;
             }
         }
-        while !self.z.is_empty() && *self.z.last().unwrap() == 0 {
-            self.z.pop();
-        }
+        trim_zeroes(&mut self.z);
+    }
+}
+
+fn trim_zeroes(z: &mut Vec<i32>) {
+    while z.last() == Some(&0) {
+        z.pop();
     }
 }
 
@@ -213,13 +217,7 @@ impl<'a> Mul<&'a UBigInt> for &UBigInt {
             res.push((carry % BASE as i128) as i32);
             carry /= BASE as i128;
         }
-        while let Some(d) = res.last() {
-            if *d == 0 {
-                res.pop();
-            } else {
-                break;
-            }
-        }
+        trim_zeroes(&mut res);
         UBigInt { z: res }
     }
 }
@@ -248,13 +246,7 @@ impl DivAssign<i32> for UBigInt {
             *i = (val / rhs) as i32;
             carry = (val % rhs) * base;
         }
-        while let Some(d) = self.z.last() {
-            if *d == 0 {
-                self.z.pop();
-            } else {
-                break;
-            }
-        }
+        trim_zeroes(&mut self.z);
     }
 }
 

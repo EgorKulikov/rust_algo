@@ -11,53 +11,23 @@ pub trait One {
     fn one() -> Self;
 }
 
-pub trait AdditionMonoid: Add<Output = Self> + AddAssign + Zero + Eq + Sized {}
-
-impl<T: Add<Output = Self> + AddAssign + Zero + Eq> AdditionMonoid for T {}
-
-pub trait AdditionMonoidWithSub: AdditionMonoid + Sub<Output = Self> + SubAssign {}
-
-impl<T: AdditionMonoid + Sub<Output = Self> + SubAssign> AdditionMonoidWithSub for T {}
-
-pub trait AdditionGroup: AdditionMonoidWithSub + Neg<Output = Self> {}
-
-impl<T: AdditionMonoidWithSub + Neg<Output = Self>> AdditionGroup for T {}
-
-pub trait MultiplicationMonoid: Mul<Output = Self> + MulAssign + One + Eq + Sized {}
-
-impl<T: Mul<Output = Self> + MulAssign + One + Eq> MultiplicationMonoid for T {}
-
-pub trait IntegerMultiplicationMonoid:
-    MultiplicationMonoid + Div<Output = Self> + Rem<Output = Self> + DivAssign + RemAssign
-{
+// Defines a marker trait as an alias for its bounds, with a blanket impl.
+macro_rules! alias {
+    ($name: ident: $($bound: tt)+) => {
+        pub trait $name: $($bound)+ {}
+        impl<T: $($bound)+> $name for T {}
+    };
 }
 
-impl<T: MultiplicationMonoid + Div<Output = Self> + Rem<Output = Self> + DivAssign + RemAssign>
-    IntegerMultiplicationMonoid for T
-{
-}
-
-pub trait MultiplicationGroup:
-    MultiplicationMonoid + Div<Output = Self> + DivAssign + Invertible<Output = Self>
-{
-}
-
-impl<T: MultiplicationMonoid + Div<Output = Self> + DivAssign + Invertible<Output = Self>>
-    MultiplicationGroup for T
-{
-}
-
-pub trait SemiRing: AdditionMonoid + MultiplicationMonoid {}
-
-impl<T: AdditionMonoid + MultiplicationMonoid> SemiRing for T {}
-
-pub trait SemiRingWithSub: AdditionMonoidWithSub + SemiRing {}
-
-impl<T: AdditionMonoidWithSub + SemiRing> SemiRingWithSub for T {}
-
-pub trait Ring: SemiRing + AdditionGroup {}
-
-impl<T: SemiRing + AdditionGroup> Ring for T {}
+alias!(AdditionMonoid: Add<Output = Self> + AddAssign + Zero + Eq + Sized);
+alias!(AdditionMonoidWithSub: AdditionMonoid + Sub<Output = Self> + SubAssign);
+alias!(AdditionGroup: AdditionMonoidWithSub + Neg<Output = Self>);
+alias!(MultiplicationMonoid: Mul<Output = Self> + MulAssign + One + Eq + Sized);
+alias!(IntegerMultiplicationMonoid: MultiplicationMonoid + Div<Output = Self> + Rem<Output = Self> + DivAssign + RemAssign);
+alias!(MultiplicationGroup: MultiplicationMonoid + Div<Output = Self> + DivAssign + Invertible<Output = Self>);
+alias!(SemiRing: AdditionMonoid + MultiplicationMonoid);
+alias!(SemiRingWithSub: AdditionMonoidWithSub + SemiRing);
+alias!(Ring: SemiRing + AdditionGroup);
 
 pub trait IntegerSemiRing: SemiRing + IntegerMultiplicationMonoid {
     fn ten() -> Self {
@@ -76,17 +46,9 @@ pub trait IntegerSemiRing: SemiRing + IntegerMultiplicationMonoid {
 
 impl<T: SemiRing + IntegerMultiplicationMonoid> IntegerSemiRing for T {}
 
-pub trait IntegerSemiRingWithSub: SemiRingWithSub + IntegerSemiRing {}
-
-impl<T: SemiRingWithSub + IntegerSemiRing> IntegerSemiRingWithSub for T {}
-
-pub trait IntegerRing: IntegerSemiRing + Ring {}
-
-impl<T: IntegerSemiRing + Ring> IntegerRing for T {}
-
-pub trait Field: Ring + MultiplicationGroup {}
-
-impl<T: Ring + MultiplicationGroup> Field for T {}
+alias!(IntegerSemiRingWithSub: SemiRingWithSub + IntegerSemiRing);
+alias!(IntegerRing: IntegerSemiRing + Ring);
+alias!(Field: Ring + MultiplicationGroup);
 
 macro_rules! zero_one_integer_impl {
     ($($t: ident)+) => {$(

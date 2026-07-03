@@ -4,50 +4,22 @@ pub trait Detuple {
     fn detuple(self) -> Self::Res;
 }
 
-impl<A, B, C, D> Detuple for Vec<(A, B, C, D)> {
-    type Res = (Vec<A>, Vec<B>, Vec<C>, Vec<D>);
+macro_rules! detuple_impl {
+    ($($t: ident $var: ident $val: ident),+) => {
+        impl<$($t),+> Detuple for Vec<($($t),+)> {
+            type Res = ($(Vec<$t>),+);
 
-    fn detuple(self) -> Self::Res {
-        let mut a = Vec::with_capacity(self.len());
-        let mut b = Vec::with_capacity(self.len());
-        let mut c = Vec::with_capacity(self.len());
-        let mut d = Vec::with_capacity(self.len());
-        for (aa, bb, cc, dd) in self {
-            a.push(aa);
-            b.push(bb);
-            c.push(cc);
-            d.push(dd);
+            fn detuple(self) -> Self::Res {
+                $(let mut $var = Vec::with_capacity(self.len());)+
+                for ($($val),+) in self {
+                    $($var.push($val);)+
+                }
+                ($($var),+)
+            }
         }
-        (a, b, c, d)
-    }
+    };
 }
 
-impl<A, B, C> Detuple for Vec<(A, B, C)> {
-    type Res = (Vec<A>, Vec<B>, Vec<C>);
-
-    fn detuple(self) -> Self::Res {
-        let mut a = Vec::with_capacity(self.len());
-        let mut b = Vec::with_capacity(self.len());
-        let mut c = Vec::with_capacity(self.len());
-        for (aa, bb, cc) in self {
-            a.push(aa);
-            b.push(bb);
-            c.push(cc);
-        }
-        (a, b, c)
-    }
-}
-
-impl<A, B> Detuple for Vec<(A, B)> {
-    type Res = (Vec<A>, Vec<B>);
-
-    fn detuple(self) -> Self::Res {
-        let mut a = Vec::with_capacity(self.len());
-        let mut b = Vec::with_capacity(self.len());
-        for (aa, bb) in self {
-            a.push(aa);
-            b.push(bb);
-        }
-        (a, b)
-    }
-}
+detuple_impl!(A a aa, B b bb);
+detuple_impl!(A a aa, B b bb, C c cc);
+detuple_impl!(A a aa, B b bb, C c cc, D d dd);

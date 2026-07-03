@@ -92,9 +92,7 @@ impl BitSet {
 
     pub fn copy_to(&self, s: &mut Self) {
         assert_eq!(self.len(), s.len());
-        for i in 0..self.data.len() {
-            s.data[i] = self.data[i];
-        }
+        s.data.copy_from_slice(&self.data);
     }
 
     pub fn is_subset(&self, other: &Self) -> bool {
@@ -211,32 +209,22 @@ impl<'a> IntoIterator for &'a BitSet {
     }
 }
 
-impl BitOrAssign<&BitSet> for BitSet {
-    fn bitor_assign(&mut self, rhs: &BitSet) {
-        assert_eq!(self.len, rhs.len);
-        for (i, &j) in self.data.iter_mut().zip(rhs.data.iter()) {
-            *i |= j;
+macro_rules! bit_assign_impl {
+    ($trait: ident, $method: ident, $op: tt) => {
+        impl $trait<&BitSet> for BitSet {
+            fn $method(&mut self, rhs: &BitSet) {
+                assert_eq!(self.len, rhs.len);
+                for (i, &j) in self.data.iter_mut().zip(rhs.data.iter()) {
+                    *i $op j;
+                }
+            }
         }
-    }
+    };
 }
 
-impl BitAndAssign<&BitSet> for BitSet {
-    fn bitand_assign(&mut self, rhs: &BitSet) {
-        assert_eq!(self.len, rhs.len);
-        for (i, &j) in self.data.iter_mut().zip(rhs.data.iter()) {
-            *i &= j;
-        }
-    }
-}
-
-impl BitXorAssign<&BitSet> for BitSet {
-    fn bitxor_assign(&mut self, rhs: &BitSet) {
-        assert_eq!(self.len, rhs.len);
-        for (i, &j) in self.data.iter_mut().zip(rhs.data.iter()) {
-            *i ^= j;
-        }
-    }
-}
+bit_assign_impl!(BitOrAssign, bitor_assign, |=);
+bit_assign_impl!(BitAndAssign, bitand_assign, &=);
+bit_assign_impl!(BitXorAssign, bitxor_assign, ^=);
 
 impl ShlAssign<usize> for BitSet {
     fn shl_assign(&mut self, rhs: usize) {

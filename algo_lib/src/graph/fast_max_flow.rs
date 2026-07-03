@@ -142,8 +142,9 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> FastMa
                 while let Some(cur_id) = queue.pop() {
                     if next_edge[cur_id] != u32::MAX {
                         let eid = next_edge[cur_id];
-                        let push_data =
-                            self.edge_at(cur_id, eid).push_flow(nodes[cur_id].with_payload(|p| p.pushed));
+                        let push_data = self
+                            .edge_at(cur_id, eid)
+                            .push_flow(nodes[cur_id].with_payload(|p| p.pushed));
                         self.push_flow(push_data);
                         nodes[cur_id].cut();
                         next_edge[cur_id] = self.step_edge(cur_id, eid);
@@ -179,8 +180,9 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> FastMa
             for i in 0..n {
                 if next_edge[i] != u32::MAX {
                     let eid = next_edge[i];
-                    let push_data =
-                        self.edge_at(i, eid).push_flow(nodes[i].with_payload(|p| p.pushed));
+                    let push_data = self
+                        .edge_at(i, eid)
+                        .push_flow(nodes[i].with_payload(|p| p.pushed));
                     self.push_flow(push_data);
                     nodes[i].cut();
                     nodes[i].with_payload_mut(|p| {

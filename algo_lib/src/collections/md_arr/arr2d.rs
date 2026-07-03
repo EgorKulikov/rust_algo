@@ -108,44 +108,22 @@ impl<T> Arr2d<T> {
     }
 
     pub fn rotate_clockwise(self) -> Self {
-        unsafe {
-            let d1 = self.d1;
-            let d2 = self.d2;
-            let mut res = MaybeUninit::new(Vec::with_capacity(d1 * d2));
-            (*res.as_mut_ptr()).set_len(d1 * d2);
-            for (id, element) in self.into_iter().enumerate() {
-                let (i, j) = (id / d2, id % d2);
-                let ptr: *mut T = (*res.as_mut_ptr()).as_mut_ptr();
-                ptr.add(j * d1 + d1 - i - 1).write(element);
-            }
-            Self {
-                d1: d2,
-                d2: d1,
-                data: res.assume_init(),
-            }
-        }
+        let d1 = self.d1;
+        self.remap(move |i, j| j * d1 + d1 - i - 1)
     }
 
     pub fn rotate_counterclockwise(self) -> Self {
-        unsafe {
-            let d1 = self.d1;
-            let d2 = self.d2;
-            let mut res = MaybeUninit::new(Vec::with_capacity(d1 * d2));
-            (*res.as_mut_ptr()).set_len(d1 * d2);
-            for (id, element) in self.into_iter().enumerate() {
-                let (i, j) = (id / d2, id % d2);
-                let ptr: *mut T = (*res.as_mut_ptr()).as_mut_ptr();
-                ptr.add((d2 - j - 1) * d1 + i).write(element);
-            }
-            Self {
-                d1: d2,
-                d2: d1,
-                data: res.assume_init(),
-            }
-        }
+        let (d1, d2) = (self.d1, self.d2);
+        self.remap(move |i, j| (d2 - j - 1) * d1 + i)
     }
 
     pub fn transpose(self) -> Self {
+        let d1 = self.d1;
+        self.remap(move |i, j| j * d1 + i)
+    }
+
+    // Moves every element to `to(i, j)` in a transposed-shape array.
+    fn remap(self, to: impl Fn(usize, usize) -> usize) -> Self {
         unsafe {
             let d1 = self.d1;
             let d2 = self.d2;
@@ -154,7 +132,7 @@ impl<T> Arr2d<T> {
             for (id, element) in self.into_iter().enumerate() {
                 let (i, j) = (id / d2, id % d2);
                 let ptr: *mut T = (*res.as_mut_ptr()).as_mut_ptr();
-                ptr.add(j * d1 + i).write(element);
+                ptr.add(to(i, j)).write(element);
             }
             Self {
                 d1: d2,

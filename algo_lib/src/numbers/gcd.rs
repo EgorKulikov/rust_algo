@@ -47,22 +47,45 @@ mod test {
                 // Normalize x to [0, m)
                 let x = ((x % m) + m) % m;
                 assert_eq!(
-                    x % n1, ((a1 % n1) + n1) % n1,
+                    x % n1,
+                    ((a1 % n1) + n1) % n1,
                     "remainder({},{},{},{})={} but {} mod {} = {} != {}",
-                    a1, n1, a2, n2, x, x, n1, x % n1, ((a1 % n1) + n1) % n1,
+                    a1,
+                    n1,
+                    a2,
+                    n2,
+                    x,
+                    x,
+                    n1,
+                    x % n1,
+                    ((a1 % n1) + n1) % n1,
                 );
                 assert_eq!(
-                    x % n2, ((a2 % n2) + n2) % n2,
+                    x % n2,
+                    ((a2 % n2) + n2) % n2,
                     "remainder({},{},{},{})={} but {} mod {} = {} != {}",
-                    a1, n1, a2, n2, x, x, n2, x % n2, ((a2 % n2) + n2) % n2,
+                    a1,
+                    n1,
+                    a2,
+                    n2,
+                    x,
+                    x,
+                    n2,
+                    x % n2,
+                    ((a2 % n2) + n2) % n2,
                 );
             }
             None => {
                 let d = gcd(n1, n2);
                 assert_ne!(
-                    (a2 - a1) % d, 0,
+                    (a2 - a1) % d,
+                    0,
                     "remainder({},{},{},{}) returned None but should be solvable (gcd={})",
-                    a1, n1, a2, n2, d,
+                    a1,
+                    n1,
+                    a2,
+                    n2,
+                    d,
                 );
             }
         }

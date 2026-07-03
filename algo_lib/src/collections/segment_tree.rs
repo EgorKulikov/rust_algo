@@ -111,32 +111,29 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
     }
 
     pub fn with_gen(n: usize, mut g: impl FnMut(usize) -> Node) -> Self {
-        if n == 0 {
-            return Self {
-                n,
-                nodes: vec![Node::default()],
-            };
-        }
-        let mut res = Self {
-            n,
-            nodes: Vec::with_capacity(2 * n - 1),
-        };
-        res.init_impl(
-            2 * n - 2,
-            0,
-            n,
-            &mut |left, right, left_node, right_node| {
-                if left + 1 == right {
-                    g(left)
-                } else {
-                    Node::join(left_node.unwrap(), right_node.unwrap())
-                }
-            },
-        );
-        res
+        Self::build(n, &mut |left, right, left_node, right_node| {
+            if left + 1 == right {
+                g(left)
+            } else {
+                Node::join(left_node.unwrap(), right_node.unwrap())
+            }
+        })
     }
 
     pub fn with_gen_full(n: usize, f: impl Fn(usize, usize) -> Node) -> Self {
+        Self::build(n, &mut |left, right, left_node, right_node| {
+            let mut res = f(left, right);
+            if let Some(left_node) = left_node {
+                res.update(left_node, right_node.unwrap());
+            }
+            res
+        })
+    }
+
+    fn build(
+        n: usize,
+        f: &mut impl FnMut(usize, usize, Option<&Node>, Option<&Node>) -> Node,
+    ) -> Self {
         if n == 0 {
             return Self {
                 n,
@@ -147,18 +144,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
             n,
             nodes: Vec::with_capacity(2 * n - 1),
         };
-        res.init_impl(
-            2 * n - 2,
-            0,
-            n,
-            &mut |left, right, left_node, right_node| {
-                let mut res = f(left, right);
-                if let Some(left_node) = left_node {
-                    res.update(left_node, right_node.unwrap());
-                }
-                res
-            },
-        );
+        res.init_impl(2 * n - 2, 0, n, f);
         res
     }
 

@@ -358,19 +358,11 @@ impl<P: Payload> LinkCutNode<P> {
         let r1 = u.find_root();
         let lca = v.access();
         let r2 = v.find_root();
-        if r1 == r2 {
-            Some(lca)
-        } else {
-            None
-        }
+        (r1 == r2).then_some(lca)
     }
 
     pub fn parent(self) -> Option<Self> {
-        if self.lc_parent.size != 0 {
-            Some(self.lc_parent)
-        } else {
-            None
-        }
+        (self.lc_parent.size != 0).then_some(self.lc_parent)
     }
 
     fn lock() {

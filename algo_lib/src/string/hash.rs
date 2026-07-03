@@ -129,13 +129,11 @@ impl StringHash for SimpleHash {
 
 impl StringHash for &SimpleHash {
     fn len(&self) -> usize {
-        self.hash.len() - 1
+        (**self).len()
     }
 
     fn hash<R: RangeBounds<usize>>(&self, r: R) -> u64 {
-        let (from, to) = convert_bounds(r, self.len());
-        let res = (self.hash[to] - self.hash[from]) * inv_power(from);
-        res.val()
+        (**self).hash(r)
     }
 }
 

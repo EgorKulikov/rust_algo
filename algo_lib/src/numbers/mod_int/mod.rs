@@ -41,9 +41,7 @@ macro_rules! mod_int {
                 debug_assert!(n < 2 * V::val());
                 n - (n >= V::val()) as $t * V::val()
             }
-        }
 
-        impl<V: Value<$t>> $name<V> {
             pub fn new(n: $t) -> Self {
                 unsafe { Self::unchecked_new(n % (V::val())) }
             }
@@ -56,12 +54,18 @@ macro_rules! mod_int {
                 }
             }
 
+            pub fn new_wide(n: $w) -> Self {
+                unsafe {
+                    Self::unchecked_new(Self::maybe_subtract_mod(
+                        (n % V::val() as $w + V::val() as $w) as $t,
+                    ))
+                }
+            }
+
             pub fn val(&self) -> $t {
                 self.n
             }
-        }
 
-        impl<V: Value<$t>> $name<V> {
             pub fn log(&self, alpha: Self) -> $t {
                 let mut base = FxHashMap::default();
                 let mut exp = 0;
@@ -85,16 +89,6 @@ macro_rules! mod_int {
                     }
                     pow *= step;
                     i += 1;
-                }
-            }
-        }
-
-        impl<V: Value<$t>> $name<V> {
-            pub fn new_wide(n: $w) -> Self {
-                unsafe {
-                    Self::unchecked_new(Self::maybe_subtract_mod(
-                        (n % V::val() as $w + V::val() as $w) as $t,
-                    ))
                 }
             }
         }

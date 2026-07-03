@@ -61,65 +61,31 @@ impl Ord for Real {
     }
 }
 
-impl<T: IntoReal> AddAssign<T> for Real {
-    fn add_assign(&mut self, rhs: T) {
-        self.0 += rhs.into_real().0;
-    }
+macro_rules! real_op_impl {
+    ($($op: ident $method: ident $assign_op: ident $assign_method: ident $sign: tt),+) => {$(
+        impl<T: IntoReal> $assign_op<T> for Real {
+            fn $assign_method(&mut self, rhs: T) {
+                self.0 $sign rhs.into_real().0;
+            }
+        }
+
+        impl<T: IntoReal> $op<T> for Real {
+            type Output = Self;
+
+            fn $method(mut self, rhs: T) -> Self::Output {
+                self.$assign_method(rhs);
+                self
+            }
+        }
+    )+};
 }
 
-impl<T: IntoReal> Add<T> for Real {
-    type Output = Self;
-
-    fn add(mut self, rhs: T) -> Self::Output {
-        self += rhs;
-        self
-    }
-}
-
-impl<T: IntoReal> SubAssign<T> for Real {
-    fn sub_assign(&mut self, rhs: T) {
-        self.0 -= rhs.into_real().0;
-    }
-}
-
-impl<T: IntoReal> Sub<T> for Real {
-    type Output = Self;
-
-    fn sub(mut self, rhs: T) -> Self::Output {
-        self -= rhs;
-        self
-    }
-}
-
-impl<T: IntoReal> MulAssign<T> for Real {
-    fn mul_assign(&mut self, rhs: T) {
-        self.0 *= rhs.into_real().0;
-    }
-}
-
-impl<T: IntoReal> Mul<T> for Real {
-    type Output = Self;
-
-    fn mul(mut self, rhs: T) -> Self::Output {
-        self *= rhs;
-        self
-    }
-}
-
-impl<T: IntoReal> DivAssign<T> for Real {
-    fn div_assign(&mut self, rhs: T) {
-        self.0 /= rhs.into_real().0;
-    }
-}
-
-impl<T: IntoReal> Div<T> for Real {
-    type Output = Self;
-
-    fn div(mut self, rhs: T) -> Self::Output {
-        self /= rhs;
-        self
-    }
-}
+real_op_impl!(
+    Add add AddAssign add_assign +=,
+    Sub sub SubAssign sub_assign -=,
+    Mul mul MulAssign mul_assign *=,
+    Div div DivAssign div_assign /=
+);
 
 impl Neg for Real {
     type Output = Self;
@@ -145,28 +111,19 @@ thread_local! {
     static EPSILON: Cell<Real> = const { Cell::new(Real(1e-9)) };
 }
 
+// Forwards unary methods to the underlying f64.
+macro_rules! real_fn_impl {
+    ($($f: ident)+) => {$(
+        pub fn $f(self) -> Self {
+            Self(self.0.$f())
+        }
+    )+};
+}
+
 impl Real {
     pub const PI: Self = Self(std::f64::consts::PI);
 
-    pub fn abs(self) -> Self {
-        Self(self.0.abs())
-    }
-
-    pub fn sqrt(self) -> Self {
-        Self(self.0.sqrt())
-    }
-
-    pub fn sin(self) -> Self {
-        Self(self.0.sin())
-    }
-
-    pub fn cos(self) -> Self {
-        Self(self.0.cos())
-    }
-
-    pub fn tan(self) -> Self {
-        Self(self.0.tan())
-    }
+    real_fn_impl!(abs sqrt sin cos tan);
 
     pub fn hypot(x: Self, y: Self) -> Self {
         Self(f64::hypot(x.0, y.0))

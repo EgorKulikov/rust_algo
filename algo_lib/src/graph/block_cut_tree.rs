@@ -94,13 +94,11 @@ impl<E: EdgeTrait> BlockCutTreeBuild for Graph<E> {
         // First, assign node IDs to cut vertices.
         let mut vertex_node = vec![usize::MAX; n];
         let mut node_count = 0;
-        let mut is_cut = BitSet::new(n + blocks.len());
         let mut node_vertices: Vec<Vec<usize>> = Vec::new();
 
         for v in 0..n {
             if is_cut_orig[v] {
                 vertex_node[v] = node_count;
-                is_cut.set(node_count);
                 node_vertices.push(vec![v]);
                 node_count += 1;
             }
@@ -122,7 +120,7 @@ impl<E: EdgeTrait> BlockCutTreeBuild for Graph<E> {
             }
         }
 
-        is_cut = BitSet::new(node_count);
+        let mut is_cut = BitSet::new(node_count);
         for v in 0..n {
             if is_cut_orig[v] {
                 is_cut.set(vertex_node[v]);

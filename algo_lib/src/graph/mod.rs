@@ -605,45 +605,35 @@ impl<'a, E: EdgeTrait> Iterator for AdjIterMut<'a, E> {
     }
 }
 
-impl Graph<Edge<()>> {
-    pub fn with_edges(n: usize, edges: &[(usize, usize)]) -> Self {
-        let mut graph = Self::new_linked(n);
-        for &(from, to) in edges {
-            graph.add_edge(Edge::new(from, to));
+macro_rules! with_edges_impl {
+    ($edge: ident, $name: ident) => {
+        impl Graph<$edge<()>> {
+            pub fn $name(n: usize, edges: &[(usize, usize)]) -> Self {
+                let mut graph = Self::new_linked(n);
+                for &(from, to) in edges {
+                    graph.add_edge($edge::new(from, to));
+                }
+                graph
+            }
         }
-        graph
-    }
+    };
+    ($edge: ident, $name: ident, payload) => {
+        impl<P: Clone> Graph<$edge<P>> {
+            pub fn $name(n: usize, edges: &[(usize, usize, P)]) -> Self {
+                let mut graph = Self::new_linked(n);
+                for (from, to, p) in edges.iter() {
+                    graph.add_edge($edge::with_payload(*from, *to, p.clone()));
+                }
+                graph
+            }
+        }
+    };
 }
 
-impl<P: Clone> Graph<Edge<P>> {
-    pub fn with_edges_with_payload(n: usize, edges: &[(usize, usize, P)]) -> Self {
-        let mut graph = Self::new_linked(n);
-        for (from, to, p) in edges.iter() {
-            graph.add_edge(Edge::with_payload(*from, *to, p.clone()));
-        }
-        graph
-    }
-}
-
-impl Graph<BiEdge<()>> {
-    pub fn with_biedges(n: usize, edges: &[(usize, usize)]) -> Self {
-        let mut graph = Self::new_linked(n);
-        for &(from, to) in edges {
-            graph.add_edge(BiEdge::new(from, to));
-        }
-        graph
-    }
-}
-
-impl<P: Clone> Graph<BiEdge<P>> {
-    pub fn with_biedges_with_payload(n: usize, edges: &[(usize, usize, P)]) -> Self {
-        let mut graph = Self::new_linked(n);
-        for (from, to, p) in edges.iter() {
-            graph.add_edge(BiEdge::with_payload(*from, *to, p.clone()));
-        }
-        graph
-    }
-}
+with_edges_impl!(Edge, with_edges);
+with_edges_impl!(Edge, with_edges_with_payload, payload);
+with_edges_impl!(BiEdge, with_biedges);
+with_edges_impl!(BiEdge, with_biedges_with_payload, payload);
 
 pub struct CostAndFlow<C> {
     pub cost: C,

@@ -1,6 +1,6 @@
 pub trait EdgeTrait: Clone {
     type Payload;
-    
+
     const REVERSABLE: bool;
 
     fn to(&self) -> usize;
