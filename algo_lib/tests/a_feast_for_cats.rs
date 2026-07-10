@@ -1,8 +1,6 @@
 //{"name":"A Feast For Cats","group":"Kattis","url":"https://open.kattis.com/problems/cats","interactive":false,"timeLimit":6000,"tests":[{"input":"1\n20 5\n0 1 4\n0 2 3\n0 3 10\n0 4 15\n1 2 7\n1 3 3\n1 4 5\n2 3 4\n2 4 3\n3 4 8\n","output":"yes\n"}],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null}}
 
 use algo_lib::graph::edges::bi_weighted_edge::BiWeightedEdge;
-use algo_lib::graph::edges::edge_trait::EdgeTrait;
-use algo_lib::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
 use algo_lib::graph::minimal_spanning_tree::MinimalSpanningTree;
 use algo_lib::graph::Graph;
 use algo_lib::io::input::Input;
@@ -24,15 +22,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             g.add_edge(BiWeightedEdge::new(u, v, w));
         }
     });
-    let tree = graph.minimal_spanning_tree();
-    let mut total = c as i32;
-    for i in 0..c {
-        for e in tree.adj(i).iter() {
-            if e.to() < i {
-                total += e.weight();
-            }
-        }
-    }
+    let total = c as i32 + graph.minimal_spanning_tree_weight();
     out.print_line(total <= m);
 }
 

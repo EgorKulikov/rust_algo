@@ -2,8 +2,6 @@
 
 use algo_lib::geometry::point::Point;
 use algo_lib::graph::edges::bi_weighted_edge::BiWeightedEdge;
-use algo_lib::graph::edges::edge_trait::EdgeTrait;
-use algo_lib::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
 use algo_lib::graph::minimal_spanning_tree::MinimalSpanningTree;
 use algo_lib::graph::Graph;
 use algo_lib::io::input::Input;
@@ -28,15 +26,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             }
         }
     });
-    let tree = graph.minimal_spanning_tree();
-    let mut ans = Real(0.);
-    for i in 0..n {
-        for e in tree.adj(i).iter() {
-            if e.to() < i {
-                ans += e.weight();
-            }
-        }
-    }
+    let ans: Real = graph.minimal_spanning_tree_weight();
     out.print_line(ans);
 }
 
