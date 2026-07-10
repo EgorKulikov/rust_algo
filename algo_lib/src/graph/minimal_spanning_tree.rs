@@ -4,7 +4,7 @@ use crate::graph::edges::weighted_edge_trait::WeightedEdgeTrait;
 use crate::graph::Graph;
 use crate::numbers::num_traits::algebra::AdditionMonoid;
 
-trait MstTarget<W: Copy, E: WeightedEdgeTrait<W>> {
+pub(crate) trait MstTarget<W: Copy, E: WeightedEdgeTrait<W>> {
     fn new(vertex_count: usize) -> Self;
     fn add_edge(&mut self, from: usize, edge: E);
 }
@@ -19,7 +19,7 @@ impl<W: Copy, E: WeightedEdgeTrait<W>> MstTarget<W, E> for Graph<E> {
     }
 }
 
-struct WeightSum<W>(W);
+pub(crate) struct WeightSum<W>(pub(crate) W);
 
 impl<W: AdditionMonoid + Copy, E: WeightedEdgeTrait<W>> MstTarget<W, E> for WeightSum<W> {
     fn new(_vertex_count: usize) -> Self {
