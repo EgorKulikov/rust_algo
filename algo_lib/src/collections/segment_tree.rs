@@ -275,7 +275,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
 
     pub fn binary_search_mut<R>(
         &mut self,
-        mut wh: impl FnMut(&mut Node, &Node, &Node) -> Direction,
+        mut wh: impl FnMut(&mut Node, &mut Node, &mut Node) -> Direction,
         calc: impl FnOnce(&mut Node, usize) -> R,
     ) -> R {
         self.binary_search_mut_with_mid(|node, left, right, _| wh(node, left, right), calc)
@@ -283,7 +283,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
 
     pub fn binary_search_mut_with_mid<R>(
         &mut self,
-        wh: impl FnMut(&mut Node, &Node, &Node, usize) -> Direction,
+        wh: impl FnMut(&mut Node, &mut Node, &mut Node, usize) -> Direction,
         calc: impl FnOnce(&mut Node, usize) -> R,
     ) -> R {
         self.do_binary_search_mut(self.nodes.len() - 1, 0, self.n, wh, calc)
@@ -294,7 +294,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         root: usize,
         left: usize,
         right: usize,
-        mut wh: impl FnMut(&mut Node, &Node, &Node, usize) -> Direction,
+        mut wh: impl FnMut(&mut Node, &mut Node, &mut Node, usize) -> Direction,
         calc: impl FnOnce(&mut Node, usize) -> Res,
     ) -> Res {
         if left + 1 == right {
@@ -305,7 +305,8 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
             let left_child = root - 2 * (right - mid);
             let right_child = root - 1;
             let (head, tail) = self.nodes.split_at_mut(root);
-            let direction = wh(&mut tail[0], &head[left_child], &head[right_child], mid);
+            let (l, r) = head.split_at_mut(right_child);
+            let direction = wh(&mut tail[0], &mut l[left_child], &mut r[0], mid);
             let res = match direction {
                 Direction::Left => self.do_binary_search_mut(left_child, left, mid, wh, calc),
                 Direction::Right => self.do_binary_search_mut(right_child, mid, right, wh, calc),
@@ -431,7 +432,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
     pub fn binary_search_in_mut<R>(
         &mut self,
         range: impl RangeBounds<usize>,
-        mut accept: impl FnMut(&Node) -> bool,
+        mut accept: impl FnMut(&mut Node) -> bool,
         calc: impl FnOnce(&mut Node, usize) -> R,
     ) -> Option<R> {
         let (from, to) = clamp(&range, self.n);
@@ -455,7 +456,7 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
     pub fn binary_search_in_mut_rtl<R>(
         &mut self,
         range: impl RangeBounds<usize>,
-        mut accept: impl FnMut(&Node) -> bool,
+        mut accept: impl FnMut(&mut Node) -> bool,
         calc: impl FnOnce(&mut Node, usize) -> R,
     ) -> Option<R> {
         let (from, to) = clamp(&range, self.n);
@@ -483,12 +484,12 @@ impl<Node: SegmentTreeNode> SegmentTree<Node> {
         right: usize,
         from: usize,
         to: usize,
-        accept: &mut impl FnMut(&Node) -> bool,
+        accept: &mut impl FnMut(&mut Node) -> bool,
         calc: C,
         direction: SearchDirection,
     ) -> Result<R, C> {
         if left >= from && right <= to {
-            if accept(&self.nodes[root]) {
+            if accept(&mut self.nodes[root]) {
                 Ok(self.do_binary_search_mut(
                     root,
                     left,

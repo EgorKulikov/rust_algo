@@ -228,7 +228,7 @@ impl<Node: SegmentTreeNode> PathSegmentTree<Node> {
     pub fn binary_search_mut<R>(
         &mut self,
         range: RangeInclusive<usize>,
-        mut accept: impl FnMut(&Node) -> bool,
+        mut accept: impl FnMut(&mut Node) -> bool,
         calc: impl FnOnce(&mut Node, usize) -> R,
     ) -> Option<R> {
         let (up, down) = self.parts(range);

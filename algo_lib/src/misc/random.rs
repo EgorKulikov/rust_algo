@@ -146,18 +146,26 @@ impl RandomTrait for StaticRandom {
     }
 }
 
-pub trait Shuffle {
+pub trait Shuffle<T> {
     fn shuffle(&mut self) {
         self.shuffle_with(&mut StaticRandom);
     }
     fn shuffle_with(&mut self, rng: &mut impl RandomTrait);
+    fn choice(&self) -> &T {
+        self.choice_with(&mut StaticRandom)
+    }
+    fn choice_with(&self, rng: &mut impl RandomTrait) -> &T;
 }
 
-impl<T> Shuffle for [T] {
+impl<T> Shuffle<T> for [T] {
     fn shuffle_with(&mut self, rng: &mut impl RandomTrait) {
         for i in self.indices() {
             let at = rng.gen_bound(i + 1);
             self.swap(i, at);
         }
+    }
+    fn choice_with(&self, rng: &mut impl RandomTrait) -> &T {
+        let index = rng.gen_bound(self.len());
+        &self[index]
     }
 }

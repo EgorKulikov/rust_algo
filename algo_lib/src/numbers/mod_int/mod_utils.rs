@@ -1,3 +1,4 @@
+use crate::collections::md_arr::arr2d::Arr2d;
 use crate::numbers::mod_int::{BaseModInt, ModIntF};
 use crate::numbers::num_traits::algebra::IntegerSemiRing;
 use crate::numbers::num_utils::{factorial, factorials};
@@ -90,5 +91,16 @@ pub fn combinations<T, M: BaseModInt<T>>(n: usize, mut k: usize) -> M {
         res *= M::from(i);
     }
     res /= factorial(k);
+    res
+}
+
+pub fn combinations_arr<T, M: BaseModInt<T>>(n: usize) -> Arr2d<M> {
+    let mut res = Arr2d::new(n, n, M::zero());
+    for i in 0..n {
+        res[(i, 0)] = M::one();
+        for j in 1..=i {
+            res[(i, j)] = res[(i - 1, j - 1)] + res[(i - 1, j)];
+        }
+    }
     res
 }
