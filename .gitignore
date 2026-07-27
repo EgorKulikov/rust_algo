@@ -5,3 +5,8 @@ target/
 .dj_cookies.json
 .submitter_cookies.json
 main/task.json
+
+token.txt
+.token
+KEY_*.txt
+.venv/
