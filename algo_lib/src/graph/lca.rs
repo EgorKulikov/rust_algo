@@ -164,10 +164,7 @@ impl<E: BidirectionalEdgeTrait> LCATrait for Graph<E> {
         let mut position = vec![vertex_count as u32; vertex_count];
         let mut level = vec![0; vertex_count];
         // `index[v]` is the current edge id at vertex `v` (u32::MAX = exhausted).
-        let mut index = vec![u32::MAX; vertex_count];
-        for v in 0..vertex_count {
-            index[v] = self.head_edge(v);
-        }
+        let mut index: Vec<u32> = (0..vertex_count).map(|v| self.head_edge(v)).collect();
         let mut parent = vec![0; vertex_count];
         let mut stack = vec![0u32; vertex_count];
         stack[0] = root as u32;

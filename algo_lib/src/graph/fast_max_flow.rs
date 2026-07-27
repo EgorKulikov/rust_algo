@@ -96,8 +96,8 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> FastMa
             if dist[destination] == u32::MAX {
                 break;
             }
-            for v in 0..n {
-                next_edge[v] = self.head_edge(v);
+            for (v, e) in next_edge.iter_mut().enumerate() {
+                *e = self.head_edge(v);
             }
             for i in 0..n {
                 nodes[i].cut();

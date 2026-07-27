@@ -23,10 +23,9 @@ impl<P: Clone> EulerPath for Graph<BiEdgeWithId<P>> {
         }
         let mut removed = BitSet::new(self.edge_count());
         // `id[v]` is the current edge id at vertex `v` (u32::MAX = exhausted).
-        let mut id = vec![u32::MAX; self.vertex_count()];
-        for v in 0..self.vertex_count() {
-            id[v] = self.head_edge(v);
-        }
+        let mut id: Vec<u32> = (0..self.vertex_count())
+            .map(|v| self.head_edge(v))
+            .collect();
         let mut st = vec![start];
         let mut ans = Vec::with_capacity(self.edge_count() + 1);
         while let Some(&v) = st.last() {

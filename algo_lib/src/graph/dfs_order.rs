@@ -32,10 +32,7 @@ impl<E: BidirectionalEdgeTrait> DFSOrderTrait for Graph<E> {
         let mut position = vec![0; count];
         let mut end = vec![0; count];
         // `edge[v]` is the current edge id at vertex `v` (u32::MAX = exhausted).
-        let mut edge = vec![u32::MAX; count];
-        for v in 0..count {
-            edge[v] = self.head_edge(v);
-        }
+        let mut edge: Vec<u32> = (0..count).map(|v| self.head_edge(v)).collect();
         let mut stack = vec![0u32; count];
         let mut last = vec![0u32; count];
         let mut size = 1usize;
