@@ -45,7 +45,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             }
         }
         let mid = node.detach();
-        treap.push_front(mid);
+        treap.merge_front(mid);
     }
     timer.milestone("solve");
     let mut iter = not_seen.iter();

@@ -47,6 +47,7 @@ impl<T: Ord> MultiTreapSet<T> {
         if node.payload().is_some() {
             let payload = node.payload_mut().unwrap();
             payload.self_size -= 1;
+            payload.total_size -= 1;
             if payload.self_size == 0 {
                 node.detach();
             }

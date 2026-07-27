@@ -61,7 +61,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             delta: 1,
         });
 
-        treap.push_front(mid);
+        treap.merge_front(mid);
     }
     out.print_per_line(&treap.iter().map(|x| (x.id, x.value)).collect::<Vec<_>>());
 }

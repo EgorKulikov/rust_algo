@@ -25,10 +25,10 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         let a_cards = treap.range_index(..a).detach();
         let mut b_cards = treap.range_index(..b).detach();
         b_cards.reverse();
-        treap.push_front(a_cards);
+        treap.merge_front(a_cards);
         let c_cards = treap.range_index(..c).detach();
-        treap.push_front(b_cards);
-        treap.push_front(c_cards);
+        treap.merge_front(b_cards);
+        treap.merge_front(c_cards);
     }
     out.print_line_iter(treap.iter().map(|payload| payload.0));
 }

@@ -33,10 +33,10 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                 let right = treap.range_index(l2..r2).detach();
                 let pos_left = treap.range_index(l1..r1);
                 let left = pos_left.detach();
-                pos_left.push_back(right);
+                pos_left.merge_back(right);
                 treap
                     .range_index(..l2 - (r1 - l1) + (r2 - l2))
-                    .push_back(left);
+                    .merge_back(left);
             }
             2 => {
                 let x = input.read_size() - 1;

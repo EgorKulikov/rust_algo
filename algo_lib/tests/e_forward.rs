@@ -21,8 +21,8 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
         let r = input.read_size();
         let left = treap.range_index(..l).detach();
         let mid = treap.range_index(..r - l).detach();
-        treap.push_front(left);
-        treap.push_front(mid);
+        treap.merge_front(left);
+        treap.merge_front(mid);
     }
     out.print_line(treap.iter().map(|x| x.0).collect::<Vec<_>>());
 }

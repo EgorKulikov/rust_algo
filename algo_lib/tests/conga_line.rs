@@ -29,7 +29,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
             b'B' => mic += 1,
             b'R' => {
                 let cur = treap.range_index(mic..=mic).detach();
-                treap.push_back(cur);
+                treap.merge_back(cur);
                 if mic == 2 * n - 1 {
                     mic = 0;
                 }
@@ -46,7 +46,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
                         mic = 0;
                     }
                 }
-                cur.push_back(d);
+                cur.merge_back(d);
             }
             b'P' => {
                 out.print_line(

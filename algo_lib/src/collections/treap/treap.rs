@@ -646,14 +646,14 @@ impl<P: Payload> Tree<P> {
         }
     }
 
-    pub fn push_front(&mut self, other: Self) -> &mut Self {
+    pub fn merge_front(&mut self, other: Self) -> &mut Self {
         self.replace_with(|root| Tree::Whole {
             root: TreapNode::merge(other.into_node(), root.into_node()),
         });
         self
     }
 
-    pub fn push_back(&mut self, other: Self) -> &mut Self {
+    pub fn merge_back(&mut self, other: Self) -> &mut Self {
         self.replace_with(|root| Tree::Whole {
             root: TreapNode::merge(root.into_node(), other.into_node()),
         });
@@ -676,28 +676,6 @@ impl<P: Payload> Tree<P> {
 
     pub fn push(&mut self, delta: &P) {
         self.with_payload_mut(|p| p.accumulate(delta));
-    }
-
-    pub fn push_right(&mut self, delta: &P) {
-        match self {
-            Tree::Whole { .. } => unreachable!(),
-            Tree::Split { right, .. } => {
-                if right.size != 0 {
-                    right.payload.accumulate(delta);
-                }
-            }
-        }
-    }
-
-    pub fn push_left(&mut self, delta: &P) {
-        match self {
-            Tree::Whole { .. } => unreachable!(),
-            Tree::Split { left, .. } => {
-                if left.size != 0 {
-                    left.payload.accumulate(delta);
-                }
-            }
-        }
     }
 
     pub fn replace(&mut self, delta: P) {
@@ -991,9 +969,129 @@ impl<P: OrdPayload> Tree<P> {
     }
 
     pub fn index(&mut self, key: &P::Key) -> Option<usize> {
-        match self.range(key..=key) {
-            Tree::Split { left, mid, .. } => mid.payload().map(|_| left.size()),
+        let found = self.range(key..=key).payload().is_some();
+        match self {
+            Tree::Split { left, .. } => found.then(|| left.size()),
             _ => unreachable!(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::collections::treap::multi_treap_set::MultiTreapSet;
+    use crate::collections::treap::treap_map::TreapMap;
+    use crate::misc::random::{Random, RandomTrait};
+    use std::collections::BTreeMap;
+
+    #[test]
+    fn lookups_match_btree() {
+        let mut rng = Random::new_with_seed(565);
+        for _ in 0..100 {
+            let mut map = TreapMap::new();
+            let mut reference = BTreeMap::new();
+            for _ in 0..300 {
+                let key = rng.gen_bound(50u32);
+                match rng.gen_bound(4u32) {
+                    0 => {
+                        assert_eq!(map.insert(key, key * 2), reference.insert(key, key * 2));
+                    }
+                    1 => {
+                        assert_eq!(map.remove(&key), reference.remove(&key));
+                    }
+                    _ => {
+                        assert_eq!(map.len(), reference.len());
+                        assert_eq!(map.get(&key), reference.get(&key));
+                        assert_eq!(map.contains(&key), reference.contains_key(&key));
+                        assert_eq!(
+                            map.floor(&key).map(|(k, _)| *k),
+                            reference.range(..=key).next_back().map(|(k, _)| *k)
+                        );
+                        assert_eq!(
+                            map.ceil(&key).map(|(k, _)| *k),
+                            reference.range(key..).next().map(|(k, _)| *k)
+                        );
+                        assert_eq!(
+                            map.prev(&key).map(|(k, _)| *k),
+                            reference.range(..key).next_back().map(|(k, _)| *k)
+                        );
+                        assert_eq!(
+                            map.next(&key).map(|(k, _)| *k),
+                            reference
+                                .range((std::ops::Bound::Excluded(key), std::ops::Bound::Unbounded))
+                                .next()
+                                .map(|(k, _)| *k)
+                        );
+                        let less = reference.range(..key).count();
+                        let less_or_eq = reference.range(..=key).count();
+                        assert_eq!(map.lower_bound(&key), less);
+                        assert_eq!(map.upper_bound(&key), less_or_eq);
+                        assert_eq!(map.more(&key), reference.len() - less_or_eq);
+                        assert_eq!(map.more_or_eq(&key), reference.len() - less);
+                        assert_eq!(
+                            map.index(&key),
+                            reference.contains_key(&key).then_some(less)
+                        );
+                        let hi = rng.gen_bound(50u32);
+                        let (lo, hi) = (key.min(hi), key.max(hi));
+                        assert_eq!(map.range_size(&lo..&hi), reference.range(lo..hi).count());
+                        assert_eq!(map.range_size(&lo..=&hi), reference.range(lo..=hi).count());
+                        if !reference.is_empty() {
+                            let at = rng.gen_bound(reference.len());
+                            assert_eq!(
+                                map.get_at(at).map(|(k, _)| *k),
+                                reference.keys().nth(at).copied()
+                            );
+                        }
+                        assert_eq!(map.get_at(reference.len()), None);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn multi_set_counts_match_reference() {
+        let mut rng = Random::new_with_seed(566);
+        for _ in 0..100 {
+            let mut set = MultiTreapSet::new();
+            let mut reference: BTreeMap<u32, usize> = BTreeMap::new();
+            for _ in 0..300 {
+                let key = rng.gen_bound(20u32);
+                match rng.gen_bound(4u32) {
+                    0..=1 => {
+                        set.insert(key);
+                        *reference.entry(key).or_default() += 1;
+                    }
+                    2 => {
+                        let expected = reference.contains_key(&key);
+                        assert_eq!(set.remove(&key), expected);
+                        if let Some(qty) = reference.get_mut(&key) {
+                            *qty -= 1;
+                            if *qty == 0 {
+                                reference.remove(&key);
+                            }
+                        }
+                    }
+                    _ => {
+                        let total: usize = reference.values().sum();
+                        let less: usize = reference.range(..key).map(|(_, q)| q).sum();
+                        let less_or_eq: usize = reference.range(..=key).map(|(_, q)| q).sum();
+                        assert_eq!(set.len(), total);
+                        assert_eq!(set.get(&key), reference.get(&key).copied().unwrap_or(0));
+                        assert_eq!(set.lower_bound(&key), less);
+                        assert_eq!(set.upper_bound(&key), less_or_eq);
+                        assert_eq!(set.less(&key), less);
+                        assert_eq!(set.less_or_eq(&key), less_or_eq);
+                        assert_eq!(set.more(&key), total - less_or_eq);
+                        assert_eq!(set.more_or_eq(&key), total - less);
+                        assert_eq!(
+                            set.index(&key),
+                            reference.contains_key(&key).then_some(less)
+                        );
+                    }
+                }
+            }
         }
     }
 }

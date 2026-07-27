@@ -19,7 +19,7 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     for i in 0..n {
         treap
             .range_index(..p[i])
-            .push_back(Tree::single(PurePayload(i + 1)));
+            .merge_back(Tree::single(PurePayload(i + 1)));
     }
     out.print_line_iter(treap.iter().map(|x| x.0));
 }
