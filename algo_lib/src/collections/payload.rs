@@ -14,6 +14,10 @@ pub trait Payload: Sized {
     fn accumulate(&mut self, delta: &Self) {
         unimplemented!()
     }
+    // Apply `delta` to this node's own element only, not the subtree.
+    fn accumulate_self(&mut self, delta: &Self) {
+        unimplemented!()
+    }
     fn need_push_down(&self) -> bool {
         true
     }
@@ -67,6 +71,11 @@ where
     fn accumulate(&mut self, delta: &Self) {
         self.d = VDT::accumulate(self.d, delta.d);
         self.v = VDT::apply(self.v, delta.d);
+        self.self_v = VDT::apply(self.self_v, delta.d);
+    }
+
+    fn accumulate_self(&mut self, delta: &Self) {
+        self.self_v = VDT::apply(self.self_v, delta.d);
     }
 }
 

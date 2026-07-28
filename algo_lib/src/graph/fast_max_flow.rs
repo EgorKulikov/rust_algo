@@ -52,6 +52,10 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> FastMa
                 self.pushed -= delta.delta;
             }
 
+            fn accumulate_self(&mut self, delta: &Self) {
+                self.self_val += delta.delta;
+            }
+
             fn reset_delta(&mut self) {
                 self.delta = C::zero();
             }
