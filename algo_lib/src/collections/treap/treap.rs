@@ -1,10 +1,12 @@
 use crate::collections::payload::{OrdPayload, Payload};
+use crate::misc::bump_alloc::bump_new;
 use crate::misc::direction::Direction;
 use crate::misc::extensions::replace_with::ReplaceWith;
 use crate::misc::random::{RandomTrait, StaticRandom};
+use std::cmp::Ordering;
 use std::collections::Bound;
 use std::marker::{PhantomData, PhantomPinned};
-use std::mem::{forget, swap, take, MaybeUninit};
+use std::mem::{swap, take, MaybeUninit};
 use std::ops::{Deref, DerefMut, RangeBounds};
 use std::ptr::NonNull;
 
@@ -37,7 +39,7 @@ impl<P: Payload> Content<P> {
 }
 
 pub struct Node<P> {
-    priority: u64,
+    priority: u32,
     size: u32,
     reversed: bool,
     content: Option<Content<P>>,
@@ -66,6 +68,22 @@ impl<P> Node<P> {
             self.reversed ^= true;
             swap(&mut content.left, &mut content.right);
         }
+    }
+
+    fn replace_payload(&mut self, f: impl FnOnce(P) -> P) {
+        let content = unsafe { self.content.take().unwrap_unchecked() };
+        let Content {
+            payload,
+            parent,
+            left,
+            right,
+        } = content;
+        self.content = Some(Content {
+            payload: f(payload),
+            parent,
+            left,
+            right,
+        });
     }
 }
 
@@ -301,12 +319,9 @@ impl<P: Payload> TreapNode<P> {
             }),
             _phantom_pinned: PhantomPinned,
         };
-        let mut pinned = Box::pin(node);
-        let res = TreapNode {
-            link: unsafe { NonNull::from(pinned.as_mut().get_unchecked_mut()) },
-        };
-        forget(pinned);
-        res
+        TreapNode {
+            link: bump_new(node),
+        }
     }
 
     fn new_ref(node: &Node<P>) -> Self {
@@ -439,6 +454,25 @@ impl<P: Payload> TreapNode<P> {
             }
         })
     }
+
+    // Read-only descends: no splits, no updates, only push_down on the way.
+    fn find_at(mut node: Self, mut at: usize) -> Self {
+        if at >= node.size() {
+            return Self::default();
+        }
+        loop {
+            node.push_down();
+            let left_size = node.left.size();
+            match at.cmp(&left_size) {
+                Ordering::Less => node = node.left.clone(),
+                Ordering::Equal => return node,
+                Ordering::Greater => {
+                    at -= left_size + 1;
+                    node = node.right.clone();
+                }
+            }
+        }
+    }
 }
 
 impl<P: OrdPayload> TreapNode<P> {
@@ -460,6 +494,145 @@ impl<P: OrdPayload> TreapNode<P> {
                 Direction::Left
             }
         })
+    }
+
+    fn find(mut node: Self, key: &P::Key) -> (Self, usize) {
+        let mut before = 0;
+        while node.size != 0 {
+            node.push_down();
+            match key.cmp(node.payload.key()) {
+                Ordering::Less => node = node.left.clone(),
+                Ordering::Greater => {
+                    before += node.left.size() + 1;
+                    node = node.right.clone();
+                }
+                Ordering::Equal => {
+                    let index = before + node.left.size();
+                    return (node, index);
+                }
+            }
+        }
+        (Self::default(), before)
+    }
+
+    // Monotone `go_right`; returns (last true node, first false node, fold over right turns).
+    fn descend<Acc>(
+        mut node: Self,
+        mut go_right: impl FnMut(&P) -> bool,
+        mut acc: Acc,
+        mut fold: impl FnMut(Acc, &Node<P>) -> Acc,
+    ) -> (Self, Self, Acc) {
+        let mut last_true = Self::default();
+        let mut first_false = Self::default();
+        while node.size != 0 {
+            node.push_down();
+            if go_right(&node.payload) {
+                acc = fold(acc, &node);
+                last_true = node.clone();
+                node = node.right.clone();
+            } else {
+                first_false = node.clone();
+                node = node.left.clone();
+            }
+        }
+        (last_true, first_false, acc)
+    }
+
+    fn rotate_right(mut root: Self) -> Self {
+        let mut left = root.detach_left();
+        let left_right = left.detach_right();
+        root.attach_left(left_right);
+        left.attach_right(root);
+        left
+    }
+
+    fn rotate_left(mut root: Self) -> Self {
+        let mut right = root.detach_right();
+        let right_left = right.detach_left();
+        root.attach_right(right_left);
+        right.attach_left(root);
+        right
+    }
+
+    // One descend, expected O(1) rotations; `merge_dup(old, new)` resolves duplicates.
+    fn insert_impl<F: FnOnce(P, P) -> P>(
+        mut root: Self,
+        p: P,
+        merge_dup: F,
+        link: &mut Self,
+    ) -> Self {
+        if root.size == 0 {
+            let node = Self::new(p);
+            *link = node.clone();
+            return node;
+        }
+        root.push_down();
+        match p.key().cmp(root.payload.key()) {
+            Ordering::Equal => {
+                root.replace_payload(|old| merge_dup(old, p));
+                root.update();
+                *link = root.clone();
+                root
+            }
+            Ordering::Less => {
+                let left = root.detach_left();
+                root.attach_left(Self::insert_impl(left, p, merge_dup, link));
+                if root.left.priority > root.priority {
+                    Self::rotate_right(root)
+                } else {
+                    root
+                }
+            }
+            Ordering::Greater => {
+                let right = root.detach_right();
+                root.attach_right(Self::insert_impl(right, p, merge_dup, link));
+                if root.right.priority > root.priority {
+                    Self::rotate_left(root)
+                } else {
+                    root
+                }
+            }
+        }
+    }
+
+    // One descend; on the found node `decide` may mutate and returns whether to delete.
+    fn remove_impl<F: FnOnce(&mut P) -> bool>(
+        mut root: Self,
+        key: &P::Key,
+        decide: F,
+        removed: &mut Option<P>,
+        found: &mut bool,
+    ) -> Self {
+        if root.size == 0 {
+            return root;
+        }
+        root.push_down();
+        match key.cmp(root.payload.key()) {
+            Ordering::Equal => {
+                *found = true;
+                if decide(root.payload_mut()) {
+                    let left = root.detach_left();
+                    let right = root.detach_right();
+                    root.detach();
+                    let res = Self::merge(left, right);
+                    *removed = Some(root.into_payload());
+                    res
+                } else {
+                    root.update();
+                    root
+                }
+            }
+            Ordering::Less => {
+                let left = root.detach_left();
+                root.attach_left(Self::remove_impl(left, key, decide, removed, found));
+                root
+            }
+            Ordering::Greater => {
+                let right = root.detach_right();
+                root.attach_right(Self::remove_impl(right, key, decide, removed, found));
+                root
+            }
+        }
     }
 
     fn union(mut a: Self, mut b: Self) -> Self {
@@ -832,6 +1005,16 @@ impl<P: Payload> Tree<P> {
         self.range_index(at..=at)
     }
 
+    pub fn at(&mut self, at: usize) -> Option<&P> {
+        let root = self.rebuild().clone();
+        self.payload_of(TreapNode::find_at(root, at))
+    }
+
+    // Sound: nodes are never freed or moved.
+    fn payload_of(&self, node: TreapNode<P>) -> Option<&P> {
+        unsafe { node.link.as_ref() }.payload()
+    }
+
     pub fn reverse(&mut self) {
         self.rebuild().reverse();
     }
@@ -889,30 +1072,26 @@ impl<P: OrdPayload> Tree<P> {
     }
 
     pub fn insert_with_id(&mut self, p: P) -> (Option<P>, NodeId<P>) {
-        let mid = self.range(&p.key()..=&p.key());
         let mut res = None;
-        let link = TreapNode::new(p);
-        mid.replace_with(|mid| {
-            if mid.size() != 0 {
-                res = Some(mid.into_node().into_payload());
-            }
-            Tree::Whole { root: link.clone() }
+        let mut link = TreapNode::default();
+        self.replace_with(|tree| Tree::Whole {
+            root: TreapNode::insert_impl(
+                tree.into_node(),
+                p,
+                |old, new| {
+                    res = Some(old);
+                    new
+                },
+                &mut link,
+            ),
         });
         (res, NodeId(link))
     }
 
     pub fn insert_or_update(&mut self, p: P) {
-        let mid = self.range(&p.key()..=&p.key());
-        mid.replace_with(|mid| {
-            if mid.is_empty() {
-                Tree::Whole {
-                    root: TreapNode::new(p),
-                }
-            } else {
-                Tree::Whole {
-                    root: TreapNode::new(P::union(mid.into_payload(), p)),
-                }
-            }
+        let mut link = TreapNode::default();
+        self.replace_with(|tree| Tree::Whole {
+            root: TreapNode::insert_impl(tree.into_node(), p, P::union, &mut link),
         });
     }
 
@@ -921,15 +1100,17 @@ impl<P: OrdPayload> Tree<P> {
     }
 
     pub fn remove(&mut self, key: &P::Key) -> Option<P> {
-        let mid = self.range(key..=key);
-        let mut res = None;
-        mid.replace_with(|mid| {
-            if mid.size() != 0 {
-                res = Some(mid.into_node().into_payload());
-            }
-            Self::new()
+        self.remove_if(key, |_| true).1
+    }
+
+    // Returns (key was found, payload if the node was deleted).
+    pub fn remove_if(&mut self, key: &P::Key, f: impl FnOnce(&mut P) -> bool) -> (bool, Option<P>) {
+        let mut removed = None;
+        let mut found = false;
+        self.replace_with(|tree| Tree::Whole {
+            root: TreapNode::remove_impl(tree.into_node(), key, f, &mut removed, &mut found),
         });
-        res
+        (found, removed)
     }
 
     pub fn split(self, key: &P::Key) -> (Self, Self) {
@@ -941,23 +1122,58 @@ impl<P: OrdPayload> Tree<P> {
     }
 
     pub fn get(&mut self, key: &P::Key) -> Option<&P> {
-        self.range(key..=key).payload()
+        let root = self.rebuild().clone();
+        self.payload_of(TreapNode::find(root, key).0)
+    }
+
+    fn descend(&mut self, go_right: impl FnMut(&P) -> bool) -> (TreapNode<P>, TreapNode<P>, usize) {
+        let root = self.rebuild().clone();
+        TreapNode::descend(root, go_right, 0, |acc, n| acc + n.left.size() + 1)
     }
 
     pub fn floor(&mut self, key: &P::Key) -> Option<&P> {
-        self.range(..=key).last()
+        let node = self.descend(|p| p.key() <= key).0;
+        self.payload_of(node)
     }
 
     pub fn ceil(&mut self, key: &P::Key) -> Option<&P> {
-        self.range(key..).first()
+        let node = self.descend(|p| p.key() < key).1;
+        self.payload_of(node)
     }
 
     pub fn prev(&mut self, key: &P::Key) -> Option<&P> {
-        self.range(..key).last()
+        let node = self.descend(|p| p.key() < key).0;
+        self.payload_of(node)
     }
 
     pub fn next(&mut self, key: &P::Key) -> Option<&P> {
-        self.range((Bound::Excluded(key), Bound::Unbounded)).first()
+        let node = self.descend(|p| p.key() <= key).1;
+        self.payload_of(node)
+    }
+
+    pub fn less(&mut self, key: &P::Key) -> usize {
+        self.descend(|p| p.key() < key).2
+    }
+
+    pub fn less_or_eq(&mut self, key: &P::Key) -> usize {
+        self.descend(|p| p.key() <= key).2
+    }
+
+    // `fold` gets each prefix node's payload and its left child payload.
+    pub fn fold_prefix<Acc>(
+        &mut self,
+        key: &P::Key,
+        inclusive: bool,
+        init: Acc,
+        mut fold: impl FnMut(Acc, &P, Option<&P>) -> Acc,
+    ) -> Acc {
+        let root = self.rebuild().clone();
+        let adapted = |acc, n: &Node<P>| fold(acc, &n.payload, n.left.payload());
+        if inclusive {
+            TreapNode::descend(root, |p| p.key() <= key, init, adapted).2
+        } else {
+            TreapNode::descend(root, |p| p.key() < key, init, adapted).2
+        }
     }
 
     pub fn union(a: Self, b: Self) -> Self {
@@ -969,11 +1185,9 @@ impl<P: OrdPayload> Tree<P> {
     }
 
     pub fn index(&mut self, key: &P::Key) -> Option<usize> {
-        let found = self.range(key..=key).payload().is_some();
-        match self {
-            Tree::Split { left, .. } => found.then(|| left.size()),
-            _ => unreachable!(),
-        }
+        let root = self.rebuild().clone();
+        let (node, index) = TreapNode::find(root, key);
+        node.payload().map(|_| index)
     }
 }
 

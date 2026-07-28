@@ -1,7 +1,7 @@
 use crate::collections::treap::multi_payload::MultiPayload;
 use crate::collections::treap::treap::Tree;
 use std::iter::repeat;
-use std::ops::{Bound, RangeBounds};
+use std::ops::RangeBounds;
 
 pub struct MultiTreapSet<T> {
     root: Tree<MultiPayload<T>>,
@@ -31,30 +31,17 @@ impl<T: Ord> MultiTreapSet<T> {
     }
 
     pub fn insert(&mut self, key: T) {
-        let view = self.root.range(&key..=&key);
-        if view.payload().is_some() {
-            view.with_payload_mut(|p| {
-                p.self_size += 1;
-                p.total_size += 1;
-            });
-        } else {
-            view.add_back(MultiPayload::new(key, ()));
-        }
+        self.root.insert_or_update(MultiPayload::new(key, ()));
     }
 
     pub fn remove(&mut self, key: &T) -> bool {
-        let node = self.root.range(&key..=&key);
-        if node.payload().is_some() {
-            let payload = node.payload_mut().unwrap();
-            payload.self_size -= 1;
-            payload.total_size -= 1;
-            if payload.self_size == 0 {
-                node.detach();
-            }
-            true
-        } else {
-            false
-        }
+        self.root
+            .remove_if(key, |p| {
+                p.self_size -= 1;
+                p.total_size -= 1;
+                p.self_size == 0
+            })
+            .0
     }
 
     pub fn index(&mut self, key: &T) -> Option<usize> {
@@ -63,14 +50,15 @@ impl<T: Ord> MultiTreapSet<T> {
     }
 
     pub fn lower_bound(&mut self, key: &T) -> usize {
-        self.root.range(..key).payload().map_or(0, |p| p.total_size)
+        self.root.fold_prefix(key, false, 0, |acc, p, left| {
+            acc + p.self_size + left.map_or(0, |l| l.total_size)
+        })
     }
 
     pub fn upper_bound(&mut self, key: &T) -> usize {
-        self.root
-            .range(..=key)
-            .payload()
-            .map_or(0, |p| p.total_size)
+        self.root.fold_prefix(key, true, 0, |acc, p, left| {
+            acc + p.self_size + left.map_or(0, |l| l.total_size)
+        })
     }
 
     pub fn keys(&mut self) -> impl Iterator<Item = &T> {
@@ -137,25 +125,19 @@ impl<T: Ord> MultiTreapSet<T> {
     }
 
     pub fn more(&mut self, key: &T) -> usize {
-        self.root
-            .range((Bound::Excluded(key), Bound::Unbounded))
-            .payload()
-            .map_or(0, |p| p.total_size)
+        self.len() - self.upper_bound(key)
     }
 
     pub fn more_or_eq(&mut self, key: &T) -> usize {
-        self.root.range(key..).payload().map_or(0, |p| p.total_size)
+        self.len() - self.lower_bound(key)
     }
 
     pub fn less(&mut self, key: &T) -> usize {
-        self.root.range(..key).payload().map_or(0, |p| p.total_size)
+        self.lower_bound(key)
     }
 
     pub fn less_or_eq(&mut self, key: &T) -> usize {
-        self.root
-            .range(..=key)
-            .payload()
-            .map_or(0, |p| p.total_size)
+        self.upper_bound(key)
     }
 
     fn node_to_pair(node: &MultiPayload<T>) -> (&T, usize) {

@@ -1,5 +1,6 @@
 pub mod between;
 pub mod bin_search;
+pub mod bump_alloc;
 pub mod direction;
 pub mod dirs;
 pub mod expression_parser;

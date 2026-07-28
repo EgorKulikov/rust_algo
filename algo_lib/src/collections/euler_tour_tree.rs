@@ -1,10 +1,11 @@
 use crate::collections::fx_hash_map::FxHashMap;
 use crate::collections::payload::Payload;
+use crate::misc::bump_alloc::bump_new;
 use crate::misc::direction::Direction;
 use crate::misc::random::{RandomTrait, StaticRandom};
 use crate::numbers::num_utils::UpperDiv;
 use std::marker::PhantomPinned;
-use std::mem::{forget, take};
+use std::mem::take;
 use std::ops::{Deref, DerefMut};
 use std::ptr::NonNull;
 
@@ -37,7 +38,7 @@ impl<P: Payload> Content<P> {
 }
 
 pub struct Node<P> {
-    priority: u64,
+    priority: u32,
     size: u32,
     content: Option<Content<P>>,
     _phantom_pinned: PhantomPinned,
@@ -136,11 +137,9 @@ impl<P: Payload> TreapNode<P> {
             }),
             _phantom_pinned: PhantomPinned,
         };
-        let mut pinned = Box::pin(node);
         let mut res = TreapNode {
-            link: unsafe { NonNull::from(pinned.as_mut().get_unchecked_mut()) },
+            link: bump_new(node),
         };
-        forget(pinned);
         res.update();
         res
     }

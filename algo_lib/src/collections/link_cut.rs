@@ -1,8 +1,9 @@
 use crate::collections::payload::Payload;
+use crate::misc::bump_alloc::bump_new;
 use crate::misc::direction::Direction;
 use std::cell::Cell;
 use std::marker::PhantomPinned;
-use std::mem::{forget, take};
+use std::mem::take;
 use std::ops::{Deref, DerefMut};
 use std::ptr::NonNull;
 
@@ -175,12 +176,9 @@ impl<P: Payload> LinkCutNode<P> {
             }),
             _phantom_pinned: PhantomPinned,
         };
-        let mut pinned = Box::pin(node);
-        let res = LinkCutNode {
-            link: unsafe { NonNull::from(pinned.as_mut().get_unchecked_mut()) },
-        };
-        forget(pinned);
-        res
+        LinkCutNode {
+            link: bump_new(node),
+        }
     }
 
     fn new_ref(node: &Node<P>) -> Self {

@@ -61,15 +61,15 @@ impl<T: Ord, V> TreapMap<T, V> {
     }
 
     pub fn lower_bound(&mut self, key: &T) -> usize {
-        self.root.range(..key).size()
+        self.root.less(key)
     }
 
     pub fn upper_bound(&mut self, key: &T) -> usize {
-        self.root.range(..=key).size()
+        self.root.less_or_eq(key)
     }
 
     pub fn get_at(&mut self, at: usize) -> Option<(&T, &V)> {
-        self.root.get_at(at).payload().map(Self::node_to_pair)
+        self.root.at(at).map(Self::node_to_pair)
     }
 
     pub fn keys(&mut self) -> impl Iterator<Item = &T> {
@@ -92,7 +92,17 @@ impl<T: Ord, V> TreapMap<T, V> {
     }
 
     pub fn range_size<'a, 's: 'a>(&'s mut self, r: impl RangeBounds<&'a T>) -> usize {
-        self.root.range(r).size()
+        let start = match r.start_bound() {
+            Bound::Included(key) => self.lower_bound(key),
+            Bound::Excluded(key) => self.upper_bound(key),
+            Bound::Unbounded => 0,
+        };
+        let end = match r.end_bound() {
+            Bound::Included(key) => self.upper_bound(key),
+            Bound::Excluded(key) => self.lower_bound(key),
+            Bound::Unbounded => self.len(),
+        };
+        end.saturating_sub(start)
     }
 
     pub fn first(&mut self) -> Option<(&T, &V)> {
@@ -137,13 +147,11 @@ impl<T: Ord, V> TreapMap<T, V> {
     }
 
     pub fn more(&mut self, key: &T) -> usize {
-        self.root
-            .range((Bound::Excluded(key), Bound::Unbounded))
-            .size()
+        self.len() - self.upper_bound(key)
     }
 
     pub fn more_or_eq(&mut self, key: &T) -> usize {
-        self.root.range(key..).size()
+        self.len() - self.lower_bound(key)
     }
 
     pub fn less(&mut self, key: &T) -> usize {
