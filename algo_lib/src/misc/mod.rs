@@ -9,6 +9,7 @@ pub mod hungarian_algorithm;
 pub mod lazy_lock;
 pub mod maybe;
 pub mod memo;
+pub mod mo;
 pub mod owned_cell;
 pub mod random;
 pub mod recursive_function;
