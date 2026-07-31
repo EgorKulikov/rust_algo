@@ -1,15 +1,17 @@
-pub trait MoWorker<T, R> {
+pub trait MoWorker {
+    type T;
+    type R;
     fn empty() -> Self;
-    fn add_left(&mut self, val: &T);
-    fn add_right(&mut self, val: &T);
-    fn remove_left(&mut self, val: &T);
-    fn result(&self) -> R;
+    fn add_left(&mut self, val: &Self::T);
+    fn add_right(&mut self, val: &Self::T);
+    fn remove_left(&mut self, val: &Self::T);
+    fn result(&self) -> Self::R;
 }
 
 // Queries are 0-based (l, r), both inclusive. Sorted by (block of l, r), so r
 // only ever grows within a block and the worker is rebuilt from empty on each
 // block change - no remove_right needed. O((n + q) * n / block) = O(n sqrt(q)).
-pub fn mo<T, R, W: MoWorker<T, R>>(arr: &[T], queries: &[(usize, usize)]) -> Vec<R> {
+pub fn mo<W: MoWorker>(arr: &[W::T], queries: &[(usize, usize)]) -> Vec<W::R> {
     if queries.is_empty() {
         return Vec::new();
     }
@@ -18,7 +20,7 @@ pub fn mo<T, R, W: MoWorker<T, R>>(arr: &[T], queries: &[(usize, usize)]) -> Vec
     let mut order: Vec<usize> = (0..queries.len()).collect();
     order.sort_by_key(|&i| (queries[i].0 / block, queries[i].1));
 
-    let mut res: Vec<Option<R>> = (0..queries.len()).map(|_| None).collect();
+    let mut res: Vec<Option<W::R>> = (0..queries.len()).map(|_| None).collect();
     let mut worker = W::empty();
     let mut cur_block = usize::MAX;
     // Current range is [cur_left, cur_right), half-open.
@@ -71,7 +73,10 @@ mod test {
         }
     }
 
-    impl MoWorker<u32, (u32, u64)> for Distinct {
+    impl MoWorker for Distinct {
+        type T = u32;
+        type R = (u32, u64);
+
         fn empty() -> Self {
             Self {
                 count: [0; 16],
@@ -115,7 +120,7 @@ mod test {
                     (from, to)
                 })
                 .collect();
-            let answers = mo::<_, _, Distinct>(&arr, &queries);
+            let answers = mo::<Distinct>(&arr, &queries);
             for (&(from, to), answer) in queries.iter().zip(answers.iter()) {
                 let mut expected = Distinct::empty();
                 for val in &arr[from..=to] {
@@ -128,7 +133,7 @@ mod test {
 
     #[test]
     fn no_queries() {
-        let answers: Vec<(u32, u64)> = mo::<_, _, Distinct>(&[1u32, 2, 3], &[]);
+        let answers: Vec<(u32, u64)> = mo::<Distinct>(&[1u32, 2, 3], &[]);
         assert!(answers.is_empty());
     }
 
@@ -136,7 +141,7 @@ mod test {
     fn fixed_answers() {
         let arr = [1u32, 2, 1, 3];
         let queries = [(0, 3), (1, 2), (2, 2), (0, 0), (1, 3), (0, 3)];
-        let answers = mo::<_, _, Distinct>(&arr, &queries);
+        let answers = mo::<Distinct>(&arr, &queries);
         assert_eq!(
             answers,
             vec![(3, 7), (2, 3), (1, 1), (1, 1), (3, 6), (3, 7)]
@@ -149,7 +154,10 @@ mod test {
         window: std::collections::VecDeque<u32>,
     }
 
-    impl MoWorker<u32, Vec<u32>> for Window {
+    impl MoWorker for Window {
+        type T = u32;
+        type R = Vec<u32>;
+
         fn empty() -> Self {
             Self {
                 window: std::collections::VecDeque::new(),
@@ -183,7 +191,7 @@ mod test {
                 queries.push((from, to));
             }
         }
-        let answers = mo::<_, _, Window>(&arr, &queries);
+        let answers = mo::<Window>(&arr, &queries);
         for (&(from, to), answer) in queries.iter().zip(answers.iter()) {
             assert_eq!(answer, &arr[from..=to], "range [{from}, {to}]");
         }
@@ -191,7 +199,7 @@ mod test {
 
     #[test]
     fn single_element() {
-        let answers = mo::<_, _, Window>(&[7u32], &[(0, 0), (0, 0)]);
+        let answers = mo::<Window>(&[7u32], &[(0, 0), (0, 0)]);
         assert_eq!(answers, vec![vec![7], vec![7]]);
     }
 }
