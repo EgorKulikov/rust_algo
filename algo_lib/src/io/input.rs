@@ -38,7 +38,7 @@ macro_rules! read_impl {
 }
 
 impl Input {
-    const DEFAULT_BUF_SIZE: usize = 1 << 18;
+    const DEFAULT_BUF_SIZE: usize = 1 << 21;
     const FIX_EOL: bool = true;
 
     pub fn slice(input: &[u8]) -> Self {
@@ -73,6 +73,7 @@ impl Input {
         }
     }
 
+    #[inline]
     pub fn get(&mut self) -> Option<u8> {
         if self.refill_buffer() {
             let res = self.buf[self.at];
@@ -91,6 +92,7 @@ impl Input {
         }
     }
 
+    #[inline]
     pub fn peek(&mut self) -> Option<u8> {
         if self.refill_buffer() {
             let res = self.buf[self.at];
@@ -100,12 +102,28 @@ impl Input {
         }
     }
 
+    #[inline]
     pub fn skip_whitespace(&mut self) {
-        while let Some(b) = self.peek() {
-            if !b.is_ascii_whitespace() {
+        loop {
+            let buf = self.buf.as_ptr();
+            let end = self.buf_read;
+            let mut at = self.at;
+            let mut eol = self.eol;
+            while at < end {
+                let b = unsafe { *buf.add(at) };
+                if !b.is_ascii_whitespace() {
+                    self.at = at;
+                    self.eol = eol;
+                    return;
+                }
+                eol = b == b'\n' || b == b'\r';
+                at += 1;
+            }
+            self.at = at;
+            self.eol = eol;
+            if !self.refill_buffer() {
                 return;
             }
-            self.get();
         }
     }
 
@@ -235,37 +253,43 @@ macro_rules! read_integer {
     // unsigned types, keeping their hot loop free of the `sgn` branch.
     ($signed: literal $($t:ident)+) => {$(
         impl Readable for $t {
+            #[inline]
             fn read(input: &mut Input) -> Self {
                 input.skip_whitespace();
-                let mut c = input.get().unwrap();
-                let sgn = match c {
-                    b'-' if $signed => {
-                        c = input.get().unwrap();
-                        true
+                let c = input.get().unwrap();
+                let (sgn, mut res): (bool, $t) = match c {
+                    b'-' if $signed => (true, 0),
+                    b'+' => (false, 0),
+                    _ => {
+                        debug_assert!(c.is_ascii_digit());
+                        (false, (c ^ b'0') as $t)
                     }
-                    b'+' => {
-                        c = input.get().unwrap();
-                        false
-                    }
-                    _ => false,
                 };
-                let mut res = 0;
                 loop {
-                    assert!(c.is_ascii_digit());
-                    res *= 10;
-                    let d = (c - b'0') as $t;
-                    if $signed && sgn {
-                        res -= d;
-                    } else {
-                        res += d;
+                    let buf = input.buf.as_ptr();
+                    let end = input.buf_read;
+                    let mut at = input.at;
+                    while at < end {
+                        let c = unsafe { *buf.add(at) };
+                        if c.is_ascii_digit() {
+                            at += 1;
+                            let d = (c ^ b'0') as $t;
+                            if $signed && sgn {
+                                res = res * 10 - d;
+                            } else {
+                                res = res * 10 + d;
+                            }
+                        } else {
+                            input.at = at;
+                            input.get();
+                            return res;
+                        }
                     }
-                    match input.get() {
-                        None => break,
-                        Some(ch) if ch.is_ascii_whitespace() => break,
-                        Some(ch) => c = ch,
+                    input.at = at;
+                    if !input.refill_buffer() {
+                        return res;
                     }
                 }
-                res
             }
         }
     )+};
