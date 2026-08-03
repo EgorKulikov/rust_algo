@@ -24,6 +24,7 @@ pub mod min_cost_flow;
 pub mod min_cost_flow_slow;
 pub mod minimal_spanning_rooted_tree;
 pub mod minimal_spanning_tree;
+pub mod mo_on_tree;
 pub mod negative_distances;
 pub mod path_segment_tree;
 pub mod strongly_connected_components;
