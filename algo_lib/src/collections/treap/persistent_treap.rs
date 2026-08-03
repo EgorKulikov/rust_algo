@@ -973,7 +973,7 @@ impl<P: OrdPayload + Clone> PersistentTree<P> {
 #[cfg(test)]
 mod test {
     use super::PersistentTree;
-    use crate::collections::payload::{Payload, PurePayload};
+    use crate::collections::payload::PurePayload;
     use crate::misc::random::{Random, RandomTrait};
     use std::collections::BTreeSet;
 
