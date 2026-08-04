@@ -102,6 +102,11 @@ impl<T: Ord> MultiTreeSet<T> {
         self.size += 1;
     }
 
+    pub fn insert_few(&mut self, value: T, qty: usize) {
+        *self.map.entry(value).or_insert(0) += qty;
+        self.size += qty;
+    }
+
     pub fn remove(&mut self, value: &T) -> bool {
         if let Some(count) = self.map.get_mut(value) {
             *count -= 1;

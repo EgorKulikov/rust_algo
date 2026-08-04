@@ -637,6 +637,16 @@ with_edges_impl!(Edge, with_edges_with_payload, payload);
 with_edges_impl!(BiEdge, with_biedges);
 with_edges_impl!(BiEdge, with_biedges_with_payload, payload);
 
+impl Graph<BiEdge<()>> {
+    pub fn with_parents(p: &[usize]) -> Self {
+        let mut graph = Self::new_linked(p.len() + 1);
+        for i in 0..p.len() {
+            graph.add_edge(BiEdge::new(p[i], i + 1));
+        }
+        graph
+    }
+}
+
 pub struct CostAndFlow<C> {
     pub cost: C,
     pub flow: C,
