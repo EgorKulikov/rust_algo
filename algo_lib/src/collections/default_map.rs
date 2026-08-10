@@ -57,6 +57,14 @@ macro_rules! default_map {
             }
         }
 
+        impl<K: Eq + $key_trait, V: Clone> Index<&K> for $name<K, V> {
+            type Output = V;
+
+            fn index(&self, index: &K) -> &Self::Output {
+                self.get(index)
+            }
+        }
+
         impl<K: Eq + $key_trait, V: Clone> IndexMut<K> for $name<K, V> {
             fn index_mut(&mut self, index: K) -> &mut Self::Output {
                 self.get_mut(index)
