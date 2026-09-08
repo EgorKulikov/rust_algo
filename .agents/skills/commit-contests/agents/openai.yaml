@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit Contests"
+  short_description: "Commit contest solutions and organize judge archives"
+  default_prompt: "Use $commit-contests to commit my accumulated contest solutions and push."
