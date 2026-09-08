@@ -34,6 +34,11 @@ impl<T: Ord> MultiTreapSet<T> {
         self.root.insert_or_update(MultiPayload::new(key, ()));
     }
 
+    pub fn insert_few(&mut self, key: T, qty: usize) {
+        self.root
+            .insert_or_update(MultiPayload::new_with_size(key, (), qty));
+    }
+
     pub fn remove(&mut self, key: &T) -> bool {
         self.root
             .remove_if(key, |p| {
