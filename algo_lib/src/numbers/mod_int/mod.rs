@@ -12,6 +12,7 @@ use std::marker::PhantomData;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 pub mod convolution;
+pub mod fft;
 pub mod mod_utils;
 pub mod prime_fft;
 
