@@ -1,12 +1,17 @@
 use crate::collections::md_arr::arr2d::Arr2d;
+use crate::collections::rmq::Rmq;
 use crate::graph::edges::edge_trait::BidirectionalEdgeTrait;
 use crate::graph::Graph;
 use crate::misc::owned_cell::OwnedCell;
 use crate::numbers::num_traits::bit_ops::BitOps;
 
 pub struct LCA {
+    /// Preorder position of each vertex.
     position: Vec<u32>,
-    lca_arr: Arr2d<u32>,
+    /// Vertex at each preorder position.
+    order: Vec<u32>,
+    /// Minimum over `parent_position[pos(u) + 1 ..= pos(v)]` locates the LCA.
+    parent_position: Rmq<u32>,
     level: Vec<u32>,
     parent: Vec<u32>,
     ancestors: OwnedCell<Option<Arr2d<i32>>>,
@@ -27,17 +32,12 @@ impl LCA {
 
     pub fn lca(&self, first: usize, second: usize) -> usize {
         if first == second {
-            first
-        } else {
-            let from = self.position[first].min(self.position[second]) as usize;
-            let to = self.position[first].max(self.position[second]) as usize;
-            let lv = (32 - ((to - from) as u32).leading_zeros() - 1) as usize;
-            get_min(
-                &self.level,
-                self.lca_arr[(lv, from)],
-                self.lca_arr[(lv, to + 1 - (1 << lv))],
-            ) as usize
+            return first;
         }
+        let (a, b) = (self.position[first], self.position[second]);
+        let (from, to) = if a < b { (a, b) } else { (b, a) };
+        let at = self.parent_position.argmin(from as usize + 1..=to as usize);
+        self.order[self.parent_position.values()[at] as usize] as usize
     }
 
     pub fn position(&self, vertex: usize) -> usize {
@@ -140,14 +140,6 @@ impl LCA {
     }
 }
 
-fn get_min(level: &[u32], a: u32, b: u32) -> u32 {
-    if level[a as usize] < level[b as usize] {
-        a
-    } else {
-        b
-    }
-}
-
 pub trait LCATrait {
     fn lca_with_root(&self, root: usize) -> LCA;
 
@@ -159,65 +151,41 @@ pub trait LCATrait {
 impl<E: BidirectionalEdgeTrait> LCATrait for Graph<E> {
     fn lca_with_root(&self, root: usize) -> LCA {
         debug_assert!(self.is_tree());
-        let vertex_count = self.vertex_count();
-        let mut order = vec![0u32; 2 * vertex_count - 1];
-        let mut position = vec![vertex_count as u32; vertex_count];
-        let mut level = vec![0; vertex_count];
-        // `index[v]` is the current edge id at vertex `v` (u32::MAX = exhausted).
-        let mut index: Vec<u32> = (0..vertex_count).map(|v| self.head_edge(v)).collect();
-        let mut parent = vec![0; vertex_count];
-        let mut stack = vec![0u32; vertex_count];
-        stack[0] = root as u32;
-        let mut size = 1usize;
-        let mut j = 0usize;
+        let n = self.vertex_count();
+        let mut position = vec![0u32; n];
+        let mut order = Vec::with_capacity(n);
+        let mut parent_position = Vec::with_capacity(n);
+        let mut level = vec![0u32; n];
+        let mut parent = vec![0u32; n];
         parent[root] = root as u32;
-        while size > 0 {
-            size -= 1;
-            let vertex = stack[size] as usize;
-            if (position[vertex] as usize) == vertex_count {
-                position[vertex] = j as u32;
+        // Iterative preorder DFS over edge cursors.
+        let mut stack: Vec<(u32, u32)> = vec![(root as u32, self.head_edge(root))];
+        position[root] = 0;
+        order.push(root as u32);
+        parent_position.push(0);
+        while let Some(frame) = stack.last_mut() {
+            let v = frame.0 as usize;
+            let cursor = frame.1;
+            if cursor == u32::MAX {
+                stack.pop();
+                continue;
             }
-            order[j] = vertex as u32;
-            j += 1;
-            while index[vertex] != u32::MAX
-                && (parent[vertex] as usize) == self.edge_at(vertex, index[vertex]).to()
-            {
-                index[vertex] = self.step_edge(vertex, index[vertex]);
+            frame.1 = self.step_edge(v, cursor);
+            let to = self.edge_at(v, cursor).to();
+            if to == parent[v] as usize && v != root || to == root {
+                continue;
             }
-            if index[vertex] != u32::MAX {
-                stack[size] = vertex as u32;
-                size += 1;
-                let to = self.edge_at(vertex, index[vertex]).to();
-                stack[size] = to as u32;
-                size += 1;
-                parent[to] = vertex as u32;
-                level[to] = level[vertex] + 1;
-                index[vertex] = self.step_edge(vertex, index[vertex]);
-            }
+            parent[to] = v as u32;
+            level[to] = level[v] + 1;
+            position[to] = order.len() as u32;
+            order.push(to as u32);
+            parent_position.push(position[v]);
+            stack.push((to as u32, self.head_edge(to)));
         }
-        let mut lca_arr = Arr2d::new(
-            (32 - ((2 * vertex_count - 1) as u32).leading_zeros()) as usize,
-            2 * vertex_count - 1,
-            0,
-        );
-        for i in 0..(2 * vertex_count - 1) {
-            lca_arr[(0, i)] = order[i];
-        }
-
-        for i in 1..lca_arr.d1() {
-            for j in 0..lca_arr.d2() {
-                let other = j + (1 << (i - 1));
-                if other < lca_arr.d2() {
-                    lca_arr[(i, j)] = get_min(&level, lca_arr[(i - 1, j)], lca_arr[(i - 1, other)]);
-                } else {
-                    lca_arr[(i, j)] = lca_arr[(i - 1, j)];
-                }
-            }
-        }
-
         LCA {
             position,
-            lca_arr,
+            order,
+            parent_position: Rmq::new(parent_position),
             level,
             parent,
             ancestors: OwnedCell::new(None),
@@ -267,6 +235,43 @@ mod test {
         assert!(lca.on_path(3, 4, 1));
         assert!(lca.on_path(3, 2, 1));
         assert!(!lca.on_path(3, 4, 2));
+    }
+
+    #[test]
+    fn random_trees_match_naive() {
+        use crate::misc::random::{Random, RandomTrait};
+        let mut rng = Random::new_with_seed(91);
+        for n in [1usize, 2, 3, 10, 64, 65, 200, 1000] {
+            let mut edges = Vec::new();
+            for v in 1..n {
+                edges.push((rng.gen_range(0..v), v));
+            }
+            let graph = Graph::with_biedges(n, &edges);
+            let root = rng.gen_range(0..n);
+            let lca = graph.lca_with_root(root);
+            let naive = |mut a: usize, mut b: usize| {
+                while lca.level(a) > lca.level(b) {
+                    a = lca.parent(a).unwrap();
+                }
+                while lca.level(b) > lca.level(a) {
+                    b = lca.parent(b).unwrap();
+                }
+                while a != b {
+                    a = lca.parent(a).unwrap();
+                    b = lca.parent(b).unwrap();
+                }
+                a
+            };
+            assert_eq!(lca.parent(root), None);
+            for _ in 0..2000 {
+                let a = rng.gen_range(0..n);
+                let b = rng.gen_range(0..n);
+                assert_eq!(lca.lca(a, b), naive(a, b), "n={n} root={root} {a} {b}");
+            }
+            let mut positions: Vec<usize> = (0..n).map(|v| lca.position(v)).collect();
+            positions.sort();
+            assert_eq!(positions, (0..n).collect::<Vec<_>>());
+        }
     }
 
     #[test]
