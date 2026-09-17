@@ -119,6 +119,60 @@ impl Output<'_> {
         }
     }
 
+    /// Guarantees `n` free bytes in the buffer.
+    #[inline]
+    fn reserve(&mut self, n: usize) {
+        if self.at + n > self.buf.len() {
+            self.flush();
+        }
+    }
+
+    fn write_u64(&mut self, n: u64) {
+        let len = n.checked_ilog10().map_or(1, |l| l as usize + 1);
+        // Digits end at tmp[24]; the zero tail lets three fixed-size 8-byte
+        // copies move the number without a variable-length memcpy.
+        let mut tmp = [0u8; 48];
+        Self::fill_digits(&mut tmp[..24], n);
+        self.reserve(48);
+        let src = tmp[24 - len..].as_ptr();
+        let dst = self.buf[self.at..].as_mut_ptr();
+        unsafe {
+            std::ptr::copy_nonoverlapping(src, dst, 24);
+        }
+        self.at += len;
+    }
+
+    /// Writes `n` right-aligned into `slot` (at least 20 bytes), zero-padded
+    /// on the left in whole 4-digit groups; digits above `slot.len()` are lost.
+    #[inline]
+    fn fill_digits(slot: &mut [u8], mut n: u64) {
+        let mut pos = slot.len();
+        loop {
+            let q = n / 10_000;
+            let r = (n - q * 10_000) as usize;
+            pos -= 4;
+            slot[pos..pos + 4].copy_from_slice(&DIGITS4[r]);
+            n = q;
+            if n == 0 {
+                break;
+            }
+        }
+    }
+
+    fn write_u128(&mut self, n: u128) {
+        if let Ok(n) = u64::try_from(n) {
+            self.write_u64(n);
+        } else {
+            const SPLIT: u128 = 10_000_000_000_000_000_000;
+            self.write_u128(n / SPLIT);
+            let mut tmp = [b'0'; 24];
+            Self::fill_digits(&mut tmp, (n % SPLIT) as u64);
+            self.reserve(19);
+            self.buf[self.at..self.at + 19].copy_from_slice(&tmp[5..]);
+            self.at += 19;
+        }
+    }
+
     pub fn print_per_line<T: Writable>(&mut self, arg: &[T]) {
         self.print_per_line_iter(arg.iter());
     }
@@ -246,23 +300,27 @@ impl Writable for () {
     fn write(&self, _output: &mut Output) {}
 }
 
+static DIGITS4: [[u8; 4]; 10_000] = {
+    let mut t = [[0u8; 4]; 10_000];
+    let mut i = 0;
+    while i < 10_000 {
+        t[i] = [
+            b'0' + (i / 1000) as u8,
+            b'0' + (i / 100 % 10) as u8,
+            b'0' + (i / 10 % 10) as u8,
+            b'0' + (i % 10) as u8,
+        ];
+        i += 1;
+    }
+    t
+};
+
 macro_rules! write_unsigned_int {
     ($($t:ident)+) => {$(
         impl Writable for $t {
+            #[inline]
             fn write(&self, output: &mut Output) {
-                let mut n = *self;
-                if n == 0 {
-                    output.put(b'0');
-                    return;
-                }
-                let mut buf = [0u8; 40];
-                let mut pos = buf.len();
-                while n > 0 {
-                    pos -= 1;
-                    buf[pos] = b'0' + (n % 10) as u8;
-                    n /= 10;
-                }
-                output.write_all(&buf[pos..]).unwrap();
+                output.write_u64(*self as u64);
             }
         }
     )+};
@@ -271,18 +329,34 @@ macro_rules! write_unsigned_int {
 macro_rules! write_signed_int {
     ($($t:ident)+) => {$(
         impl Writable for $t {
+            #[inline]
             fn write(&self, output: &mut Output) {
                 if *self < 0 {
                     output.put(b'-');
                 }
-                self.unsigned_abs().write(output);
+                output.write_u64(self.unsigned_abs() as u64);
             }
         }
     )+};
 }
 
-write_unsigned_int!(u16 u32 u64 u128 usize);
-write_signed_int!(i8 i16 i32 i64 i128 isize);
+write_unsigned_int!(u16 u32 u64 usize);
+write_signed_int!(i8 i16 i32 i64 isize);
+
+impl Writable for u128 {
+    fn write(&self, output: &mut Output) {
+        output.write_u128(*self);
+    }
+}
+
+impl Writable for i128 {
+    fn write(&self, output: &mut Output) {
+        if *self < 0 {
+            output.put(b'-');
+        }
+        output.write_u128(self.unsigned_abs());
+    }
+}
 
 macro_rules! tuple_writable {
     ($name0:ident $($name:ident: $id:tt )*) => {

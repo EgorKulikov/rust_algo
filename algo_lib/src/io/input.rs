@@ -39,12 +39,17 @@ macro_rules! read_impl {
 
 impl Input {
     const DEFAULT_BUF_SIZE: usize = 1 << 21;
+    /// Zero bytes kept after the readable part of `buf`, so the 8-byte
+    /// SWAR loads in integer parsing never run off the allocation.
+    const SLACK: usize = 64;
     const FIX_EOL: bool = true;
 
     pub fn slice(input: &[u8]) -> Self {
+        let mut buf = input.to_vec();
+        buf.resize(input.len() + Self::SLACK, 0);
         Self {
             input: InputSource::Slice,
-            buf: input.to_vec(),
+            buf,
             at: 0,
             buf_read: input.len(),
             eol: true,
@@ -66,10 +71,50 @@ impl Input {
     fn new(input: InputSource) -> Self {
         Self {
             input,
-            buf: vec![0; Self::DEFAULT_BUF_SIZE],
+            buf: vec![0; Self::DEFAULT_BUF_SIZE + Self::SLACK],
             at: 0,
             buf_read: 0,
             eol: true,
+        }
+    }
+
+    #[inline]
+    fn capacity(&self) -> usize {
+        self.buf.len() - Self::SLACK
+    }
+
+    fn read_more(&mut self) -> usize {
+        let cap = self.capacity();
+        let target = &mut self.buf[self.buf_read..cap];
+        let read = match &mut self.input {
+            InputSource::Stdin(stdin) => stdin.read(target).unwrap(),
+            InputSource::File(file) => file.read(target).unwrap(),
+            InputSource::Delegate(reader) => reader.read(target).unwrap(),
+            InputSource::Slice => 0,
+        };
+        self.buf_read += read;
+        let end = (self.buf_read + Self::SLACK).min(self.buf.len());
+        self.buf[self.buf_read..end].fill(0);
+        read
+    }
+
+    /// Makes at least `n` unread bytes available at `self.at` unless the
+    /// source is exhausted first; the bytes after `buf_read` are zero.
+    #[inline]
+    fn ensure(&mut self, n: usize) {
+        if self.buf_read - self.at < n {
+            self.ensure_slow(n);
+        }
+    }
+
+    fn ensure_slow(&mut self, n: usize) {
+        self.buf.copy_within(self.at..self.buf_read, 0);
+        self.buf_read -= self.at;
+        self.at = 0;
+        while self.buf_read < n && self.read_more() != 0 {}
+        if self.buf_read < n {
+            let end = (self.buf_read + Self::SLACK).min(self.buf.len());
+            self.buf[self.buf_read..end].fill(0);
         }
     }
 
@@ -188,13 +233,8 @@ impl Input {
     fn refill_buffer(&mut self) -> bool {
         if self.at == self.buf_read {
             self.at = 0;
-            self.buf_read = match &mut self.input {
-                InputSource::Stdin(stdin) => stdin.read(&mut self.buf).unwrap(),
-                InputSource::File(file) => file.read(&mut self.buf).unwrap(),
-                InputSource::Delegate(reader) => reader.read(&mut self.buf).unwrap(),
-                InputSource::Slice => 0,
-            };
-            self.buf_read != 0
+            self.buf_read = 0;
+            self.read_more() != 0
         } else {
             true
         }
@@ -248,55 +288,106 @@ impl Read for Input {
     }
 }
 
+const SWAR_ZEROS: u64 = 0x3030_3030_3030_3030;
+const SWAR_LOW7: u64 = 0x7f7f_7f7f_7f7f_7f7f;
+const SWAR_HIGH: u64 = 0x8080_8080_8080_8080;
+const POW10: [u64; 9] = [
+    1,
+    10,
+    100,
+    1_000,
+    10_000,
+    100_000,
+    1_000_000,
+    10_000_000,
+    100_000_000,
+];
+
+/// Value of the digits stored one per byte in `x` (first digit in the lowest
+/// byte, every byte already reduced to 0..=9).
+#[inline]
+fn swar_digits(x: u64) -> u64 {
+    let x = (x * 10 + (x >> 8)) & 0x00ff_00ff_00ff_00ff;
+    let x = (x * 100 + (x >> 16)) & 0x0000_ffff_0000_ffff;
+    (x * 10_000 + (x >> 32)) & 0xffff_ffff
+}
+
 macro_rules! read_integer {
     // `$signed` is a literal, so the sign handling const-folds away for
-    // unsigned types, keeping their hot loop free of the `sgn` branch.
-    ($signed: literal $($t:ident)+) => {$(
+    // unsigned types. `$acc` is the unsigned accumulator (u64 or u128).
+    ($signed: literal, $acc: ty, $($t:ident)+) => {$(
         impl Readable for $t {
             #[inline]
             fn read(input: &mut Input) -> Self {
-                input.skip_whitespace();
-                let c = input.get().unwrap();
-                let (sgn, mut res): (bool, $t) = match c {
-                    b'-' if $signed => (true, 0),
-                    b'+' => (false, 0),
-                    _ => {
-                        debug_assert!(c.is_ascii_digit());
-                        (false, (c ^ b'0') as $t)
-                    }
-                };
+                let mut at = input.at;
                 loop {
                     let buf = input.buf.as_ptr();
-                    let end = input.buf_read;
-                    let mut at = input.at;
-                    while at < end {
-                        let c = unsafe { *buf.add(at) };
-                        if c.is_ascii_digit() {
-                            at += 1;
-                            let d = (c ^ b'0') as $t;
-                            if $signed && sgn {
-                                res = res * 10 - d;
-                            } else {
-                                res = res * 10 + d;
-                            }
-                        } else {
-                            input.at = at;
-                            input.get();
-                            return res;
-                        }
+                    while at < input.buf_read && unsafe { *buf.add(at) } <= b' ' {
+                        at += 1;
                     }
                     input.at = at;
-                    if !input.refill_buffer() {
-                        return res;
+                    if at < input.buf_read || !input.refill_buffer() {
+                        break;
                     }
+                    at = input.at;
+                }
+                let mut buf = input.buf.as_ptr();
+                let first = unsafe { *buf.add(at) };
+                let neg = $signed && first == b'-';
+                if neg || first == b'+' {
+                    at += 1;
+                }
+                let mut res: $acc = 0;
+                loop {
+                    if input.buf_read < at + 10 {
+                        input.at = at;
+                        input.ensure(10);
+                        buf = input.buf.as_ptr();
+                        at = input.at;
+                    }
+                    // Eight bytes at once: a byte is a digit iff (b ^ b'0') < 10.
+                    let chunk = unsafe { (buf.add(at) as *const u64).read_unaligned() };
+                    let x = u64::from_le(chunk) ^ SWAR_ZEROS;
+                    let non_digit = (((x & SWAR_LOW7) + 0x7676_7676_7676_7676) | x) & SWAR_HIGH;
+                    if non_digit == 0 {
+                        res = res.wrapping_mul(100_000_000).wrapping_add(swar_digits(x) as $acc);
+                        at += 8;
+                    } else {
+                        let k = (non_digit.trailing_zeros() / 8) as usize;
+                        if k != 0 {
+                            let v = swar_digits(x << (64 - 8 * k));
+                            res = res.wrapping_mul(POW10[k] as $acc).wrapping_add(v as $acc);
+                            at += k;
+                        }
+                        break;
+                    }
+                }
+                // Consume one whitespace terminator (`\r\n` counts as one).
+                if at < input.buf_read {
+                    let c = unsafe { *buf.add(at) };
+                    input.eol = c == b'\n' || c == b'\r';
+                    if c <= b' ' {
+                        at += 1;
+                        if c == b'\r' && at < input.buf_read && unsafe { *buf.add(at) } == b'\n' {
+                            at += 1;
+                        }
+                    }
+                }
+                input.at = at;
+                if $signed && neg {
+                    res.wrapping_neg() as $t
+                } else {
+                    res as $t
                 }
             }
         }
     )+};
 }
 
-read_integer!(true i8 i16 i32 i64 i128 isize);
-read_integer!(false u16 u32 u64 u128 usize);
+read_integer!(true, u64, i8 i16 i32 i64 isize);
+read_integer!(false, u64, u16 u32 u64 usize);
+read_integer!(true, u128, i128);
+read_integer!(false, u128, u128);
 
 macro_rules! tuple_readable {
     ($($name:ident)+) => {
