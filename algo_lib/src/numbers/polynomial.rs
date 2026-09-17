@@ -51,6 +51,10 @@ impl<T, M: BaseModInt<T>> PolynomialOps<T, M> {
 }
 
 impl<T: Into<u64>, M: BaseModInt<T>> PolynomialOps<T, M> {
+    pub(crate) fn fft_mut(&mut self) -> &mut FFT<M, T> {
+        self.fft.get_or_insert_with(FFT::new)
+    }
+
     /// Multiplies two coefficient slices, returning an empty vector if either
     /// input is empty. Otherwise returns `a.len() + b.len() - 1` coefficients,
     /// including any trailing zeros.

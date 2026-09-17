@@ -104,3 +104,47 @@ pub fn combinations_arr<T, M: BaseModInt<T>>(n: usize) -> Arr2d<M> {
     }
     res
 }
+
+/// Square root modulo a prime by Tonelli-Shanks; `None` if `a` is a
+/// non-residue. Either root may be returned.
+pub fn mod_sqrt<T: Into<u64> + Copy, M: BaseModInt<T>>(a: M) -> Option<M> {
+    use crate::numbers::number_ext::Power;
+    let p: u64 = M::module().into();
+    if a == M::zero() || p == 2 {
+        return Some(a);
+    }
+    let minus_one = -M::one();
+    if a.power((p - 1) / 2) != M::one() {
+        return None;
+    }
+    let s = (p - 1).trailing_zeros();
+    let q = (p - 1) >> s;
+    if s == 1 {
+        return Some(a.power((p + 1) / 4));
+    }
+    let mut z = M::one() + M::one();
+    while z.power((p - 1) / 2) != minus_one {
+        z += M::one();
+    }
+    let mut m = s;
+    let mut c = z.power(q);
+    let mut t = a.power(q);
+    let mut r = a.power((q + 1) / 2);
+    while t != M::one() {
+        let mut i = 0;
+        let mut t2 = t;
+        while t2 != M::one() {
+            t2 *= t2;
+            i += 1;
+        }
+        let mut b = c;
+        for _ in 0..m - i - 1 {
+            b *= b;
+        }
+        m = i;
+        c = b * b;
+        t *= c;
+        r *= b;
+    }
+    Some(r)
+}

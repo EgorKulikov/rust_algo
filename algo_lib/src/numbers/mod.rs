@@ -1,6 +1,7 @@
 pub mod combinations;
 pub mod fixed_int;
 pub mod floor_sum;
+pub mod fps;
 pub mod fwht;
 pub mod gauss;
 pub mod gcd;
