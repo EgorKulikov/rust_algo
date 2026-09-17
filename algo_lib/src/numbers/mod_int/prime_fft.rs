@@ -74,9 +74,14 @@ impl Montgomery {
 /// [`FFT`](crate::numbers::mod_int::fft::FFT).
 pub struct PrimeFFT<M: BaseModInt<T>, T = u32> {
     mont: Montgomery,
+    avx2: bool,
     rank: usize,
     rate2: [u32; 32],
     irate2: [u32; 32],
+    /// `tw[s]` is the twiddle of block `s` at every level (strict Montgomery
+    /// form); the table for a smaller transform is a prefix of a larger one.
+    tw: Vec<u32>,
+    itw: Vec<u32>,
     aa: Vec<u32>,
     bb: Vec<u32>,
     phantom: PhantomData<(T, M)>,
@@ -133,13 +138,23 @@ impl<T: Into<u64>, M: BaseModInt<T>> PrimeFFT<M, T> {
         }
         Self {
             mont,
+            avx2: avx2_available(),
             rank,
             rate2,
             irate2,
+            tw: Vec::new(),
+            itw: Vec::new(),
             aa: Vec::new(),
             bb: Vec::new(),
             phantom: PhantomData,
         }
+    }
+
+    /// Forces the portable scalar butterflies (used by tests).
+    #[cfg(test)]
+    pub(crate) fn scalar_only(mut self) -> Self {
+        self.avx2 = false;
+        self
     }
 
     pub(crate) fn max_len(&self) -> usize {
@@ -187,20 +202,27 @@ impl<T: Into<u64>, M: BaseModInt<T>> PrimeFFT<M, T> {
             panic!("unsuitable modulo");
         }
         let mont = self.mont;
+        self.ensure_twiddles(size);
         load(&mut self.aa, a, size, mont);
-        Self::dif(&mut self.aa[..size], mont, &self.rate2);
+        let avx2 = self.avx2;
+        Self::dif(&mut self.aa[..size], mont, &self.tw, avx2);
         if a == b {
             for x in self.aa[..size].iter_mut() {
                 *x = mont.mul(*x, *x);
             }
         } else {
             load(&mut self.bb, b, size, mont);
-            Self::dif(&mut self.bb[..size], mont, &self.rate2);
-            for (x, y) in self.aa[..size].iter_mut().zip(self.bb[..size].iter()) {
-                *x = mont.mul(*x, *y);
+            Self::dif(&mut self.bb[..size], mont, &self.tw, avx2);
+            if avx2 && size >= 8 {
+                // SAFETY: `avx2` is only set when the CPU reports AVX2.
+                unsafe { simd::pointwise(&mut self.aa[..size], &self.bb[..size], mont) };
+            } else {
+                for (x, y) in self.aa[..size].iter_mut().zip(self.bb[..size].iter()) {
+                    *x = mont.mul(*x, *y);
+                }
             }
         }
-        Self::dit(&mut self.aa[..size], mont, &self.irate2);
+        Self::dit(&mut self.aa[..size], mont, &self.itw, avx2);
         // One Montgomery multiply by the plain 1/size both scales and converts
         // out of Montgomery form.
         let inv_size = Into::<u64>::into(M::from(size).inv().unwrap().value()) as u32;
@@ -243,19 +265,43 @@ impl<T: Into<u64>, M: BaseModInt<T>> PrimeFFT<M, T> {
 
     pub(crate) const BORDER_LEN: usize = 60;
 
+    /// Grows the twiddle tables to cover transforms of length `size`.
+    fn ensure_twiddles(&mut self, size: usize) {
+        let need = size / 2;
+        if self.tw.len() >= need.max(1) {
+            return;
+        }
+        let mont = self.mont;
+        if self.tw.is_empty() {
+            let one = mont.to_mont(1);
+            self.tw.push(one);
+            self.itw.push(one);
+        }
+        while self.tw.len() < need {
+            let t = self.tw.len() - 1;
+            let k = (!t).trailing_zeros() as usize;
+            self.tw
+                .push(mont.strict(mont.mul(self.tw[t], self.rate2[k])));
+            self.itw
+                .push(mont.strict(mont.mul(self.itw[t], self.irate2[k])));
+        }
+    }
+
     /// Decimation in frequency: natural order in, bit-reversed order out.
-    /// Values stay in `[0, 2p)`; twiddles are strict.
-    fn dif(a: &mut [u32], mont: Montgomery, rate2: &[u32; 32]) {
+    /// Values stay in `[0, 2p)`.
+    fn dif(a: &mut [u32], mont: Montgomery, tw: &[u32], avx2: bool) {
         let n = a.len();
         let h = n.trailing_zeros() as usize;
-        let one = mont.to_mont(1);
-        for len in 0..h {
+        let leaf = if avx2 && h >= 3 { 3 } else { 0 };
+        for len in 0..h - leaf {
             let half = 1 << (h - len - 1);
-            let mut rot = one;
-            for s in 0..(1usize << len) {
-                let offset = s << (h - len);
-                let (lo, hi) = a[offset..offset + 2 * half].split_at_mut(half);
-                if rot == one {
+            for (s, block) in a.chunks_exact_mut(2 * half).enumerate() {
+                let rot = tw[s];
+                let (lo, hi) = block.split_at_mut(half);
+                if avx2 && half >= 8 {
+                    // SAFETY: `avx2` is only set when the CPU reports AVX2.
+                    unsafe { simd::dif_block(lo, hi, rot, mont) };
+                } else if s == 0 {
                     for (l, r) in lo.iter_mut().zip(hi.iter_mut()) {
                         let (x, y) = (*l, *r);
                         *l = mont.add(x, y);
@@ -268,25 +314,32 @@ impl<T: Into<u64>, M: BaseModInt<T>> PrimeFFT<M, T> {
                         *r = mont.add(x + mont.p2 - y, 0);
                     }
                 }
-                if s + 1 != 1 << len {
-                    rot = mont.strict(mont.mul(rot, rate2[(!s).trailing_zeros() as usize]));
-                }
             }
+        }
+        if leaf == 3 {
+            // SAFETY: `avx2` is only set when the CPU reports AVX2.
+            unsafe { simd::dif_leaf(a, tw, mont) };
         }
     }
 
     /// Decimation in time: bit-reversed order in, natural order out (unscaled).
-    fn dit(a: &mut [u32], mont: Montgomery, irate2: &[u32; 32]) {
+    fn dit(a: &mut [u32], mont: Montgomery, itw: &[u32], avx2: bool) {
         let n = a.len();
         let h = n.trailing_zeros() as usize;
-        let one = mont.to_mont(1);
-        for len in (1..=h).rev() {
+        let leaf = if avx2 && h >= 3 { 3 } else { 0 };
+        if leaf == 3 {
+            // SAFETY: `avx2` is only set when the CPU reports AVX2.
+            unsafe { simd::dit_leaf(a, itw, mont) };
+        }
+        for len in (1..=h - leaf).rev() {
             let half = 1 << (h - len);
-            let mut irot = one;
-            for s in 0..(1usize << (len - 1)) {
-                let offset = s << (h - len + 1);
-                let (lo, hi) = a[offset..offset + 2 * half].split_at_mut(half);
-                if irot == one {
+            for (s, block) in a.chunks_exact_mut(2 * half).enumerate() {
+                let irot = itw[s];
+                let (lo, hi) = block.split_at_mut(half);
+                if avx2 && half >= 8 {
+                    // SAFETY: `avx2` is only set when the CPU reports AVX2.
+                    unsafe { simd::dit_block(lo, hi, irot, mont) };
+                } else if s == 0 {
                     for (l, r) in lo.iter_mut().zip(hi.iter_mut()) {
                         let (x, y) = (*l, *r);
                         *l = mont.add(x, y);
@@ -299,10 +352,180 @@ impl<T: Into<u64>, M: BaseModInt<T>> PrimeFFT<M, T> {
                         *r = mont.mul(x + mont.p2 - y, irot);
                     }
                 }
-                if s + 1 != 1 << (len - 1) {
-                    irot = mont.strict(mont.mul(irot, irate2[(!s).trailing_zeros() as usize]));
-                }
             }
+        }
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+fn avx2_available() -> bool {
+    is_x86_feature_detected!("avx2")
+}
+
+#[cfg(not(target_arch = "x86_64"))]
+fn avx2_available() -> bool {
+    false
+}
+
+/// AVX2 versions of the block butterflies: eight lanes of lazy Montgomery
+/// arithmetic. Only called with slices whose length is a multiple of 8.
+#[cfg(target_arch = "x86_64")]
+mod simd {
+    use super::Montgomery;
+    use std::arch::x86_64::*;
+
+    /// Lazy Montgomery product of eight u32 lanes (inputs `< 2p`, twiddle
+    /// lanes `< p`), result `< 2p`.
+    #[inline(always)]
+    unsafe fn mul(a: __m256i, b: __m256i, p: __m256i, n_inv: __m256i) -> __m256i {
+        let even = _mm256_mul_epu32(a, b);
+        let odd = _mm256_mul_epu32(_mm256_srli_epi64::<32>(a), _mm256_srli_epi64::<32>(b));
+        let m_even = _mm256_mul_epu32(even, n_inv);
+        let m_odd = _mm256_mul_epu32(odd, n_inv);
+        let r_even = _mm256_add_epi64(even, _mm256_mul_epu32(m_even, p));
+        let r_odd = _mm256_add_epi64(odd, _mm256_mul_epu32(m_odd, p));
+        _mm256_blend_epi32::<0b1010_1010>(_mm256_srli_epi64::<32>(r_even), r_odd)
+    }
+
+    /// `x + y` reduced into `[0, 2p)` for `x, y < 2p`.
+    #[inline(always)]
+    unsafe fn add(x: __m256i, y: __m256i, p2: __m256i) -> __m256i {
+        let s = _mm256_add_epi32(x, y);
+        _mm256_min_epu32(s, _mm256_sub_epi32(s, p2))
+    }
+
+    /// `x - y` reduced into `[0, 2p)` for `x, y < 2p`.
+    #[inline(always)]
+    unsafe fn sub(x: __m256i, y: __m256i, p2: __m256i) -> __m256i {
+        let d = _mm256_sub_epi32(x, y);
+        _mm256_min_epu32(d, _mm256_add_epi32(d, p2))
+    }
+
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn dif_block(lo: &mut [u32], hi: &mut [u32], rot: u32, mont: Montgomery) {
+        let p = _mm256_set1_epi32(mont.p as i32);
+        let p2 = _mm256_set1_epi32(mont.p2 as i32);
+        let n_inv = _mm256_set1_epi32(mont.n_inv as i32);
+        let w = _mm256_set1_epi32(rot as i32);
+        for (l, r) in lo.chunks_exact_mut(8).zip(hi.chunks_exact_mut(8)) {
+            let x = _mm256_loadu_si256(l.as_ptr() as *const __m256i);
+            let y = mul(
+                _mm256_loadu_si256(r.as_ptr() as *const __m256i),
+                w,
+                p,
+                n_inv,
+            );
+            _mm256_storeu_si256(l.as_mut_ptr() as *mut __m256i, add(x, y, p2));
+            _mm256_storeu_si256(r.as_mut_ptr() as *mut __m256i, sub(x, y, p2));
+        }
+    }
+
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn dit_block(lo: &mut [u32], hi: &mut [u32], irot: u32, mont: Montgomery) {
+        let p = _mm256_set1_epi32(mont.p as i32);
+        let p2 = _mm256_set1_epi32(mont.p2 as i32);
+        let n_inv = _mm256_set1_epi32(mont.n_inv as i32);
+        let w = _mm256_set1_epi32(irot as i32);
+        for (l, r) in lo.chunks_exact_mut(8).zip(hi.chunks_exact_mut(8)) {
+            let x = _mm256_loadu_si256(l.as_ptr() as *const __m256i);
+            let y = _mm256_loadu_si256(r.as_ptr() as *const __m256i);
+            _mm256_storeu_si256(l.as_mut_ptr() as *mut __m256i, add(x, y, p2));
+            let d = sub(x, y, p2);
+            _mm256_storeu_si256(r.as_mut_ptr() as *mut __m256i, mul(d, w, p, n_inv));
+        }
+    }
+
+    /// Twiddle vector `[t[0] x4, t[1] x4]` from two consecutive table entries.
+    #[inline(always)]
+    unsafe fn dup4(t: *const u32) -> __m256i {
+        let v = _mm256_castsi128_si256(_mm_loadl_epi64(t as *const __m128i));
+        _mm256_permutevar8x32_epi32(v, _mm256_setr_epi32(0, 0, 0, 0, 1, 1, 1, 1))
+    }
+
+    /// Twiddle vector `[t[0] x2, t[1] x2, t[2] x2, t[3] x2]`.
+    #[inline(always)]
+    unsafe fn dup2(t: *const u32) -> __m256i {
+        let v = _mm256_castsi128_si256(_mm_loadu_si128(t as *const __m128i));
+        _mm256_permutevar8x32_epi32(v, _mm256_setr_epi32(0, 0, 1, 1, 2, 2, 3, 3))
+    }
+
+    /// The last three forward levels for every block of eight elements:
+    /// block `s` uses `tw[s]`, then `tw[2s..2s+2]`, then `tw[4s..4s+4]`.
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn dif_leaf(a: &mut [u32], tw: &[u32], mont: Montgomery) {
+        let p = _mm256_set1_epi32(mont.p as i32);
+        let p2 = _mm256_set1_epi32(mont.p2 as i32);
+        let n_inv = _mm256_set1_epi32(mont.n_inv as i32);
+        for (s, block) in a.chunks_exact_mut(8).enumerate() {
+            let ptr = block.as_mut_ptr() as *mut __m256i;
+            let mut v = _mm256_loadu_si256(ptr);
+            // half = 4: x = lanes 0..4, y = lanes 4..8
+            let x = _mm256_permute2x128_si256::<0x00>(v, v);
+            let y = mul(
+                _mm256_permute2x128_si256::<0x11>(v, v),
+                _mm256_set1_epi32(tw[s] as i32),
+                p,
+                n_inv,
+            );
+            v = _mm256_blend_epi32::<0b1111_0000>(add(x, y, p2), sub(x, y, p2));
+            // half = 2: x = lanes {0,1,4,5}, y = lanes {2,3,6,7}
+            let x = _mm256_shuffle_epi32::<0b0100_0100>(v);
+            let y = mul(
+                _mm256_shuffle_epi32::<0b1110_1110>(v),
+                dup4(tw.as_ptr().add(2 * s)),
+                p,
+                n_inv,
+            );
+            v = _mm256_blend_epi32::<0b1100_1100>(add(x, y, p2), sub(x, y, p2));
+            // half = 1: x = even lanes, y = odd lanes
+            let x = _mm256_shuffle_epi32::<0b1010_0000>(v);
+            let y = mul(
+                _mm256_shuffle_epi32::<0b1111_0101>(v),
+                dup2(tw.as_ptr().add(4 * s)),
+                p,
+                n_inv,
+            );
+            v = _mm256_blend_epi32::<0b1010_1010>(add(x, y, p2), sub(x, y, p2));
+            _mm256_storeu_si256(ptr, v);
+        }
+    }
+
+    /// The first three inverse levels (mirror of `dif_leaf`).
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn dit_leaf(a: &mut [u32], itw: &[u32], mont: Montgomery) {
+        let p = _mm256_set1_epi32(mont.p as i32);
+        let p2 = _mm256_set1_epi32(mont.p2 as i32);
+        let n_inv = _mm256_set1_epi32(mont.n_inv as i32);
+        for (s, block) in a.chunks_exact_mut(8).enumerate() {
+            let ptr = block.as_mut_ptr() as *mut __m256i;
+            let mut v = _mm256_loadu_si256(ptr);
+            // half = 1
+            let x = _mm256_shuffle_epi32::<0b1010_0000>(v);
+            let y = _mm256_shuffle_epi32::<0b1111_0101>(v);
+            let d = mul(sub(x, y, p2), dup2(itw.as_ptr().add(4 * s)), p, n_inv);
+            v = _mm256_blend_epi32::<0b1010_1010>(add(x, y, p2), d);
+            // half = 2
+            let x = _mm256_shuffle_epi32::<0b0100_0100>(v);
+            let y = _mm256_shuffle_epi32::<0b1110_1110>(v);
+            let d = mul(sub(x, y, p2), dup4(itw.as_ptr().add(2 * s)), p, n_inv);
+            v = _mm256_blend_epi32::<0b1100_1100>(add(x, y, p2), d);
+            // half = 4
+            let x = _mm256_permute2x128_si256::<0x00>(v, v);
+            let y = _mm256_permute2x128_si256::<0x11>(v, v);
+            let d = mul(sub(x, y, p2), _mm256_set1_epi32(itw[s] as i32), p, n_inv);
+            v = _mm256_blend_epi32::<0b1111_0000>(add(x, y, p2), d);
+            _mm256_storeu_si256(ptr, v);
+        }
+    }
+
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn pointwise(a: &mut [u32], b: &[u32], mont: Montgomery) {
+        let p = _mm256_set1_epi32(mont.p as i32);
+        let n_inv = _mm256_set1_epi32(mont.n_inv as i32);
+        for (x, y) in a.chunks_exact_mut(8).zip(b.chunks_exact(8)) {
+            let vx = _mm256_loadu_si256(x.as_ptr() as *const __m256i);
+            let vy = _mm256_loadu_si256(y.as_ptr() as *const __m256i);
+            _mm256_storeu_si256(x.as_mut_ptr() as *mut __m256i, mul(vx, vy, p, n_inv));
         }
     }
 }
@@ -392,6 +615,30 @@ mod tests {
             }
             assert_eq!(c[0], a[0] * b[0]);
             assert_eq!(c[n + m - 2], a[n - 1] * b[m - 1]);
+        }
+    }
+
+    #[test]
+    fn scalar_and_simd_paths_agree() {
+        let mut rng = Random::new_with_seed(19);
+        let mut fast = PrimeFFT::<M>::new();
+        let mut slow = PrimeFFT::<M>::new().scalar_only();
+        for _ in 0..60 {
+            let n = rng.gen_range(1..700usize);
+            let m = rng.gen_range(1..700usize);
+            let a: Vec<M> = (0..n).map(|_| M::new(rng.gen_u128() as u32)).collect();
+            let b: Vec<M> = (0..m).map(|_| M::new(rng.gen_u128() as u32)).collect();
+            let expected = naive(&a, &b);
+            assert_eq!(slow.multiply(&a, &b), expected, "scalar {n} x {m}");
+            assert_eq!(fast.multiply(&a, &b), expected, "simd {n} x {m}");
+        }
+        for &(n, m) in &[(1usize << 15, 1usize << 15), (200_000, 70_001)] {
+            let a: Vec<M> = (0..n).map(|_| M::new(rng.gen_u128() as u32)).collect();
+            let b: Vec<M> = (0..m).map(|_| M::new(rng.gen_u128() as u32)).collect();
+            let c = slow.multiply(&a, &b);
+            assert_eq!(c, fast.multiply(&a, &b));
+            let x = M::new(rng.gen_u128() as u32);
+            assert_eq!(eval(&c, x), eval(&a, x) * eval(&b, x));
         }
     }
 
