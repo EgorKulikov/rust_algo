@@ -14,6 +14,7 @@ pub mod fenwick;
 pub mod fx_hash_map;
 pub mod id;
 pub mod indexed_heap;
+pub mod int_set;
 pub mod iter_ext;
 pub mod link_cut;
 pub mod md_arr;
