@@ -18,12 +18,58 @@ fn to_m<M: BaseModInt<u32>>(v: u64) -> M {
     M::from(v as usize)
 }
 
+/// `acc[j] += x * row[j]` for every column.
+#[inline]
+fn axpy(acc: &mut [u64], x: u32, row: &[u32], avx2: bool) {
+    #[cfg(target_arch = "x86_64")]
+    if avx2 {
+        // SAFETY: `avx2` is only set when the CPU reports AVX2.
+        unsafe { axpy_avx2(acc, x, row) };
+        return;
+    }
+    let _ = avx2;
+    for (s, &y) in acc.iter_mut().zip(row.iter()) {
+        *s += x as u64 * y as u64;
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2")]
+unsafe fn axpy_avx2(acc: &mut [u64], x: u32, row: &[u32]) {
+    use std::arch::x86_64::*;
+    let xv = _mm256_set1_epi64x(x as i64);
+    for (a, r) in acc.chunks_exact_mut(4).zip(row.chunks_exact(4)) {
+        let rv = _mm256_cvtepu32_epi64(_mm_loadu_si128(r.as_ptr() as *const __m128i));
+        let av = _mm256_loadu_si256(a.as_ptr() as *const __m256i);
+        _mm256_storeu_si256(
+            a.as_mut_ptr() as *mut __m256i,
+            _mm256_add_epi64(av, _mm256_mul_epu32(xv, rv)),
+        );
+    }
+    let tail = acc.len() / 4 * 4;
+    for (s, &y) in acc[tail..].iter_mut().zip(row[tail..].iter()) {
+        *s += x as u64 * y as u64;
+    }
+}
+
+fn avx2_available() -> bool {
+    #[cfg(target_arch = "x86_64")]
+    {
+        is_x86_feature_detected!("avx2")
+    }
+    #[cfg(not(target_arch = "x86_64"))]
+    {
+        false
+    }
+}
+
 /// `a * b` for an `n x k` and a `k x m` matrix.
 pub fn mat_mul<M: BaseModInt<u32>>(a: &Arr2d<M>, b: &Arr2d<M>) -> Arr2d<M> {
     assert_eq!(a.d2(), b.d1());
     let (n, k, m) = (a.d1(), a.d2(), b.d2());
     let p = modulus::<M>();
     let batch = batch_size(p);
+    let avx2 = avx2_available();
     let b_rows: Vec<Vec<u32>> = (0..k)
         .map(|i| b.row(i).map(|x| x.value()).collect())
         .collect();
@@ -33,12 +79,9 @@ pub fn mat_mul<M: BaseModInt<u32>>(a: &Arr2d<M>, b: &Arr2d<M>) -> Arr2d<M> {
             acc.fill(0);
             for (start, chunk) in b_rows.chunks(batch).enumerate() {
                 for (t, row) in chunk.iter().enumerate() {
-                    let x = a[(i, start * batch + t)].value() as u64;
-                    if x == 0 {
-                        continue;
-                    }
-                    for (s, &y) in acc.iter_mut().zip(row.iter()) {
-                        *s += x * y as u64;
+                    let x = a[(i, start * batch + t)].value();
+                    if x != 0 {
+                        axpy(&mut acc, x, row, avx2);
                     }
                 }
                 for s in acc.iter_mut() {
