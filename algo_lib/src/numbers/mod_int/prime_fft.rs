@@ -213,14 +213,7 @@ impl<T: Into<u64>, M: BaseModInt<T>> PrimeFFT<M, T> {
         } else {
             load(&mut self.bb, b, size, mont);
             Self::dif(&mut self.bb[..size], mont, &self.tw, avx2);
-            if avx2 && size >= 8 {
-                // SAFETY: `avx2` is only set when the CPU reports AVX2.
-                unsafe { simd::pointwise(&mut self.aa[..size], &self.bb[..size], mont) };
-            } else {
-                for (x, y) in self.aa[..size].iter_mut().zip(self.bb[..size].iter()) {
-                    *x = mont.mul(*x, *y);
-                }
-            }
+            self.pointwise_product(size);
         }
         Self::dit(&mut self.aa[..size], mont, &self.itw, avx2);
         // One Montgomery multiply by the plain 1/size both scales and converts
@@ -239,6 +232,83 @@ impl<T: Into<u64>, M: BaseModInt<T>> PrimeFFT<M, T> {
             let mut res = vec![M::zero(); a.len() + b.len() - 1];
             self.multiply_res(a, b, &mut res);
             res
+        }
+    }
+
+    /// `1 / f` modulo `x^n` (`f[0]` nonzero) by Newton iteration kept in the
+    /// transform domain: five transforms of length `2m` per doubling.
+    pub fn inverse_series(&mut self, f: &[M], n: usize) -> Vec<M> {
+        assert!(!f.is_empty() && f[0] != M::zero());
+        let inv0 = f[0].inv().unwrap();
+        if n <= 2 * Self::BORDER_LEN {
+            // Direct recurrence: g_i = -g_0 * sum_{j>=1} f_j g_{i-j}.
+            let mut g = vec![M::zero(); n];
+            if n > 0 {
+                g[0] = inv0;
+            }
+            for i in 1..n {
+                let mut acc = M::zero();
+                for j in 1..=i.min(f.len() - 1) {
+                    acc += f[j] * g[i - j];
+                }
+                g[i] = -acc * inv0;
+            }
+            return g;
+        }
+        let mont = self.mont;
+        let avx2 = self.avx2;
+        let mut g: Vec<u32> = vec![mont.to_mont(Into::<u64>::into(inv0.value()) as u32)];
+        let mut m = 1;
+        while m < n {
+            let size = 2 * m;
+            if self.max_len() < size {
+                panic!("unsuitable modulo");
+            }
+            self.ensure_twiddles(size);
+            let inv_size =
+                mont.to_mont(Into::<u64>::into(M::from(size).inv().unwrap().value()) as u32);
+            load(&mut self.aa, &f[..f.len().min(size)], size, mont);
+            Self::dif(&mut self.aa[..size], mont, &self.tw, avx2);
+            self.bb.clear();
+            self.bb.extend_from_slice(&g);
+            self.bb.resize(size, 0);
+            Self::dif(&mut self.bb[..size], mont, &self.tw, avx2);
+            self.pointwise_product(size);
+            Self::dit(&mut self.aa[..size], mont, &self.itw, avx2);
+            // Low half is corrupted by wrap-around but equals [1, 0, ..] anyway;
+            // the high half is the error term e = (f g)[m..2m].
+            for x in self.aa[..m].iter_mut() {
+                *x = 0;
+            }
+            for x in self.aa[m..size].iter_mut() {
+                *x = mont.mul(*x, inv_size);
+            }
+            Self::dif(&mut self.aa[..size], mont, &self.tw, avx2);
+            self.pointwise_product(size);
+            Self::dit(&mut self.aa[..size], mont, &self.itw, avx2);
+            g.reserve(m);
+            for &x in &self.aa[m..size] {
+                let v = mont.strict(mont.mul(x, inv_size));
+                g.push(if v == 0 { 0 } else { mont.p - v });
+            }
+            m = size;
+        }
+        g.truncate(n);
+        g.into_iter()
+            .map(|x| M::from(mont.strict(mont.reduce(x as u64)) as usize))
+            .collect()
+    }
+
+    /// `aa[i] *= bb[i]` for the first `size` entries.
+    fn pointwise_product(&mut self, size: usize) {
+        let mont = self.mont;
+        if self.avx2 && size >= 8 {
+            // SAFETY: `avx2` is only set when the CPU reports AVX2.
+            unsafe { simd::pointwise(&mut self.aa[..size], &self.bb[..size], mont) };
+        } else {
+            for (x, y) in self.aa[..size].iter_mut().zip(self.bb[..size].iter()) {
+                *x = mont.mul(*x, *y);
+            }
         }
     }
 
@@ -639,6 +709,26 @@ mod tests {
             assert_eq!(c, fast.multiply(&a, &b));
             let x = M::new(rng.gen_u128() as u32);
             assert_eq!(eval(&c, x), eval(&a, x) * eval(&b, x));
+        }
+    }
+
+    #[test]
+    fn inverse_series_matches_recurrence() {
+        let mut rng = Random::new_with_seed(20);
+        let mut fft = PrimeFFT::<M>::new();
+        for n in [1usize, 5, 120, 121, 128, 129, 1000, 1 << 14] {
+            let mut f: Vec<M> = (0..n).map(|_| M::new(rng.gen_u128() as u32)).collect();
+            f[0] = M::new(rng.gen_u128() as u32 % 1000 + 1);
+            let g = fft.inverse_series(&f, n);
+            assert_eq!(g.len(), n);
+            let prod = fft.multiply(&f, &g);
+            assert_eq!(prod[0], M::one());
+            assert!(prod[1..n].iter().all(|&c| c == M::zero()), "n={n}");
+            // shorter f than n
+            let g2 = fft.inverse_series(&f[..(n / 2).max(1)], n);
+            let prod = fft.multiply(&f[..(n / 2).max(1)], &g2);
+            assert_eq!(prod[0], M::one());
+            assert!(prod[1..n].iter().all(|&c| c == M::zero()), "short n={n}");
         }
     }
 

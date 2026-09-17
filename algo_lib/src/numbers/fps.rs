@@ -38,6 +38,11 @@ impl<T: Into<u64> + IntegerSemiRing + Copy, M: BaseModInt<T>> PolynomialOps<T, M
             !f.is_empty() && f[0] != M::zero(),
             "inverse needs f[0] != 0"
         );
+        if n > 60 && M::module().into() <= u32::MAX as u64 {
+            if let Some(g) = self.fft_mut().inverse_series(f, n) {
+                return g;
+            }
+        }
         let mut g = vec![f[0].inv().unwrap()];
         while g.len() < n {
             let size = (2 * g.len()).min(n);

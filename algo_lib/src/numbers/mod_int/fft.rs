@@ -17,6 +17,7 @@ use crate::numbers::primes::prime::is_prime;
 /// assert_eq!(fft.multiply(&[M::new(1), M::new(2)], &[M::new(3), M::new(4)]),
 ///            vec![M::new(3), M::new(10), M::new(8)]);
 /// ```
+#[allow(clippy::large_enum_variant)]
 pub enum FFT<M: BaseModInt<T>, T = u32> {
     Prime(PrimeFFT<M, T>),
     Convolution(Convolution<M, T>),
@@ -52,6 +53,17 @@ impl<T: Into<u64>, M: BaseModInt<T>> FFT<M, T> {
         let mut result = vec![M::zero(); a.len() + b.len() - 1];
         self.multiply_fix_len(a, b, &mut result);
         result
+    }
+
+    /// `1 / f` modulo `x^n` (`f[0]` nonzero). The direct NTT backend keeps
+    /// the Newton iteration in the transform domain; otherwise `None`.
+    pub fn inverse_series(&mut self, f: &[M], n: usize) -> Option<Vec<M>> {
+        match self {
+            Self::Prime(fft) if fft.max_len() >= n.next_power_of_two() => {
+                Some(fft.inverse_series(f, n))
+            }
+            _ => None,
+        }
     }
 
     /// Writes the full product, growing `res` if needed and zeroing its tail.
