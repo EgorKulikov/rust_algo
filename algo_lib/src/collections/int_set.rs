@@ -16,7 +16,7 @@ impl IntSet {
         let mut levels = Vec::new();
         let mut size = n.max(1);
         loop {
-            let words = size.div_ceil(64);
+            let words = (size + 63) / 64;
             levels.push(vec![0u64; words]);
             if words == 1 {
                 break;
