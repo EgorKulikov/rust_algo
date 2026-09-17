@@ -3,20 +3,28 @@ use crate::io::output::{Output, Writable};
 use crate::misc::extensions::replace_with::ReplaceWith;
 use crate::numbers::mod_int::convolution::convolution;
 use crate::numbers::num_traits::algebra::{One, Zero};
+use crate::numbers::num_traits::primitive::Primitive;
+use crate::numbers::num_traits::sign::IsSigned;
 use crate::string::str::StrReader;
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
-use std::ops::{Add, AddAssign, DivAssign, Mul, MulAssign, Rem, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
 
 const DIGITS: usize = 9;
 const BASE: i32 = 10i32.pow(DIGITS as u32);
 
+/// Arbitrary-precision unsigned integer, little-endian limbs in base 10^9.
+/// Invariant: no trailing zero limbs, so zero is the empty vector.
 #[derive(Eq, PartialEq, Clone)]
 pub struct UBigInt {
     z: Vec<i32>,
 }
 
 impl UBigInt {
+    pub fn is_zero(&self) -> bool {
+        self.z.is_empty()
+    }
+
     pub fn power(&self, exp: usize) -> Self {
         if exp == 0 {
             Self::one()
@@ -26,6 +34,57 @@ impl UBigInt {
         } else {
             &self.power(exp - 1) * self
         }
+    }
+
+    /// Value as `u128`, or `None` if it does not fit.
+    pub fn to_u128(&self) -> Option<u128> {
+        let mut res = 0u128;
+        for &i in self.z.iter().rev() {
+            res = res.checked_mul(BASE as u128)?.checked_add(i as u128)?;
+        }
+        Some(res)
+    }
+
+    /// Quotient and remainder. Schoolbook long division, O(len(self) * len(rhs)).
+    pub fn div_rem(&self, rhs: &Self) -> (Self, Self) {
+        assert!(!rhs.is_zero(), "division by zero");
+        if self < rhs {
+            return (Self::zero(), self.clone());
+        }
+        if rhs.z.len() == 1 {
+            let mut q = self.clone();
+            q /= rhs.z[0];
+            return (q, Self::from(self % rhs.z[0]));
+        }
+        // Knuth, TAOCP vol. 2, algorithm D: normalize so the top limb of the
+        // divisor is at least BASE / 2, then each quotient digit estimated from
+        // the top two limbs of the remainder is at most two too large.
+        let norm = BASE / (rhs.z[rhs.z.len() - 1] + 1);
+        let mut a = self.clone();
+        a *= norm;
+        let mut b = rhs.clone();
+        b *= norm;
+        let n = b.z.len();
+        let top = b.z[n - 1] as i64;
+        let mut q = vec![0; a.z.len()];
+        let mut r = Self::zero();
+        for i in (0..a.z.len()).rev() {
+            r.z.insert(0, a.z[i]);
+            trim_zeroes(&mut r.z);
+            let limb = |at: usize| r.z.get(at).copied().unwrap_or(0) as i64;
+            let mut d = ((limb(n) * BASE as i64 + limb(n - 1)) / top) as i32;
+            let mut bd = b.clone();
+            bd *= d;
+            while r < bd {
+                bd -= &b;
+                d -= 1;
+            }
+            r -= &bd;
+            q[i] = d;
+        }
+        trim_zeroes(&mut q);
+        r /= norm;
+        (Self { z: q }, r)
     }
 }
 
@@ -46,24 +105,45 @@ impl From<&[u8]> for UBigInt {
             res.push(cur);
             at = start;
         }
+        trim_zeroes(&mut res);
         Self { z: res }
     }
 }
 
-impl From<i32> for UBigInt {
-    fn from(mut v: i32) -> Self {
+/// Conversion from any primitive integer. Panics on a negative value.
+impl<T: Primitive<u128> + Primitive<i128> + IsSigned> From<T> for UBigInt {
+    fn from(v: T) -> Self {
+        assert!(
+            !T::SIGNED || <T as Primitive<i128>>::to(v) >= 0,
+            "negative value in UBigInt"
+        );
+        let mut v = <T as Primitive<u128>>::to(v);
         let mut z = Vec::new();
         while v > 0 {
-            z.push(v % BASE);
-            v /= BASE;
+            z.push((v % BASE as u128) as i32);
+            v /= BASE as u128;
         }
         Self { z }
     }
 }
 
+macro_rules! try_from {
+    ($($t:ident)+) => {$(
+        impl TryFrom<&UBigInt> for $t {
+            type Error = ();
+
+            fn try_from(v: &UBigInt) -> Result<Self, ()> {
+                v.to_u128().and_then(|v| v.try_into().ok()).ok_or(())
+            }
+        }
+    )+};
+}
+
+try_from!(u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize);
+
 impl Zero for UBigInt {
     fn zero() -> Self {
-        Self::from(0)
+        Self { z: Vec::new() }
     }
 }
 
@@ -203,6 +283,8 @@ impl MulAssign<i32> for UBigInt {
 impl<'a> Mul<&'a UBigInt> for &UBigInt {
     type Output = UBigInt;
 
+    /// FFT-based; the combined limb count of the operands is limited to about
+    /// 2^21 (roughly 19 million decimal digits) by the convolution.
     fn mul(self, rhs: &'a UBigInt) -> Self::Output {
         let c = convolution(&self.z, &rhs.z);
         let mut carry = 0;
@@ -264,15 +346,80 @@ impl Rem<i32> for &UBigInt {
     }
 }
 
+impl<'a> Div<&'a UBigInt> for &UBigInt {
+    type Output = UBigInt;
+
+    fn div(self, rhs: &'a UBigInt) -> Self::Output {
+        self.div_rem(rhs).0
+    }
+}
+
+impl Div for UBigInt {
+    type Output = Self;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        &self / &rhs
+    }
+}
+
+impl<'a> DivAssign<&'a Self> for UBigInt {
+    fn div_assign(&mut self, rhs: &'a Self) {
+        *self = &*self / rhs;
+    }
+}
+
+impl DivAssign for UBigInt {
+    fn div_assign(&mut self, rhs: Self) {
+        *self /= &rhs;
+    }
+}
+
+impl<'a> Rem<&'a UBigInt> for &UBigInt {
+    type Output = UBigInt;
+
+    fn rem(self, rhs: &'a UBigInt) -> Self::Output {
+        self.div_rem(rhs).1
+    }
+}
+
+impl Rem for UBigInt {
+    type Output = Self;
+
+    fn rem(self, rhs: Self) -> Self::Output {
+        &self % &rhs
+    }
+}
+
+impl<'a> RemAssign<&'a Self> for UBigInt {
+    fn rem_assign(&mut self, rhs: &'a Self) {
+        *self = &*self % rhs;
+    }
+}
+
+impl RemAssign for UBigInt {
+    fn rem_assign(&mut self, rhs: Self) {
+        *self %= &rhs;
+    }
+}
+
 impl Writable for UBigInt {
     fn write(&self, output: &mut Output) {
-        if let Some(tail) = self.z.last() {
-            tail.write(output);
-            for &i in self.z.iter().rev().skip(1) {
-                format!("{:09}", i).write(output);
+        match self.z.split_last() {
+            None => output.put(b'0'),
+            Some((top, rest)) => {
+                top.write(output);
+                for &i in rest.iter().rev() {
+                    let mut buf = [b'0'; DIGITS];
+                    let mut v = i;
+                    for b in buf.iter_mut().rev() {
+                        *b += (v % 10) as u8;
+                        v /= 10;
+                    }
+                    for b in buf {
+                        output.put(b);
+                    }
+                }
             }
-        } else {
-            0u32.write(output);
         }
     }
 }

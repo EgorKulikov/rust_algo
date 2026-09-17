@@ -2,53 +2,108 @@ use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use crate::misc::extensions::replace_with::ReplaceWith;
 use crate::numbers::num_traits::algebra::{One, Zero};
+use crate::numbers::num_traits::primitive::Primitive;
+use crate::numbers::num_traits::sign::IsSigned;
 use crate::numbers::unsigned_big_int::UBigInt;
 use crate::string::str::StrReader;
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
-use std::ops::{Add, AddAssign, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
+};
 
+/// Arbitrary-precision signed integer as sign and magnitude.
+/// Invariant: `sign` is 0 exactly when the magnitude is zero.
 #[derive(Eq, PartialEq, Clone)]
 pub struct BigInt {
     value: UBigInt,
     sign: i8,
 }
 
+impl BigInt {
+    fn new(value: UBigInt, sign: i8) -> Self {
+        let sign = if value.is_zero() { 0 } else { sign };
+        Self { value, sign }
+    }
+
+    pub fn abs(self) -> UBigInt {
+        self.value
+    }
+
+    /// Value as `i128`, or `None` if it does not fit.
+    pub fn to_i128(&self) -> Option<i128> {
+        let v = self.value.to_u128()?;
+        if self.sign < 0 {
+            (v <= i128::MIN.unsigned_abs()).then(|| (v as i128).wrapping_neg())
+        } else {
+            v.try_into().ok()
+        }
+    }
+
+    /// Quotient and remainder, truncating toward zero like the primitive types.
+    pub fn div_rem(&self, rhs: &Self) -> (Self, Self) {
+        let (q, r) = self.value.div_rem(&rhs.value);
+        (Self::new(q, self.sign * rhs.sign), Self::new(r, self.sign))
+    }
+}
+
 impl From<&[u8]> for BigInt {
     fn from(value: &[u8]) -> Self {
         if value[0] == b'-' {
-            Self {
-                value: (&value[1..]).into(),
-                sign: -1,
-            }
+            Self::new((&value[1..]).into(), -1)
         } else {
-            Self {
-                value: value.into(),
-                sign: if value.len() == 1 && value[0] == b'0' {
-                    0
-                } else {
-                    1
-                },
-            }
+            Self::new(value.into(), 1)
         }
     }
 }
 
-impl From<i32> for BigInt {
-    fn from(v: i32) -> Self {
-        if v >= 0 {
-            Self {
-                value: v.into(),
-                sign: if v == 0 { 0 } else { 1 },
-            }
+impl From<UBigInt> for BigInt {
+    fn from(value: UBigInt) -> Self {
+        Self::new(value, 1)
+    }
+}
+
+impl<T: Primitive<u128> + Primitive<i128> + IsSigned> From<T> for BigInt {
+    fn from(v: T) -> Self {
+        if T::SIGNED {
+            let v = <T as Primitive<i128>>::to(v);
+            Self::new(v.unsigned_abs().into(), v.signum() as i8)
         } else {
-            Self {
-                value: (-v).into(),
-                sign: -1,
-            }
+            Self::new(<T as Primitive<u128>>::to(v).into(), 1)
         }
     }
 }
+
+macro_rules! try_from_signed {
+    ($($t:ident)+) => {$(
+        impl TryFrom<&BigInt> for $t {
+            type Error = ();
+
+            fn try_from(v: &BigInt) -> Result<Self, ()> {
+                v.to_i128().and_then(|v| v.try_into().ok()).ok_or(())
+            }
+        }
+    )+};
+}
+
+macro_rules! try_from_unsigned {
+    ($($t:ident)+) => {$(
+        impl TryFrom<&BigInt> for $t {
+            type Error = ();
+
+            fn try_from(v: &BigInt) -> Result<Self, ()> {
+                if v.sign < 0 {
+                    Err(())
+                } else {
+                    (&v.value).try_into()
+                }
+            }
+        }
+    )+};
+}
+
+try_from_signed!(i8 i16 i32 i64 i128 isize);
+try_from_unsigned!(u8 u16 u32 u64 u128 usize);
 
 impl Zero for BigInt {
     fn zero() -> Self {
@@ -81,6 +136,9 @@ impl<'a> AddAssign<&'a Self> for BigInt {
             (1, -1) | (-1, 1) => {
                 if self.value >= rhs.value {
                     self.value -= &rhs.value;
+                    if self.value.is_zero() {
+                        self.sign = 0;
+                    }
                 } else {
                     self.value = rhs.value.clone() - &self.value;
                     self.sign *= -1;
@@ -125,25 +183,28 @@ impl Sub for BigInt {
     }
 }
 
+impl Neg for BigInt {
+    type Output = Self;
+
+    fn neg(mut self) -> Self::Output {
+        self.sign *= -1;
+        self
+    }
+}
+
 impl MulAssign<i32> for BigInt {
     fn mul_assign(&mut self, rhs: i32) {
-        if rhs >= 0 {
-            self.value *= rhs;
-            self.sign *= if rhs == 0 { 0 } else { 1 };
-        } else {
-            self.value *= -rhs;
-            self.sign *= -1;
-        }
+        self.value *= rhs.unsigned_abs() as i32;
+        self.sign *= rhs.signum() as i8;
     }
 }
 
 impl DivAssign<i32> for BigInt {
     fn div_assign(&mut self, rhs: i32) {
-        if rhs >= 0 {
-            self.value /= rhs;
-        } else {
-            self.value /= -rhs;
-            self.sign *= -1;
+        self.value /= rhs.unsigned_abs() as i32;
+        self.sign *= rhs.signum() as i8;
+        if self.value.is_zero() {
+            self.sign = 0;
         }
     }
 }
@@ -152,10 +213,7 @@ impl Mul for BigInt {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        Self {
-            value: self.value * rhs.value,
-            sign: self.sign * rhs.sign,
-        }
+        &self * &rhs
     }
 }
 
@@ -163,7 +221,15 @@ impl<'a> Mul<&'a Self> for BigInt {
     type Output = Self;
 
     fn mul(self, rhs: &'a Self) -> Self::Output {
-        Self {
+        &self * rhs
+    }
+}
+
+impl<'a> Mul<&'a BigInt> for &BigInt {
+    type Output = BigInt;
+
+    fn mul(self, rhs: &'a BigInt) -> Self::Output {
+        BigInt {
             value: &self.value * &rhs.value,
             sign: self.sign * rhs.sign,
         }
@@ -176,10 +242,66 @@ impl MulAssign for BigInt {
     }
 }
 
+impl<'a> Div<&'a BigInt> for &BigInt {
+    type Output = BigInt;
+
+    fn div(self, rhs: &'a BigInt) -> Self::Output {
+        self.div_rem(rhs).0
+    }
+}
+
+impl Div for BigInt {
+    type Output = Self;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        &self / &rhs
+    }
+}
+
+impl<'a> DivAssign<&'a Self> for BigInt {
+    fn div_assign(&mut self, rhs: &'a Self) {
+        *self = &*self / rhs;
+    }
+}
+
+impl DivAssign for BigInt {
+    fn div_assign(&mut self, rhs: Self) {
+        *self /= &rhs;
+    }
+}
+
+impl<'a> Rem<&'a BigInt> for &BigInt {
+    type Output = BigInt;
+
+    fn rem(self, rhs: &'a BigInt) -> Self::Output {
+        self.div_rem(rhs).1
+    }
+}
+
+impl Rem for BigInt {
+    type Output = Self;
+
+    fn rem(self, rhs: Self) -> Self::Output {
+        &self % &rhs
+    }
+}
+
+impl<'a> RemAssign<&'a Self> for BigInt {
+    fn rem_assign(&mut self, rhs: &'a Self) {
+        *self = &*self % rhs;
+    }
+}
+
+impl RemAssign for BigInt {
+    fn rem_assign(&mut self, rhs: Self) {
+        *self %= &rhs;
+    }
+}
+
 impl Writable for BigInt {
     fn write(&self, output: &mut Output) {
         if self.sign == -1 {
-            output.print(b'-');
+            output.put(b'-');
         }
         self.value.write(output);
     }

@@ -81,7 +81,19 @@ fn test_divisors() {
 }
 
 mod big_int {
+    use crate::io::output::{Output, Writable};
+    use crate::misc::random::{Random, RandomTrait};
+    use crate::numbers::num_traits::algebra::{IntegerRing, IntegerSemiRing, One, Zero};
+    use crate::numbers::signed_big_int::BigInt;
     use crate::numbers::unsigned_big_int::UBigInt;
+
+    fn ub(s: &str) -> UBigInt {
+        UBigInt::from(s.as_bytes())
+    }
+
+    fn sb(s: &str) -> BigInt {
+        BigInt::from(s.as_bytes())
+    }
 
     #[test]
     fn test_mul() {
@@ -94,6 +106,195 @@ mod big_int {
         assert_eq!(res.to_string(), "119631771048379978125");
         let res = res + res2;
         assert_eq!(res.to_string(), "119745078962272761406");
+    }
+
+    #[test]
+    fn zero_has_one_representation() {
+        assert_eq!(ub("0"), UBigInt::zero());
+        assert_eq!(ub("000000000000"), UBigInt::zero());
+        assert_eq!(ub("0000000000007"), UBigInt::from(7));
+        assert_eq!(sb("00"), BigInt::zero());
+        assert_eq!(sb("-0"), BigInt::zero());
+        assert_eq!(sb("-000000000012"), BigInt::from(-12));
+        let d = BigInt::from(5) - BigInt::from(5);
+        assert_eq!(d, BigInt::zero());
+        assert_eq!(d.cmp(&BigInt::zero()), std::cmp::Ordering::Equal);
+        assert_eq!(d + BigInt::from(3), BigInt::from(3));
+        let d = sb("-123456789012345678901234567890") + sb("123456789012345678901234567890");
+        assert_eq!(d, BigInt::zero());
+        assert_eq!(-BigInt::zero(), BigInt::zero());
+    }
+
+    #[test]
+    fn division_matches_i128() {
+        let mut rng = Random::new_with_seed(7);
+        for _ in 0..3000 {
+            let bits = rng.gen_range(0..127usize);
+            let a = (rng.gen_u128() >> (127 - bits)) as i128 * if rng.gen_bool() { -1 } else { 1 };
+            let bits = rng.gen_range(0..127usize);
+            let b = (rng.gen_u128() >> (127 - bits)) as i128 * if rng.gen_bool() { -1 } else { 1 };
+            if b == 0 {
+                continue;
+            }
+            let (fa, fb) = (BigInt::from(a), BigInt::from(b));
+            assert_eq!((&fa / &fb).to_string(), (a / b).to_string(), "{a} / {b}");
+            assert_eq!((&fa % &fb).to_string(), (a % b).to_string(), "{a} % {b}");
+            assert_eq!((fa.clone() / fb.clone()).to_string(), (a / b).to_string());
+            assert_eq!((fa.clone() % fb.clone()).to_string(), (a % b).to_string());
+            let (mut q, mut r) = (fa.clone(), fa.clone());
+            q /= &fb;
+            r %= fb.clone();
+            assert_eq!(q.to_string(), (a / b).to_string());
+            assert_eq!(r.to_string(), (a % b).to_string());
+            let (ua, ub) = (
+                UBigInt::from(a.unsigned_abs()),
+                UBigInt::from(b.unsigned_abs()),
+            );
+            assert_eq!(
+                (&ua / &ub).to_string(),
+                (a.unsigned_abs() / b.unsigned_abs()).to_string()
+            );
+            assert_eq!(
+                (ua.clone() % ub.clone()).to_string(),
+                (a.unsigned_abs() % b.unsigned_abs()).to_string()
+            );
+        }
+    }
+
+    fn rand_ubig(rng: &mut Random, limbs: usize) -> UBigInt {
+        let mut res = UBigInt::zero();
+        for _ in 0..limbs {
+            res *= 1_000_000_000;
+            res += UBigInt::from(rng.gen_range(0..1_000_000_000u32));
+        }
+        res
+    }
+
+    #[test]
+    fn division_identities() {
+        let mut rng = Random::new_with_seed(8);
+        for _ in 0..300 {
+            let al = rng.gen_range(0..40usize);
+            let a = rand_ubig(&mut rng, al);
+            let bl = rng.gen_range(1..25usize);
+            let b = rand_ubig(&mut rng, bl);
+            if b == UBigInt::zero() {
+                continue;
+            }
+            let (q, r) = a.div_rem(&b);
+            assert_eq!(&q * &b + &r, a);
+            assert!(r < b);
+            let sa = if rng.gen_bool() {
+                -BigInt::from(a.clone())
+            } else {
+                BigInt::from(a.clone())
+            };
+            let sbb = if rng.gen_bool() {
+                -BigInt::from(b.clone())
+            } else {
+                BigInt::from(b.clone())
+            };
+            let (q, r) = sa.div_rem(&sbb);
+            assert_eq!(&q * &sbb + &r, sa);
+            assert!(r.clone().abs() < sbb.clone().abs());
+            assert!(r == BigInt::zero() || (r < BigInt::zero()) == (sa < BigInt::zero()));
+        }
+        // divisor with top limb forcing quotient-digit corrections
+        let a = ub("999999999999999999999999999999999999999999999999999999");
+        let b = ub("1000000000000000000000000000000000000000000000000000001");
+        assert_eq!(a.div_rem(&b), (UBigInt::zero(), a.clone()));
+        let b = ub("500000000499999999");
+        let (q, r) = a.div_rem(&b);
+        assert_eq!(&q * &b + &r, a);
+        assert!(r < b);
+    }
+
+    #[test]
+    #[should_panic]
+    fn division_by_zero() {
+        let _ = ub("5") / UBigInt::zero();
+    }
+
+    #[test]
+    fn conversions() {
+        assert_eq!(UBigInt::from(u64::MAX).to_string(), u64::MAX.to_string());
+        assert_eq!(UBigInt::from(u128::MAX).to_string(), u128::MAX.to_string());
+        assert_eq!(UBigInt::from(12usize).to_string(), "12");
+        assert_eq!(UBigInt::from(0u8), UBigInt::zero());
+        assert_eq!(BigInt::from(i64::MIN).to_string(), i64::MIN.to_string());
+        assert_eq!(BigInt::from(i128::MIN).to_string(), i128::MIN.to_string());
+        assert_eq!(BigInt::from(u128::MAX).to_string(), u128::MAX.to_string());
+        assert_eq!(BigInt::from(-1i8).to_string(), "-1");
+        assert_eq!(BigInt::from(0i64), BigInt::zero());
+        assert_eq!(BigInt::from(ub("123")), sb("123"));
+        assert_eq!(sb("-123").abs(), ub("123"));
+        assert_eq!(sb("123").abs(), ub("123"));
+        assert_eq!(u64::try_from(&ub("18446744073709551615")), Ok(u64::MAX));
+        assert_eq!(u64::try_from(&ub("18446744073709551616")), Err(()));
+        assert_eq!(u128::try_from(&UBigInt::from(u128::MAX)), Ok(u128::MAX));
+        assert_eq!(
+            u128::try_from(&(UBigInt::from(u128::MAX) + UBigInt::one())),
+            Err(())
+        );
+        assert_eq!(usize::try_from(&UBigInt::zero()), Ok(0));
+        assert_eq!(i32::try_from(&sb("-2147483648")), Ok(i32::MIN));
+        assert_eq!(i32::try_from(&sb("-2147483649")), Err(()));
+        assert_eq!(i128::try_from(&BigInt::from(i128::MIN)), Ok(i128::MIN));
+        assert_eq!(
+            i128::try_from(&(BigInt::from(i128::MIN) - BigInt::one())),
+            Err(())
+        );
+        assert_eq!(u8::try_from(&sb("-1")), Err(()));
+        assert_eq!(u8::try_from(&sb("255")), Ok(255));
+    }
+
+    #[test]
+    #[should_panic]
+    fn negative_into_unsigned() {
+        let _ = UBigInt::from(-1);
+    }
+
+    #[test]
+    fn writable_matches_display() {
+        for s in [
+            "0",
+            "7",
+            "1000000000",
+            "123456789012345678901234567890",
+            "-5",
+            "-1000000000000000000",
+        ] {
+            let mut buf = Vec::new();
+            {
+                let mut out = Output::buf(&mut buf);
+                sb(s).write(&mut out);
+                out.flush();
+            }
+            assert_eq!(String::from_utf8(buf).unwrap(), s);
+            assert_eq!(sb(s).to_string(), s);
+            if !s.starts_with('-') {
+                let mut buf = Vec::new();
+                {
+                    let mut out = Output::buf(&mut buf);
+                    ub(s).write(&mut out);
+                    out.flush();
+                }
+                assert_eq!(String::from_utf8(buf).unwrap(), s);
+            }
+        }
+    }
+
+    #[test]
+    fn traits() {
+        fn semi<T: IntegerSemiRing>() -> T {
+            T::ten()
+        }
+        fn ring<T: IntegerRing>() -> T {
+            -T::ten()
+        }
+        assert_eq!(semi::<UBigInt>(), UBigInt::from(10));
+        assert_eq!(semi::<BigInt>(), BigInt::from(10));
+        assert_eq!(ring::<BigInt>(), BigInt::from(-10));
     }
 }
 
