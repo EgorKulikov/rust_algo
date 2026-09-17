@@ -1,10 +1,6 @@
 //{"name":"Matching on Bipartite Graph","group":"Library Checker","url":"https://judge.yosupo.jp/problem/bipartitematching","interactive":false,"timeLimit":5000,"tests":[],"testType":"single","input":{"type":"stdin","fileName":null,"pattern":null},"output":{"type":"stdout","fileName":null,"pattern":null}}
 
-use algo_lib::graph::edges::edge_trait::EdgeTrait;
-use algo_lib::graph::edges::flow_edge::FlowEdge;
-use algo_lib::graph::edges::flow_edge_trait::FlowEdgeTrait;
-use algo_lib::graph::fast_max_flow::FastMaxFlow;
-use algo_lib::graph::Graph;
+use algo_lib::graph::bipartite_matching::BipartiteMatching;
 use algo_lib::io::input::Input;
 use algo_lib::io::output::Output;
 use algo_lib::misc::test_type::TaskType;
@@ -19,26 +15,14 @@ fn solve(input: &mut Input, out: &mut Output, _test_case: usize, _data: &mut Pre
     let m = input.read_size();
     let edges = input.read_size_pair_vec(m);
 
-    let mut graph = Graph::new_linked(l + r + 2);
-    let source = l + r;
-    let sink = l + r + 1;
+    let mut matching = BipartiteMatching::new(l, r);
     for (u, v) in edges {
-        graph.add_edge(FlowEdge::new(u, l + v, 1));
+        matching.add_edge(u, v);
     }
-    for i in 0..l {
-        graph.add_edge(FlowEdge::new(source, i, 1));
-    }
-    for i in 0..r {
-        graph.add_edge(FlowEdge::new(l + i, sink, 1));
-    }
-
-    out.print_line(graph.fast_max_flow(source, sink));
-    for i in 0..l {
-        for e in graph.adj(i).iter() {
-            if e.capacity() == 0 && e.to() < l + r {
-                out.print_line((i, e.to() - l));
-                break;
-            }
+    out.print_line(matching.run());
+    for (u, v) in matching.left_mate().iter().enumerate() {
+        if let Some(v) = v {
+            out.print_line((u, v));
         }
     }
 }

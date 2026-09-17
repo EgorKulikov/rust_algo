@@ -5,6 +5,7 @@ use crate::graph::edges::edge_trait::{BidirectionalEdgeTrait, EdgeTrait};
 use std::marker::PhantomData;
 
 pub mod all_distances;
+pub mod bipartite_matching;
 pub mod block_cut_tree;
 pub mod bridges;
 pub mod central_decomposition;
