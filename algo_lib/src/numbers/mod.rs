@@ -10,6 +10,7 @@ pub mod interpolation;
 pub mod matrix;
 pub mod matrix_series;
 pub mod mod_int;
+pub mod mod_linear;
 pub mod multiplicative_function;
 pub mod num_traits;
 pub mod num_utils;
