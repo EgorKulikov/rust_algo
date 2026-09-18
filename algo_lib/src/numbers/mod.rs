@@ -1,4 +1,5 @@
 pub mod combinations;
+pub mod combinatorial_series;
 pub mod fixed_int;
 pub mod floor_sum;
 pub mod fps;
