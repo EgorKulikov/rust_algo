@@ -12,6 +12,7 @@ pub mod euler_tour_tree;
 pub mod fast_clear_arr;
 pub mod fast_clear_fenwick;
 pub mod fenwick;
+pub mod foldable_deque;
 pub mod fx_hash_map;
 pub mod id;
 pub mod indexed_heap;
