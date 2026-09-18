@@ -178,6 +178,86 @@ impl<T: Into<u64> + IntegerSemiRing + Copy, M: BaseModInt<T>> PolynomialOps<T, M
         Some(res)
     }
 
+    /// Coefficients of `f(x + c)`.
+    pub fn taylor_shift(&mut self, f: &[M], c: M) -> Vec<M> {
+        let n = f.len();
+        if n == 0 {
+            return Vec::new();
+        }
+        let (fact, inv_fact) = factorial_tables::<M>(n);
+        // g_k = (1 / k!) * sum_{i >= k} (f_i i!) * c^(i-k) / (i-k)!
+        let a: Vec<M> = (0..n).rev().map(|i| f[i] * fact[i]).collect();
+        let mut power = M::one();
+        let b: Vec<M> = (0..n)
+            .map(|j| {
+                let term = power * inv_fact[j];
+                power *= c;
+                term
+            })
+            .collect();
+        let product = self.mul_trunc(&a, &b, n);
+        (0..n).map(|k| product[n - 1 - k] * inv_fact[k]).collect()
+    }
+
+    /// Given `ys[i] = f(i)` for `i` in `0..n` with `deg f < n`, returns
+    /// `f(start), f(start + 1), .., f(start + count - 1)`. Needs `n` below
+    /// the (prime) modulus.
+    pub fn shift_sampling_points(&mut self, ys: &[M], start: M, count: usize) -> Vec<M> {
+        let n = ys.len();
+        if n == 0 || count == 0 {
+            return vec![M::zero(); count];
+        }
+        let (_, inv_fact) = factorial_tables::<M>(n);
+        // f(x) = prod_j (x - j) * sum_i d_i / (x - i), d_i = y_i (-1)^(n-1-i) / (i! (n-1-i)!)
+        let d: Vec<M> = (0..n)
+            .map(|i| {
+                let v = ys[i] * inv_fact[i] * inv_fact[n - 1 - i];
+                if (n - 1 - i) % 2 == 1 {
+                    -v
+                } else {
+                    v
+                }
+            })
+            .collect();
+        // w_t = start - (n - 1) + t covers every x - i that occurs.
+        let total = n + count - 1;
+        let mut w = Vec::with_capacity(total);
+        let mut cur = start - M::from(n - 1);
+        for _ in 0..total {
+            w.push(cur);
+            cur += M::one();
+        }
+        let h = batch_inverse(&w);
+        let sums = self.fft_conv(&d, &h);
+        // Window products prod_{t=k}^{k+n-1} w_t through prefix products that skip zeros.
+        let mut prefix = Vec::with_capacity(total + 1);
+        let mut zeros = Vec::with_capacity(total + 1);
+        prefix.push(M::one());
+        zeros.push(0usize);
+        for &x in &w {
+            let last = *prefix.last().unwrap();
+            prefix.push(if x == M::zero() { last } else { last * x });
+            zeros.push(zeros.last().unwrap() + (x == M::zero()) as usize);
+        }
+        let prefix_inv = batch_inverse(&prefix);
+        let p: u64 = M::module().into();
+        (0..count)
+            .map(|k| {
+                if zeros[k + n] != zeros[k] {
+                    // start + k is one of the sample points 0..n (mod p).
+                    let x: u64 = Into::<usize>::into(start + M::from(k)) as u64 % p;
+                    ys[x as usize]
+                } else {
+                    sums[k + n - 1] * prefix[k + n] * prefix_inv[k]
+                }
+            })
+            .collect()
+    }
+
+    fn fft_conv(&mut self, a: &[M], b: &[M]) -> Vec<M> {
+        self.mul_trunc(a, b, a.len() + b.len() - 1)
+    }
+
     fn nonzeros(f: &[M], n: usize) -> Vec<(usize, M)> {
         f.iter()
             .take(n)
@@ -323,6 +403,43 @@ impl<T: Into<u64> + IntegerSemiRing + Copy, M: BaseModInt<T>> PolynomialOps<T, M
         }
         Some(res)
     }
+}
+
+/// `(i!, 1 / i!)` for `i` in `0..n`.
+pub fn factorial_tables<M: crate::numbers::num_traits::algebra::Field + Copy + From<usize>>(
+    n: usize,
+) -> (Vec<M>, Vec<M>) {
+    let mut fact = Vec::with_capacity(n.max(1));
+    fact.push(M::one());
+    for i in 1..n {
+        fact.push(fact[i - 1] * M::from(i));
+    }
+    let mut inv_fact = vec![M::one(); fact.len()];
+    let last = fact.len() - 1;
+    inv_fact[last] = M::one() / fact[last];
+    for i in (0..last).rev() {
+        inv_fact[i] = inv_fact[i + 1] * M::from(i + 1);
+    }
+    (fact, inv_fact)
+}
+
+/// Inverses of all elements with one field division; zeros map to zero.
+pub fn batch_inverse<M: crate::numbers::num_traits::algebra::Field + Copy>(a: &[M]) -> Vec<M> {
+    let mut prefix = Vec::with_capacity(a.len() + 1);
+    prefix.push(M::one());
+    for &x in a {
+        let last = *prefix.last().unwrap();
+        prefix.push(if x == M::zero() { last } else { last * x });
+    }
+    let mut inv = M::one() / prefix[a.len()];
+    let mut res = vec![M::zero(); a.len()];
+    for i in (0..a.len()).rev() {
+        if a[i] != M::zero() {
+            res[i] = inv * prefix[i];
+            inv *= a[i];
+        }
+    }
+    res
 }
 
 #[cfg(test)]
@@ -474,6 +591,36 @@ mod tests {
         sq[0] = M::from(4usize);
         sq[7] = rnd(&mut rng);
         assert_eq!(ops.sqrt_sparse(&sq, n), ops.sqrt(&sq, n));
+    }
+
+    #[test]
+    fn taylor_shift_and_sampling_shift() {
+        use crate::numbers::polynomial::evaluate;
+        let mut rng = Random::new_with_seed(46);
+        let mut ops = PolynomialOps::new();
+        for n in [1usize, 2, 3, 10, 64, 100, 300] {
+            let f = random_poly(&mut rng, n);
+            let c = rnd(&mut rng);
+            let g = ops.taylor_shift(&f, c);
+            for _ in 0..5 {
+                let x = rnd(&mut rng);
+                assert_eq!(evaluate(&g, x), evaluate(&f, x + c), "taylor n={n}");
+            }
+            let ys: Vec<M> = (0..n).map(|i| evaluate(&f, M::from(i))).collect();
+            let p = 998_244_353usize;
+            for start in [0usize, 1, n / 2, n, n + 5, 1_000_000, p - 3, p - n, p - 1] {
+                let count = 2 * n + 7;
+                let got = ops.shift_sampling_points(&ys, M::from(start), count);
+                let expected: Vec<M> = (0..count)
+                    .map(|k| evaluate(&f, M::from(start) + M::from(k)))
+                    .collect();
+                assert_eq!(got, expected, "sampling n={n} start={start}");
+            }
+        }
+        assert_eq!(
+            super::batch_inverse(&[M::zero(), M::one() + M::one()])[0],
+            M::zero()
+        );
     }
 
     #[test]
