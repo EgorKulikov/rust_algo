@@ -1,6 +1,7 @@
 use crate::numbers::num_traits::algebra::Ring;
 
 pub mod angle;
+pub mod arg_sort;
 pub mod circle;
 pub mod geometry_utils;
 pub mod line;
