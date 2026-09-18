@@ -12,6 +12,8 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, S
 
 const DIGITS: usize = 9;
 const BASE: i32 = 10i32.pow(DIGITS as u32);
+/// Limb count above which division switches to a Newton reciprocal.
+const NEWTON_THRESHOLD: usize = 96;
 
 /// Arbitrary-precision unsigned integer, little-endian limbs in base 10^9.
 /// Invariant: no trailing zero limbs, so zero is the empty vector.
@@ -45,8 +47,93 @@ impl UBigInt {
         Some(res)
     }
 
-    /// Quotient and remainder. Schoolbook long division, O(len(self) * len(rhs)).
+    /// `self * BASE^limbs`
+    fn shifted_left(&self, limbs: usize) -> Self {
+        if self.is_zero() {
+            return Self::zero();
+        }
+        let mut z = vec![0; limbs];
+        z.extend_from_slice(&self.z);
+        Self { z }
+    }
+
+    /// `floor(self / BASE^limbs)`
+    fn shifted_right(&self, limbs: usize) -> Self {
+        Self {
+            z: self.z.get(limbs..).map_or_else(Vec::new, |s| s.to_vec()),
+        }
+    }
+
+    /// Approximation of `BASE^(2p) / d` for a `d` with `p` limbs, off by at
+    /// most a few units: recursive Newton iteration with one full-precision
+    /// step per level.
+    fn reciprocal(d: &Self) -> Self {
+        let p = d.z.len();
+        if p <= NEWTON_THRESHOLD {
+            return Self::one().shifted_left(2 * p).div_rem_schoolbook(d).0;
+        }
+        let h = p / 2 + 2;
+        let high = Self::reciprocal(&d.shifted_right(p - h));
+        let x0 = high.shifted_left(p - h);
+        let t = d * &x0;
+        let unit = Self::one().shifted_left(2 * p);
+        if t <= unit {
+            let e = unit - &t;
+            x0.clone() + (&x0 * &e).shifted_right(2 * p)
+        } else {
+            let e = t - &unit;
+            let correction = (&x0 * &e).shifted_right(2 * p) + Self::one();
+            if correction >= x0 {
+                Self::zero()
+            } else {
+                x0 - &correction
+            }
+        }
+    }
+
+    /// Quotient and remainder. Small operands use schoolbook long division;
+    /// large ones use block division by a Newton reciprocal, so the cost is a
+    /// constant number of multiplications of the operands' size.
     pub fn div_rem(&self, rhs: &Self) -> (Self, Self) {
+        assert!(!rhs.is_zero(), "division by zero");
+        let (n, m) = (self.z.len(), rhs.z.len());
+        if m <= NEWTON_THRESHOLD || n < m + NEWTON_THRESHOLD {
+            return self.div_rem_schoolbook(rhs);
+        }
+        let x = Self::reciprocal(rhs);
+        let mut q = vec![0; n];
+        let mut r = Self::zero();
+        let mut hi = n;
+        while hi > 0 {
+            // Top block may be shorter so that the rest are exactly `m` limbs.
+            let len = if hi % m == 0 { m } else { hi % m };
+            let lo = hi - len;
+            let mut chunk = self.z[lo..hi].to_vec();
+            trim_zeroes(&mut chunk);
+            let cur = r.shifted_left(len) + Self { z: chunk };
+            // cur < rhs * BASE^m, so the estimate is off by a few units at most.
+            let mut qc = (&cur * &x).shifted_right(2 * m);
+            let mut prod = &qc * rhs;
+            while prod > cur {
+                prod -= rhs;
+                qc -= &Self::one();
+            }
+            let mut rem = cur - &prod;
+            while rem >= *rhs {
+                rem -= rhs;
+                qc += Self::one();
+            }
+            debug_assert!(qc.z.len() <= len);
+            q[lo..lo + qc.z.len()].copy_from_slice(&qc.z);
+            r = rem;
+            hi = lo;
+        }
+        trim_zeroes(&mut q);
+        (Self { z: q }, r)
+    }
+
+    /// Schoolbook long division, O(len(self) * len(rhs)).
+    fn div_rem_schoolbook(&self, rhs: &Self) -> (Self, Self) {
         assert!(!rhs.is_zero(), "division by zero");
         if self < rhs {
             return (Self::zero(), self.clone());

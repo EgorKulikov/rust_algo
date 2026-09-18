@@ -210,6 +210,50 @@ mod big_int {
     }
 
     #[test]
+    fn newton_division() {
+        let mut rng = Random::new_with_seed(9);
+        let base_pow = |limbs: usize| {
+            let mut x = UBigInt::one();
+            for _ in 0..limbs {
+                x *= 1_000_000_000;
+            }
+            x
+        };
+        let mut cases: Vec<(UBigInt, UBigInt)> = Vec::new();
+        for &(n, m) in &[
+            (300usize, 100usize),
+            (200, 100),
+            (196, 100),
+            (1000, 97),
+            (500, 250),
+            (2000, 130),
+            (400, 399),
+        ] {
+            cases.push((rand_ubig(&mut rng, n), rand_ubig(&mut rng, m)));
+        }
+        // divisors with extreme top limbs, exact multiples, remainder b - 1
+        let b_max = base_pow(120) - &UBigInt::one();
+        let b_min = base_pow(119);
+        let a = rand_ubig(&mut rng, 400);
+        cases.push((a.clone(), b_max.clone()));
+        cases.push((a.clone(), b_min.clone()));
+        let b = rand_ubig(&mut rng, 150);
+        let qq = rand_ubig(&mut rng, 300);
+        cases.push((&qq * &b, b.clone()));
+        cases.push((&qq * &b + &(b.clone() - &UBigInt::one()), b.clone()));
+        cases.push((&b_max * &b_max, b_max.clone()));
+        cases.push((base_pow(500), b_min));
+        for (a, b) in cases {
+            if b == UBigInt::zero() {
+                continue;
+            }
+            let (q, r) = a.div_rem(&b);
+            assert!(r < b);
+            assert_eq!(&q * &b + &r, a);
+        }
+    }
+
+    #[test]
     #[should_panic]
     fn division_by_zero() {
         let _ = ub("5") / UBigInt::zero();
