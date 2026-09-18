@@ -17,9 +17,9 @@
 //   distances                  -> bench_dijkstra
 //   edge_distances             -> bench_edge_distances
 //   euler_path                 -> bench_euler_path
-//   fast_max_flow              -> PANICS (LCT-Dinic underflows u64 with overflow-checks=true)
+//   fast_max_flow              -> bench_fast_max_flow
 //   flow_graph                 -> SKIPPED (primitive, covered via flow algos)
-//   flow_with_demand           -> PANICS (demand[i] -= payload underflows u64; algorithm needs signed C)
+//   flow_with_demand           -> bench_flow_with_demand
 //   hl_decomposition           -> bench_hl_build + bench_hl_query
 //   lca                        -> bench_lca_build + bench_lca_query
 //   max_flow                   -> bench_max_flow
@@ -48,7 +48,6 @@ use algo_lib::graph::negative_distances::NegativeDistances;
 use algo_lib::graph::strongly_connected_components::StronglyConnectedComponentsTrait;
 use algo_lib::graph::topological_sort::TopologicalSort;
 use algo_lib::graph::two_sat::TwoSat;
-// FastMaxFlow and FlowWithDemand imports kept for documentation; both benches excluded due to panics.
 use algo_lib::graph::edges::bi_edge::BiEdge;
 use algo_lib::graph::edges::bi_edge::BiEdgeWithId;
 use algo_lib::graph::edges::bi_weighted_edge::BiWeightedEdge;
@@ -56,9 +55,7 @@ use algo_lib::graph::edges::edge::Edge;
 use algo_lib::graph::edges::flow_edge::FlowEdge;
 use algo_lib::graph::edges::weighted_edge::WeightedEdge;
 use algo_lib::graph::edges::weighted_flow_edge::WeightedFlowEdge;
-#[allow(unused_imports)]
 use algo_lib::graph::fast_max_flow::FastMaxFlow;
-#[allow(unused_imports)]
 use algo_lib::graph::flow_with_demand::FlowWithDemand;
 use algo_lib::graph::max_flow::MaxFlow;
 use algo_lib::graph::min_cost_flow::MinCostFlow;
@@ -267,8 +264,6 @@ fn dense_bipartite_flow(
 /// Like `dense_bipartite_flow` but with non-zero lower bounds (demands) on
 /// each edge so that `flow_with_demand` has something non-trivial to do.
 /// Returns `Graph<FlowEdge<u64, u64>>` (payload = lower bound = demand).
-/// NOTE: bench_flow_with_demand is excluded; kept for reference.
-#[allow(dead_code)]
 fn dense_bipartite_flow_with_demand(
     left: usize,
     right: usize,
@@ -590,21 +585,33 @@ fn bench_max_flow(c: &mut Criterion) {
     });
 }
 
-// bench_fast_max_flow is intentionally excluded from criterion_group! below.
-// fast_max_flow (LCT-Dinic) panics with arithmetic underflow on u64 whenever
-// overflow-checks = true (which this workspace enables for all profiles).
-// The algorithm is correct in concept but uses wrapping arithmetic that is
-// incompatible with Rust's checked integer ops. Filed as a known issue.
-#[allow(dead_code)]
-fn bench_fast_max_flow(_c: &mut Criterion) {}
+fn bench_fast_max_flow(c: &mut Criterion) {
+    let (g0, source, sink) = dense_bipartite_flow(500, 500, 40);
+    c.bench_function("fast_max_flow/lct_dinic/bipartite_500x500", |b| {
+        b.iter_batched(
+            || g0.clone(),
+            |mut g| {
+                let f = g.fast_max_flow(source, sink);
+                black_box(f);
+            },
+            BatchSize::SmallInput,
+        );
+    });
+}
 
-// bench_flow_with_demand is intentionally excluded from criterion_group! below.
-// flow_with_demand internally computes demand[i] -= payload on a u64 vector, which
-// underflows when a node has more outgoing demand than incoming (very common in any
-// non-trivial graph). The algorithm requires a signed capacity type; calling it with
-// u64 and overflow-checks=true causes a panic.
-#[allow(dead_code)]
-fn bench_flow_with_demand(_c: &mut Criterion) {}
+fn bench_flow_with_demand(c: &mut Criterion) {
+    let (g0, source, sink) = dense_bipartite_flow_with_demand(100, 100, 41);
+    c.bench_function("flow_with_demand/bipartite_100x100", |b| {
+        b.iter_batched(
+            || g0.clone(),
+            |mut g| {
+                let ok = g.flow_with_demand(source, sink);
+                black_box(ok);
+            },
+            BatchSize::SmallInput,
+        );
+    });
+}
 
 fn bench_min_cost_flow(c: &mut Criterion) {
     // 200×200 measured ~3.6 s (> 1 s concern threshold); reduced to 100×100.
@@ -812,8 +819,8 @@ criterion_group!(
     bench_lca_query,
     bench_hl_query,
     bench_max_flow,
-    // bench_fast_max_flow excluded: LCT-Dinic panics with overflow-checks=true
-    // bench_flow_with_demand excluded: demand bookkeeping underflows u64 with overflow-checks=true
+    bench_fast_max_flow,
+    bench_flow_with_demand,
     bench_min_cost_flow,
     bench_min_cost_max_flow,
     bench_min_cost_flow_slow,
