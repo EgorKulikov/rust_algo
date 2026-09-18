@@ -15,6 +15,7 @@ pub trait FlowWithDemand<C: AdditionMonoidWithSub + Ord + Copy + MinMax> {
 impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C, Payload = C>>
     FlowWithDemand<C> for Graph<E>
 {
+    #[allow(clippy::needless_range_loop)]
     fn flow_with_demand(&mut self, source: usize, destination: usize) -> bool {
         let mut flow_graph = Graph::new_linked(self.vertex_count() + 2);
         // Lower bounds entering and leaving each vertex, kept separately so
