@@ -36,3 +36,4 @@ pub mod sparse_table_pos;
 mod test;
 pub mod treap;
 pub mod vec_ext;
+pub mod wavelet_matrix;
