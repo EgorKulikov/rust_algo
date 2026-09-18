@@ -7,6 +7,7 @@ pub mod gauss;
 pub mod gcd;
 pub mod integer_sqrt;
 pub mod interpolation;
+pub mod linear_recurrence;
 pub mod matrix;
 pub mod matrix_series;
 pub mod mod_int;
