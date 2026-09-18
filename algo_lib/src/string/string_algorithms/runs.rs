@@ -57,8 +57,7 @@ pub fn runs<T: Zero + Ord + Debug + Copy>(s: &[T]) -> Vec<(usize, usize, usize)>
             }
             stack.push(i);
         }
-        for i in 0..n {
-            let j = lyndon_end[i];
+        for (i, &j) in lyndon_end.iter().enumerate() {
             let period = j - i;
             let from = i - lcs(i, j);
             let to = j + lcp(i, j);
