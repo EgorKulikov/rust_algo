@@ -20,6 +20,7 @@ pub mod euler_path;
 pub mod fast_max_flow;
 pub mod flow_graph;
 pub mod flow_with_demand;
+pub mod general_matching;
 pub mod hl_decomposition;
 pub mod lca;
 pub mod max_flow;
