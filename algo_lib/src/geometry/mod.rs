@@ -5,6 +5,7 @@ pub mod arg_sort;
 pub mod circle;
 pub mod geometry_utils;
 pub mod line;
+pub mod manhattan_mst;
 pub mod min_enclosing_circle;
 pub mod point;
 pub mod point_pairs;
