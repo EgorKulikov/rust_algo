@@ -2,6 +2,23 @@
 
 Generated 2026-09-17 from the 10 fastest accepted submissions overall and the 5 fastest Rust submissions for all 253 problems on https://judge.yosupo.jp (dedup by user). Submission ids are cited so sources can be re-fetched with `curl https://v3.api.judge.yosupo.jp/submissions/<id>`.
 
+## Progress log
+
+Work done against the priority list below (2026-09-18/19), one commit per change:
+
+| # | Item | Done | Measured | Left open |
+|---|---|---|---|---|
+| 1 | Fast I/O | SWAR integer parsing, 4-digit-table output | read 1.6-1.9x, write 1.5-2.0x | mmap input (not portable to Windows judges / interactive tasks) |
+| 2 | NTT kernel | Montgomery DIF/DIT without bit reversal, shared twiddle table, AVX2 butterflies with runtime dispatch, 8-element SIMD leaf | 2^19 x 2^19 multiply 105 ms -> 15 ms | Montgomery as the ModInt representation; radix-4; split-FFT for arbitrary moduli |
+| 3 | Segment trees | `collections/seg_tree.rs`: bottom-up `SegTree` (with max_right/min_left) and `LazySegTree` with push-free queries | 2.0x / 1.7x vs recursive tree | tag-only dual tree, pool-based persistent tree |
+| 4 | Graph DFS toolkit | single-pass iterative Tarjan SCC (2-SAT inherits it) | colors 3x, 2-SAT 1.5x | iterative bridges / BCC / cycle detection |
+| 5 | FPS layer | `numbers/fps.rs`: inverse, log, exp, pow, sqrt, sparse variants, `mod_sqrt`; NTT-domain Newton inverse | n=5e5: inv 31 ms, log 52, exp 103, pow 160, sqrt 77 | Kinoshita-Li composition and compositional inverse, relaxed exp/log |
+| 6 | Number theory | Montgomery64 deterministic Miller-Rabin, Pollard-Brent (M=512, binary gcd), segmented odd sieve, Lucy `PrimeSums`/`prime_pi` | is_prime 10x, factorize 7x, primes(5e8) 4.6x, pi(1e10) 109 ms | wheel-30 sieve, min_25 multiplicative sums |
+| 7 | Linear algebra | `numbers/mod_linear.rs`: delayed-reduction det/rank/invert/solve, AVX2 mat_mul | det 3.8x, invert 3.2x, mat_mul 1024^3 1.6 s -> 0.22 s | GF(2) BitMatrix with M4RI, Strassen, Frobenius-form matrix power |
+| 8 | Data structures | `IntSet` (64-ary bitmap, 37x BTreeSet), `Rmq` (O(1) block RMQ), `LiChao`, `WeightedDsu`, `WaveletMatrix`, push-relabel `BipartiteMatching` | see commits | kinetic segment tree, segment tree beats hook, wide xor trie, interval heap |
+| 9 | Trees | LCA on preorder positions + parent-position RMQ | build 82 ms -> 18 ms at n=5e5 | static top tree, centroid bisect, xor-linked tree builders |
+| 10 | Big integers | multiply rides the new NTT (2e6 x 2e6 digits 43 ms); Newton reciprocal block division | 200k/100k digits 1078 ms -> 15 ms | SWAR parse/print, hex big integers |
+
 ## Cross-cutting priorities (merged)
 
 1. **Fast I/O**: mmap stdin (fstat, fallback to buffered read), SWAR 8-digit parse, 4-digit LUT writer with one final write. Named by 11 of 13 category reports as the first reason Rust entries trail C++ by 1.3-3x, and it explains most of Egor's own gaps (static_range_sum 0.087 vs 0.017; associative_array 0.206 vs 0.043). Effort M.
