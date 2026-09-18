@@ -204,3 +204,9 @@ impl<T: IntoReal> IntoReal for Rational<T> {
         self.num.into_real() / self.den.into_real()
     }
 }
+
+impl<T: Copy + IntegerRing + Ord> Default for Rational<T> {
+    fn default() -> Self {
+        Self::zero()
+    }
+}
