@@ -17,6 +17,7 @@ pub mod fx_hash_map;
 pub mod id;
 pub mod indexed_heap;
 pub mod int_set;
+pub mod interval_heap;
 pub mod iter_ext;
 pub mod li_chao;
 pub mod link_cut;
