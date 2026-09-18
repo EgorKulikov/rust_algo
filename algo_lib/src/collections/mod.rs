@@ -28,6 +28,7 @@ pub mod order;
 pub mod payload;
 pub mod persistent_fenwick;
 pub mod seg_tree;
+pub mod rectangle_sum;
 pub mod rmq;
 pub mod segment_tree;
 pub mod slice_ext;
