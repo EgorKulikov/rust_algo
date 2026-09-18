@@ -19,6 +19,33 @@ Work done against the priority list below (2026-09-18/19), one commit per change
 | 9 | Trees | LCA on preorder positions + parent-position RMQ | build 82 ms -> 18 ms at n=5e5 | static top tree, centroid bisect, xor-linked tree builders |
 | 10 | Big integers | multiply rides the new NTT (2e6 x 2e6 digits 43 ms); Newton reciprocal block division | 200k/100k digits 1078 ms -> 15 ms | SWAR parse/print, hex big integers |
 
+## Second pass (2026-09-19/20): bugs, then items outside the top ten
+
+Bugs and debt:
+
+- `fast_max_flow` stored a negative path delta and underflowed for unsigned capacities; fixed, bench re-enabled.
+- `flow_with_demand` underflowed for unsigned capacities, and also pushed flow twice on vertex 0 because helper reverse edges defaulted to payload `(0, 0)`; both fixed (payload is now `Option`), bench re-enabled.
+- `bridges`, `cut_points`, `block_cut_tree` are iterative; `cut_points` reports each vertex once.
+- `Matrix::fast_mult` / `fast_power` route modular matrices to `mod_linear` (stable Rust cannot specialize the generic `mult`); tiny sizes delegate back to the generic code.
+- `ModInt64` multiply was measured and is **not** slow (the compiler and compiler-rt already avoid the slow path); a hardware-division version was tried and reverted.
+
+Additions, one commit each:
+
+| Area | What |
+|---|---|
+| Graph storage | `Graph::compact()` (linked -> contiguous rows, order and reverse links kept), called by `max_flow` / `min_cost_flow`: Dinic 2.9 s -> 1.9 s on the matching instance. New `EdgeTrait::TRACKS_REVERSE`. |
+| Graph algorithms | lazy-heap Dijkstra (same tie-breaking, 14% faster), complement-graph components, dominator tree, `assignment()` returning the matching, general matching (blossom) |
+| Polynomials | `linear_recurrence` (Berlekamp-Massey, Bostan-Mori k-th term), transposed multipoint evaluation (255 ms -> 112 ms at 2^17), public `div_rem`, Taylor shift, sampling-point shift |
+| Lattices | `numbers/zeta.rs`: subset/superset and divisor/multiple zeta+Moebius, AND/OR/XOR/gcd/lcm convolutions, subset convolution (0.9 s at n=20), set power series exp |
+| Combinatorics | `combinatorial_series.rs` (Stirling both kinds, Bell, partitions, Bernoulli, subset-sum counts), `BinomialMod` (Granville + CRT) |
+| Strings | Lyndon factorization, palindromic tree, wildcard matching via NTT, runs enumeration |
+| Geometry | exact `arg_cmp`, closest / farthest pair, minimum enclosing circle, Manhattan MST |
+| Number theory | primitive root, general discrete log, Stern-Brocot search, 64-bit nim product |
+| Data structures | `FoldableDeque`, `IntervalHeap`, stable radix sort (matches `sort_unstable`, 1.6x over stable sort), offline rectangle sums |
+| Infrastructure | `benches/kernels.rs` criterion suite for I/O, NTT, FPS, segment trees, linear algebra, IntSet, primes |
+
+Still open from both passes: Montgomery as the ModInt representation, Kinoshita-Li composition, GF(2) M4RI bit matrix, static top tree, kinetic segment tree / beats, persistent segment tree, ModInt-specialized subset convolution, true CSR storage, half-GCD.
+
 ## Cross-cutting priorities (merged)
 
 1. **Fast I/O**: mmap stdin (fstat, fallback to buffered read), SWAR 8-digit parse, 4-digit LUT writer with one final write. Named by 11 of 13 category reports as the first reason Rust entries trail C++ by 1.3-3x, and it explains most of Egor's own gaps (static_range_sum 0.087 vs 0.017; associative_array 0.206 vs 0.043). Effort M.
