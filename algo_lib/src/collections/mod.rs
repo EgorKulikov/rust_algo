@@ -16,6 +16,7 @@ pub mod id;
 pub mod indexed_heap;
 pub mod int_set;
 pub mod iter_ext;
+pub mod li_chao;
 pub mod link_cut;
 pub mod md_arr;
 pub mod min_max;
