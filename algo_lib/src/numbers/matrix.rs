@@ -38,6 +38,10 @@ impl<T: Copy> Matrix<T> {
     }
 }
 
+/// Generic arithmetic. For `ModInt` elements with a 32-bit modulus,
+/// `fast_mult` and `fast_power` (see `numbers::mod_linear`) give the same
+/// results several times faster; `mod_linear` also has `det`, `rank`,
+/// `invert` and `solve`.
 impl<T: Add<Output = T> + AddAssign + Mul<Output = T> + One + Zero + Copy> Matrix<T> {
     pub fn mult(&self, a: &Matrix<T>) -> Self {
         let mut res = Self::zero(self.d1(), a.d2());

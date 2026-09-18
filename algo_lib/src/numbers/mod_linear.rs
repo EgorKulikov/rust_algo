@@ -3,7 +3,11 @@
 //! inner loops are plain multiply-adds that vectorize.
 
 use crate::collections::md_arr::arr2d::Arr2d;
+use crate::numbers::matrix::Matrix;
 use crate::numbers::mod_int::BaseModInt;
+
+/// Below this dimension the generic `Matrix` code is at least as fast.
+const TINY: usize = 6;
 
 /// Products that fit in a `u64` accumulator on top of a reduced value.
 fn batch_size(p: u64) -> usize {
@@ -69,28 +73,74 @@ pub fn mat_mul<M: BaseModInt<u32>>(a: &Arr2d<M>, b: &Arr2d<M>) -> Arr2d<M> {
     let (n, k, m) = (a.d1(), a.d2(), b.d2());
     let p = modulus::<M>();
     let batch = batch_size(p);
-    let avx2 = avx2_available();
-    let b_rows: Vec<Vec<u32>> = (0..k)
-        .map(|i| b.row(i).map(|x| x.value()).collect())
-        .collect();
+    if k <= TINY {
+        // Tiny matrices: no buffers, one reduction per `batch` products.
+        return Arr2d::with_gen(n, m, |i, j| {
+            let mut s = 0u64;
+            for t in 0..k {
+                s += a[(i, t)].value() as u64 * b[(t, j)].value() as u64;
+                if (t + 1) % batch == 0 {
+                    s %= p;
+                }
+            }
+            to_m(s % p)
+        });
+    }
+    let avx2 = m >= 8 && avx2_available();
+    // One flat copy of `b`, so tiny matrices pay a single allocation.
+    let b_flat: Vec<u32> = b.iter().map(|x| x.value()).collect();
     let mut acc = vec![0u64; m];
     Arr2d::with_gen(n, m, |i, j| {
         if j == 0 {
             acc.fill(0);
-            for (start, chunk) in b_rows.chunks(batch).enumerate() {
-                for (t, row) in chunk.iter().enumerate() {
-                    let x = a[(i, start * batch + t)].value();
+            let mut t = 0;
+            while t < k {
+                let end = (t + batch).min(k);
+                for col in t..end {
+                    let x = a[(i, col)].value();
                     if x != 0 {
-                        axpy(&mut acc, x, row, avx2);
+                        axpy(&mut acc, x, &b_flat[col * m..(col + 1) * m], avx2);
                     }
                 }
                 for s in acc.iter_mut() {
                     *s %= p;
                 }
+                t = end;
             }
         }
         to_m(acc[j])
     })
+}
+
+impl<M: BaseModInt<u32>> Matrix<M> {
+    /// Same result as [`Matrix::mult`], using the delayed-reduction kernel.
+    pub fn fast_mult(&self, other: &Matrix<M>) -> Self {
+        if self.d2() <= TINY {
+            return self.mult(other);
+        }
+        Matrix::from(mat_mul(self, other))
+    }
+
+    /// Same result as [`Matrix::power`], using the delayed-reduction kernel.
+    pub fn fast_power(&self, mut exp: u64) -> Self {
+        assert_eq!(self.d1(), self.d2());
+        if self.d1() <= TINY {
+            // The generic version reuses two buffers, which wins at this size.
+            return self.power(exp as usize);
+        }
+        let mut result = Matrix::ident(self.d1());
+        let mut base = self.clone();
+        while exp > 0 {
+            if exp & 1 == 1 {
+                result = result.fast_mult(&base);
+            }
+            exp >>= 1;
+            if exp > 0 {
+                base = base.fast_mult(&base);
+            }
+        }
+        result
+    }
 }
 
 /// Row-reduced working copy with delayed reduction.
@@ -269,7 +319,6 @@ mod tests {
     use super::*;
     use crate::misc::random::{Random, RandomTrait};
     use crate::numbers::gauss;
-    use crate::numbers::matrix::Matrix;
     use crate::numbers::mod_int::{ModInt7, ModIntF};
 
     fn random_matrix<M: BaseModInt<u32>>(
@@ -353,6 +402,24 @@ mod tests {
         let mut rng = Random::new_with_seed(61);
         check::<ModIntF>(&mut rng);
         check::<ModInt7>(&mut rng);
+    }
+
+    #[test]
+    fn fast_matrix_methods_match_generic() {
+        let mut rng = Random::new_with_seed(63);
+        for _ in 0..60 {
+            let n = rng.gen_range(1..=12usize);
+            let a = Matrix::from(random_matrix::<ModInt7>(&mut rng, n, n, false));
+            let b = Matrix::from(random_matrix::<ModInt7>(&mut rng, n, n, false));
+            assert!(a.fast_mult(&b) == a.mult(&b));
+            let exp = rng.gen_range(0..1000usize);
+            assert!(a.fast_power(exp as u64) == a.power(exp));
+        }
+        let a = Matrix::from(random_matrix::<ModIntF>(&mut rng, 3, 3, false));
+        assert!(a.fast_power(0) == Matrix::ident(3));
+        let big = a.fast_power(1 << 40);
+        let half = a.fast_power(1 << 39);
+        assert!(big == half.fast_mult(&half));
     }
 
     #[test]
