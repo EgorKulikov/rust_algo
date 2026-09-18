@@ -9,6 +9,7 @@ pub mod bipartite_matching;
 pub mod block_cut_tree;
 pub mod bridges;
 pub mod central_decomposition;
+pub mod complement_components;
 pub mod cut_points;
 pub mod dfs_order;
 pub mod distances;
