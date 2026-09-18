@@ -13,6 +13,7 @@ pub mod complement_components;
 pub mod cut_points;
 pub mod dfs_order;
 pub mod distances;
+pub mod dominator_tree;
 pub mod edge_distances;
 pub mod edges;
 pub mod euler_path;
