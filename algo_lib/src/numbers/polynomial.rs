@@ -101,38 +101,53 @@ impl<T: Into<u64>, M: BaseModInt<T>> PolynomialOps<T, M> {
         g
     }
 
-    fn remainder(&mut self, a: &[M], b: &[M]) -> Vec<M> {
-        debug_assert!(b.last() == Some(&M::one()));
+    /// Quotient and remainder of polynomial division; `b` must be nonzero.
+    /// Both results are trimmed of trailing zeros.
+    pub fn div_rem(&mut self, a: &[M], b: &[M]) -> (Vec<M>, Vec<M>) {
+        let mut b = b.to_vec();
+        trim(&mut b);
+        assert!(!b.is_empty(), "division by the zero polynomial");
+        let mut a = a.to_vec();
+        trim(&mut a);
         if a.len() < b.len() {
-            return a.to_vec();
+            return (Vec::new(), a);
         }
         let degree = b.len() - 1;
-        if degree == 0 {
-            return Vec::new();
-        }
         let quotient_len = a.len() - degree;
-        let mut result;
+        // Divide by the monic b / lead, then rescale the quotient.
+        let lead_inv = b[degree].inv().unwrap();
+        let monic: Vec<M> = b.iter().map(|&x| x * lead_inv).collect();
+        let mut quotient;
         if degree.min(quotient_len) <= DIRECT {
-            result = a.to_vec();
+            let mut rest = a.clone();
+            quotient = vec![M::zero(); quotient_len];
             for i in (degree..a.len()).rev() {
-                let c = result[i];
+                let c = rest[i];
+                quotient[i - degree] = c;
                 for j in 0..degree {
-                    result[i - degree + j] -= c * b[j];
+                    rest[i - degree + j] -= c * monic[j];
                 }
             }
-            result.truncate(degree);
         } else {
-            let reversed_b: Vec<_> = b.iter().rev().take(quotient_len).copied().collect();
+            let reversed_b: Vec<_> = monic.iter().rev().take(quotient_len).copied().collect();
             let inverse = self.inverse(&reversed_b, quotient_len);
             let reversed_a: Vec<_> = a.iter().rev().take(quotient_len).copied().collect();
-            let mut quotient = self.multiply(&reversed_a, &inverse);
+            quotient = self.multiply(&reversed_a, &inverse);
             quotient.truncate(quotient_len);
             quotient.reverse();
-            let product = self.multiply(&quotient, b);
-            result = (0..degree).map(|i| a[i] - product[i]).collect();
         }
-        trim(&mut result);
-        result
+        for q in quotient.iter_mut() {
+            *q *= lead_inv;
+        }
+        let mut remainder: Vec<M> = if degree == 0 {
+            Vec::new()
+        } else {
+            let product = self.multiply(&quotient, &b);
+            (0..degree).map(|i| a[i] - product[i]).collect()
+        };
+        trim(&mut remainder);
+        trim(&mut quotient);
+        (quotient, remainder)
     }
 }
 
@@ -344,6 +359,45 @@ mod tests {
                 .collect();
             let expected: Vec<M> = xs.iter().map(|&x| evaluate(&g, x)).collect();
             assert_eq!(tree.evaluate(&g, &mut ops), expected);
+        }
+    }
+
+    #[test]
+    fn division_with_remainder() {
+        use crate::numbers::num_traits::algebra::Zero;
+        type M = ModIntF;
+        let mut rng = Random::new_with_seed(203);
+        let mut ops = PolynomialOps::new();
+        for &(n, m) in &[
+            (1usize, 1usize),
+            (5, 1),
+            (5, 5),
+            (3, 8),
+            (100, 40),
+            (300, 100),
+            (700, 650),
+            (500, 61),
+            (0, 3),
+        ] {
+            let a: Vec<M> = (0..n).map(|_| M::new(rng.gen_u128() as u32)).collect();
+            let mut b: Vec<M> = (0..m).map(|_| M::new(rng.gen_u128() as u32)).collect();
+            if rng.gen_bool() {
+                b.push(M::zero()); // trailing zero coefficient is ignored
+            }
+            let (q, r) = ops.div_rem(&a, &b);
+            let mut b_trim = b.clone();
+            while b_trim.last() == Some(&M::zero()) {
+                b_trim.pop();
+            }
+            assert!(r.len() < b_trim.len());
+            let mut back = ops.multiply(&q, &b_trim);
+            back.resize(back.len().max(r.len()).max(a.len()), M::zero());
+            for (x, &y) in back.iter_mut().zip(&r) {
+                *x += y;
+            }
+            let mut expected = a.clone();
+            expected.resize(back.len(), M::zero());
+            assert_eq!(back, expected, "n={n} m={m}");
         }
     }
 
