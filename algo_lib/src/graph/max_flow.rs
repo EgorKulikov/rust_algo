@@ -13,6 +13,9 @@ pub trait MaxFlow<C: AdditionMonoidWithSub + Ord + Copy + MinMax> {
 
 impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> MaxFlow<C> for Graph<E> {
     fn max_flow(&mut self, source: usize, destination: usize) -> C {
+        // Every phase rescans adjacency, so contiguous rows pay off; this
+        // invalidates edge cursors obtained before the call.
+        self.compact();
         let n = self.vertex_count();
         let mut dist = vec![0u32; n];
         // `next_edge[v]` is the current edge id at vertex `v` (u32::MAX = exhausted).

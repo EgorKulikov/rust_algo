@@ -2,6 +2,9 @@ pub trait EdgeTrait: Clone {
     type Payload;
 
     const REVERSABLE: bool;
+    /// Whether `reverse_id` is meaningful (flow edges); other reversible
+    /// edges are stored in both directions without cross links.
+    const TRACKS_REVERSE: bool = false;
 
     fn to(&self) -> usize;
     fn id(&self) -> usize;

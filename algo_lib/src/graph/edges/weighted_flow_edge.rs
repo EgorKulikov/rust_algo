@@ -66,6 +66,7 @@ impl<
 {
     type Payload = P;
     const REVERSABLE: bool = true;
+    const TRACKS_REVERSE: bool = true;
 
     fn to(&self) -> usize {
         self.to as usize

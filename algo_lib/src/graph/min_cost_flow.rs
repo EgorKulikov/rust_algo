@@ -186,10 +186,12 @@ macro_rules! min_cost_flow {
                 Id: EdgeId,
             {
                 fn min_cost_flow(&mut self, source: usize, sink: usize) -> CostAndFlow<$t> {
+                    self.compact();
                     $imp(self, source, sink, false)
                 }
 
                 fn min_cost_max_flow(&mut self, source: usize, sink: usize) -> CostAndFlow<$t> {
+                    self.compact();
                     $imp(self, source, sink, true)
                 }
             }

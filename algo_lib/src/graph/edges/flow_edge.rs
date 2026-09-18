@@ -49,6 +49,7 @@ impl<C: AdditionMonoidWithSub + PartialOrd + Copy, Id: EdgeId, P: Default + Clon
 {
     type Payload = P;
     const REVERSABLE: bool = true;
+    const TRACKS_REVERSE: bool = true;
 
     fn to(&self) -> usize {
         self.to as usize

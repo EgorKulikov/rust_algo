@@ -172,6 +172,71 @@ impl<E: EdgeTrait> Graph<E> {
         }
     }
 
+    /// Converts linked storage into contiguous per-vertex rows, in place.
+    ///
+    /// Adjacency iteration order, edge ids and reverse links are preserved,
+    /// so algorithms give identical results; repeated traversals (flows,
+    /// repeated searches) run up to twice as fast because edges of a vertex
+    /// become adjacent in memory. Cursors obtained earlier from `add_edge`,
+    /// `iter_with_id` or `head_edge` are invalidated. Edges added afterwards
+    /// are appended after the existing ones. No-op for dense storage.
+    pub fn compact(&mut self) {
+        if !matches!(self.storage, Storage::Linked { .. }) {
+            return;
+        }
+        let placeholder = Storage::TwoD {
+            edges: Vec::new(),
+            edge_count: 0,
+        };
+        let Storage::Linked {
+            first,
+            next,
+            edges,
+            degree,
+        } = std::mem::replace(&mut self.storage, placeholder)
+        else {
+            unreachable!()
+        };
+        // Position of every edge entry inside its vertex row.
+        let mut position = vec![0u32; edges.len()];
+        for &head in &first {
+            let mut cur = head;
+            let mut at = 0;
+            while cur != u32::MAX {
+                position[cur as usize] = at;
+                at += 1;
+                cur = next[cur as usize];
+            }
+        }
+        let edge_count = if E::REVERSABLE {
+            edges.len() / 2
+        } else {
+            edges.len()
+        };
+        let mut slots: Vec<Option<E>> = edges.into_iter().map(Some).collect();
+        let rows = first
+            .iter()
+            .zip(degree.iter())
+            .map(|(&head, &deg)| {
+                let mut row = Vec::with_capacity(deg as usize);
+                let mut cur = head;
+                while cur != u32::MAX {
+                    let mut edge = slots[cur as usize].take().unwrap();
+                    if E::TRACKS_REVERSE {
+                        edge.set_reverse_id(position[edge.reverse_id()] as usize);
+                    }
+                    row.push(edge);
+                    cur = next[cur as usize];
+                }
+                row
+            })
+            .collect();
+        self.storage = Storage::TwoD {
+            edges: rows,
+            edge_count,
+        };
+    }
+
     pub fn add_vertices(&mut self, cnt: usize) {
         match &mut self.storage {
             Storage::Linked { first, degree, .. } => {
@@ -651,4 +716,86 @@ impl Graph<BiEdge<()>> {
 pub struct CostAndFlow<C> {
     pub cost: C,
     pub flow: C,
+}
+
+#[cfg(test)]
+mod compact_tests {
+    use crate::graph::edges::bi_edge::BiEdge;
+    use crate::graph::edges::edge::Edge;
+    use crate::graph::edges::edge_trait::EdgeTrait;
+    use crate::graph::edges::flow_edge::FlowEdgeWithId;
+    use crate::graph::edges::flow_edge_trait::FlowEdgeTrait;
+    use crate::graph::max_flow::MaxFlow;
+    use crate::graph::Graph;
+    use crate::misc::random::{Random, RandomTrait};
+
+    fn snapshot<E: EdgeTrait>(g: &Graph<E>) -> Vec<Vec<(usize, usize)>> {
+        (0..g.vertex_count())
+            .map(|v| g.adj(v).iter().map(|e| (e.to(), e.id())).collect())
+            .collect()
+    }
+
+    #[test]
+    fn compact_preserves_order_ids_and_reverse_links() {
+        let mut rng = Random::new_with_seed(171);
+        for _ in 0..100 {
+            let n = rng.gen_range(1..=10usize);
+            let m = rng.gen_range(0..=30usize);
+            let pairs: Vec<(usize, usize)> = (0..m)
+                .map(|_| (rng.gen_range(0..n), rng.gen_range(0..n)))
+                .collect();
+
+            let mut plain: Graph<Edge<()>> = Graph::new_linked(n);
+            let mut bi: Graph<BiEdge<()>> = Graph::new_linked(n);
+            let mut flow: Graph<FlowEdgeWithId<i64, ()>> = Graph::new_linked(n);
+            for &(a, b) in &pairs {
+                plain.add_edge(Edge::new(a, b));
+                bi.add_edge(BiEdge::new(a, b));
+                flow.add_edge(FlowEdgeWithId::new(a, b, rng.gen_range(0..10i64)));
+            }
+            let targets =
+                |g: &dyn Fn(usize) -> Vec<usize>| -> Vec<Vec<usize>> { (0..n).map(g).collect() };
+            let plain_targets =
+                |g: &Graph<Edge<()>>| targets(&|v| g.adj(v).iter().map(|e| e.to()).collect());
+            let bi_targets =
+                |g: &Graph<BiEdge<()>>| targets(&|v| g.adj(v).iter().map(|e| e.to()).collect());
+            let (sp, sb, sf) = (plain_targets(&plain), bi_targets(&bi), snapshot(&flow));
+            let mut reference = flow.clone();
+            plain.compact();
+            bi.compact();
+            flow.compact();
+            flow.compact(); // idempotent
+            assert_eq!(plain_targets(&plain), sp);
+            assert_eq!(bi_targets(&bi), sb);
+            assert_eq!(snapshot(&flow), sf);
+            assert_eq!(plain.edge_count(), m);
+            assert_eq!(bi.edge_count(), m);
+            assert_eq!(flow.edge_count(), m);
+            // reverse links point back at each other
+            for v in 0..n {
+                for (cursor, e) in flow.adj(v).iter_with_id() {
+                    let rev = flow.edge_at(e.to(), e.reverse_id() as u32);
+                    assert_eq!(rev.to(), v);
+                    assert_eq!(rev.reverse_id(), cursor as usize);
+                    assert_eq!(rev.id(), e.id());
+                }
+                assert_eq!(flow.degree(v), sf[v].len());
+            }
+            if n >= 2 {
+                // max_flow compacts internally; results and per-edge flows agree
+                let mut compacted = flow.clone();
+                let expected = reference.max_flow(0, n - 1);
+                assert_eq!(compacted.max_flow(0, n - 1), expected);
+                let flows = |g: &Graph<FlowEdgeWithId<i64, ()>>| -> Vec<Vec<i64>> {
+                    (0..n)
+                        .map(|v| g.adj(v).iter().map(|e| e.flow(g)).collect())
+                        .collect()
+                };
+                assert_eq!(flows(&compacted), flows(&reference));
+            }
+            // adding edges after compaction still works
+            flow.add_edge(FlowEdgeWithId::new(0, n - 1, 5));
+            assert_eq!(flow.edge_count(), m + 1);
+        }
+    }
 }
