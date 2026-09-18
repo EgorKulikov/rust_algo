@@ -17,3 +17,7 @@ harness = false
 [[bench]]
 name = "graph"
 harness = false
+
+[[bench]]
+name = "kernels"
+harness = false
