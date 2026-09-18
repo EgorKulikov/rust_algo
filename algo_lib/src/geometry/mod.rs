@@ -6,6 +6,7 @@ pub mod circle;
 pub mod geometry_utils;
 pub mod line;
 pub mod point;
+pub mod point_pairs;
 pub mod polygon;
 pub mod ray;
 pub mod segment;
