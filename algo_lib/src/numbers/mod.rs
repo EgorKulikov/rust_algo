@@ -19,6 +19,7 @@ pub mod num_traits;
 pub mod num_utils;
 pub mod number_ext;
 pub mod number_iterator;
+pub mod number_theory;
 pub mod polynomial;
 pub mod primes;
 pub mod rational;
