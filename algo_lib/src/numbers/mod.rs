@@ -1,3 +1,4 @@
+pub mod binomial_mod;
 pub mod combinations;
 pub mod combinatorial_series;
 pub mod fixed_int;
