@@ -81,6 +81,11 @@ impl<T: Into<u64>, M: BaseModInt<T>> PolynomialOps<T, M> {
     // are monic, so their reversals have constant coefficient one.
     fn inverse(&mut self, f: &[M], len: usize) -> Vec<M> {
         debug_assert!(f[0] == M::one());
+        if len > DIRECT && modulus::<T, M>() <= u32::MAX as u64 {
+            if let Some(g) = self.fft_mut().inverse_series(f, len) {
+                return g;
+            }
+        }
         let mut g = vec![M::one()];
         while g.len() < len {
             let size = (2 * g.len()).min(len);
@@ -190,38 +195,80 @@ impl<'a, T: Into<u64>, M: BaseModInt<T>> ProductTree<'a, T, M> {
     /// Takes O((n + m) log^2(n + m)) time with FFT multiplication for n
     /// coefficients and m query points. The same tree can evaluate multiple
     /// polynomials without rebuilding its products.
+    ///
+    /// Uses the transposed algorithm: `f(x_i)` is the coefficient of
+    /// `x^(n-1)` in `rev(f) / (1 - x_i x)`, so after one series inverse of
+    /// `prod (1 - x_i x)` at the root every node only needs a window of a
+    /// product with its sibling's polynomial, with no divisions in the tree.
     pub fn evaluate(&self, polynomial: &[M], ops: &mut PolynomialOps<T, M>) -> Vec<M> {
-        let mut result = vec![M::zero(); self.xs.len()];
-        let remainder = ops.remainder(polynomial, self.product());
-        self.evaluate_node(1, 0, self.size, &remainder, ops, &mut result);
+        let points = self.xs.len();
+        let mut result = vec![M::zero(); points];
+        let len = polynomial.len();
+        if len == 0 {
+            return result;
+        }
+        if len <= 32 || points <= 32 {
+            for (r, &x) in result.iter_mut().zip(self.xs) {
+                *r = evaluate(polynomial, x);
+            }
+            return result;
+        }
+        let root: Vec<M> = self.products[1].iter().rev().copied().collect();
+        let inverse = ops.inverse(&root, len);
+        let reversed: Vec<M> = polynomial.iter().rev().copied().collect();
+        let mut quotient = ops.multiply(&reversed, &inverse);
+        quotient.resize(len, M::zero());
+        // Coefficients len - points .. len of the quotient (zero below index 0).
+        let window: Vec<M> = (0..points)
+            .map(|t| {
+                if len + t >= points {
+                    quotient[len + t - points]
+                } else {
+                    M::zero()
+                }
+            })
+            .collect();
+        self.descend(1, 0, window, ops, &mut result);
         result
     }
 
-    fn evaluate_node(
+    /// `a` has one coefficient per point under `node`; the value at point `i`
+    /// is the top coefficient of `a * prod_{j != i} (1 - x_j x)`.
+    fn descend(
         &self,
         node: usize,
         left: usize,
-        right: usize,
-        polynomial: &[M],
+        a: Vec<M>,
         ops: &mut PolynomialOps<T, M>,
         result: &mut [M],
     ) {
-        if left >= self.xs.len() {
+        let size = a.len();
+        if size == 0 {
             return;
         }
-        if polynomial.len() <= 32 || right - left <= 32 {
-            for i in left..right.min(self.xs.len()) {
-                result[i] = evaluate(polynomial, self.xs[i]);
+        if size == 1 {
+            result[left] = a[0];
+            return;
+        }
+        let left_size = self.products[2 * node].len() - 1;
+        let right_size = size - left_size;
+        let child = |sibling: &[M], own: usize, ops: &mut PolynomialOps<T, M>| -> Vec<M> {
+            if sibling.len() == 1 {
+                return a.clone();
             }
-            return;
-        }
-        let mid = (left + right) / 2;
-        let remainder = ops.remainder(polynomial, &self.products[node * 2]);
-        self.evaluate_node(node * 2, left, mid, &remainder, ops, result);
-        if mid < self.xs.len() {
-            let remainder = ops.remainder(polynomial, &self.products[node * 2 + 1]);
-            self.evaluate_node(node * 2 + 1, mid, right, &remainder, ops, result);
-        }
+            let reversed: Vec<M> = sibling.iter().rev().copied().collect();
+            let product = ops.multiply(&a, &reversed);
+            product[size - own..size].to_vec()
+        };
+        let to_left = child(&self.products[2 * node + 1], left_size, ops);
+        let to_right = if right_size > 0 {
+            child(&self.products[2 * node], right_size, ops)
+        } else {
+            Vec::new()
+        };
+        drop(a);
+        self.descend(2 * node, left, to_left, ops, result);
+        self.descend(2 * node + 1, left + left_size, to_right, ops, result);
     }
 
     pub(crate) fn interpolate(&self, weights: &[M], ops: &mut PolynomialOps<T, M>) -> Vec<M> {
@@ -252,5 +299,57 @@ impl<'a, T: Into<u64>, M: BaseModInt<T>> ProductTree<'a, T, M> {
         }
         trim(&mut result);
         result
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{evaluate, PolynomialOps, ProductTree};
+    use crate::misc::random::{Random, RandomTrait};
+    use crate::numbers::mod_int::BaseModInt;
+    use crate::numbers::mod_int::{ModInt7, ModIntF};
+
+    fn check<M: BaseModInt<u32> + std::fmt::Debug>(seed: u64) {
+        let mut rng = Random::new_with_seed(seed);
+        let mut ops = PolynomialOps::new();
+        for &(points, len) in &[
+            (1usize, 1usize),
+            (33, 33),
+            (33, 1),
+            (40, 500),
+            (500, 40),
+            (100, 100),
+            (129, 257),
+            (257, 129),
+            (1000, 1000),
+            (64, 0),
+        ] {
+            let mut xs: Vec<M> = (0..points)
+                .map(|_| M::from(rng.gen_u128() as u32 as usize))
+                .collect();
+            if points > 3 {
+                xs[1] = xs[0]; // repeated points are allowed
+                xs[points - 1] = M::zero();
+            }
+            let f: Vec<M> = (0..len)
+                .map(|_| M::from(rng.gen_u128() as u32 as usize))
+                .collect();
+            let tree = ProductTree::new(&xs, &mut ops);
+            let got = tree.evaluate(&f, &mut ops);
+            let expected: Vec<M> = xs.iter().map(|&x| evaluate(&f, x)).collect();
+            assert_eq!(got, expected, "points={points} len={len}");
+            // the tree is reusable
+            let g: Vec<M> = (0..len / 2 + 1)
+                .map(|_| M::from(rng.gen_u128() as u32 as usize))
+                .collect();
+            let expected: Vec<M> = xs.iter().map(|&x| evaluate(&g, x)).collect();
+            assert_eq!(tree.evaluate(&g, &mut ops), expected);
+        }
+    }
+
+    #[test]
+    fn multipoint_evaluation_matches_horner() {
+        check::<ModIntF>(201);
+        check::<ModInt7>(202);
     }
 }
