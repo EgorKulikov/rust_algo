@@ -3,7 +3,6 @@ use crate::collections::min_max::MinimMaxim;
 use crate::graph::edges::bi_edge::BiEdge;
 use crate::graph::edges::edge_trait::EdgeTrait;
 use crate::graph::Graph;
-use crate::misc::recursive_function::{Callable2, RecursiveFunction2};
 
 pub struct BlockCutTree {
     // For each original vertex, which block-cut tree node it maps to.
@@ -36,57 +35,73 @@ impl<E: EdgeTrait> BlockCutTreeBuild for Graph<E> {
         let mut stack = Vec::new();
         let mut blocks: Vec<Vec<usize>> = Vec::new();
 
-        for i in 0..n {
-            if !used[i] {
-                let mut dfs = RecursiveFunction2::new(|f, vert: usize, prev: usize| {
-                    used.set(vert);
-                    tin[vert] = timer;
-                    fup[vert] = timer;
+        const NO_PARENT: u32 = u32::MAX;
+        // Frame: (vertex, parent, edge cursor, tree children so far).
+        let mut frames: Vec<(u32, u32, u32, u32)> = Vec::new();
+        for root in 0..n {
+            if used[root] {
+                continue;
+            }
+            used.set(root);
+            tin[root] = timer;
+            fup[root] = timer;
+            timer += 1;
+            frames.push((root as u32, NO_PARENT, self.head_edge(root), 0));
+            while let Some(frame) = frames.last_mut() {
+                let (vert, prev, cursor) = (frame.0 as usize, frame.1, frame.2);
+                if cursor == u32::MAX {
+                    let children = frame.3;
+                    frames.pop();
+                    if prev == NO_PARENT {
+                        if children == 0 {
+                            // Isolated vertex (no edges)
+                            blocks.push(vec![vert]);
+                        }
+                        continue;
+                    }
+                    let parent = frames.last().unwrap();
+                    let (up, up_prev, up_children) = (parent.0 as usize, parent.1, parent.3);
+                    let cand = fup[vert];
+                    fup[up].minim(cand);
+                    if up_prev == NO_PARENT {
+                        if up_children > 1 {
+                            is_cut_orig.set(up);
+                        }
+                    } else if fup[vert] >= tin[up] {
+                        is_cut_orig.set(up);
+                    }
+                    if fup[vert] >= tin[up] {
+                        let mut block = Vec::new();
+                        while let Some((u, v)) = stack.pop() {
+                            block.push(u);
+                            block.push(v);
+                            if u == up && v == vert {
+                                break;
+                            }
+                        }
+                        block.sort();
+                        block.dedup();
+                        blocks.push(block);
+                    }
+                    continue;
+                }
+                frame.2 = self.step_edge(vert, cursor);
+                let to = self.edge_at(vert, cursor).to();
+                if prev != NO_PARENT && to == prev as usize {
+                    continue;
+                }
+                if used[to] {
+                    let cand = tin[to];
+                    fup[vert].minim(cand);
+                } else {
+                    stack.push((vert, to));
+                    frame.3 += 1;
+                    used.set(to);
+                    tin[to] = timer;
+                    fup[to] = timer;
                     timer += 1;
-                    let mut children = 0u32;
-                    for e in self.adj(vert).iter() {
-                        let to = e.to();
-                        if to == prev {
-                            continue;
-                        }
-                        if used[to] {
-                            fup[vert].minim(tin[to]);
-                        } else {
-                            stack.push((vert, to));
-                            children += 1;
-                            f.call(to, vert);
-                            let cand = fup[to];
-                            fup[vert].minim(cand);
-
-                            if prev == n {
-                                if children > 1 {
-                                    is_cut_orig.set(vert);
-                                }
-                            } else if fup[to] >= tin[vert] {
-                                is_cut_orig.set(vert);
-                            }
-
-                            if fup[to] >= tin[vert] {
-                                let mut block = Vec::new();
-                                while let Some((u, v)) = stack.pop() {
-                                    block.push(u);
-                                    block.push(v);
-                                    if u == vert && v == to {
-                                        break;
-                                    }
-                                }
-                                block.sort();
-                                block.dedup();
-                                blocks.push(block);
-                            }
-                        }
-                    }
-                    // Isolated vertex (no edges)
-                    if prev == n && children == 0 {
-                        blocks.push(vec![vert]);
-                    }
-                });
-                dfs.call(i, n);
+                    frames.push((to as u32, vert as u32, self.head_edge(to), 0));
+                }
             }
         }
 
@@ -201,5 +216,83 @@ mod test {
         // 3 blocks (0-1-2, 2-3, 3-4-5) + 2 cut vertices (2, 3) = 5 nodes
         assert_eq!(bct.node_count, 5);
         assert!(bct.tree.is_tree());
+    }
+
+    #[test]
+    fn random_graphs_satisfy_invariants() {
+        use crate::graph::cut_points::CutPointSearch;
+        use crate::graph::edges::edge_trait::EdgeTrait;
+        use crate::misc::random::{Random, RandomTrait};
+        let mut rng = Random::new_with_seed(153);
+        for _ in 0..300 {
+            let n = rng.gen_range(1..=9usize);
+            let m = rng.gen_range(0..=12usize);
+            let edges: Vec<(usize, usize)> = (0..m)
+                .map(|_| (rng.gen_range(0..n), rng.gen_range(0..n)))
+                .filter(|&(a, b)| a != b)
+                .collect();
+            let graph = Graph::with_biedges(n, &edges);
+            let bct = graph.block_cut_tree();
+            let mut cuts = graph.cut_points();
+            cuts.sort();
+            let from_tree: Vec<usize> =
+                (0..n).filter(|&v| bct.is_cut[bct.vertex_node[v]]).collect();
+            assert_eq!(from_tree, cuts, "n={n} edges={edges:?}");
+            assert_eq!(bct.node_vertices.len(), bct.node_count);
+            // Every edge lies inside exactly one block.
+            for &(a, b) in &edges {
+                let holding = (0..bct.node_count)
+                    .filter(|&k| !bct.is_cut[k])
+                    .filter(|&k| {
+                        bct.node_vertices[k].contains(&a) && bct.node_vertices[k].contains(&b)
+                    })
+                    .count();
+                assert_eq!(holding, 1, "edge {a}-{b} in n={n} edges={edges:?}");
+            }
+            // Non-cut vertices belong to exactly one block; the tree is a forest.
+            for v in 0..n {
+                let blocks = (0..bct.node_count)
+                    .filter(|&k| !bct.is_cut[k] && bct.node_vertices[k].contains(&v))
+                    .count();
+                if cuts.contains(&v) {
+                    assert!(blocks >= 2);
+                } else {
+                    assert_eq!(blocks, 1);
+                }
+            }
+            let tree_edges: usize = (0..bct.node_count)
+                .map(|k| bct.tree.adj(k).iter().count())
+                .sum::<usize>()
+                / 2;
+            let mut comp: Vec<usize> = (0..bct.node_count).collect();
+            for k in 0..bct.node_count {
+                for e in bct.tree.adj(k).iter() {
+                    let (ca, cb) = (comp[k], comp[e.to()]);
+                    for c in comp.iter_mut() {
+                        if *c == cb {
+                            *c = ca;
+                        }
+                    }
+                }
+            }
+            let mut distinct = comp.clone();
+            distinct.sort();
+            distinct.dedup();
+            assert_eq!(tree_edges + distinct.len(), bct.node_count, "not a forest");
+        }
+    }
+
+    #[test]
+    fn long_path_needs_no_deep_stack() {
+        let n = 200_000;
+        let handle = std::thread::Builder::new()
+            .stack_size(256 * 1024)
+            .spawn(move || {
+                let edges: Vec<(usize, usize)> = (1..n).map(|v| (v - 1, v)).collect();
+                Graph::with_biedges(n, &edges).block_cut_tree().node_count
+            })
+            .unwrap();
+        // n - 1 blocks plus n - 2 cut vertices
+        assert_eq!(handle.join().unwrap(), 2 * n - 3);
     }
 }
