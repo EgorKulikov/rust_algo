@@ -8,7 +8,8 @@ use crate::numbers::num_traits::algebra::AdditionMonoidWithSub;
 use crate::numbers::num_traits::ord::MinMax;
 use std::collections::VecDeque;
 
-// is it really fast though?
+// Dinic with link-cut trees: O(VE log V), but only faster than plain Dinic
+// when augmenting paths are very long (thousands of vertices).
 pub trait FastMaxFlow<C: AdditionMonoidWithSub + Ord + Copy + MinMax> {
     fn fast_max_flow(&mut self, source: usize, destination: usize) -> C;
 }
@@ -22,7 +23,9 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> FastMa
             self_val: C,
             val: C,
             val_id: u32,
-            delta: C,
+            /// Pending decrease of every capacity on the path (kept
+            /// non-negative so unsigned capacity types work).
+            dec: C,
             pushed: C,
         }
         impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax> Payload for Node<C> {
@@ -46,18 +49,18 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> FastMa
             }
 
             fn accumulate(&mut self, delta: &Self) {
-                self.self_val += delta.delta;
-                self.val += delta.delta;
-                self.delta += delta.delta;
-                self.pushed -= delta.delta;
+                self.self_val -= delta.dec;
+                self.val -= delta.dec;
+                self.dec += delta.dec;
+                self.pushed += delta.dec;
             }
 
             fn accumulate_self(&mut self, delta: &Self) {
-                self.self_val += delta.delta;
+                self.self_val -= delta.dec;
             }
 
             fn reset_delta(&mut self) {
-                self.delta = C::zero();
+                self.dec = C::zero();
             }
         }
 
@@ -68,7 +71,7 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> FastMa
                 self_val: C::zero(),
                 val: C::zero(),
                 val_id: i as u32,
-                delta: C::zero(),
+                dec: C::zero(),
                 pushed: C::zero(),
             })
         });
@@ -137,7 +140,7 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> FastMa
                 };
                 total_flow += cur_val;
                 nodes[source].with_payload_mut(|p| {
-                    p.delta -= cur_val;
+                    p.dec += cur_val;
                     p.pushed += cur_val;
                     p.self_val -= cur_val;
                     p.val -= cur_val;
@@ -198,5 +201,35 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C>> FastMa
             }
         }
         total_flow
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::FastMaxFlow;
+    use crate::graph::edges::flow_edge::FlowEdge;
+    use crate::graph::max_flow::MaxFlow;
+    use crate::graph::Graph;
+    use crate::misc::random::{Random, RandomTrait};
+
+    #[test]
+    fn unsigned_capacities_match_dinic() {
+        let mut rng = Random::new_with_seed(131);
+        for _ in 0..200 {
+            let n = rng.gen_range(2..=12usize);
+            let m = rng.gen_range(0..=4 * n);
+            let mut fast: Graph<FlowEdge<u64, ()>> = Graph::new_linked(n);
+            let mut plain: Graph<FlowEdge<u64, ()>> = Graph::new_linked(n);
+            for _ in 0..m {
+                let (a, b) = (rng.gen_range(0..n), rng.gen_range(0..n));
+                if a == b {
+                    continue;
+                }
+                let c = rng.gen_range(0..=20u64);
+                fast.add_edge(FlowEdge::new(a, b, c));
+                plain.add_edge(FlowEdge::new(a, b, c));
+            }
+            assert_eq!(fast.fast_max_flow(0, n - 1), plain.max_flow(0, n - 1));
+        }
     }
 }
