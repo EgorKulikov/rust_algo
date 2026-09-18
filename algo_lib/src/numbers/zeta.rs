@@ -262,6 +262,7 @@ pub fn sps_exp<T: SemiRingWithSub + Copy>(a: &[T]) -> Vec<T> {
 }
 
 #[cfg(test)]
+#[allow(clippy::needless_range_loop)]
 mod tests {
     use super::*;
     use crate::misc::random::{Random, RandomTrait};
