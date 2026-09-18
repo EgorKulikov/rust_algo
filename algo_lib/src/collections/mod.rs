@@ -7,6 +7,7 @@ pub mod divided_set;
 pub mod dsu;
 pub mod dsu2d;
 pub mod dsu_rollback;
+pub mod dsu_weighted;
 pub mod euler_tour_tree;
 pub mod fast_clear_arr;
 pub mod fast_clear_fenwick;
