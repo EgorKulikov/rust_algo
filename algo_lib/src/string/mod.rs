@@ -1,6 +1,7 @@
 pub mod aho_corasick;
 pub mod concat;
 pub mod hash;
+pub mod palindromic_tree;
 pub mod qty;
 pub mod slicelike;
 pub mod split;
