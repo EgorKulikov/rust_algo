@@ -31,6 +31,11 @@ impl<T: Into<u64>, M: BaseModInt<T>> Default for FFT<M, T> {
 
 impl<T: Into<u64>, M: BaseModInt<T>> FFT<M, T> {
     /// Selects a backend. Panics if the modulus does not fit in `u32`.
+    ///
+    /// NTT-friendly primes (`128 | p - 1`) get the Montgomery NTT, which needs
+    /// `p < 2^30` and panics otherwise. Every prime we use (998244353,
+    /// 167772161, 469762049, 754974721, ...) satisfies that; primes such as
+    /// 2013265921 or 2130706433 are deliberately not supported.
     pub fn new() -> Self {
         let p = modulus::<T, M>();
         assert!(

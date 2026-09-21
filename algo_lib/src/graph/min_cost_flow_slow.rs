@@ -7,6 +7,18 @@ use crate::graph::negative_distances::{Distance, NegativeDistances};
 use crate::graph::{CostAndFlow, Graph};
 use crate::numbers::num_traits::algebra::{AdditionMonoidWithSub, MultiplicationMonoid};
 
+/// Successive shortest paths with potentials.
+///
+/// "Slow" is meant literally once a cost is negative. The initial potentials
+/// come from a Bellman-Ford over all stored edges, zero-capacity reverse edges
+/// included, so any negative edge with an alternative route looks like a
+/// negative cycle and the potentials stay zero. Dijkstra then runs on negative
+/// reduced costs as a label-correcting search: the answer is still right, but
+/// the running time has no polynomial bound (it is exponential on adversarial
+/// graphs). With non-negative costs it is the usual `O(flow * E log V)`.
+///
+/// A real negative cycle among positive-capacity edges is not supported (the
+/// search never ends); use `MinCostFlow` for that.
 pub trait MinCostFlowSlow<C> {
     fn min_cost_flow_slow(&mut self, source: usize, sink: usize) -> CostAndFlow<C>;
     fn min_cost_max_flow_slow(&mut self, source: usize, sink: usize) -> CostAndFlow<C>;

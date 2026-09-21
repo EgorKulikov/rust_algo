@@ -9,6 +9,13 @@ use crate::graph::flow_graph::FlowGraph;
 use crate::graph::{CostAndFlow, Graph};
 use crate::numbers::num_traits::bit_ops::BitOps;
 
+/// Capacity-scaling min cost flow; negative costs and negative cycles are fine.
+///
+/// Capacities must stay below `2^(BITS - 2)` of the capacity type (`2^62` for
+/// `i64`, `2^30` for `i32`): the scaling doubles an internal edge once per bit
+/// of the largest capacity and it must not overflow. In particular `MAX` is
+/// not usable as an "infinite" capacity: the result is silently a zero flow.
+/// Use a bound such as the sum of the real capacities instead.
 pub trait MinCostFlow<C> {
     fn min_cost_flow(&mut self, source: usize, sink: usize) -> CostAndFlow<C>;
     fn min_cost_max_flow(&mut self, source: usize, sink: usize) -> CostAndFlow<C>;

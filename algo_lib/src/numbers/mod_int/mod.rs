@@ -224,6 +224,9 @@ macro_rules! mod_int {
             }
         }
 
+        /// Reads the value through the signed base type (`i32` for `ModInt`,
+        /// `i64` for `ModInt64`): input outside that range wraps silently.
+        /// Read a wider integer and convert it when the input can be larger.
         impl<V: Value<$t>> Readable for $name<V> {
             fn read(input: &mut Input) -> Self {
                 Self::new_signed(input.read())
