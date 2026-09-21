@@ -48,11 +48,11 @@ macro_rules! mod_int {
             }
 
             pub fn new_signed(n: $s) -> Self {
-                unsafe {
-                    Self::unchecked_new(Self::maybe_subtract_mod(
-                        (n % (V::val() as $s) + V::val() as $s) as $t,
-                    ))
-                }
+                // `r + m` only for negative `r`: the unconditional sum reaches
+                // `2m - 1`, which overflows `$s` for moduli above half its range.
+                let r = n % (V::val() as $s);
+                let r = if r < 0 { r + V::val() as $s } else { r };
+                unsafe { Self::unchecked_new(r as $t) }
             }
 
             pub fn new_wide(n: $w) -> Self {
@@ -293,3 +293,23 @@ pub type ModInt9 = ModInt<Val9>;
 
 value!(pub ValF: u32 = 998_244_353);
 pub type ModIntF = ModInt<ValF>;
+
+#[cfg(test)]
+mod tests {
+    use super::{ModInt, ModInt64, ModInt7};
+    use crate::value;
+
+    value!(Large: u32 = 2147483647);
+    value!(Large64: u64 = 9223372036854775783);
+
+    #[test]
+    fn signed_construction_with_moduli_near_the_type_limit() {
+        assert_eq!(ModInt::<Large>::from(5i32).val(), 5);
+        assert_eq!(ModInt::<Large>::from(-5i32).val(), 2147483642);
+        assert_eq!(ModInt::<Large>::from(i32::MIN).val(), 2147483646);
+        assert_eq!(ModInt::<Large>::from(i32::MAX).val(), 0);
+        assert_eq!(ModInt64::<Large64>::from(1i64).val(), 1);
+        assert_eq!(ModInt64::<Large64>::from(-1i64).val(), 9223372036854775782);
+        assert_eq!(ModInt7::from(-1i32).val(), 1_000_000_006);
+    }
+}
