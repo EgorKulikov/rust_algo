@@ -59,11 +59,42 @@ impl<T> Index<usize> for FastClearArr<T> {
 
 impl<T: Clone> IndexMut<usize> for FastClearArr<T> {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        if index >= self.arr.len() || self.arr[index].1 != self.epoch {
+        if index >= self.arr.len() {
+            // Only ever grow: `resize_with` to a smaller length would drop
+            // live elements above `index`.
             self.arr
                 .resize_with(index + 1, || (self.default.clone(), self.epoch));
-            self.arr[index].1 = self.epoch;
+        } else if self.arr[index].1 != self.epoch {
+            // A slot from before the last `clear` still holds its old value.
+            self.arr[index] = (self.default.clone(), self.epoch);
         }
         &mut self.arr[index].0
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::FastClearArr;
+
+    #[test]
+    fn write_below_live_elements_after_clear() {
+        let mut a: FastClearArr<i32> = FastClearArr::with_default(0);
+        a[0] = 1;
+        a[1] = 2;
+        a.clear();
+        a[1] = 3;
+        a[0] = 4;
+        assert_eq!((a[0], a[1], a[2]), (4, 3, 0));
+    }
+
+    #[test]
+    fn compound_assignment_starts_from_default_after_clear() {
+        let mut a: FastClearArr<i32> = FastClearArr::with_default(7);
+        a[3] += 5;
+        assert_eq!(a[3], 12);
+        a.clear();
+        assert_eq!(a[3], 7);
+        a[3] += 1;
+        assert_eq!(a[3], 8);
     }
 }
