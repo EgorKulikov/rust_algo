@@ -379,16 +379,22 @@ impl<P: Payload> TreapNode<P> {
         }
     }
 
+    /// Pushes pending updates down the path from the root to `self` and
+    /// records that path, root first. The ancestors have to be pushed before a
+    /// direction is read off: a pending reversal swaps the children.
     fn push_from_up(&self, directions: &mut Vec<Direction>) -> TreapNode<P> {
         if self.parent.size != 0 {
-            if self.parent.left == *self {
+            let mut parent = self.parent.clone();
+            let root = parent.push_from_up(directions);
+            parent.push_down();
+            if parent.left == *self {
                 directions.push(Direction::Left);
-            } else if self.parent.right == *self {
+            } else if parent.right == *self {
                 directions.push(Direction::Right);
             } else {
                 unreachable!();
             }
-            self.parent.push_from_up(directions)
+            root
         } else {
             TreapNode { link: self.link }
         }
@@ -399,6 +405,8 @@ impl<P: Payload> TreapNode<P> {
         let mut directions = Vec::new();
         let expected_parent = link.push_from_up(&mut directions);
         assert!(expected_parent == self);
+        // `split_by_dir` pops, so it needs the root's direction last.
+        directions.reverse();
         self.split_by_dir(directions)
     }
 
@@ -1304,6 +1312,67 @@ mod test {
                             reference.contains_key(&key).then_some(less)
                         );
                     }
+                }
+            }
+        }
+    }
+
+    mod lazy_state {
+        use crate::collections::payload::{PurePayload, ValueDeltaPayload};
+        use crate::collections::treap::treap::Tree;
+        use crate::misc::value_delta::ValueDeltaTrait;
+
+        #[derive(Clone, Copy)]
+        struct SumAdd;
+        impl ValueDeltaTrait for SumAdd {
+            type V = (i64, i64); // (sum, count)
+            type D = i64;
+            fn join(a: (i64, i64), b: (i64, i64)) -> (i64, i64) {
+                (a.0 + b.0, a.1 + b.1)
+            }
+            fn accumulate(a: i64, b: i64) -> i64 {
+                a + b
+            }
+            fn apply(v: (i64, i64), d: i64) -> (i64, i64) {
+                (v.0 + d * v.1, v.1)
+            }
+        }
+
+        fn add(d: i64) -> ValueDeltaPayload<SumAdd> {
+            let mut delta = ValueDeltaPayload::<SumAdd>::new((0, 0));
+            delta.d = d;
+            delta
+        }
+
+        // The treap shape is random, so every scenario is repeated.
+        const REPS: usize = 200;
+
+        #[test]
+        fn node_ids_survive_reverse() {
+            let n = 6;
+            for rep in 0..REPS {
+                let i = rep % n;
+                let mut tree: Tree<PurePayload<usize>> = Tree::with_gen(n, PurePayload);
+                let ids = tree.refs();
+                tree.reverse();
+                assert_eq!(tree.index_ref(&ids[i]), n - 1 - i);
+                assert_eq!(tree.raise(&ids[i]).payload().map(|p| p.0), Some(i));
+                assert_eq!(
+                    tree.iter().map(|p| p.0).collect::<Vec<_>>(),
+                    (0..n).rev().collect::<Vec<_>>()
+                );
+            }
+        }
+
+        #[test]
+        fn node_id_payload_sees_pending_deltas() {
+            for _ in 0..REPS {
+                let mut tree: Tree<ValueDeltaPayload<SumAdd>> =
+                    Tree::with_gen(5, |_| ValueDeltaPayload::new((0, 1)));
+                let ids = tree.refs();
+                tree.push(&add(5));
+                for id in &ids {
+                    assert_eq!(unsafe { id.with_payload(|p| p.self_v.0) }, 5);
                 }
             }
         }
