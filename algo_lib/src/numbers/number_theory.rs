@@ -126,7 +126,8 @@ pub fn stern_brocot_search(
             // largest k with from + k * step within the limit and on `right`'s side
             let mut k = 0u64;
             let mut jump = 1u64;
-            while let Some(f) = fits(from, step, k + jump) {
+            // `k + jump` itself can overflow when `limit` is close to `u64::MAX`.
+            while let Some(f) = k.checked_add(jump).and_then(|k| fits(from, step, k)) {
                 if is_at_most(f.0, f.1) != right {
                     break;
                 }
@@ -134,7 +135,7 @@ pub fn stern_brocot_search(
                 jump = jump.saturating_mul(2);
             }
             while jump > 0 {
-                if let Some(f) = fits(from, step, k + jump) {
+                if let Some(f) = k.checked_add(jump).and_then(|k| fits(from, step, k)) {
                     if is_at_most(f.0, f.1) == right {
                         k += jump;
                     }
@@ -345,5 +346,20 @@ mod tests {
                 assert_eq!(nim_product(a as u64, b as u64), table[a][b], "{a} x {b}");
             }
         }
+    }
+
+    #[test]
+    fn stern_brocot_with_the_largest_limit() {
+        assert_eq!(
+            stern_brocot_search(u64::MAX, |_, _| true),
+            ((u64::MAX, 1), (1, 0))
+        );
+        assert_eq!(
+            stern_brocot_search(u64::MAX, |p, _| p == 0),
+            ((0, 1), (1, u64::MAX))
+        );
+        // 1/3: p / q <= 1/3
+        let (lo, _) = stern_brocot_search(u64::MAX, |p, q| (p as u128) * 3 <= q as u128);
+        assert_eq!(lo.1 as u128, lo.0 as u128 * 3);
     }
 }
