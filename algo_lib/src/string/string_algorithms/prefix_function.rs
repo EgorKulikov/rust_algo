@@ -10,6 +10,9 @@ where
 {
     fn prefix_function(&self) -> Vec<usize> {
         let mut res = Vec::with_capacity(self.len());
+        if self.len() == 0 {
+            return res;
+        }
         res.push(0);
         for i in 1..self.len() {
             let mut j = res[i - 1];
@@ -42,5 +45,11 @@ mod test {
     #[test]
     fn prefix_single() {
         assert_eq!(b"x".prefix_function(), vec![0]);
+    }
+
+    #[test]
+    fn prefix_function_of_empty() {
+        let e: &[u8] = b"";
+        assert_eq!(e.prefix_function(), Vec::<usize>::new());
     }
 }

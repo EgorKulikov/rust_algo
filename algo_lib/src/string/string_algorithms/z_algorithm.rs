@@ -10,6 +10,9 @@ where
 {
     fn z_algorithm(&self) -> Vec<usize> {
         let mut res = Vec::with_capacity(self.len());
+        if self.len() == 0 {
+            return res;
+        }
         res.push(0);
         let mut l = 0;
         let mut r = 0;
@@ -49,5 +52,11 @@ mod test {
     #[test]
     fn z_single_char() {
         assert_eq!(b"a".z_algorithm(), vec![0]);
+    }
+
+    #[test]
+    fn z_of_empty() {
+        let e: &[u8] = b"";
+        assert_eq!(e.z_algorithm(), Vec::<usize>::new());
     }
 }
