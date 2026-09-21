@@ -137,12 +137,11 @@ macro_rules! mod_int {
 
         impl<V: Value<$t>> From<usize> for $name<V> {
             fn from(idx: usize) -> Self {
-                let v = idx as $w;
-                if v >= V::val() as $w {
-                    Self::new_wide(v)
-                } else {
-                    unsafe { Self::unchecked_new(v as $t) }
-                }
+                // Compared as `usize`: a cast to the signed wide type turns
+                // values of 2^63 and above negative.
+                let m = V::val() as usize;
+                let v = if idx >= m { idx % m } else { idx };
+                unsafe { Self::unchecked_new(v as $t) }
             }
         }
 
@@ -311,5 +310,17 @@ mod tests {
         assert_eq!(ModInt64::<Large64>::from(1i64).val(), 1);
         assert_eq!(ModInt64::<Large64>::from(-1i64).val(), 9223372036854775782);
         assert_eq!(ModInt7::from(-1i32).val(), 1_000_000_006);
+    }
+
+    #[test]
+    fn from_usize_above_the_signed_range() {
+        let u = usize::MAX;
+        assert_eq!(ModInt7::from(u).val() as u128, u as u128 % 1_000_000_007);
+        assert_eq!(ModInt7::from(1_000_000_008usize).val(), 1);
+        assert_eq!(ModInt7::from(17usize).val(), 17);
+        assert_eq!(
+            ModInt64::<Large64>::from(u).val() as u128,
+            u as u128 % 9223372036854775783
+        );
     }
 }
