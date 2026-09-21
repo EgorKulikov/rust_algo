@@ -103,6 +103,10 @@ impl<T: Ord> MultiTreeSet<T> {
     }
 
     pub fn insert_few(&mut self, value: T, qty: usize) {
+        if qty == 0 {
+            // A key with count 0 would still show up in lookups and iteration.
+            return;
+        }
         *self.map.entry(value).or_insert(0) += qty;
         self.size += qty;
     }
@@ -222,5 +226,23 @@ impl<T: Ord> FromIterator<T> for MultiTreeSet<T> {
             set.insert(value);
         }
         set
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::MultiTreeSet;
+
+    #[test]
+    fn insert_few_with_zero_quantity_adds_nothing() {
+        let mut ms: MultiTreeSet<i32> = MultiTreeSet::new();
+        ms.insert_few(5, 0);
+        assert_eq!(ms.len(), 0);
+        assert!(!ms.contains(&5));
+        assert_eq!(ms.first(), None);
+        ms.insert_few(5, 2);
+        ms.insert_few(5, 0);
+        assert_eq!(ms.len(), 2);
+        assert!(ms.remove(&5) && ms.remove(&5) && !ms.contains(&5));
     }
 }
