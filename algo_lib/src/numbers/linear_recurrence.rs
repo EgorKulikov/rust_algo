@@ -70,11 +70,16 @@ pub fn kth_term<T: Into<u64>, M: BaseModInt<T>>(
     if d == 0 {
         return M::zero();
     }
+    // The sequence continues from the last `d` initial terms; anything before
+    // them need not follow the recurrence.
+    let skipped = init.len() - d;
+    let init = &init[skipped..];
+    k -= skipped as u64;
     // Generating function P(x) / Q(x), Q = 1 - sum c_j x^{j+1}, deg P < d.
     let mut q = Vec::with_capacity(d + 1);
     q.push(M::one());
     q.extend(c.iter().map(|&x| -x));
-    let mut p = ops.multiply(&init[..d], &q);
+    let mut p = ops.multiply(init, &q);
     p.truncate(d);
     while k > 0 {
         // Multiply numerator and denominator by Q(-x): the new denominator is
@@ -180,5 +185,17 @@ mod tests {
             guess_kth_term(&[M::from(7usize); 5], u64::MAX, &mut ops),
             M::from(7usize)
         );
+    }
+
+    #[test]
+    fn kth_term_continues_from_the_last_initial_terms() {
+        // 5 1 1 2 3 5 8 ...: the first term does not follow the recurrence.
+        let mut ops = PolynomialOps::<u32, ModIntF>::new();
+        let init = [ModIntF::new(5), ModIntF::new(1), ModIntF::new(1)];
+        let c = [ModIntF::new(1), ModIntF::new(1)];
+        let expected = extend(&init, &c, 40);
+        for (k, &e) in expected.iter().enumerate() {
+            assert_eq!(kth_term(&init, &c, k as u64, &mut ops), e, "k = {}", k);
+        }
     }
 }
