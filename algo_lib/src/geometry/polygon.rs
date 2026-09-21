@@ -52,7 +52,9 @@ impl<T: Base + Ord> Polygon<T> {
                 neg = true;
             }
         }
-        !pos || !neg
+        // No side seen at all means every vertex is the same point, and that
+        // point was handled by the segment check above.
+        (pos || neg) && !(pos && neg)
     }
 }
 
@@ -112,5 +114,15 @@ mod tests {
             }
         }
         assert!(repeated.contains(Point::new(1, 1)));
+    }
+
+    #[test]
+    fn contains_for_a_polygon_that_is_a_single_point() {
+        for copies in 1..=3 {
+            let point = Polygon::new(vec![Point::new(0i64, 0); copies]);
+            assert!(point.contains(Point::new(0, 0)));
+            assert!(!point.contains(Point::new(-1, -1)));
+            assert!(!point.contains(Point::new(1, 0)));
+        }
     }
 }
