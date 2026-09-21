@@ -32,7 +32,9 @@ impl Circle<Real> {
         if dist == self.radius {
             return vec![base];
         }
-        let delta = (self.radius * self.radius - dist * dist).sqrt();
+        // (perp.a, perp.b) runs along `l` but is a unit vector only for
+        // canonical lines.
+        let delta = (self.radius * self.radius - dist * dist).sqrt() / Real::hypot(perp.a, perp.b);
         vec![
             base + Point::new(perp.a, perp.b) * delta,
             base - Point::new(perp.a, perp.b) * delta,
@@ -62,5 +64,41 @@ impl Circle<Real> {
         }
         let power = Circle::new(p, ((dist - self.radius) * (dist + self.radius)).sqrt());
         self.intersect_circle(power)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Circle;
+    use crate::geometry::point::Point;
+    use crate::numbers::real::Real;
+
+    fn pt(x: f64, y: f64) -> Point<Real> {
+        Point::new(Real(x), Real(y))
+    }
+
+    #[test]
+    fn intersect_line_that_is_not_normalized() {
+        let c = Circle::new(pt(1.0, 2.0), Real(5.0));
+        // y = 5 through two far apart points: the line coefficients are not unit length
+        let pts = c.intersect_line(pt(-7.0, 5.0).line(pt(9.0, 5.0)));
+        assert_eq!(pts.len(), 2);
+        let mut xs: Vec<f64> = pts.iter().map(|p| p.x.0).collect();
+        xs.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        assert!(
+            (xs[0] + 3.0).abs() < 1e-9 && (xs[1] - 5.0).abs() < 1e-9,
+            "{:?}",
+            xs
+        );
+        for p in pts {
+            assert!((p.y.0 - 5.0).abs() < 1e-9);
+        }
+    }
+
+    #[test]
+    fn intersect_line_tangent_and_missing() {
+        let c = Circle::new(pt(0.0, 0.0), Real(1.0));
+        assert_eq!(c.intersect_line(pt(-3.0, 1.0).line(pt(4.0, 1.0))).len(), 1);
+        assert_eq!(c.intersect_line(pt(-3.0, 2.0).line(pt(4.0, 2.0))).len(), 0);
     }
 }
