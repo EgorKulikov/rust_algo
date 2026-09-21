@@ -358,3 +358,25 @@ fn read_line_keeps_last_char_of_unterminated_final_line() {
         assert_eq!(input.read_line().as_slice(), b"ab");
     }
 }
+
+#[test]
+fn integer_read_past_the_end_panics() {
+    for data in [&b""[..], b"  \n", b"1 ", b"1\n\n"] {
+        let count = inputs(data).len();
+        for i in 0..count {
+            let res = std::panic::catch_unwind(|| {
+                let mut input = inputs(data).swap_remove(i);
+                if !data.iter().all(|b| b.is_ascii_whitespace()) {
+                    assert_eq!(input.read_int(), 1);
+                }
+                input.read_int()
+            });
+            let message = res
+                .expect_err("reading past the end must not return a value")
+                .downcast::<&str>()
+                .map(|s| *s)
+                .unwrap_or("not a str");
+            assert_eq!(message, "read past the end of input");
+        }
+    }
+}

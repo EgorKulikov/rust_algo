@@ -330,6 +330,12 @@ fn swar_digits(x: u64) -> u64 {
     (x * 10_000 + (x >> 32)) & 0xffff_ffff
 }
 
+#[cold]
+#[inline(never)]
+fn read_past_the_end() -> ! {
+    panic!("read past the end of input");
+}
+
 macro_rules! read_integer {
     // `$signed` is a literal, so the sign handling const-folds away for
     // unsigned types. `$acc` is the unsigned accumulator (u64 or u128).
@@ -344,8 +350,11 @@ macro_rules! read_integer {
                         at += 1;
                     }
                     input.at = at;
-                    if at < input.buf_read || !input.refill_buffer() {
+                    if at < input.buf_read {
                         break;
+                    }
+                    if !input.refill_buffer() {
+                        read_past_the_end();
                     }
                     at = input.at;
                 }
