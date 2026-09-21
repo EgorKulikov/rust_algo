@@ -61,7 +61,9 @@ impl<T: Ord> SuffixArray<T> {
                 continue;
             }
             let j = sorted_suffixes[pos_in_sorted[i] + 1];
-            while i + k < n && j + k < n && str[i + k] == str[j + k] {
+            // `str[n - 1]` is the sentinel: it sorts below everything by
+            // construction, but its value can equal a real element.
+            while i + k < n - 1 && j + k < n - 1 && str[i + k] == str[j + k] {
                 k += 1;
             }
             lcp[pos_in_sorted[i]] = k as u32
@@ -100,15 +102,16 @@ impl<T: Ord> SuffixArray<T> {
         if cfg!(debug_assertions) {
             // too slow for debug mode?
             for (w, &lcp) in sorted_suffixes.windows(2).zip(lcp.iter()) {
-                let first = &str[w[0]..];
-                let second = &str[w[1]..];
+                // Without the sentinel, whose value can equal a real element.
+                let first = &str[w[0]..n - 1];
+                let second = &str[w[1]..n - 1];
                 assert!(
                     first < second,
                     "[{} -> {:?}] not less than [{} -> {:?}]",
                     w[0],
-                    &str[w[0]..],
+                    first,
                     w[1],
-                    &str[w[1]..]
+                    second
                 );
                 let lcp = lcp as usize;
                 assert!(first[0..lcp] == second[0..lcp]);
@@ -125,11 +128,13 @@ impl<T: Ord> SuffixArray<T> {
     }
 
     pub fn find(&self, t: &[T]) -> (usize, usize) {
+        // Suffixes without the sentinel, whose value can equal a real element.
+        let suffix = |pos: usize| &self.str[self[pos]..self.str.len() - 1];
         let mut l = 0;
         let mut r = self.len() - 1;
         while l < r {
             let mid = (l + r + 1) / 2;
-            if &self.str[self[mid]..] < t {
+            if suffix(mid) < t {
                 l = mid;
             } else {
                 r = mid - 1;
@@ -139,7 +144,7 @@ impl<T: Ord> SuffixArray<T> {
         let mut r = self.len() - 1;
         while l < r {
             let mid = (l + r + 1) / 2;
-            if self.str[self[mid]..].starts_with(t) {
+            if suffix(mid).starts_with(t) {
                 l = mid;
             } else {
                 r = mid - 1;
@@ -332,5 +337,52 @@ mod test {
                 s
             );
         }
+    }
+
+    /// All strings over `alphabet` up to length 6: `lcp` of adjacent suffixes
+    /// and `find` of every short pattern against brute force.
+    fn check_alphabet(alphabet: &[i32]) {
+        let mut strings: Vec<Vec<i32>> = vec![vec![]];
+        let mut from = 0;
+        for _ in 0..6 {
+            let to = strings.len();
+            for i in from..to {
+                for &c in alphabet {
+                    let mut s = strings[i].clone();
+                    s.push(c);
+                    strings.push(s);
+                }
+            }
+            from = to;
+        }
+        for s in &strings[1..] {
+            let n = s.len();
+            let sa = SuffixArray::new(s);
+            for p in 1..n {
+                let (a, b) = (&s[sa[p]..], &s[sa[p + 1]..]);
+                assert!(a < b, "{:?}", s);
+                let expected = a.iter().zip(b).take_while(|(x, y)| x == y).count();
+                assert_eq!(sa.lcp(p, p + 1), expected, "lcp {:?} {}", s, p);
+            }
+            for t in strings[1..].iter().filter(|t| t.len() <= 3) {
+                let (from, to) = sa.find(t);
+                let mut got: Vec<usize> = (from..to).map(|p| sa[p]).collect();
+                got.sort_unstable();
+                let expected: Vec<usize> = (0..n).filter(|&i| s[i..].starts_with(t)).collect();
+                assert_eq!(got, expected, "find {:?} in {:?}", t, s);
+            }
+        }
+    }
+
+    #[test]
+    fn lcp_and_find_with_positive_elements() {
+        check_alphabet(&[1, 2]);
+    }
+
+    #[test]
+    fn lcp_and_find_with_zero_and_negative_elements() {
+        check_alphabet(&[0, 1]);
+        check_alphabet(&[-2, -1]);
+        check_alphabet(&[-1, 0, 1]);
     }
 }
