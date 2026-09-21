@@ -361,6 +361,8 @@ impl<P: Payload> TreapNode<P> {
         mut f: F,
     ) -> (Self, Self) {
         if self.size != 0 {
+            // The callback looks at the children, so they need our pending updates.
+            self.push_down();
             let direction = f(&self.payload, self.left.payload(), self.right.payload());
             match direction {
                 Direction::Left => {
@@ -1320,6 +1322,7 @@ mod test {
     mod lazy_state {
         use crate::collections::payload::{PurePayload, ValueDeltaPayload};
         use crate::collections::treap::treap::Tree;
+        use crate::misc::direction::Direction;
         use crate::misc::value_delta::ValueDeltaTrait;
 
         #[derive(Clone, Copy)]
@@ -1374,6 +1377,28 @@ mod test {
                 for id in &ids {
                     assert_eq!(unsafe { id.with_payload(|p| p.self_v.0) }, 5);
                 }
+            }
+        }
+
+        #[test]
+        fn split_by_head_sees_pushed_children() {
+            for _ in 0..REPS {
+                let mut tree: Tree<ValueDeltaPayload<SumAdd>> =
+                    Tree::with_gen(2, |_| ValueDeltaPayload::new((1, 1)));
+                tree.push(&add(5)); // elements are now [6, 6]
+                let mut rem = 7; // the longest prefix with sum <= 7 has length 1
+                let len = tree
+                    .split_by_head(|p, left, _| {
+                        let here = left.map_or(0, |l| l.v.0) + p.self_v.0;
+                        if here > rem {
+                            Direction::Left
+                        } else {
+                            rem -= here;
+                            Direction::Right
+                        }
+                    })
+                    .size();
+                assert_eq!(len, 1);
             }
         }
     }
