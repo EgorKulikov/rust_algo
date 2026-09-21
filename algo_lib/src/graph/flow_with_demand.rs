@@ -24,10 +24,12 @@ impl<C: AdditionMonoidWithSub + Ord + Copy + MinMax, E: FlowEdgeTrait<C, Payload
         let mut outgoing = vec![C::zero(); self.vertex_count()];
         for i in 0..self.vertex_count() {
             for (j, e) in self.adj(i).iter_with_id() {
+                // Checked for zero-capacity edges as well: a demand on one of
+                // them cannot be met (reverse edges carry a zero payload).
+                if *e.payload() > e.capacity() {
+                    return false;
+                }
                 if e.capacity() != C::zero() {
-                    if *e.payload() > e.capacity() {
-                        return false;
-                    }
                     flow_graph.add_edge(FlowEdge::with_payload(
                         i,
                         e.to(),
@@ -147,5 +149,16 @@ mod tests {
         graph.add_edge(FlowEdge::with_payload(0, 1, 5, 2));
         graph.add_edge(FlowEdge::with_payload(0, 2, 5, 0));
         assert!(!graph.flow_with_demand(0, 2));
+    }
+
+    #[test]
+    fn demand_on_an_edge_without_capacity_is_infeasible() {
+        let mut g: Graph<FlowEdge<u64, u64>> = Graph::new_linked(2);
+        g.add_edge(FlowEdge::with_payload(0, 1, 0, 5));
+        assert!(!g.flow_with_demand(0, 1));
+        let mut g: Graph<FlowEdge<u64, u64>> = Graph::new_linked(2);
+        g.add_edge(FlowEdge::with_payload(0, 1, 0, 0));
+        g.add_edge(FlowEdge::with_payload(0, 1, 5, 5));
+        assert!(g.flow_with_demand(0, 1));
     }
 }
