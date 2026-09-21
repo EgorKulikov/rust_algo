@@ -146,7 +146,7 @@ impl<T: Ord> MultiTreapSet<T> {
     }
 
     fn node_to_pair(node: &MultiPayload<T>) -> (&T, usize) {
-        (&node.key, node.total_size)
+        (&node.key, node.self_size)
     }
 
     fn node_to_key(node: &MultiPayload<T>) -> &T {
@@ -157,5 +157,26 @@ impl<T: Ord> MultiTreapSet<T> {
 impl<T: Ord> Default for MultiTreapSet<T> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::MultiTreapSet;
+
+    // The treap shape is random, so the scenario is repeated.
+    #[test]
+    fn iter_and_range_report_own_multiplicity() {
+        for _ in 0..200 {
+            let mut s = MultiTreapSet::new();
+            for x in [1, 2, 2, 3, 5] {
+                s.insert(x);
+            }
+            assert_eq!(s.iter().copied().collect::<Vec<i32>>(), vec![1, 2, 2, 3, 5]);
+            assert_eq!(
+                s.range(&2..&5).copied().collect::<Vec<i32>>(),
+                vec![2, 2, 3]
+            );
+        }
     }
 }
