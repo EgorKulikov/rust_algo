@@ -55,6 +55,10 @@ where
         } else {
             let mut res = self.parse_expr(priority + 1, s);
             loop {
+                // An atom swallows the blanks after it, a `)` does not.
+                while self.pos.get() < s.len() && s[self.pos.get()] == b' ' {
+                    self.pos.set(self.pos.get() + 1);
+                }
                 if self.pos.get() == s.len() {
                     return res;
                 }
@@ -109,5 +113,34 @@ where
         // 1.80
         // let s = s.trim_ascii();
         (self.parse)(s)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ExpressionParser;
+
+    fn eval(s: &[u8]) -> i64 {
+        let mut p = ExpressionParser::new(|s: &[u8]| {
+            std::str::from_utf8(s).unwrap().parse::<i64>().unwrap()
+        });
+        p.add_binary_op(0, b'+', |a, b| a + b);
+        p.add_binary_op(0, b'-', |a, b| a - b);
+        p.add_binary_op(1, b'*', |a, b| a * b);
+        p.parse(s)
+    }
+
+    #[test]
+    fn without_spaces() {
+        assert_eq!(eval(b"1+2*3"), 7);
+        assert_eq!(eval(b"(1+2)*3-4"), 5);
+    }
+
+    #[test]
+    fn spaces_after_closing_parenthesis() {
+        assert_eq!(eval(b"(1) +2"), 3);
+        assert_eq!(eval(b"((1) )*5"), 5);
+        assert_eq!(eval(b"(16 * 11 * (13 )* 1) +( 17)*( 19 )"), 2611);
+        assert_eq!(eval(b" ( 2 + 3 ) * ( 4 - 1 ) "), 15);
     }
 }
