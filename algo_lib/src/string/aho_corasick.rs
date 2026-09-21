@@ -123,7 +123,12 @@ impl<P: Default + ACPayload, const K: usize, const BASE: u8> AhoCorasick<P, K, B
     fn get_link(&mut self, node: usize) -> u32 {
         if self.nodes[node].link == NULL {
             let parent = self.nodes[node].parent;
-            self.nodes[node].link = if node == 0 || parent == 0 {
+            self.nodes[node].link = if node == 0 {
+                0
+            } else if parent == 0 {
+                // The root holds the empty pattern, if there is one.
+                let (node_node, root) = self.nodes.two_mut(node, 0);
+                node_node.payload.add_node(&root.payload);
                 0
             } else {
                 let parent_link = self.get_link(parent as usize) as usize;
@@ -157,5 +162,48 @@ impl<P: Default + ACPayload, const K: usize, const BASE: u8> AhoCorasick<P, K, B
                 self.go(node, i as u8);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{ACPayload, AhoCorasickLowercase};
+
+    #[derive(Default)]
+    struct Count(usize);
+
+    impl ACPayload for Count {
+        fn add_single(&mut self, _id: usize) {
+            self.0 += 1;
+        }
+        fn add_node(&mut self, other: &Self) {
+            self.0 += other.0;
+        }
+    }
+
+    /// Number of pattern occurrences ending at each prefix of `text`.
+    fn counts(patterns: &[&[u8]], text: &[u8]) -> Vec<usize> {
+        let ac = AhoCorasickLowercase::<Count>::new(patterns);
+        let text = text.to_vec();
+        let res = ac.iterate(&text).map(|p| p.0).collect();
+        res
+    }
+
+    fn brute(patterns: &[&[u8]], text: &[u8]) -> Vec<usize> {
+        (0..=text.len())
+            .map(|end| patterns.iter().filter(|p| text[..end].ends_with(p)).count())
+            .collect()
+    }
+
+    #[test]
+    fn nested_patterns() {
+        let patterns: [&[u8]; 4] = [b"a", b"ab", b"bab", b"b"];
+        assert_eq!(counts(&patterns, b"ababb"), brute(&patterns, b"ababb"));
+    }
+
+    #[test]
+    fn empty_pattern_is_counted_everywhere() {
+        let patterns: [&[u8]; 3] = [b"", b"ab", b"b"];
+        assert_eq!(counts(&patterns, b"abab"), brute(&patterns, b"abab"));
     }
 }
