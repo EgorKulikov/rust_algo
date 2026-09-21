@@ -40,6 +40,10 @@ impl<T: Base + Ord> Polygon<T> {
             if seg.contains(point) {
                 return true;
             }
+            if self.points[i] == self.points[j] {
+                // A repeated vertex: the zero-length edge has no side.
+                continue;
+            }
             let val = seg.line().value(point);
             if val >= T::zero() {
                 pos = true;
@@ -86,5 +90,27 @@ impl<T: Base + PartialOrd> ConvexHull<T> for &mut [Point<T>] {
             ans.pop();
         }
         Polygon::new(ans)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Polygon;
+    use crate::geometry::point::Point;
+
+    #[test]
+    fn contains_with_a_repeated_vertex() {
+        let square = |points: Vec<(i64, i64)>| {
+            Polygon::new(points.into_iter().map(|(x, y)| Point::new(x, y)).collect())
+        };
+        let plain = square(vec![(0, 0), (2, 0), (2, 2), (0, 2)]);
+        let repeated = square(vec![(0, 0), (2, 0), (2, 0), (2, 2), (0, 2)]);
+        for x in -1..=3 {
+            for y in -1..=3 {
+                let p = Point::new(x, y);
+                assert_eq!(repeated.contains(p), plain.contains(p), "({}, {})", x, y);
+            }
+        }
+        assert!(repeated.contains(Point::new(1, 1)));
     }
 }
