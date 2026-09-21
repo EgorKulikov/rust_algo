@@ -1,4 +1,3 @@
-use crate::collections::iter_ext::iter_copied::ItersCopied;
 use crate::io::input::{Input, Readable};
 use crate::io::output::{Output, Writable};
 use crate::numbers::num_traits::algebra::{One, Zero};
@@ -25,7 +24,7 @@ impl Real {
     }
     pub fn with_precision(&self, precision: usize) -> Str {
         let res = format!("{:.*}", precision, self.0).into_bytes();
-        if res.starts_with(b"-") && res.copy_count(b'0') == precision + 1 {
+        if res.starts_with(b"-") && !res.iter().any(|c| (b'1'..=b'9').contains(c)) {
             res[1..].into()
         } else {
             res.into()
@@ -234,3 +233,28 @@ macro_rules! into_real {
 }
 
 into_real!(u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64);
+
+#[cfg(test)]
+mod tests {
+    use super::Real;
+
+    fn fmt(v: f64, precision: usize) -> String {
+        String::from_utf8(Real(v).with_precision(precision).unwrap()).unwrap()
+    }
+
+    #[test]
+    fn with_precision_keeps_sign_of_negative_numbers() {
+        assert_eq!(fmt(-10.0, 6), "-10.000000");
+        assert_eq!(fmt(-100.05, 2), "-100.05");
+        assert_eq!(fmt(-30.0, 0), "-30");
+        assert_eq!(fmt(-37260.0, 2), "-37260.00");
+    }
+
+    #[test]
+    fn with_precision_prints_negative_zero_unsigned() {
+        assert_eq!(fmt(-0.0, 3), "0.000");
+        assert_eq!(fmt(-0.0004, 3), "0.000");
+        assert_eq!(fmt(-0.4, 0), "0");
+        assert_eq!(fmt(-0.0006, 3), "-0.001");
+    }
+}
