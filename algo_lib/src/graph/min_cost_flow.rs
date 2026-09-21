@@ -58,6 +58,10 @@ macro_rules! min_cost_flow {
                         }
                     }
                 }
+                if max_capacity == 0 {
+                    // Nothing can flow, and `highest_bit` rejects 0.
+                    return CostAndFlow { cost: 0, flow: 0 };
+                }
                 let bits = max_capacity.highest_bit() + 1;
                 let back = graph.add_edge(WeightedFlowEdgeRaw::new(
                     sink,
@@ -207,3 +211,30 @@ macro_rules! min_cost_flow {
 }
 
 min_cost_flow!(i32: impl_32 i64: impl_64 i128: impl_128);
+
+#[cfg(test)]
+mod tests {
+    use super::MinCostFlow;
+    use crate::graph::edges::weighted_flow_edge::WeightedFlowEdge;
+    use crate::graph::Graph;
+
+    #[test]
+    fn no_edge_with_positive_capacity() {
+        let mut g: Graph<WeightedFlowEdge<i64, i64, ()>> = Graph::new_linked(2);
+        let r = g.min_cost_max_flow(0, 1);
+        assert_eq!((r.flow, r.cost), (0, 0));
+        g.add_edge(WeightedFlowEdge::new(0, 1, -5, 0));
+        let r = g.min_cost_flow(0, 1);
+        assert_eq!((r.flow, r.cost), (0, 0));
+    }
+
+    #[test]
+    fn small_network() {
+        let mut g: Graph<WeightedFlowEdge<i64, i64, ()>> = Graph::new_linked(3);
+        g.add_edge(WeightedFlowEdge::new(0, 1, 1, 5));
+        g.add_edge(WeightedFlowEdge::new(1, 2, 1, 2));
+        g.add_edge(WeightedFlowEdge::new(0, 2, 7, 1));
+        let r = g.min_cost_max_flow(0, 2);
+        assert_eq!((r.flow, r.cost), (3, 11));
+    }
+}
