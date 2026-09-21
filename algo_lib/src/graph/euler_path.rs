@@ -10,6 +10,9 @@ pub trait EulerPath {
 
 impl<P: Clone> EulerPath for Graph<BiEdgeWithId<P>> {
     fn euler_path(&self) -> Option<Vec<usize>> {
+        if self.vertex_count() == 0 {
+            return Some(Vec::new());
+        }
         let mut start = 0;
         let mut odd_count = 0;
         for i in 0..self.vertex_count() {
@@ -99,5 +102,10 @@ mod tests {
         assert_eq!(path(4, &[(0, 1), (2, 3)]), None);
         assert_eq!(path(4, &[(0, 1), (0, 2), (0, 3)]), None);
         assert_eq!(path(3, &[]), Some(vec![0]));
+    }
+
+    #[test]
+    fn graph_without_vertices() {
+        assert_eq!(path(0, &[]), Some(vec![]));
     }
 }
