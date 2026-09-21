@@ -344,3 +344,17 @@ fn integer_split_across_interactive_messages() {
         Some((1, true, 2))
     );
 }
+
+#[test]
+fn read_line_keeps_last_char_of_unterminated_final_line() {
+    for mut input in inputs(b"x y\r\n\nabc") {
+        assert_eq!(input.read_line().as_slice(), b"x y");
+        assert_eq!(input.read_line().as_slice(), b"");
+        assert_eq!(input.read_line().as_slice(), b"abc");
+        assert!(input.is_exhausted());
+    }
+    for mut input in inputs(b"7\nab\n") {
+        assert_eq!(input.read_int(), 7);
+        assert_eq!(input.read_line().as_slice(), b"ab");
+    }
+}

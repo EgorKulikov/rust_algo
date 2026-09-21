@@ -128,8 +128,9 @@ impl StrReader for Input {
 
     fn read_line(&mut self) -> Str {
         let mut res = Str::new();
+        // `get` reports `\r` and `\r\n` as `\n`.
         while let Some(c) = self.get() {
-            if self.is_eol() {
+            if c == b'\n' {
                 break;
             }
             res.push(c);
