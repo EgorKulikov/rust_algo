@@ -115,6 +115,9 @@ impl<const N: usize> FixedInt<N> {
     }
 }
 
+/// Converts through `i128`, so the value must fit in it. Only `u128` can
+/// exceed that: a `u128` of `2^127` and above wraps to a negative number, e.g.
+/// `i256::from(u128::MAX)` is `-1`. Build such values from two halves instead.
 impl<const N: usize, T: Primitive<i128>> From<T> for FixedInt<N> {
     fn from(v: T) -> Self {
         let mut v = v.to();
