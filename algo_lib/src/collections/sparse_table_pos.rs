@@ -13,11 +13,13 @@ pub struct SparseTableWithPos<T, F = fn(&T, &T) -> Direction> {
 impl<T: Clone, F: Fn(&T, &T) -> Direction> SparseTableWithPos<T, F> {
     pub fn new(a: &[T], f: F) -> Self {
         let n = a.len();
-        let mut table = Vec::with_capacity(n.highest_bit() + 1);
+        // Number of levels above the array itself; `highest_bit` rejects 0.
+        let levels = if n == 0 { 0 } else { n.highest_bit() };
+        let mut table = Vec::with_capacity(levels + 1);
         table.push(a.to_vec());
-        let mut pos: Vec<Vec<usize>> = Vec::with_capacity(n.highest_bit() + 1);
+        let mut pos: Vec<Vec<usize>> = Vec::with_capacity(levels + 1);
         pos.push((0..n).collect());
-        table.gen_append(n.highest_bit(), |i, table| {
+        table.gen_append(levels, |i, table| {
             let mut cur = Vec::with_capacity(n - (1 << i) + 1);
             let mut cur_pos = Vec::with_capacity(n - (1 << i) + 1);
             for j in 0..=n - (1 << i) {
@@ -55,5 +57,24 @@ impl<T: Clone, F: Fn(&T, &T) -> Direction> SparseTableWithPos<T, F> {
                 self.pos[level][to - (1 << level)],
             ),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::SparseTableWithPos;
+    use crate::misc::direction::Direction;
+
+    fn left_if_not_greater(a: &i32, b: &i32) -> Direction {
+        if a <= b {
+            Direction::Left
+        } else {
+            Direction::Right
+        }
+    }
+
+    #[test]
+    fn empty_array() {
+        let _ = SparseTableWithPos::new(&[], left_if_not_greater);
     }
 }
