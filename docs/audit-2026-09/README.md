@@ -27,8 +27,21 @@ By design, now documented in the source instead of changed (owner's call):
 - A12: NTT primes are always below `2^30`.
 - A13: `ModInt` input always fits the signed base type.
 
-Still open: all of section B, and the notes in section C. After the fixes the full `algo_lib` suite passes
-(201 binaries) and the audit files here fail only on the open and by-design items.
+The notes in section C were not touched in this round.
+
+## Status after the second round (2026-09-21)
+
+Section B is closed. Fixed, one commit each, test first: B1, B3 to B15, B17 to B24 (B5 and B6 share a
+commit, both live in the rewritten `gen_range`/`gen_bound`). B11 needed a follow-up: skipping zero-length
+edges made a single-point polygon contain everything, which this audit's own convex hull stress caught.
+
+By design, owner's call:
+- B2 `EolVec` with a trailing space: inputs are well formed.
+- B16 `FixedInt::from(u128)` above `2^127`: documented on the impl.
+
+After both rounds the full `algo_lib` suite passes (201 binaries), and the audit files here fail only on
+the by-design items (A5, A12, A13, B2, B16), the ignored A4 timing test, and the `hl_decomposition`
+note from section C. The notes in section C are still open.
 
 ## A. High impact: wrong answer, hang or crash on ordinary contest input
 
