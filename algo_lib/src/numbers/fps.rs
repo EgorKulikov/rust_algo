@@ -20,7 +20,8 @@ impl<T: Into<u64> + IntegerSemiRing + Copy, M: BaseModInt<T>> PolynomialOps<T, M
         }
         let a = &a[..a.len().min(n)];
         let b = &b[..b.len().min(n)];
-        if a.len().min(b.len()) <= 60 {
+        // No FFT backend for moduli wider than 32 bits (as in `multiply`).
+        if a.len().min(b.len()) <= 60 || M::module().into() > u32::MAX as u64 {
             for (i, &x) in a.iter().enumerate() {
                 for (j, &y) in b.iter().take(n - i).enumerate() {
                     res[i + j] += x * y;
@@ -641,5 +642,25 @@ mod tests {
         assert!(r == f || r.iter().zip(&f).all(|(&a, &b)| a == -b));
         let p3 = ops.pow(&f, 3, n);
         assert_eq!(p3, ops.mul_trunc(&sq, &f, n));
+    }
+
+    #[test]
+    fn long_series_with_a_modulus_wider_than_32_bits() {
+        use crate::numbers::mod_int::ModInt64;
+        use crate::value;
+        value!(Wide: u64 = 1_000_000_000_000_000_003);
+        type W = ModInt64<Wide>;
+        let mut ops = PolynomialOps::<u64, W>::new();
+        let n = 130;
+        let f: Vec<W> = (0..n as u64).map(|i| W::new(i * i + 1)).collect();
+        let inv = ops.inverse_series(&f, n);
+        let mut product = vec![W::zero(); n];
+        for i in 0..n {
+            for j in 0..n - i {
+                product[i + j] += f[i] * inv[j];
+            }
+        }
+        assert_eq!(product[0], W::one());
+        assert!(product[1..].iter().all(|&x| x == W::zero()));
     }
 }
