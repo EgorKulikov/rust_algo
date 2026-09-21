@@ -66,7 +66,7 @@ fn min_cost_flow_slow_impl<
                 }
             }
         }
-        if prev[sink].is_none() || !take_positive && d[sink] + adj[sink] >= C::zero() {
+        if prev[sink].is_none() || !take_positive && d[sink] + adj[sink] >= adj[source] {
             break;
         }
         let mut cur_flow = None;
@@ -94,4 +94,47 @@ fn min_cost_flow_slow_impl<
         }
     }
     CostAndFlow { cost, flow }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::graph::edges::weighted_flow_edge::WeightedFlowEdge;
+
+    // Chain of 5 split vertices; every vertex may emit one free unit and
+    // absorb one unit for a gain. Once flow leaves the source, reverse edges
+    // lead back into it and its potential becomes positive, which the stop
+    // condition used to ignore.
+    fn chain() -> (Graph<WeightedFlowEdge<i64, i64, ()>>, usize, usize) {
+        let gain = [10i64, 89, 30, 27, 0];
+        let num = gain.len();
+        let mut graph = Graph::new_2d(2 * num + 2);
+        let source = 2 * num;
+        let sink = source + 1;
+        for i in 0..num {
+            graph.add_edge(WeightedFlowEdge::new(2 * i, sink, -gain[i], 1));
+            graph.add_edge(WeightedFlowEdge::new(2 * i, 2 * i + 1, 0, num as i64));
+            graph.add_edge(WeightedFlowEdge::new(source, 2 * i + 1, 0, 1));
+        }
+        for i in 0..num - 1 {
+            graph.add_edge(WeightedFlowEdge::new(2 * i + 1, 2 * i + 2, 0, num as i64));
+        }
+        (graph, source, sink)
+    }
+
+    #[test]
+    fn negative_paths_after_source_potential_grows() {
+        let (mut graph, source, sink) = chain();
+        let res = graph.min_cost_flow_slow(source, sink);
+        assert_eq!(res.cost, -146);
+        assert_eq!(res.flow, 3);
+    }
+
+    #[test]
+    fn max_flow_variant_agrees_on_cost() {
+        let (mut graph, source, sink) = chain();
+        let res = graph.min_cost_max_flow_slow(source, sink);
+        assert_eq!(res.cost, -146);
+        assert_eq!(res.flow, 4);
+    }
 }
