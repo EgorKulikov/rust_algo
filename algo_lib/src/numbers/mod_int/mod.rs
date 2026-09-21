@@ -258,11 +258,16 @@ macro_rules! mod_int {
                     self.n >= V::val() - max => write!(f, "-{}", V::val() - self.n),
                     else => {
                         for denominator in 1..max {
+                            // Not every denominator is invertible when the
+                            // modulus is composite.
+                            let Some(inv) = Self::new(denominator).inv() else {
+                                continue;
+                            };
                             for num in 1..max {
-                                if Self::new(num) / Self::new(denominator) == *self {
+                                if Self::new(num) * inv == *self {
                                     return write!(f, "{}/{}", num, denominator);
                                 }
-                                if -Self::new(num) / Self::new(denominator) == *self {
+                                if -Self::new(num) * inv == *self {
                                     return write!(f, "-{}/{}", num, denominator);
                                 }
                             }
@@ -300,6 +305,7 @@ mod tests {
 
     value!(Large: u32 = 2147483647);
     value!(Large64: u64 = 9223372036854775783);
+    value!(Composite: u32 = 1 << 30);
 
     #[test]
     fn signed_construction_with_moduli_near_the_type_limit() {
@@ -322,5 +328,15 @@ mod tests {
             ModInt64::<Large64>::from(u).val() as u128,
             u as u128 % 9223372036854775783
         );
+    }
+
+    #[test]
+    fn debug_with_a_composite_modulus() {
+        assert_eq!(
+            format!("{:?}", ModInt::<Composite>::new(123456789)),
+            "(?? 123456789 ??)"
+        );
+        assert_eq!(format!("{:?}", ModInt::<Composite>::new(5)), "5");
+        assert_eq!(format!("{:?}", ModInt7::new(500000004)), "1/2");
     }
 }
