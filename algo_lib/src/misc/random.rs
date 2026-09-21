@@ -33,14 +33,28 @@ pub trait RandomTrait {
     //     self.gen_impl().into_real() / u64::MAX
     // }
 
-    fn gen_bound<T: Rem<Output = T> + Primitive<u64>>(&mut self, n: T) -> T
+    /// Uniform-ish value in `0..n`. Types of up to 64 bits consume one
+    /// `gen_impl` value, 128-bit types two.
+    fn gen_bound<T: Rem<Output = T> + Primitive<u64> + Primitive<u128>>(&mut self, n: T) -> T
     where
         u64: Primitive<T>,
     {
-        (self.gen_impl() % n.to()).to()
+        let n: u128 = Primitive::<u128>::to(n);
+        self.gen_below(n, std::mem::size_of::<T>() > 8)
     }
 
-    fn gen_range<T: IntegerSemiRingWithSub + Primitive<u64> + MinMax>(
+    /// `gen_bound` on the `u128` image of the bound.
+    #[doc(hidden)]
+    fn gen_below<T: Primitive<u128>>(&mut self, n: u128, wide: bool) -> T {
+        let value = if wide {
+            self.gen_u128() % n
+        } else {
+            (self.gen_impl() % n as u64) as u128
+        };
+        Primitive::<u128>::from(value)
+    }
+
+    fn gen_range<T: IntegerSemiRingWithSub + Primitive<u64> + Primitive<u128> + MinMax>(
         &mut self,
         range: impl RangeBounds<T>,
     ) -> T
@@ -57,11 +71,22 @@ pub trait RandomTrait {
             std::ops::Bound::Excluded(&e) => e - T::one(),
             std::ops::Bound::Unbounded => T::max_val(),
         };
+        let wide = std::mem::size_of::<T>() > 8;
         if f == T::min_val() && t == T::max_val() {
-            self.gen_int()
-        } else {
-            f + self.gen_bound(t - f + T::one())
+            return if wide {
+                Primitive::<u128>::from(self.gen_u128())
+            } else {
+                self.gen_int()
+            };
         }
+        // `t - f + 1` does not fit in a signed `T` once the range spans half of
+        // the type, so work on the sign-extended `u128` images: the wrapping
+        // difference is the true span, and the final cast wraps back into `T`.
+        let from: u128 = Primitive::<u128>::to(f);
+        let to: u128 = Primitive::<u128>::to(t);
+        let span = to.wrapping_sub(from).wrapping_add(1);
+        let offset: u128 = self.gen_below(span, wide);
+        Primitive::<u128>::from(from.wrapping_add(offset))
     }
 }
 
@@ -167,5 +192,57 @@ impl<T> Shuffle<T> for [T] {
     fn choice_with(&self, rng: &mut impl RandomTrait) -> &T {
         let index = rng.gen_bound(self.len());
         &self[index]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Random, RandomTrait};
+
+    #[test]
+    fn gen_range_over_wide_signed_ranges() {
+        let mut r = Random::new_with_seed(1);
+        let (mut low, mut high) = (false, false);
+        for _ in 0..1000 {
+            let x: i32 = r.gen_range(-2_000_000_000..=2_000_000_000);
+            assert!((-2_000_000_000..=2_000_000_000).contains(&x));
+            low |= x < -1_000_000_000;
+            high |= x > 1_000_000_000;
+            let y: i32 = r.gen_range(0..);
+            assert!(y >= 0);
+            let z: i64 = r.gen_range(..0);
+            assert!(z < 0);
+            let w: i8 = r.gen_range(-128..=126);
+            assert!(w <= 126);
+        }
+        assert!(low && high);
+    }
+
+    #[test]
+    fn gen_range_keeps_the_sequence_of_narrow_ranges() {
+        let mut a = Random::new_with_seed(7);
+        let mut b = Random::new_with_seed(7);
+        for _ in 0..100 {
+            let x: i64 = a.gen_range(-5..=20);
+            assert_eq!(x, -5 + (b.gen_impl() % 26) as i64);
+        }
+    }
+
+    #[test]
+    fn gen_bound_and_gen_range_with_128_bit_bounds() {
+        let mut r = Random::new_with_seed(1);
+        let n = (1u128 << 64) + 5;
+        let mut above = false;
+        for _ in 0..1000 {
+            let x = r.gen_bound(n);
+            assert!(x < n);
+            above |= x >= 5;
+            assert!(r.gen_bound(1u128 << 64) < 1u128 << 64);
+            let y: i128 = r.gen_range(-(1i128 << 100)..1i128 << 100);
+            assert!((-(1i128 << 100)..1i128 << 100).contains(&y));
+        }
+        assert!(above);
+        let wide = (0..100).any(|_| r.gen_range::<i128>(..).unsigned_abs() > 1u128 << 70);
+        assert!(wide);
     }
 }
