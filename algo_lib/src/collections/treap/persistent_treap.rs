@@ -356,6 +356,9 @@ impl<P: Payload + Clone> PersistentTreapNode<P> {
     ) -> (Self, Self) {
         if self.size != 0 {
             let mut self_ = self.copy();
+            // The callback looks at the children: they need our pending
+            // delta, and a pending reversal means they are still swapped.
+            self_.push_down();
             let direction = f(
                 &self_.payload,
                 self_.left.payload_ref(),
@@ -1300,6 +1303,69 @@ mod lazy_test {
                     "range sum mismatch"
                 );
                 assert_eq!(tree.range_payload(from..from).map(|p| p.sum), None);
+            }
+        }
+    }
+
+    mod split_by_lazy_state {
+        use crate::collections::payload::ValueDeltaPayload;
+        use crate::collections::treap::persistent_treap::PersistentTree;
+        use crate::misc::direction::Direction;
+        use crate::misc::value_delta::ValueDeltaTrait;
+
+        #[derive(Clone, Copy)]
+        struct SumAdd;
+        impl ValueDeltaTrait for SumAdd {
+            type V = (i64, i64); // (sum, count)
+            type D = i64;
+            fn join(a: (i64, i64), b: (i64, i64)) -> (i64, i64) {
+                (a.0 + b.0, a.1 + b.1)
+            }
+            fn accumulate(a: i64, b: i64) -> i64 {
+                a + b
+            }
+            fn apply(v: (i64, i64), d: i64) -> (i64, i64) {
+                (v.0 + d * v.1, v.1)
+            }
+        }
+
+        /// Length of the longest prefix with sum <= `limit`.
+        fn prefix_len(tree: &PersistentTree<ValueDeltaPayload<SumAdd>>, limit: i64) -> usize {
+            let mut rem = limit;
+            let (head, _) = tree.split_by(|p, left, _| {
+                let here = left.map_or(0, |l| l.v.0) + p.self_v.0;
+                if here > rem {
+                    Direction::Left
+                } else {
+                    rem -= here;
+                    Direction::Right
+                }
+            });
+            head.size()
+        }
+
+        // The treap shape is random, so every scenario is repeated.
+        #[test]
+        fn callback_sees_reversed_children() {
+            for _ in 0..200 {
+                let tree: PersistentTree<ValueDeltaPayload<SumAdd>> =
+                    PersistentTree::with_gen(3, |i| ValueDeltaPayload::new((i as i64 + 1, 1)));
+                let tree = tree.reverse(); // [3, 2, 1]
+                assert_eq!(prefix_len(&tree, 3), 1);
+                assert_eq!(prefix_len(&tree, 5), 2);
+            }
+        }
+
+        #[test]
+        fn callback_sees_pushed_children() {
+            for _ in 0..200 {
+                let tree: PersistentTree<ValueDeltaPayload<SumAdd>> =
+                    PersistentTree::with_gen(3, |_| ValueDeltaPayload::new((1, 1)));
+                let mut delta = ValueDeltaPayload::<SumAdd>::new((0, 0));
+                delta.d = 5;
+                let tree = tree.push(&delta); // [6, 6, 6]
+                assert_eq!(prefix_len(&tree, 7), 1);
+                assert_eq!(prefix_len(&tree, 12), 2);
             }
         }
     }
