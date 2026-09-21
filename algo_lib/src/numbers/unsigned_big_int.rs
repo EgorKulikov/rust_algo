@@ -348,6 +348,13 @@ impl Sub for UBigInt {
 
 impl MulAssign<i32> for UBigInt {
     fn mul_assign(&mut self, rhs: i32) {
+        assert!(rhs >= 0);
+        *self *= rhs as u32;
+    }
+}
+
+impl MulAssign<u32> for UBigInt {
+    fn mul_assign(&mut self, rhs: u32) {
         if rhs == 0 {
             *self = Self::zero();
             return;
@@ -407,6 +414,13 @@ impl MulAssign for UBigInt {
 
 impl DivAssign<i32> for UBigInt {
     fn div_assign(&mut self, rhs: i32) {
+        assert!(rhs > 0);
+        *self /= rhs as u32;
+    }
+}
+
+impl DivAssign<u32> for UBigInt {
+    fn div_assign(&mut self, rhs: u32) {
         let rhs = rhs as i64;
         let mut carry = 0;
         let base = BASE as i64;

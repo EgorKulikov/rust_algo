@@ -194,14 +194,15 @@ impl Neg for BigInt {
 
 impl MulAssign<i32> for BigInt {
     fn mul_assign(&mut self, rhs: i32) {
-        self.value *= rhs.unsigned_abs() as i32;
+        // `u32`: the magnitude of `i32::MIN` does not fit in `i32`.
+        self.value *= rhs.unsigned_abs();
         self.sign *= rhs.signum() as i8;
     }
 }
 
 impl DivAssign<i32> for BigInt {
     fn div_assign(&mut self, rhs: i32) {
-        self.value /= rhs.unsigned_abs() as i32;
+        self.value /= rhs.unsigned_abs();
         self.sign *= rhs.signum() as i8;
         if self.value.is_zero() {
             self.sign = 0;
@@ -347,5 +348,34 @@ impl Ord for BigInt {
 impl Readable for BigInt {
     fn read(input: &mut Input) -> Self {
         input.read_str().as_slice().into()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::BigInt;
+
+    #[test]
+    fn multiply_and_divide_by_i32_min() {
+        let mut z = BigInt::from(5);
+        z *= i32::MIN;
+        assert_eq!(z, BigInt::from(5i128 * i32::MIN as i128));
+        assert_eq!(z.to_string(), "-10737418240");
+        let mut z = BigInt::from(-(1i128 << 40));
+        z /= i32::MIN;
+        assert_eq!(z, BigInt::from(512));
+        let mut z = BigInt::from(1i128 << 100);
+        z *= i32::MIN;
+        z /= i32::MIN;
+        assert_eq!(z, BigInt::from(1i128 << 100));
+    }
+
+    #[test]
+    fn multiply_and_divide_by_ordinary_i32() {
+        let mut z = BigInt::from(123456789012345678i128);
+        z *= -1000;
+        assert_eq!(z, BigInt::from(-123456789012345678000i128));
+        z /= 7;
+        assert_eq!(z, BigInt::from(-123456789012345678000i128 / 7));
     }
 }
