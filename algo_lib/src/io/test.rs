@@ -264,3 +264,83 @@ fn write_many_lines_matches_format() {
     expected += "\n";
     assert_eq!(String::from_utf8(buf).unwrap(), expected);
 }
+
+/// Reader fed through a channel: `read` blocks until the other side sends the
+/// next message, like stdin of an interactive problem.
+struct Interactive {
+    rcv: std::sync::mpsc::Receiver<Vec<u8>>,
+    cur: Vec<u8>,
+    at: usize,
+}
+
+impl Read for Interactive {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        if self.at == self.cur.len() {
+            self.cur = match self.rcv.recv() {
+                Ok(v) => v,
+                Err(_) => return Ok(0),
+            };
+            self.at = 0;
+        }
+        let n = buf.len().min(self.cur.len() - self.at);
+        buf[..n].copy_from_slice(&self.cur[self.at..self.at + n]);
+        self.at += n;
+        Ok(n)
+    }
+}
+
+/// Runs `f` over an input that has received `messages` and nothing else, the
+/// sender still being open. `None` means `f` blocked waiting for more data.
+fn interactive<T: Send + 'static>(
+    messages: &[&[u8]],
+    f: impl FnOnce(&mut Input) -> T + Send + 'static,
+) -> Option<T> {
+    let (snd, rcv) = std::sync::mpsc::channel();
+    let (res_snd, res_rcv) = std::sync::mpsc::channel();
+    for m in messages {
+        snd.send(m.to_vec()).unwrap();
+    }
+    std::thread::spawn(move || {
+        let mut input = Input::delegate(Interactive {
+            rcv,
+            cur: Vec::new(),
+            at: 0,
+        });
+        let _ = res_snd.send(f(&mut input));
+    });
+    let res = res_rcv.recv_timeout(std::time::Duration::from_secs(2)).ok();
+    drop(snd);
+    res
+}
+
+#[test]
+fn integer_read_does_not_wait_for_data_past_its_terminator() {
+    assert_eq!(interactive(&[b"5\n"], |input| input.read_int()), Some(5));
+    assert_eq!(
+        interactive(&[b"5 1234567890\n"], |input| (
+            input.read_int(),
+            input.read_long()
+        )),
+        Some((5, 1234567890))
+    );
+    assert_eq!(
+        interactive(&[b"-7\r\n"], |input| (input.read_int(), input.is_eol())),
+        Some((-7, true))
+    );
+}
+
+#[test]
+fn integer_split_across_interactive_messages() {
+    assert_eq!(
+        interactive(&[b"12", b"34\n"], |input| input.read_int()),
+        Some(1234)
+    );
+    assert_eq!(
+        interactive(&[b"1\r", b"\n2\n"], |input| (
+            input.read_int(),
+            input.is_eol(),
+            input.read_int()
+        )),
+        Some((1, true, 2))
+    );
+}

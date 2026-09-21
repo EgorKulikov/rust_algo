@@ -108,13 +108,31 @@ impl Input {
     }
 
     fn ensure_slow(&mut self, n: usize) {
+        if self.token_ends_in_buffer() {
+            // Reading on could block forever in an interactive problem: the
+            // other side has sent everything it is going to send.
+            return;
+        }
         self.buf.copy_within(self.at..self.buf_read, 0);
         self.buf_read -= self.at;
         self.at = 0;
-        while self.buf_read < n && self.read_more() != 0 {}
+        while self.buf_read < n && !self.token_ends_in_buffer() && self.read_more() != 0 {}
         if self.buf_read < n {
             let end = (self.buf_read + Self::SLACK).min(self.buf.len());
             self.buf[self.buf_read..end].fill(0);
+        }
+    }
+
+    /// Whether the unread bytes already contain the whitespace that ends the
+    /// current token. A `\r` at the very end does not count, so that the `\n`
+    /// of a `\r\n` pair is still fetched and consumed with it.
+    fn token_ends_in_buffer(&self) -> bool {
+        match self.buf[self.at..self.buf_read]
+            .iter()
+            .position(|&b| b <= b' ')
+        {
+            Some(pos) => self.buf[self.at + pos] != b'\r' || self.at + pos + 1 < self.buf_read,
+            None => false,
         }
     }
 
