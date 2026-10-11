@@ -29,4 +29,5 @@ pub mod signed_big_int;
 #[cfg(test)]
 mod test;
 pub mod unsigned_big_int;
+pub mod wide_real;
 pub mod zeta;
