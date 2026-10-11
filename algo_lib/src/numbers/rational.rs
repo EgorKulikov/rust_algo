@@ -8,7 +8,13 @@ use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-#[derive(Eq, PartialEq, Copy, Clone, Hash)]
+/// Always stored in lowest terms with a positive denominator, so the derived
+/// `Hash` agrees with equality.
+///
+/// Operators and comparisons accept any right operand `A` with
+/// `Rational<T>: From<A>`: another rational, an integer of type `T` or of a
+/// narrower signed type, or a `(num, den)` pair.
+#[derive(Copy, Clone, Hash)]
 pub struct Rational<T> {
     num: T,
     den: T,
@@ -56,61 +62,54 @@ impl<T: Copy + IntegerRing + Ord> Rational<T> {
     }
 }
 
-impl<T: Copy + IntegerRing + Ord> Add for Rational<T> {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self::Output {
+impl<T: Copy + IntegerRing + Ord> Rational<T> {
+    fn add_rational(self, rhs: Self) -> Self {
         Self::new(self.num * rhs.den + rhs.num * self.den, self.den * rhs.den)
     }
-}
 
-impl<T: Copy + IntegerRing + Ord> Sub for Rational<T> {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self::Output {
+    fn sub_rational(self, rhs: Self) -> Self {
         Self::new(self.num * rhs.den - rhs.num * self.den, self.den * rhs.den)
     }
-}
 
-impl<T: Copy + IntegerRing + Ord> Mul for Rational<T> {
-    type Output = Self;
-
-    fn mul(self, rhs: Self) -> Self::Output {
+    fn mul_rational(self, rhs: Self) -> Self {
         Self::new(self.num * rhs.num, self.den * rhs.den)
     }
-}
 
-impl<T: Copy + IntegerRing + Ord> Div for Rational<T> {
-    type Output = Self;
-
-    fn div(self, rhs: Self) -> Self::Output {
+    fn div_rational(self, rhs: Self) -> Self {
         Self::new(self.num * rhs.den, self.den * rhs.num)
     }
 }
 
-impl<T: Copy + IntegerRing + Ord> AddAssign for Rational<T> {
-    fn add_assign(&mut self, rhs: Self) {
-        *self = *self + rhs
-    }
+macro_rules! rational_op_impl {
+    ($($op: ident $method: ident $assign_op: ident $assign_method: ident $impl: ident),+) => {$(
+        impl<T: Copy + IntegerRing + Ord, A> $op<A> for Rational<T>
+        where
+            Self: From<A>,
+        {
+            type Output = Self;
+
+            fn $method(self, rhs: A) -> Self {
+                self.$impl(Self::from(rhs))
+            }
+        }
+
+        impl<T: Copy + IntegerRing + Ord, A> $assign_op<A> for Rational<T>
+        where
+            Self: From<A>,
+        {
+            fn $assign_method(&mut self, rhs: A) {
+                *self = self.$impl(Self::from(rhs));
+            }
+        }
+    )+};
 }
 
-impl<T: Copy + IntegerRing + Ord> SubAssign for Rational<T> {
-    fn sub_assign(&mut self, rhs: Self) {
-        *self = *self - rhs
-    }
-}
-
-impl<T: Copy + IntegerRing + Ord> MulAssign for Rational<T> {
-    fn mul_assign(&mut self, rhs: Self) {
-        *self = *self * rhs
-    }
-}
-
-impl<T: Copy + IntegerRing + Ord> DivAssign for Rational<T> {
-    fn div_assign(&mut self, rhs: Self) {
-        *self = *self / rhs
-    }
-}
+rational_op_impl!(
+    Add add AddAssign add_assign add_rational,
+    Sub sub SubAssign sub_assign sub_rational,
+    Mul mul MulAssign mul_assign mul_rational,
+    Div div DivAssign div_assign div_rational
+);
 
 impl<T: Copy + Debug> Debug for Rational<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -136,9 +135,25 @@ impl<T: Copy + Writable> Writable for Rational<T> {
     }
 }
 
-impl<T: Copy + IntegerRing + Ord> PartialOrd for Rational<T> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
+impl<T: Copy + IntegerRing + Ord, A: Copy> PartialEq<A> for Rational<T>
+where
+    Self: From<A>,
+{
+    fn eq(&self, other: &A) -> bool {
+        let other = Self::from(*other);
+        self.num == other.num && self.den == other.den
+    }
+}
+
+impl<T: Copy + IntegerRing + Ord> Eq for Rational<T> {}
+
+#[allow(clippy::non_canonical_partial_ord_impl)]
+impl<T: Copy + IntegerRing + Ord, A: Copy> PartialOrd<A> for Rational<T>
+where
+    Self: From<A>,
+{
+    fn partial_cmp(&self, other: &A) -> Option<Ordering> {
+        Some(self.cmp(&Self::from(*other)))
     }
 }
 
@@ -165,6 +180,32 @@ impl<T: One> From<T> for Rational<T> {
         Self::new_internal(num, T::one())
     }
 }
+
+/// `(num, den)`, reduced.
+impl<T: Copy + IntegerRing + Ord> From<(T, T)> for Rational<T> {
+    fn from((num, den): (T, T)) -> Self {
+        Self::new(num, den)
+    }
+}
+
+// Integers narrower than `T`, so that `r + 1` works for every `Rational<T>`.
+macro_rules! from_narrower {
+    ($($t: ty: $($a: ty)+;)+) => {$($(
+        impl From<$a> for Rational<$t> {
+            fn from(num: $a) -> Self {
+                Self::new_internal(num as $t, 1)
+            }
+        }
+    )+)+};
+}
+
+from_narrower!(
+    i16: i8 u8;
+    i32: i8 i16 u8 u16;
+    i64: i8 i16 i32 u8 u16 u32;
+    i128: i8 i16 i32 i64 u8 u16 u32 u64;
+    isize: i8 i16 i32 u8 u16 u32;
+);
 
 impl<T: IntegerRing + Ord + Copy> Invertible for Rational<T> {
     type Output = Self;
@@ -208,5 +249,46 @@ impl<T: IntoReal> IntoReal for Rational<T> {
 impl<T: Copy + IntegerRing + Ord> Default for Rational<T> {
     fn default() -> Self {
         Self::zero()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Rational;
+    use crate::numbers::num_traits::algebra::{One, Zero};
+
+    fn r(num: i64, den: i64) -> Rational<i64> {
+        Rational::new(num, den)
+    }
+
+    #[test]
+    fn operands_of_any_convertible_type() {
+        let half = r(1, 2);
+        assert_eq!(half + 1, r(3, 2));
+        assert_eq!(half * 2, Rational::one());
+        assert_eq!(half / 4i64, r(1, 8));
+        assert_eq!(half - (1, 4), r(1, 4));
+        assert_eq!(half + half, Rational::one());
+        let mut x = half;
+        x += 1i64;
+        x *= (2, 3);
+        x -= 1u8;
+        x /= -1i16;
+        assert_eq!(x, Rational::zero());
+        let wide: Rational<i128> = Rational::new(1, 3);
+        assert_eq!(wide + 5i64, Rational::new(16i128, 3));
+        assert_eq!(wide * 3i32, Rational::one());
+    }
+
+    #[test]
+    fn comparisons_with_any_convertible_type() {
+        let third = r(1, 3);
+        assert!(third == (2, 6));
+        assert!(third < 1);
+        assert!(third > 0i64);
+        assert!(third != 1u32);
+        assert!(r(5, 1) == 5);
+        assert!(r(-7, 2) >= (-7, 2) && r(-7, 2) <= -3);
+        assert_eq!(Rational::<i64>::from((6, -4)), r(-3, 2));
     }
 }
