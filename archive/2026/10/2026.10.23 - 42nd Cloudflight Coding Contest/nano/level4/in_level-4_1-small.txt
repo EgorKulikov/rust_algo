@@ -1,0 +1,131 @@
+10
+8
+10
+T B T - T B
+- F - T B -
+T T B T - F
+T T F B F -
+T B F T B B
+T B T F F B
+B - - B - B
+- T - - B F
+F F T B B T
+T F T - F T
+
+6
+10
+- T T T - F
+- F F F F T
+F - - T - -
+B F B - T T
+- T - - F -
+F F - T B -
+- T T T B T
+B F - - B T
+- T F F B -
+B B F - - B
+
+3
+10
+- T F - B -
+F - T - - -
+- B B T T F
+F F B F T F
+- F T F - B
+B F - B B T
+B T F T B F
+T F - F T T
+- F - - F T
+T T B T - T
+
+3
+10
+- B B F T -
+B T T F B F
+F - F B T T
+- F B T - F
+T - T - B -
+T F F T T B
+B F - - B B
+F F T F F -
+- B - F B T
+B T T - F F
+
+5
+10
+F T - T B -
+B T T - F B
+- T F F B F
+- F B - T -
+- - T F B T
+- B B F T T
+- F T B B -
+F - F B B B
+B - T T - -
+- F T T B T
+
+3
+10
+F F B - B -
+- - - T F T
+B B B B B T
+T F - B F -
+- T T T F F
+T T - F - B
+- - F B - -
+- F - F F -
+F T B F - F
+T T T F B F
+
+5
+10
+T B T - - B
+T - - F B B
+B B F B T -
+B T T T B T
+- - B T - -
+F B B B - T
+T T T - B F
+- B T B B B
+- T - T T -
+- F B - B B
+
+8
+10
+F F - T B T
+T B F F B T
+F T T T - -
+T - F F B -
+B T - T F B
+B T T F F T
+F B B F F B
+T T T T - F
+T - F - F -
+- T - F - -
+
+4
+10
+F F - - B -
+F - T F B -
+B B - F T B
+B - F - - -
+- F F F - -
+F - T - B T
+T T B F B F
+B T B T - T
+B F T - B B
+B B - - B -
+
+8
+10
+T - B B T T
+T T T - - B
+B F - B F B
+F - T T B B
+F B B - B T
+- F - T - B
+- B B - T B
+F - B T - B
+B - - B T F
+B F T - - T
+

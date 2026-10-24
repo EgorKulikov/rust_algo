@@ -1,0 +1,25 @@
+3
+2
+3
+F T T F - -
+T - - T - -
+T B - B T -
+
+3
+6
+B B B B B B
+- - - T T -
+- - T - T -
+- T - T - -
+T - T - - -
+- T - - - T
+
+3
+6
+- T F - B -
+F - T - - -
+B B B T T F
+T F - F T F
+- F T F - B
+- F F B B T
+

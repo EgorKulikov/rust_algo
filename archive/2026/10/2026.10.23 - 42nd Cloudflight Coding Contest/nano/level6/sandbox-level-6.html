@@ -1,0 +1,1948 @@
+<!-- TODO(alex):
+    - Split into simplified sandboxes for levels 4 and 5
+-->
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <meta name="description" content="This is an interactive tool for the CCC. Use this to visualize, debug and prototype your solutions! To use it, open this file in your browser.">
+    <link rel="icon" href="">
+    <title>CCC | Nanofabricator</title>
+</head>
+
+<body>
+    <div class="input-panel">
+        <div class="input-group">
+            <label for="hex-input">Input <small class="input-hint">Paste or drag</small></label>
+            <textarea id="hex-input" rows="6" placeholder="Paste or drag file here"></textarea>
+        </div>
+        <div class="input-group">
+            <label for="hex-solution">Solution <small class="input-hint">Paste or drag</small></label>
+            <textarea id="hex-solution" rows="6" placeholder="Paste or drag file here"></textarea>
+        </div>
+        <div class="case-buttons" id="hex-case-buttons"></div>
+        <div class="input-group">
+            <label>Pattern <small class="input-hint">target matter</small></label>
+            <div class="pattern-svg-container" id="svg-container-pattern"></div>
+        </div>
+        <div class="stats-group" id="stats-hex"></div>
+    </div>
+    <div class="canvas-wrapper">
+        <h2 class="canvas-label">Nanofabricator</h2>
+        <div class="svg-container" id="svg-container-hex"></div>
+        <div class="playback-controls" id="playback-controls"></div>
+    </div>
+    <div class="instruction-wrapper">
+        <h2 class="canvas-label">Instructions</h2>
+        <div class="instruction-panel" id="instruction-panel">
+            <div class="instruction-fixed">
+                <div id="instruction-controls" class="instruction-controls"></div>
+                <p class="instruction-hint">Click cycle · Shift back · Ctrl clear · Alt insert row above · Ctrl+Alt delete row<br>Space pause · 1 play · 2 fast · ← step back · → step · Esc stop</p>
+                <div class="instruction-col-headers">
+                    <span></span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
+                </div>
+            </div>
+            <div class="instruction-scroll" id="instruction-scroll"></div>
+        </div>
+    </div>
+
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="39 48 384 284" id="codinator" class="codinator-icon">
+        <polygon fill="#FDDD00" points="59.65 53.93 52.5 53.93 52.5 61.08 59.65 61.08 66.8 61.08 66.8 53.93 59.65 53.93"/>
+        <polygon fill="#FDDD00" points="173.98 311.18 173.98 318.33 181.13 318.33 181.13 311.18 181.13 304.04 181.13 296.89 173.98 296.89 173.98 304.04 173.98 311.18"/>
+        <rect fill="#FDDD00" x="181.13" y="318.33" width="7.15" height="7.15"/>
+        <polygon fill="#FDDD00" points="409.79 61.08 409.79 53.93 402.65 53.93 395.5 53.93 395.5 61.08 402.65 61.08 409.79 61.08"/>
+        <path fill="#FDDD00" d="m409.79,103.95v-14.29h-7.15v-14.29h-7.15v-14.29h-7.15v7.15h-7.15v14.29h7.15v7.15h7.15v14.29h7.15v21.44h-7.15v7.15h-7.15v7.15h-71.46v7.15h-21.44v7.15h-14.29v7.15h-7.15v-7.15h-14.29v-7.15h-57.17v7.15h-14.29v7.15h-7.15v-7.15h-14.29v-7.15h-21.44v-7.15h-71.46v-7.15h-7.15v-7.15h-7.15v-21.44h7.15v-14.29h7.15v-7.15h7.15v-14.29h-7.15v-7.15h-7.15v14.29h-7.15v14.29h-7.15v14.29h-7.15v42.87h7.15v7.15h7.15v7.15h35.73v7.15h35.73v7.15h7.15v7.15h7.15v28.58h7.15v7.15h7.15v42.87h7.15v35.73h7.15v-7.15h7.15v-7.15h28.58v-7.15h14.29v-7.15h14.29v7.15h14.29v7.15h28.58v7.15h7.15v7.15h7.15v-35.73h7.15v-42.87h7.15v-7.15h7.15v-28.58h7.15v-7.15h7.15v-7.15h35.73v-7.15h35.73v-7.15h7.15v-7.15h7.15v-42.87h-7.15Zm-128.62,128.62v14.29h-7.15v7.15h-28.58v-14.29h14.29v-7.15h14.29v-7.15h7.15v7.15Zm-71.46,21.44h-21.44v-7.15h-7.15v-21.44h7.15v7.15h14.29v7.15h14.29v14.29h-7.15Z"/>
+        <polygon fill="#FDDD00" points="281.17 304.04 281.17 311.18 281.17 318.33 288.32 318.33 288.32 311.18 288.32 304.04 288.32 296.89 281.17 296.89 281.17 304.04"/>
+        <rect fill="#FDDD00" x="274.02" y="318.33" width="7.15" height="7.15"/>
+    </svg>
+</body>
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    * { scrollbar-width: thin; scrollbar-color: rgba(156,156,160,0.2) transparent; }
+    *::-webkit-scrollbar { width: 3px; height: 3px; }
+    *::-webkit-scrollbar-track { background: transparent; }
+    *::-webkit-scrollbar-thumb { background: rgba(156,156,160,0.2); border-radius: 2px; }
+
+    html {
+        color-scheme: dark;
+        background: #000000;
+        font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+        color: #C9C9CD;
+        font-size: 14px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    h2 {
+        font-size: 11px;
+        font-weight: 500;
+        color: #9C9CA0;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+    }
+
+    p, label { margin: 0; }
+
+    small { color: #7a7a7e; }
+
+    strong {
+        color: #FDDD00;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+
+        &[valid='false'] { color: #FF7373; }
+        &[valid='true']  { color: #4ADE80; }
+    }
+
+    .stats-group {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+
+        & .stat-row {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        & .stat-row + .stat-row {
+            border-left: 1px solid #3a3a42;
+            padding-left: 16px;
+        }
+    }
+
+    .stat-label {
+        color: #9C9CA0;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .stat-value {
+        color: #C9C9CD;
+        font-family: 'Space Mono', monospace;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .validation-column {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .validation-ok  { font-family: 'Space Mono', monospace; font-size: 13px; color: #4ADE80; }
+    .validation-err { font-family: 'Space Mono', monospace; font-size: 13px; color: #FF7373; }
+
+    .error-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 4px;
+    }
+
+    .error-item { font-family: 'Space Mono', monospace; font-size: 12px; color: #FF7373; }
+
+    /* Buttons */
+    button {
+        background: transparent;
+        color: #9C9CA0;
+        border: 1px solid #3a3a42;
+        border-radius: 2px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        cursor: pointer;
+        padding: 6px 12px;
+        transition: background 0.15s, color 0.15s, border-color 0.15s;
+        white-space: nowrap;
+        line-height: 1;
+
+        &:hover {
+            background: rgba(156, 156, 160, 0.1);
+            color: #F5F5F9;
+            border-color: #9C9CA0;
+        }
+
+        &:focus-visible {
+            outline: 2px solid #FDDD00;
+            outline-offset: 2px;
+        }
+    }
+
+    .case-buttons {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+
+    /* Input panel */
+    .input-panel {
+        padding: 12px 16px;
+        border-bottom: 1px solid #3a3a42;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .input-group {
+        position: relative;
+    }
+
+    .input-group label {
+        position: absolute;
+        top: -6px;
+        left: 12px;
+        color: #9C9CA0;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        background: #000000;
+        padding: 0 6px;
+        z-index: 1;
+        line-height: 1;
+    }
+
+    .input-group textarea {
+        background: #121216;
+        color: #C9C9CD;
+        border: 1px solid #3a3a42;
+        border-radius: 2px;
+        padding: 12px;
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        resize: none;
+        outline: none;
+        transition: border-color 0.15s;
+        width: 100%;
+
+        &:focus { border-color: #FDDD00; }
+    }
+
+    .input-hint {
+        font-size: 11px;
+        font-weight: 400;
+        text-transform: none;
+        letter-spacing: 0;
+        color: #7a7a7e;
+    }
+
+    /* Canvas */
+    .canvas-wrapper {
+        flex: 1;
+        position: relative;
+        min-height: 0;
+        margin: 8px;
+        padding-top: 8px;
+    }
+
+    .canvas-label {
+        position: absolute;
+        top: 0;
+        left: 8px;
+        background: #000000;
+        padding: 0 6px;
+        z-index: 1;
+        margin: 0;
+    }
+
+    .svg-container {
+        overflow: hidden;
+        position: relative;
+        height: 100%;
+        background: #08080C;
+        border: 1px solid #3a3a42;
+        border-radius: 2px;
+
+        & svg {
+            background-color: #08080C;
+            display: block;
+        }
+    }
+
+    /* Codinator easter egg - clicking it triggers the first available case button. */
+    .codinator-icon {
+        position: fixed;
+        bottom: 8px;
+        right: 8px;
+        width: 28px;
+        height: auto;
+        opacity: 0.12;
+        cursor: help;
+        transition: opacity 0.2s;
+        z-index: 5;
+    }
+
+    .codinator-icon:hover { opacity: 0.35; }
+
+    /* Wide viewport: side panel layout.
+     * grid-row: 1 is set explicitly on every child because the source order places
+     * canvas-wrapper (col 3) before instruction-wrapper (col 2); without it, the
+     * default row auto-flow advances the placement cursor past col 2 and the
+     * instruction column gets pushed onto an implicit row 2. */
+    @media (min-width: 800px) {
+        body {
+            display: grid;
+            grid-template-rows: 1fr;
+            grid-template-columns: 280px 240px 1fr;
+            padding: 8px;
+            gap: 0 8px;
+        }
+
+        .input-panel {
+            grid-row: 1;
+            grid-column: 1;
+            border: none;
+            padding: 8px 0 0 0;
+            overflow-y: auto;
+        }
+
+        .canvas-wrapper {
+            grid-row: 1;
+            grid-column: 3;
+            margin: 0;
+        }
+
+        .instruction-wrapper {
+            grid-row: 1;
+            grid-column: 2;
+        }
+    }
+</style>
+
+<style>
+    /* SVG Hexagonal Grid */
+    .svg-container svg {
+        & polygon[hex-value='.'] {
+            fill: transparent;
+            stroke: #444444;
+            stroke-width: 1.5;
+        }
+
+        & polygon[hex-value='#'] {
+            fill: #444444;
+            stroke: #888888;
+            stroke-width: 1.5;
+        }
+
+        & polygon[hex-value='O'] {
+            fill: #000000;
+            stroke: #888888;
+            stroke-width: 1.5;
+        }
+
+        & polygon[hex-value='M'] {
+            fill: rgba(253, 221, 0, 0.45);
+            stroke: #FDDD00;
+            stroke-width: 1.5;
+        }
+
+        & polygon[hex-value='m'] {
+            fill: rgba(253, 221, 0, 0.85);
+            stroke: #FDDD00;
+            stroke-width: 2;
+        }
+
+        & polygon[hex-value='x'] {
+            fill: rgba(0, 253, 0, 0.45);
+            stroke: #00FD00;
+            stroke-width: 1.5;
+        }
+
+        & polygon[hex-value='d'] {
+            fill: rgba(253, 0, 0, 0.45);
+            stroke: #FD0000;
+            stroke-width: 1.5;
+        }
+    }
+
+    /* Canvas wrapper becomes a flex column so the playback bar sits below the SVG */
+    .canvas-wrapper {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .svg-container {
+        flex: 1;
+        min-height: 0;
+        height: auto;
+    }
+
+    .playback-controls {
+        flex-shrink: 0;
+        display: flex;
+        gap: 8px;
+        padding: 10px 12px;
+        border-top: 1px solid #3a3a42;
+        background: #08080C;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-playback {
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        flex-shrink: 0;
+    }
+
+    .btn-playback svg {
+        width: 20px;
+        height: 20px;
+        pointer-events: none;
+    }
+
+    .btn-playback[active='true'] {
+        background: rgba(253, 221, 0, 0.1);
+        color: #FDDD00;
+        border-color: rgba(253, 221, 0, 0.5);
+    }
+
+    /* Active instruction step highlight */
+    .instruction-row.active {
+        background: rgba(253, 221, 0, 0.07);
+        border-radius: 2px;
+        outline: 1px solid rgba(253, 221, 0, 0.3);
+        outline-offset: 1px;
+    }
+
+    /* Trailing noop rows that fall outside the effective program */
+    .instruction-row.dim { opacity: 0.32; }
+
+    #stats-hex {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        max-height: 215px;
+        overflow-y: auto;
+    }
+
+    #stats-hex .stat-row + .stat-row {
+        border-left: none;
+        padding-left: 0;
+        border-top: 1px solid #3a3a42;
+        padding-top: 4px;
+        width: 100%;
+    }
+
+    #hex-problem-controls {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    #hex-problem-controls button:not([active='true']) {
+        background: #27272A;
+        color: #555555;
+        border-color: #444444;
+    }
+
+    /* Pattern preview, inline in the input column */
+    .pattern-svg-container {
+        width: 100%;
+        min-height: 180px;
+        height: 250px;
+        overflow: hidden;
+        background: #08080C;
+        border: 1px solid #3a3a42;
+        border-radius: 2px;
+
+        & svg {
+            display: block;
+            background-color: #08080C;
+        }
+
+        & polygon[hex-value='border'] {
+            fill: #333338;
+            stroke: #666670;
+            stroke-width: 1.5;
+        }
+
+        & polygon[hex-value='skirting'] {
+            fill: rgba(0, 180, 255, 0.10);
+            stroke: rgba(0, 180, 255, 0.50);
+            stroke-width: 1.5;
+            cursor: pointer;
+        }
+        & polygon[hex-value='skirting']:hover {
+            fill: rgba(253, 221, 0, 0.12);
+            stroke: rgba(253, 221, 0, 0.5);
+        }
+
+        & polygon[hex-value='dontcare'] {
+            fill: transparent;
+            stroke: #444444;
+            stroke-width: 1.5;
+            stroke-dasharray: 3 3;
+            cursor: pointer;
+        }
+        & polygon[hex-value='dontcare']:hover {
+            fill: rgba(253, 221, 0, 0.12);
+            stroke: rgba(253, 221, 0, 0.5);
+            stroke-dasharray: none;
+        }
+
+        & polygon[hex-value='M'] {
+            fill: rgba(253, 221, 0, 0.45);
+            stroke: #FDDD00;
+            stroke-width: 1.5;
+            cursor: pointer;
+        }
+        & polygon[hex-value='M']:hover {
+            fill: rgba(253, 221, 0, 0.65);
+        }
+    }
+
+    /* Instruction Panel */
+    .instruction-wrapper {
+        position: relative;
+        min-height: 0;
+        padding-top: 8px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .instruction-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #08080C;
+        border: 1px solid #3a3a42;
+        border-radius: 2px;
+        overflow: hidden;
+        min-height: 0;
+    }
+
+    .instruction-fixed {
+        flex-shrink: 0;
+        background: #08080C;
+        border-bottom: 1px solid #3a3a42;
+    }
+
+    .instruction-controls {
+        display: flex;
+        gap: 4px;
+        padding: 8px;
+        flex-wrap: wrap;
+    }
+
+    .instruction-hint {
+        font-size: 10px;
+        color: #555559;
+        line-height: 1.5;
+        padding: 0 8px 6px;
+    }
+
+    .instruction-col-headers {
+        display: grid;
+        grid-template-columns: 42px repeat(6, 1fr);
+        gap: 2px;
+        padding: 4px 8px;
+        border-top: 1px solid #3a3a42;
+    }
+
+    .instruction-col-headers span {
+        text-align: center;
+        font-family: 'Space Mono', monospace;
+        font-size: 11px;
+        color: #9C9CA0;
+        padding: 2px 0;
+    }
+
+    .instruction-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 6px 8px;
+        min-height: 0;
+    }
+
+    .instruction-row {
+        display: grid;
+        grid-template-columns: 42px repeat(6, 1fr);
+        gap: 2px;
+        margin-bottom: 2px;
+    }
+
+    .instruction-row-num {
+        font-family: 'Space Mono', monospace;
+        font-size: 10px;
+        color: #444448;
+        background: none;
+        border: none;
+        text-align: right;
+        padding: 0 3px 0 0;
+        height: 26px;
+        border-radius: 2px;
+        cursor: pointer;
+        line-height: 26px;
+    }
+    .instruction-row-num:hover {
+        color: #FDDD00;
+        background: rgba(253, 221, 0, 0.08);
+    }
+    .instruction-row.active .instruction-row-num { color: rgba(253, 221, 0, 0.7); }
+
+    .instruction-cell {
+        padding: 0;
+        font-size: 13px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 600;
+        min-width: 0;
+        border-radius: 2px;
+        text-align: center;
+        height: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-color: #2a2a32;
+    }
+
+    .instruction-scroll[data-mod="ctrl"]     .instruction-cell { cursor: crosshair; }
+    .instruction-scroll[data-mod="alt"]      .instruction-cell { cursor: copy; }
+    .instruction-scroll[data-mod="ctrl-alt"] .instruction-cell { cursor: not-allowed; }
+</style>
+
+<script>
+/**
+ * Creates an SVG element with camelCase attribute keys auto-converted to kebab-case.
+ * @param {string} name
+ * @param {Object.<string,*>} attributes
+ * @returns {SVGElement}
+ */
+function createSvgElement(name, attributes) {
+    const element = document.createElementNS('http://www.w3.org/2000/svg', name);
+    for (const key in attributes) {
+        const kebab = key.replace(/[A-Z]/g, c => '-' + c.toLowerCase());
+        element.setAttributeNS(null, kebab, attributes[key]);
+    }
+    return element;
+}
+
+/**
+ * Attaches auto-fit behavior to a container holding a rendered SVG. The SVG must
+ * carry `natural-width` and `natural-height` attributes so the viewport can be
+ * computed. Optional `offset-x` / `offset-y` attributes (in SVG units) shift
+ * the visible content right / down by that amount — useful when the geometric
+ * center of the bounding box doesn't match the perceived visual center (e.g. a
+ * hex grid where the middle row sits left of the parallelogram center because
+ * the offset rows overhang on the right). Refits automatically when the inner
+ * SVG is replaced (MutationObserver) or the container is resized (ResizeObserver).
+ * @param {HTMLElement} container
+ */
+function attachFitOnly(container) {
+    function getSvg() { return container.querySelector('svg'); }
+
+    function fitToContainer() {
+        const svg = getSvg();
+        if (!svg) return;
+        const w = parseFloat(svg.getAttribute('natural-width'));
+        const h = parseFloat(svg.getAttribute('natural-height'));
+        const cw = container.clientWidth, ch = container.clientHeight;
+        if (w === 0 || h === 0 || cw === 0 || ch === 0) return;
+        const offsetX = parseFloat(svg.getAttribute('offset-x') || '0');
+        const offsetY = parseFloat(svg.getAttribute('offset-y') || '0');
+        const pad = 4;
+        const zoom = Math.min((cw - pad * 2) / w, (ch - pad * 2) / h) * 0.95;
+        const panX = (w - cw / zoom) / 2 - offsetX;
+        const panY = (h - ch / zoom) / 2 - offsetY;
+        svg.setAttribute('viewBox', `${panX} ${panY} ${cw / zoom} ${ch / zoom}`);
+        svg.setAttribute('width', cw);
+        svg.setAttribute('height', ch);
+    }
+
+    new MutationObserver(fitToContainer).observe(container, { childList: true });
+    new ResizeObserver(fitToContainer).observe(container);
+}
+
+document.getElementById('codinator')?.addEventListener('click', () => {
+    if (typeof window.__codinatorClick === 'function') window.__codinatorClick();
+    else document.querySelector('.case-buttons button')?.click();
+});
+</script>
+
+<script>
+/**
+ * @typedef {'-'|'T'|'F'|'B'} Instruction
+ * @typedef {Instruction[]} InstructionLine - exactly 6 instructions, one per emitter track
+ * @typedef {{ grid: string[][], rows: number, cols: number, count: number, patternRadius: number }} HexPattern
+ * @typedef {{ perimeter: Array<{c:number,r:number}>, indices: number[], active: boolean[], baseGrid: string[][], grid: string[][], possibleEmitterStates: Array, rayCells: Array }} HexEmitter
+ * @typedef {{ indices: number[], active: boolean[], grid: string[][], acceptedPatterns: number }} SimSnapshot
+ * @typedef {{ radius: number, cols: number, rows: number, pattern: HexPattern, acceptedPatterns: number, emitter: HexEmitter, program: InstructionLine[], precomputedStates: SimSnapshot[], inputParseErrors: string[], solutionParseErrors: string[], mode: string }} HexGameState
+ * @typedef {{ input: HTMLTextAreaElement, solution: HTMLTextAreaElement, container: HTMLElement, patternContainer: HTMLElement, stats: HTMLElement }} Elements
+ * @typedef {{ radius: number, grid: string[][], container: HTMLElement, emitterPositions: Array<{cx: number, cy: number, angle: number, exitCx: number, exitCy: number, active: boolean, hasRay: boolean}> }} HexRenderState
+ * @typedef {{ gameState: HexGameState, elements: Elements }} GlobalState
+ */
+//  Input format:
+//    Line 1:  boardRadius patternRows patternCols patternCount
+//    Lines 2+: patternRows lines of pattern text, each patternCols chars from {'-', '*', 'O', 'M'}
+//    boardRadius IS the patternRadius. Pattern grid is same size as the board.
+//    '-' = ghost / interstitial, '*' = border perimeter, 'O' = open cell, 'M' = matter cell
+//
+//  Solution format (program):
+//    One instructionLine per row, 6 space-separated Instruction tokens.
+//    INSTR_NOOP='-'  INSTR_TOGGLE='T'  INSTR_FORWARD='F'  INSTR_BACKWARD='B'
+/** Emitter does not move or change state. */ const INSTR_NOOP     = '-';
+/** Flips emitter active state. */            const INSTR_TOGGLE   = 'T';
+/** Advances emitter clockwise. */            const INSTR_FORWARD  = 'F';
+/** Retreats emitter counter-clockwise. */    const INSTR_BACKWARD = 'B';
+/** All valid instruction characters. */              const VALID_INSTRUCTIONS = new Set([INSTR_NOOP, INSTR_TOGGLE, INSTR_FORWARD, INSTR_BACKWARD]);
+
+/**
+ * Nanofabricator sandbox: renders the hex grid and wires up the instruction editor.
+ * @param {GlobalState} state
+ */
+function nanofabricator(state) {
+    let syncProgram = () => {};
+    let stopPlayback = () => {};
+    let markProgramDirty = () => {};
+    let _suppressSolutionSync = false;
+    let playbackState = { status: 'stopped', step: 0, timerId: null, prevStatus: 'playing' };
+    const { gameState, elements } = state;
+
+    /**
+     * Renders stats key-value pairs and optional validation result into the stats column.
+     * @param {Elements} elements
+     * @param {{ stats: Object.<string,string|number>, errors: string[], hasFeedback: boolean }} validation
+     */
+    function renderStats({ stats: container }, { stats, errors, hasFeedback }) {
+        const el = (tag, className, text) => {
+            const e = document.createElement(tag);
+            if (className) e.className = className;
+            if (text != null) e.textContent = text;
+            return e;
+        };
+        container.replaceChildren();
+        for (const [label, value] of Object.entries(stats)) {
+            const row = el('div', 'stat-row');
+            row.append(el('span', 'stat-label', label), el('span', 'stat-value', value));
+            container.appendChild(row);
+        }
+        if (!hasFeedback) return;
+        container.appendChild(el('hr', 'stats-divider'));
+        const ok = errors.length === 0;
+        container.appendChild(el('div', ok ? 'validation-ok' : 'validation-err', ok ? '✓ Valid' : '✗ Invalid'));
+        if (errors.length) {
+            const ul = el('ul', 'error-list');
+            for (const err of errors) ul.appendChild(el('li', 'error-item', err));
+            container.appendChild(ul);
+        }
+    }
+
+    /**
+     * Parses input text into gameState (radius, cols, rows, pattern, emitter geometry).
+     * Pushes human-readable diagnostics to gameState.inputParseErrors.
+     * @param {HexGameState} gameState
+     * @param {string} text
+     */
+    function parseHexInput(gameState, text) {
+        const errs = [];
+        gameState.inputParseErrors = errs;
+
+        const lines = text.split('\n');
+        if (!text.trim()) { errs.push('Input is empty'); return; }
+
+        const posInt = (raw, label) => {
+            const n = Number(raw);
+            if (!Number.isInteger(n) || n < 1) {
+                errs.push(`Line 1: ${label} must be a positive integer, got "${raw}"`);
+                return null;
+            }
+            return n;
+        };
+
+        // Line 1: boardRadius patternRows patternCols patternCount
+        const headerTokens = lines[0].trim().split(/\s+/);
+        if (headerTokens.length < 4) { errs.push(`Line 1: expected "boardRadius patternRows patternCols patternCount", got "${lines[0]}"`); return; }
+        const boardRadius   = posInt(headerTokens[0], 'boardRadius');
+        const patternRows   = posInt(headerTokens[1], 'patternRows');
+        const patternCols   = posInt(headerTokens[2], 'patternCols');
+        const numPatterns   = posInt(headerTokens[3], 'patternCount');
+        if (boardRadius === null || patternRows === null || patternCols === null || numPatterns === null) return;
+
+        // boardRadius IS the patternRadius; the pattern grid is the same size as the board
+        const patternRadius = boardRadius;
+
+        const prevRadius = gameState.radius;
+        gameState.radius = boardRadius + 1;
+        gameState.cols = 4 * gameState.radius - 3;
+        gameState.rows = 2 * gameState.radius - 1;
+        gameState.pattern.patternRadius = patternRadius;
+        gameState.pattern.rows = patternRows;
+        gameState.pattern.cols = patternCols;
+        gameState.pattern.count = numPatterns;
+        gameState.acceptedPatterns = 0;
+
+        if (lines.length < 1 + patternRows) {
+            errs.push(`Expected ${patternRows} pattern lines after header, got ${Math.max(0, lines.length - 1)}`);
+            return;
+        }
+
+        const patternLines = lines.slice(1, 1 + patternRows);
+        const validChars = new Set(['-', '*', 'O', 'M']);
+        for (let i = 0; i < patternLines.length; i++) {
+            const ln = patternLines[i];
+            if (ln.length !== patternCols) {
+                errs.push(`Line ${i + 2}: expected ${patternCols} chars, got ${ln.length}`);
+            }
+            const bad = ln.split('').findIndex(ch => !validChars.has(ch));
+            if (bad !== -1) {
+                errs.push(`Line ${i + 2} col ${bad + 1}: unexpected char "${ln[bad]}", expected one of '-', '*', 'O', 'M'`);
+            }
+        }
+        if (errs.length) return;
+
+        const patternGrid = patternLines.map(ln => ln.split(''));
+        gameState.pattern.grid = patternGrid;
+
+        // Semantic validation: at least one matter cell, all matter connected
+        const matterCells = [];
+        for (let r = 0; r < patternRows; r++)
+            for (let c = 0; c < patternCols; c++)
+                if (patternGrid[r][c] === 'M') matterCells.push({ r, c });
+        if (matterCells.length === 0) {
+            errs.push('Pattern must contain at least one matter cell');
+        } else {
+            const visited = new Set([`${matterCells[0].r},${matterCells[0].c}`]);
+            const queue = [matterCells[0]];
+            while (queue.length) {
+                const { r, c } = queue.shift();
+                for (const { r: dr, c: dc } of Object.values(DIR_TO)) {
+                    const key = `${r + dr},${c + dc}`;
+                    if (!visited.has(key) && patternGrid[r + dr]?.[c + dc] === 'M') {
+                        visited.add(key);
+                        queue.push({ r: r + dr, c: c + dc });
+                    }
+                }
+            }
+            if (visited.size !== matterCells.length) {
+                errs.push('Pattern matter cells must all be connected');
+            }
+        }
+
+        if (gameState.radius !== prevRadius) rebuildPerimeter(gameState.radius);
+    }
+
+    /**
+     * Serializes the current gameState input back to the input text format.
+     * @param {HexGameState} gameState
+     * @returns {string}
+     */
+    function serializeInput(gameState) {
+        const boardRadius = gameState.radius - 1;
+        const { rows: pRows, cols: pCols, count, grid: patternGrid } = gameState.pattern;
+        const lines = [];
+        for (let r = 0; r < pRows; r++) {
+            lines.push((patternGrid[r] ?? []).join(''));
+        }
+        return `${boardRadius} ${pRows} ${pCols} ${count}\n${lines.join('\n')}`;
+    }
+
+    /**
+     * Serializes a program (array of instructionLines) to solution text.
+     * @param {InstructionLine[]} program
+     * @returns {string}
+     */
+    function serializeProgram(program) {
+        return program.map(instructionLine => instructionLine.join(' ')).join('\n');
+    }
+
+    /**
+     * Parses solution text into gameState.program (array of instructionLines).
+     * Each text line is one instructionLine: 6 space-separated Instruction tokens.
+     * @param {HexGameState} gameState
+     * @param {string} text
+     */
+    function parseHexSolution(gameState, text) {
+        const errs = [];
+        const program = [];
+        text.trim().split('\n').forEach((line, i) => {
+            if (!line.trim()) return;
+            const tokens = line.trim().split(/\s+/);
+            const instructionLine = [];
+            for (let c = 0; c < 6; c++) {
+                const tok = tokens[c] ?? INSTR_NOOP;
+                if (!VALID_INSTRUCTIONS.has(tok)) {
+                    errs.push(`Line ${i + 1} col ${c + 1}: unknown token "${tok}"`);
+                    instructionLine.push(INSTR_NOOP);
+                } else {
+                    instructionLine.push(tok);
+                }
+            }
+            program.push(instructionLine);
+        });
+        gameState.program = program;
+        gameState.solutionParseErrors = errs;
+    }
+
+    /**
+     * Returns display stats and combined parse errors for the current input + program.
+     * @param {HexGameState} gameState
+     * @returns {{ stats: Object.<string,string|number>, errors: string[], hasFeedback: boolean }}
+     */
+    function validateHexStats(gameState) {
+        const { radius, pattern = {}, acceptedPatterns = 0, program = [], inputParseErrors = [], solutionParseErrors = [], precomputedStates = [] } = gameState;
+        const instrCount = program.reduce((n, instructionLine) => n + instructionLine.filter(v => v !== INSTR_NOOP).length, 0);
+        const cycleCount = program.filter(instructionLine => instructionLine.some(v => v !== INSTR_NOOP)).length;
+        const stats = {
+            'Radius': radius ?? '-',
+            'Instructions': instrCount || '-',
+            'Cycles': cycleCount || '-',
+            'Accepted': pattern.count ? `${acceptedPatterns} / ${pattern.count}` : (acceptedPatterns || '-'),
+        };
+        const parseErrors = [...inputParseErrors, ...solutionParseErrors];
+        const simulationErrors = [];
+        if (!parseErrors.length && program.length > 0 && pattern.count) {
+            const finalAccepted = precomputedStates.length > 0
+                ? precomputedStates[precomputedStates.length - 1].acceptedPatterns
+                : 0;
+            if (finalAccepted < pattern.count) {
+                simulationErrors.push(`Simulation accepts ${finalAccepted} of ${pattern.count} required patterns`);
+            }
+        }
+        const errors = [...parseErrors, ...simulationErrors];
+        const hasFeedback = program.length > 0 || errors.length > 0;
+        return { stats, errors, hasFeedback };
+    }
+
+
+    const DIR_TO = {
+        'E':  { c:  2, r:  0 },
+        'SE': { c:  1, r:  1 },
+        'SW': { c: -1, r:  1 },
+        'W':  { c: -2, r:  0 },
+        'NW': { c: -1, r: -1 },
+        'NE': { c:  1, r: -1 },
+    };
+
+    function rebuildPerimeter(radius) {
+        const perimeter = [];
+        if (radius > 1) {
+            let cur = { c: 0, r: radius - 1 };
+            for (const dir of ['NE', 'E', 'SE', 'SW', 'W', 'NW']) {
+                const { c: dc, r: dr } = DIR_TO[dir];
+                for (let i = 0; i < radius - 1; i++) {
+                    perimeter.push({ ...cur });
+                    cur = { c: cur.c + dc, r: cur.r + dr };
+                }
+            }
+        }
+
+        const S = 30, W = Math.sqrt(3) * S, M = 10;
+        const shouldOffsetRow = radius % 2 === 0;
+        const oCols = 4 * radius - 3;
+
+        function isInGrid(c, r) {
+            if (r < 0 || r >= 2 * radius - 1) return false;
+            if ((r + c + radius + 1) % 2 !== 0) return false;
+            if (r < radius) return c + r >= radius - 1 && c - r <= oCols - radius + 1;
+            return c + (2 * radius - 1 - r) >= radius - 1 && c + r - 2 * radius + 1 < oCols - radius + 1;
+        }
+
+        const cols = 4 * radius - 3;
+        const rows = 2 * radius - 1;
+
+        // Base grid: fixed geometry, only depends on radius
+        const baseGrid = Array.from({ length: rows }, (_, r) => {
+            const rRail = r === 0 || r === rows - 1;
+            return Array.from({ length: cols }, (_, c) => {
+                if ((r + c + radius + 1) % 2 !== 0) return '-';
+                if (r < radius) {
+                    const cRail = c === radius - 1 - r || c === cols - 1 - radius + 1 + r;
+                    if (c + r >= radius - 1 && c - r <= cols - radius + 1) return rRail || cRail ? '#' : 'O';
+                    return ':';
+                }
+                const cRail = c === radius - 1 + r - 2 * radius + 2 || c === cols - 1 + radius - 1 - r;
+                if (c + 2 * radius - 1 - r >= radius - 1 && c + r - 2 * radius + 1 < cols - radius + 1) return rRail || cRail ? '#' : 'O';
+                return ':';
+            });
+        });
+
+        const possibleEmitterStates = perimeter.map(({ c: cOv, r }) => {
+            const mustOffsetCol = (r + radius + 1) % 2 === 1 ? 1 : 0;
+            const cVis     = (cOv - mustOffsetCol) / 2;
+            const rowIsOdd = r % 2 === (shouldOffsetRow ? 0 : 1);
+            const cx = cVis * W + (rowIsOdd ? W / 2 : 0) + M + W / 2;
+            const cy = r * 1.5 * S + M + S;
+            return Array.from({ length: 6 }, (_, t) => {
+                const angle = t * Math.PI / 3;
+                const { dc, dr } = FIRE_OV[t];
+                let eC = cOv, eR = r;
+                while (isInGrid(eC + dc, eR + dr)) { eC += dc; eR += dr; }
+                const mustOffsetExit = (eR + radius + 1) % 2 === 1 ? 1 : 0;
+                const exitCVis     = (eC - mustOffsetExit) / 2;
+                const exitRowIsOdd = eR % 2 === (shouldOffsetRow ? 0 : 1);
+                return {
+                    cx, cy, angle,
+                    exitCx: exitCVis * W + (exitRowIsOdd ? W / 2 : 0) + M + W / 2 - Math.cos(angle) * (W / 2),
+                    exitCy: eR * 1.5 * S + M + S - Math.sin(angle) * (W / 2),
+                };
+            });
+        });
+
+        // Ray cells for each (perimIdx, trackIdx): overlay coords the ray passes through
+        const rayCells = perimeter.map(({ c: cOv, r: rOv }) =>
+            FIRE_OV.map(({ dc, dr }) => {
+                const cells = [];
+                let eC = cOv + dc, eR = rOv + dr;
+                while (isInGrid(eC, eR)) { cells.push({ c: eC, r: eR }); eC += dc; eR += dr; }
+                return cells;
+            })
+        );
+
+        gameState.emitter.perimeter             = perimeter;
+        gameState.emitter.baseGrid              = baseGrid;
+        gameState.emitter.possibleEmitterStates = possibleEmitterStates;
+        gameState.emitter.rayCells              = rayCells;
+        resetEmitterIndices();
+    }
+
+    function resetEmitterIndices() {
+        const { emitter } = gameState;
+        const edgeLen = Math.max(gameState.radius - 1, 1);
+        emitter.indices = Array.from({ length: 6 }, (_, i) =>
+            emitter.perimeter.length > 0 ? i * edgeLen : 0
+        );
+        emitter.active = [false, false, false, false, false, false];
+        emitter.grid = emitter.baseGrid.map(row => [...row]);
+        gameState.acceptedPatterns = 0;
+    }
+
+    /** Captures a deep-copy snapshot of the current simulation state. @returns {SimSnapshot} */
+    function captureState() {
+        const { indices, active, grid } = gameState.emitter;
+        return {
+            indices: [...indices],
+            active:  [...active],
+            grid:    grid.map(row => [...row]),
+            acceptedPatterns: gameState.acceptedPatterns,
+        };
+    }
+
+    /** Restores simulation state from a snapshot. @param {SimSnapshot} snapshot */
+    function restoreState(snapshot) {
+        const { emitter } = gameState;
+        emitter.indices = [...snapshot.indices];
+        emitter.active  = [...snapshot.active];
+        emitter.grid    = snapshot.grid.map(row => [...row]);
+        gameState.acceptedPatterns = snapshot.acceptedPatterns;
+    }
+
+    function applyEmitterStep(stepIndex) {
+        cleanUpGrid();
+
+        const { perimeter, indices, active, rayCells, grid } = gameState.emitter;
+        const perimLen = perimeter.length;
+        const step = gameState.program?.[stepIndex];
+        if (!step) return;
+        for (let t = 0; t < 6; t++) {
+            if (step[t] === INSTR_FORWARD && perimLen > 0)
+                indices[t] = (indices[t] + 1) % perimLen;
+            else if (step[t] === INSTR_BACKWARD && perimLen > 0)
+                indices[t] = (indices[t] + perimLen - 1) % perimLen;
+            else if (step[t] === INSTR_TOGGLE)
+                active[t] = !active[t];
+        }
+        // Apply matter rules to persistent grid based on new active state
+        const hitCount = {};
+        for (let t = 0; t < 6; t++) {
+            if (!active[t]) continue;
+            for (const { c, r } of (rayCells[indices[t]]?.[t] ?? [])) {
+                const key = `${r},${c}`;
+                hitCount[key] = (hitCount[key] ?? 0) + 1;
+            }
+        }
+        for (const [key, n] of Object.entries(hitCount)) {
+            const [r, c] = key.split(',').map(Number);
+            const cell = grid[r]?.[c];
+            if (cell !== 'O' && cell !== 'M') continue;
+            if (n === 2) grid[r][c] = cell === 'O' ? 'm' : 'M';
+            else if (n >= 3) grid[r][c] = 'd';
+        }
+
+        detectAndAcceptPatterns();
+    }
+
+    function cleanUpGrid() {
+        const { grid } = gameState.emitter;
+        for (let r = 0; r < grid.length; r++) {
+            for (let c = 0; c < grid[0].length; c++) {
+                const cell = grid[r][c];
+                if (cell === 'x' || cell === 'd') grid[r][c] = 'O';
+                else if (cell === 'm') grid[r][c] = 'M';
+            }
+        }
+    }
+
+    function detectAndAcceptPatterns() {
+        const { grid } = gameState.emitter;
+        const { pattern } = gameState;
+
+        // Pattern matches positionally at (0,0) — same size as the board
+        if (pattern.rows !== grid.length || pattern.cols !== (grid[0]?.length ?? 0)) return;
+        if (testPattern(grid, 0, 0, pattern.grid, pattern.rows, pattern.cols)) {
+            acceptAndDeletePattern(grid, 0, 0, pattern.grid, pattern.rows, pattern.cols);
+            gameState.acceptedPatterns++;
+        }
+    }
+
+    function testPattern(grid, startR, startC, patternGrid, patternRows, patternCols) {
+        for (let patternR = 0; patternR < patternRows; patternR++) {
+            for (let patternC = 0; patternC < patternCols; patternC++) {
+                const patternCell = patternGrid[patternR][patternC];
+                if (patternCell === '-' || patternCell === '*') continue;  // ghost/border: don't care
+                const gridCell = grid[startR + patternR]?.[startC + patternC];
+                if (patternCell === 'M') {
+                    // Must be matter on board
+                    if (gridCell !== 'M' && gridCell !== 'm') return false;
+                } else if (patternCell === 'O') {
+                    // 'O' bordering 'M' in the pattern = skirting: must NOT be matter
+                    // 'O' not bordering 'M' = don't care
+                    let isSkirting = false;
+                    for (const { c: dc, r: dr } of Object.values(DIR_TO)) {
+                        if (patternGrid[patternR + dr]?.[patternC + dc] === 'M') { isSkirting = true; break; }
+                    }
+                    if (isSkirting && (gridCell === 'M' || gridCell === 'm')) return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function acceptAndDeletePattern(grid, startR, startC, patternGrid, patternRows, patternCols) {
+        for (let patternR = 0; patternR < patternRows; patternR++) {
+            for (let patternC = 0; patternC < patternCols; patternC++) {
+                const gridCell    = grid[startR + patternR][startC + patternC];
+                const patternCell = patternGrid[patternR][patternC];
+                if ((gridCell === 'M' || gridCell === 'm') && patternCell === 'M') {
+                    grid[startR + patternR][startC + patternC] = 'x';
+                }
+            }
+        }
+    }
+
+    /** Returns the total number of program lines to simulate (all lines, including trailing noops). */
+    function getMaxSteps() {
+        const program = gameState.program ?? [];
+        return program.length;
+    }
+
+    /**
+     * Runs the full simulation from the initial state and stores a {@link SimSnapshot} per step.
+     * Must be called after any change to program or input. Safe to call when input has errors
+     * (produces an empty array). All playback functions read from `gameState.precomputedStates`.
+     */
+    function precomputeStates() {
+        if (gameState.inputParseErrors?.length || !gameState.emitter.perimeter.length) {
+            gameState.precomputedStates = [];
+            return;
+        }
+        const maxSteps = getMaxSteps();
+        resetEmitterIndices();
+        const states = [];
+        for (let i = 0; i < maxSteps; i++) {
+            applyEmitterStep(i);
+            states.push(captureState());
+        }
+        gameState.precomputedStates = states;
+    }
+
+    const FIRE_OV = [
+        { dc:  2, dr:  0 },  // 0: E
+        { dc:  1, dr:  1 },  // 1: SE
+        { dc: -1, dr:  1 },  // 2: SW
+        { dc: -2, dr:  0 },  // 3: W
+        { dc: -1, dr: -1 },  // 4: NW
+        { dc:  1, dr: -1 },  // 5: NE
+    ];
+
+    const TRACK_COLORS     = ['#FF4444', '#FFDD00', '#44DD88', '#22BBEE', '#4488FF', '#AA55FF'];
+    const TRACK_COLORS_RGB = TRACK_COLORS.map(h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)]);
+
+    /**
+     * Maps gameState + elements to a pure visual render state.
+     * @param {HexGameState} gameState
+     * @param {Elements} elements
+     * @returns {HexRenderState}
+     */
+    function toRenderState(gameState, elements) {
+        const { radius, emitter } = gameState;
+        const { grid, indices, active, rayCells, baseGrid } = emitter;
+
+        const emitterPositions = indices.map((idx, t) => ({
+            ...(emitter.possibleEmitterStates[idx]?.[t] ?? { cx: 0, cy: 0, angle: 0, exitCx: 0, exitCy: 0 }),
+            active: active[t],
+            hasRay: rayCells[idx]?.[t]?.some(({ c, r }) => baseGrid[r]?.[c] !== '#') ?? false,
+        }));
+
+        return { radius, grid, container: elements.container, emitterPositions };
+    }
+
+    /**
+     * Renders the hexagonal grid SVG from a render state.
+     * @param {HexRenderState} renderState
+     */
+    function renderSVG(renderState) {
+        if (!renderState) return;
+
+        const HEX_SIZE = 30;
+        const HEX_W    = Math.sqrt(3) * HEX_SIZE;
+
+        /**
+         * Returns a space-separated polygon points string for a pointy-top hexagon centred at (cx, cy).
+         * @param {number} cx
+         * @param {number} cy
+         * @returns {string}
+         */
+        function hexPoints(cx, cy) {
+            return Array.from({ length: 6 }, (_, i) => {
+                const angle = (Math.PI / 3) * i - Math.PI / 6;
+                return `${cx + HEX_SIZE * Math.cos(angle)},${cy + HEX_SIZE * Math.sin(angle)}`;
+            }).join(' ');
+        }
+
+        /**
+         * Appends a hexagon polygon to the SVG parent at grid position (col, row).
+         * @param {SVGElement} parent
+         * @param {number} col
+         * @param {number} row
+         * @param {boolean} shouldOffsetRow
+         * @param {number} overlayCol
+         * @param {number} overlayRow
+         * @param {string} [value=':']
+         */
+        function createSvgHex(parent, col, row, shouldOffsetRow, overlayCol, overlayRow, value = ':') {
+            if (value === ':') return;
+            const rowIsOdd = row % 2 === (shouldOffsetRow ? 0 : 1);
+            const margin = 10;
+            const cx = col * HEX_W + rowIsOdd * (HEX_W / 2) + margin + HEX_W / 2;
+            const cy = row * 1.5 * HEX_SIZE + margin + HEX_SIZE;
+            parent.appendChild(createSvgElement('polygon', {
+                id: `hex-${overlayRow}-${overlayCol}`, hexValue: value, col: overlayCol, row: overlayRow,
+                points: hexPoints(cx, cy),
+            }));
+        }
+
+
+        const EMIT_R     = 11;
+        const ARROW_LEN  = 8;
+        const RAY_OFFSET = EMIT_R + ARROW_LEN + 2;
+
+        function drawRays(parent, emitterPositions) {
+            if (!emitterPositions?.length) return;
+            for (let i = 0; i < emitterPositions.length; i++) {
+                const { cx, cy, angle, exitCx, exitCy, active, hasRay } = emitterPositions[i];
+                if (!hasRay) continue;
+                const dx = Math.cos(angle), dy = Math.sin(angle);
+                const color = TRACK_COLORS[i];
+                parent.appendChild(createSvgElement('line', {
+                    x1: cx + dx * RAY_OFFSET, y1: cy + dy * RAY_OFFSET,
+                    x2: exitCx, y2: exitCy,
+                    stroke: color, strokeWidth: active ? 2 : 1.5, strokeOpacity: active ? 0.75 : 0.55,
+                    strokeDasharray: active ? '' : '3 4',
+                }));
+            }
+        }
+
+        function drawEmitterMarkers(parent, emitterPositions) {
+            if (!emitterPositions?.length) return;
+            for (let i = 0; i < emitterPositions.length; i++) {
+                const { cx, cy, angle, active } = emitterPositions[i];
+                const color = TRACK_COLORS[i];
+                const dx = Math.cos(angle);
+                const dy = Math.sin(angle);
+
+                const hexPts = Array.from({ length: 6 }, (_, k) => {
+                    const a = (Math.PI / 3) * k - Math.PI / 6;
+                    return `${(cx + EMIT_R * Math.cos(a)).toFixed(2)},${(cy + EMIT_R * Math.sin(a)).toFixed(2)}`;
+                }).join(' ');
+                parent.appendChild(createSvgElement('polygon', {
+                    points: hexPts,
+                    fill: color, fillOpacity: active ? 0.15 : 0.08,
+                    stroke: color, strokeWidth: 1.5, strokeOpacity: active ? 1 : 0.55,
+                }));
+
+                const tipX = cx + dx * RAY_OFFSET;
+                const tipY = cy + dy * RAY_OFFSET;
+                const px = -dy, py = dx;
+                const half_w = ARROW_LEN * 0.45;
+                parent.appendChild(createSvgElement('polygon', {
+                    points: [
+                        `${tipX},${tipY}`,
+                        `${tipX - dx*ARROW_LEN + px*half_w},${tipY - dy*ARROW_LEN + py*half_w}`,
+                        `${tipX - dx*ARROW_LEN - px*half_w},${tipY - dy*ARROW_LEN - py*half_w}`,
+                    ].join(' '),
+                    fill: color, fillOpacity: active ? 0.9 : 0.45,
+                }));
+
+                const label = createSvgElement('text', {
+                    x: cx, y: cy,
+                    textAnchor: 'middle', dominantBaseline: 'central',
+                    fontSize: 11, fontFamily: 'Space Mono, monospace', fontWeight: 'bold',
+                    fill: color, fillOpacity: active ? 1 : 0.65,
+                });
+                label.textContent = String(i + 1);
+                parent.appendChild(label);
+            }
+        }
+
+        /**
+         * Builds and mounts the full hex grid SVG into container.
+         * Layer order: base cells → matter cells → rays → emitter markers.
+         */
+        function createHexGrid(container, radius, grid, emitterPositions) {
+            const rows = 2 * radius - 1;
+            const cols = 2 * radius - 1;
+            const margin = 10;
+            const svg = createSvgElement('svg', {
+                naturalWidth: Math.ceil(cols * HEX_W + HEX_W / 2 + margin * 2),
+                naturalHeight: Math.ceil(rows * 1.5 * HEX_SIZE + HEX_SIZE * 0.5 + margin * 2),
+                offsetX: HEX_W / 4,
+            });
+
+            const gBase   = createSvgElement('g', {});
+            const gMatter = createSvgElement('g', {});
+            const gRays   = createSvgElement('g', {});
+            const gEmit   = createSvgElement('g', {});
+
+            for (let r = 0; r < rows; r++) {
+                const mustOffsetCol = (r + radius + 1) % 2 === 1;
+                for (let c = 0; c < cols; c++) {
+                    const gridCol = c * 2 + (mustOffsetCol ? 1 : 0);
+                    const val = grid[r][gridCol];
+                    createSvgHex((val === 'M') || (val === 'm') || (val === 'x') ? gMatter : gBase, c, r, radius % 2 === 0, r, gridCol, val);
+                }
+            }
+
+            drawRays(gRays, emitterPositions);
+            drawEmitterMarkers(gEmit, emitterPositions);
+
+            svg.append(gBase, gMatter, gRays, gEmit);
+            container.replaceChildren(svg);
+        }
+
+        const { radius, grid, container, emitterPositions } = renderState;
+        createHexGrid(container, radius, grid, emitterPositions);
+    }
+
+    /**
+     * Renders the pattern hex grid into the pattern container.
+     * Cell types: '*' = border, 'O' adjacent to 'M' = skirting (must be clear),
+     * 'O' not adjacent to 'M' = don't-care, 'M' = matter, '-' = ghost (not drawn).
+     * @param {HexGameState} gameState
+     * @param {HTMLElement} container
+     */
+    function renderPatternSVG(gameState, container) {
+        const { pattern } = gameState;
+        if (!pattern?.grid?.length || !pattern.cols || !pattern.patternRadius) { container.replaceChildren(); return; }
+
+        const { grid: patternGrid, rows: patternRows, cols: patternCols, patternRadius: pR } = pattern;
+        const HEX_SIZE = 18;
+        const HEX_W    = Math.sqrt(3) * HEX_SIZE;
+        const margin   = 10;
+        const visualCols = Math.ceil(patternCols / 2);
+
+        function hexPoints(cx, cy) {
+            return Array.from({ length: 6 }, (_, i) => {
+                const angle = (Math.PI / 3) * i - Math.PI / 6;
+                return `${cx + HEX_SIZE * Math.cos(angle)},${cy + HEX_SIZE * Math.sin(angle)}`;
+            }).join(' ');
+        }
+
+        const patternBaseRadius = (patternRows + 1) / 2;
+
+        const svgW = Math.ceil(visualCols * HEX_W + (patternCols % 2 === 0 ? HEX_W / 2 : 0) + margin * 2);
+        const svgH = Math.ceil(patternRows * 1.5 * HEX_SIZE + HEX_SIZE * 0.5 + margin * 2);
+
+        const svg       = createSvgElement('svg', { naturalWidth: svgW, naturalHeight: svgH });
+        const gBorder   = createSvgElement('g', {});
+        const gSkirting = createSvgElement('g', {});
+        const gDontCare = createSvgElement('g', {});
+        const gMatter   = createSvgElement('g', {});
+
+        for (let r = 0; r < patternRows; r++) {
+            const rowStr      = patternGrid[r] ?? [];
+            const isOffsetRow = (r + patternBaseRadius) % 2 === 0;
+            for (let c = 0; c < patternCols; c++) {
+                if ((r + c + patternBaseRadius) % 2 === 0) continue;
+                const ch = rowStr[c] ?? '-';
+                if (ch === '-') continue;
+
+                const visualCol = Math.floor(c / 2);
+                const cx = visualCol * HEX_W + (isOffsetRow ? HEX_W / 2 : 0) + margin + HEX_W / 2;
+                const cy = r * 1.5 * HEX_SIZE + margin + HEX_SIZE;
+
+                if (ch === '*') {
+                    const poly = createSvgElement('polygon', { points: hexPoints(cx, cy), hexValue: 'border' });
+                    gBorder.appendChild(poly);
+                } else if (ch === 'M') {
+                    const poly = createSvgElement('polygon', { points: hexPoints(cx, cy), hexValue: 'M', dataGridR: r, dataGridC: c });
+                    gMatter.appendChild(poly);
+                } else if (ch === 'O') {
+                    let isSkirting = false;
+                    for (const { c: dc, r: dr } of Object.values(DIR_TO)) {
+                        if (patternGrid[r + dr]?.[c + dc] === 'M') { isSkirting = true; break; }
+                    }
+                    if (isSkirting) {
+                        const poly = createSvgElement('polygon', { points: hexPoints(cx, cy), hexValue: 'skirting', dataGridR: r, dataGridC: c });
+                        gSkirting.appendChild(poly);
+                    } else {
+                        const poly = createSvgElement('polygon', { points: hexPoints(cx, cy), hexValue: 'dontcare', dataGridR: r, dataGridC: c });
+                        gDontCare.appendChild(poly);
+                    }
+                }
+            }
+        }
+
+        svg.append(gBorder, gDontCare, gSkirting, gMatter);
+        container.replaceChildren(svg);
+    }
+
+    /** Re-renders the SVG, stats, and instruction grid.
+     * @param {HexGameState} gameState
+     * @param {Elements} elements
+     */
+    function render(gameState, elements) {
+        renderSVG(toRenderState(gameState, elements));
+        renderStats(elements, validateHexStats(gameState));
+        syncProgram();
+    }
+
+    /** Builds and registers the preset case buttons for the hex demo.
+     * @param {HexGameState} gameState
+     * @param {Elements} elements
+     */
+    function initCases(gameState, elements, onCaseSelect) {
+        // === CASES BEGIN ===
+        const hexCases = [
+            {
+                label: 'Case 1',
+                title: 'Example case 1 — r=3, 3 patterns',
+                input: '3 7 13 3\n---*-*-*-*---\n--*-O-O-O-*--\n-*-O-M-M-O-*-\n*-O-M-O-O-O-*\n-*-O-M-M-O-*-\n--*-O-O-O-*--\n---*-*-*-*---',
+                solution: 'F - - - - -\nF - - - - -\n- - B - - -\n- - B - - -\n- - T - - -\n- - F - - -\n- - F - - -\nB - - - - -\n- - F - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nB - - - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\n- - F - - -\n- - F - - -\nB - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nB - - - - -\n- - F - - -\n- - F - - -\n- - F - - -\n- - T - - -\nF - - - - -\nF - - - - -\nF - - - - -\nF - - - - -\n- - B - - -\n- - B - - -\n- - B - - -\n- - B - - -\n- - T - - -\n- - F - - -\n- - F - - -\nB - - - - -\n- - F - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nB - - - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\n- - F - - -\n- - F - - -\nB - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nB - - - - -\n- - F - - -\n- - F - - -\n- - F - - -\n- - T - - -\nF - - - - -\nF - - - - -\nF - - - - -\nF - - - - -\n- - B - - -\n- - B - - -\n- - B - - -\n- - B - - -\n- - T - - -\n- - F - - -\n- - F - - -\nB - - - - -\n- - F - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nB - - - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\n- - F - - -\n- - F - - -\nB - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nB - - - - -\n- - F - - -\n- - F - - -\n- - F - - -\n- - T - - -',
+            },
+            {
+                label: 'Case 2',
+                title: 'Example case 2 — r=3, 1 pattern',
+                input: '3 7 13 1\n---*-*-*-*---\n--*-M-M-M-*--\n-*-M-M-M-M-*-\n*-M-O-M-M-M-*\n-*-O-O-M-M-*-\n--*-M-M-M-*--\n---*-*-*-*---',
+                solution: 'F - - - - -\nF - - - - -\n- - B - - -\n- - B - - -\nT - T - - -\nT - - - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\nT - - - - -\nT - - - - -\nB - - - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\nB - - - - -\nT - - - - -\nT - - - - -\n- - F - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\nT - - - - -\nT - - - - -\nB - - - - -\nT - - - - -\nT - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\n- - B - - -\nB - - - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\nT - - - - -\nT - T - - -',
+            },
+            {
+                label: 'Case 3',
+                title: 'Example case 3 — r=4, 4 patterns',
+                input: '4 9 17 4\n----*-*-*-*-*----\n---*-O-O-O-O-*---\n--*-O-O-O-M-O-*--\n-*-O-O-M-M-O-O-*-\n*-O-O-O-M-M-O-O-*\n-*-O-O-M-O-O-O-*-\n--*-O-O-M-M-O-*--\n---*-O-O-O-O-*---\n----*-*-*-*-*----',
+                solution: 'F - - - - -\nF - - - - -\nF - - - - -\n- - B - - -\n- - B - - -\n- - B - - -\n- - T - - -\n- - F - - -\n- - F - - -\n- - F - - -\nB - - - - -\n- - F - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\n- - B - - -\n- - B - - -\nB - - - - -\n- - F - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\n- - F - - -\nB - - - - -\n- - F - - -\n- - B - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\n- - B - - -\n- - B - - -\nB - - - - -\n- - F - - -\n- - F - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\n- - F - - -\n- - F - - -\nB - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\n- - B - - -\nB - - - - -\n- - F - - -\n- - F - - -\n- - F - - -\n- - F - - -\n- - T - - -\nF - - - - -\nF - - - - -\nF - - - - -\nF - - - - -\nF - - - - -\nF - - - - -\n- - B - - -\n- - B - - -\n- - B - - -\n- - B - - -\n- - B - - -\n- - B - - -\n- - T - - -\n- - F - - -\n- - F - - -\n- - F - - -\nB - - - - -\n- - F - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\n- - B - - -\n- - B - - -\nB - - - - -\n- - F - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\n- - F - - -\nB - - - - -\n- - F - - -\n- - B - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\n- - B - - -\n- - B - - -\nB - - - - -\n- - F - - -\n- - F - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\n- - F - - -\n- - F - - -\nB - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\n- - B - - -\nB - - - - -\n- - F - - -\n- - F - - -\n- - F - - -\n- - F - - -\n- - T - - -\nF - - - - -\nF - - - - -\nF - - - - -\nF - - - - -\nF - - - - -\nF - - - - -\n- - B - - -\n- - B - - -\n- - B - - -\n- - B - - -\n- - B - - -\n- - B - - -\n- - T - - -\n- - F - - -\n- - F - - -\n- - F - - -\nB - - - - -\n- - F - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\n- - B - - -\n- - B - - -\nB - - - - -\n- - F - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\n- - F - - -\nB - - - - -\n- - F - - -\n- - B - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\n- - B - - -\n- - B - - -\nB - - - - -\n- - F - - -\n- - F - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\n- - F - - -\n- - F - - -\nB - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\n- - B - - -\nB - - - - -\n- - F - - -\n- - F - - -\n- - F - - -\n- - F - - -\n- - T - - -\nF - - - - -\nF - - - - -\nF - - - - -\nF - - - - -\nF - - - - -\nF - - - - -\n- - B - - -\n- - B - - -\n- - B - - -\n- - B - - -\n- - B - - -\n- - B - - -\n- - T - - -\n- - F - - -\n- - F - - -\n- - F - - -\nB - - - - -\n- - F - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\n- - B - - -\n- - B - - -\nB - - - - -\n- - F - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\n- - F - - -\nB - - - - -\n- - F - - -\n- - B - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\n- - B - - -\n- - B - - -\nB - - - - -\n- - F - - -\n- - F - - -\n- - F - - -\nT - - - - -\nT - - - - -\n- - F - - -\n- - F - - -\n- - F - - -\nB - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\nT - - - - -\nT - - - - -\n- - B - - -\n- - B - - -\nB - - - - -\n- - F - - -\n- - F - - -\n- - F - - -\n- - F - - -\n- - T - - -',
+            },
+        ];
+
+        const secretCase = {
+            label: 'Secret',
+            title: 'Codinator\'s pick — easter egg',
+            input: '4 9 17 1\n----*-*-*-*-*----\n---*-O-O-O-O-*---\n--*-M-M-O-M-M-*--\n-*-M-M-M-M-M-M-*-\n*-M-M-M-M-M-M-M-*\n-*-O-M-M-M-M-O-*-\n--*-O-O-M-O-O-*--\n---*-O-O-O-O-*---\n----*-*-*-*-*----',
+            solution: '',
+        };
+        // === CASES END ===
+
+        const caseButtonsEl = document.getElementById('hex-case-buttons');
+        for (const { label, title, input, solution } of hexCases) {
+            const btn = document.createElement('button');
+            btn.textContent = label;
+            btn.title = title;
+            btn.addEventListener('mousedown', e => e.preventDefault());
+            btn.addEventListener('click', () => {
+                elements.input.value    = input;
+                elements.solution.value = solution;
+                parseHexInput(gameState, input);
+                parseHexSolution(gameState, solution);
+                renderPatternSVG(gameState, elements.patternContainer);
+                onCaseSelect();
+            });
+            caseButtonsEl.appendChild(btn);
+        }
+        return { hexCases, secretCase };
+    }
+
+    /** Wires up DOM elements, loads default input and solution, and performs the initial render.
+     * @param {HexGameState} gameState
+     * @param {Elements} elements
+     */
+    function init(gameState, elements) {
+        elements.input            = document.getElementById('hex-input');
+        elements.solution         = document.getElementById('hex-solution');
+        elements.container        = document.getElementById('svg-container-hex');
+        elements.stats            = document.getElementById('stats-hex');
+        elements.patternContainer = document.getElementById('svg-container-pattern');
+
+        const { hexCases, secretCase } = initCases(gameState, elements, () => schedulePrecompute(() => stopPlayback()));
+        elements.input.value    = hexCases[0].input;
+        elements.solution.value = hexCases[0].solution;
+
+        window.__codinatorClick = () => {
+            elements.input.value    = secretCase.input;
+            elements.solution.value = secretCase.solution;
+            parseHexInput(gameState, secretCase.input);
+            parseHexSolution(gameState, secretCase.solution);
+            renderPatternSVG(gameState, elements.patternContainer);
+            schedulePrecompute(() => stopPlayback());
+        };
+
+        const codinatorEl = document.getElementById('codinator');
+        if (codinatorEl) {
+            const svgData = new XMLSerializer().serializeToString(codinatorEl);
+            const faviconEl = document.querySelector('link[rel="icon"]');
+            if (faviconEl) faviconEl.href = 'data:image/svg+xml,' + encodeURIComponent(svgData);
+        }
+
+        const INSTR_ICONS = {
+            [INSTR_FORWARD]:  `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4,14 A9,9 0 0 1 20,14"/><polyline points="16,9.5 20.5,14.5 24,9.5"/></svg>`,
+            [INSTR_BACKWARD]: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20,14 A9,9 0 0 0 4,14"/><polyline points="0,9.5 3.5,14.5 8,9.5"/></svg>`,
+        };
+        const INSTR_CYCLE      = { [INSTR_NOOP]: INSTR_TOGGLE, [INSTR_TOGGLE]: INSTR_FORWARD, [INSTR_FORWARD]: INSTR_BACKWARD, [INSTR_BACKWARD]: INSTR_NOOP };
+        const INSTR_CYCLE_BACK = { [INSTR_NOOP]: INSTR_BACKWARD, [INSTR_BACKWARD]: INSTR_FORWARD, [INSTR_FORWARD]: INSTR_TOGGLE, [INSTR_TOGGLE]: INSTR_NOOP };
+
+        const instructionControls = document.getElementById('instruction-controls');
+        const clearAllBtn = document.createElement('button');
+        clearAllBtn.textContent = 'Clear All';
+        clearAllBtn.addEventListener('mousedown', e => e.preventDefault());
+        clearAllBtn.addEventListener('click', () => {
+            gameState.program = gameState.program.map(instructionLine => instructionLine.map(() => INSTR_NOOP));
+            markProgramDirty();
+            schedulePrecompute(() => stopPlayback());
+        });
+        instructionControls.appendChild(clearAllBtn);
+
+        function getVisibleRowCount() {
+            const program = gameState.program ?? [];
+            let lastNonNoop = -1;
+            for (let r = 0; r < program.length; r++) {
+                if (program[r].some(v => v !== INSTR_NOOP)) lastNonNoop = r;
+            }
+            return lastNonNoop + 3;
+        }
+
+        function ensureInstrRows(count) {
+            if (!gameState.program) gameState.program = [];
+            while (gameState.program.length < count) {
+                gameState.program.push([INSTR_NOOP, INSTR_NOOP, INSTR_NOOP, INSTR_NOOP, INSTR_NOOP, INSTR_NOOP]);
+            }
+        }
+
+        // Playback
+
+        const replayButtons = {};
+
+        function updatePlaybackUI() {
+            replayButtons.stop.setAttribute    ('active', playbackState.status === 'stopped'     ? 'true' : 'false');
+            replayButtons.stepBack.setAttribute('active', 'false');
+            replayButtons.pause.setAttribute   ('active', playbackState.status === 'paused'      ? 'true' : 'false');
+            replayButtons.step.setAttribute    ('active', 'false');
+            replayButtons.play.setAttribute    ('active', playbackState.status === 'playing'     ? 'true' : 'false');
+            replayButtons.fast.setAttribute    ('active', playbackState.status === 'fastforward' ? 'true' : 'false');
+        }
+
+        stopPlayback = function() {
+            clearInterval(playbackState.timerId);
+            playbackState.timerId = null;
+            playbackState.status = 'stopped';
+            playbackState.step = 0;
+            resetEmitterIndices();
+            updatePlaybackUI();
+            render(gameState, elements);
+        };
+
+        function pausePlayback() {
+            if (playbackState.status === 'stopped' || playbackState.status === 'paused') return;
+            playbackState.prevStatus = playbackState.status;
+            clearInterval(playbackState.timerId);
+            playbackState.timerId = null;
+            playbackState.status = 'paused';
+            updatePlaybackUI();
+        }
+
+        const PLAYBACK_INTERVALS = { playing: 333, fastforward: 67 };
+
+        function stepForward() {
+            if (playbackState.status === 'playing' || playbackState.status === 'fastforward') pausePlayback();
+            const maxSteps = gameState.precomputedStates.length;
+            if (maxSteps === 0) return;
+            if (playbackState.status === 'stopped') {
+                playbackState.step   = 0;
+                playbackState.status = 'paused';
+                restoreState(gameState.precomputedStates[0]);
+            } else if (playbackState.step < maxSteps - 1) {
+                playbackState.step++;
+                restoreState(gameState.precomputedStates[playbackState.step]);
+            } else {
+                pausePlayback(); return;
+            }
+            updatePlaybackUI();
+            render(gameState, elements);
+        }
+
+        function stepBackward() {
+            if (playbackState.status === 'playing' || playbackState.status === 'fastforward') pausePlayback();
+            if (playbackState.status === 'stopped') return;
+            if (playbackState.step === 0) {
+                resetEmitterIndices();
+                playbackState.status = 'stopped';
+            } else {
+                playbackState.step--;
+                restoreState(gameState.precomputedStates[playbackState.step]);
+            }
+            updatePlaybackUI();
+            render(gameState, elements);
+        }
+
+        function startPlayback(speed) {
+            if (playbackState.timerId) clearInterval(playbackState.timerId);
+            const maxSteps = gameState.precomputedStates.length;
+            if (maxSteps === 0) return;
+            if (playbackState.status === 'stopped' || playbackState.step >= maxSteps - 1) {
+                playbackState.step = 0;
+                restoreState(gameState.precomputedStates[0]);
+            }
+            playbackState.status = speed;
+            playbackState.timerId = setInterval(() => {
+                if (playbackState.step >= maxSteps - 1) { pausePlayback(); return; }
+                playbackState.step++;
+                restoreState(gameState.precomputedStates[playbackState.step]);
+                render(gameState, elements);
+            }, PLAYBACK_INTERVALS[speed]);
+            updatePlaybackUI();
+            render(gameState, elements);
+        }
+
+        function jumpToStep(targetStep) {
+            if (playbackState.timerId) { clearInterval(playbackState.timerId); playbackState.timerId = null; }
+            const maxSteps = gameState.precomputedStates.length;
+            if (maxSteps === 0) return;
+            playbackState.step   = Math.max(0, Math.min(targetStep, maxSteps - 1));
+            playbackState.status = 'paused';
+            restoreState(gameState.precomputedStates[playbackState.step]);
+            updatePlaybackUI();
+            render(gameState, elements);
+        }
+
+        // Pending precompute timer — debounces rapid edits so only the final
+        // state triggers the full simulation.
+        let _precomputeTimerId = null;
+
+        /**
+         * Schedule a precompute run on the next macrotask (setTimeout 0).
+         * Any previously scheduled run is cancelled first, so rapid edits
+         * only trigger one simulation at the end.
+         * @param {() => void} onDone — called after precomputeStates() finishes
+         */
+        function schedulePrecompute(onDone) {
+            if (_precomputeTimerId !== null) clearTimeout(_precomputeTimerId);
+            _precomputeTimerId = setTimeout(() => {
+                _precomputeTimerId = null;
+                precomputeStates();
+                onDone();
+            }, 0);
+        }
+
+        /**
+         * Precomputes all states then adapts the current playback frame to the new program.
+         * If stopped or the program became empty, resets to the initial state.
+         * If paused/playing, clamps to the last available step and pauses.
+         * The heavy precomputeStates() call is deferred to the next macrotask so
+         * the calling event handler returns immediately (keeps the browser responsive).
+         */
+        function precomputeAndAdapt() {
+            const prevStatus = playbackState.status;
+            const prevStep   = playbackState.step;
+            if (playbackState.timerId) { clearInterval(playbackState.timerId); playbackState.timerId = null; }
+            schedulePrecompute(() => {
+                const maxSteps = gameState.precomputedStates.length;
+                if (prevStatus === 'stopped' || maxSteps === 0) {
+                    playbackState.status = 'stopped';
+                    playbackState.step   = 0;
+                    resetEmitterIndices();
+                } else {
+                    playbackState.step   = Math.min(prevStep, maxSteps - 1);
+                    playbackState.status = 'paused';
+                    restoreState(gameState.precomputedStates[playbackState.step]);
+                }
+                updatePlaybackUI();
+                render(gameState, elements);
+            });
+        }
+
+        const PLAYBACK_ICONS = {
+            stop:     `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="1.5"/></svg>`,
+            stepBack: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><polygon points="17,3 17,21 4,12"/></svg>`,
+            pause:    `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="4" width="5" height="16" rx="1"/><rect x="14" y="4" width="5" height="16" rx="1"/></svg>`,
+            step:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><polygon points="7,3 7,21 20,12"/></svg>`,
+            play:     `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="7,3 7,21 20,12"/></svg>`,
+            fast:     `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="2,4 2,20 8,12"/><polygon points="9,4 9,20 15,12"/><polygon points="16,4 16,20 22,12"/></svg>`,
+        };
+        const controlsEl = document.getElementById('playback-controls');
+        for (const [key, title, action] of [
+            ['stop',     'Stop (Esc)',        stopPlayback],
+            ['stepBack', 'Step back (←)', stepBackward],
+            ['pause',    'Pause (Space)',      pausePlayback],
+            ['step',     'Step forward (→)', stepForward],
+            ['play',     'Play (1)',  () => startPlayback('playing')],
+            ['fast',     'Fast (2)', () => startPlayback('fastforward')],
+        ]) {
+            const btn = document.createElement('button');
+            btn.innerHTML = PLAYBACK_ICONS[key]; btn.title = title; btn.className = 'btn-playback';
+            btn.addEventListener('mousedown', e => e.preventDefault());
+            btn.addEventListener('click', action);
+            replayButtons[key] = btn;
+            controlsEl.appendChild(btn);
+        }
+        updatePlaybackUI();
+
+        document.addEventListener('keydown', e => {
+            if (e.target.matches('textarea, input, button')) return;
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (playbackState.status === 'paused') startPlayback(playbackState.prevStatus);
+                else if (playbackState.status !== 'stopped') pausePlayback();
+                else startPlayback('playing');
+            } else if (e.key === '1') { startPlayback('playing'); }
+            else if (e.key === '2') { startPlayback('fastforward'); }
+            else if (e.code === 'ArrowLeft')  { e.preventDefault(); stepBackward(); }
+            else if (e.code === 'ArrowRight') { e.preventDefault(); stepForward(); }
+            else if (e.code === 'Escape') { stopPlayback(); }
+        });
+
+        // Instruction grid: diff-based renderer
+        // Rebuilding the grid each frame is too slow for long solutions, so we
+        // keep a DOM cache mirroring gameState.program and only write the
+        // cells that actually changed since the last sync.
+        const instructionScroll = document.getElementById('instruction-scroll');
+        const CELL_STYLES = TRACK_COLORS_RGB.map(([cr, cg, cb]) => ({
+            on:  { background: `rgba(${cr},${cg},${cb},0.35)`, color: `rgba(0,0,0,1.0)`,             borderColor: `rgba(${cr},${cg},${cb},0.65)` },
+            off: { background: `rgba(${cr},${cg},${cb},0.07)`, color: `rgba(${cr},${cg},${cb},1.00)`, borderColor: `rgba(${cr},${cg},${cb},0.18)` },
+        }));
+        const rowCache = [];
+        let lastActiveRow = -1;
+        let programDirty = true;
+        markProgramDirty = () => { programDirty = true; };
+
+        function makeRowElement() {
+            const el = document.createElement('div');
+            el.className = 'instruction-row';
+            const rowNumEl = document.createElement('button');
+            rowNumEl.className = 'instruction-row-num';
+            rowNumEl.addEventListener('mousedown', e => e.preventDefault());
+            el.appendChild(rowNumEl);
+            const cells = [];
+            for (let c = 0; c < 6; c++) {
+                const cellEl = document.createElement('button');
+                cellEl.className = 'instruction-cell';
+                cellEl.dataset.col = String(c);
+                cellEl.addEventListener('mousedown', e => e.preventDefault());
+                el.appendChild(cellEl);
+                cells.push({ el: cellEl, val: undefined, active: undefined });
+            }
+            return { el, rowNumEl, cells, isActive: false, isDim: false };
+        }
+
+        function applyCell(state, c, val, active) {
+            if (state.val !== val) {
+                const icon = INSTR_ICONS[val];
+                if (icon) state.el.innerHTML = icon;
+                else { state.el.innerHTML = ''; state.el.textContent = val; }
+                state.val = val;
+            }
+            if (state.active !== active) {
+                const styles = CELL_STYLES[c][active ? 'on' : 'off'];
+                const s = state.el.style;
+                s.background  = styles.background;
+                s.color       = styles.color;
+                s.borderColor = styles.borderColor;
+                state.active = active;
+            }
+        }
+
+        instructionScroll.addEventListener('click', e => {
+            const cellEl = e.target.closest('.instruction-cell');
+            if (!cellEl) return;
+            const r = Array.prototype.indexOf.call(instructionScroll.children, cellEl.parentElement);
+            const c = Number(cellEl.dataset.col);
+            if (r < 0 || Number.isNaN(c)) return;
+            if (e.ctrlKey && e.altKey) {
+                e.preventDefault();
+                gameState.program.splice(r, 1);
+            } else if (e.altKey) {
+                e.preventDefault();
+                gameState.program.splice(r, 0, [INSTR_NOOP, INSTR_NOOP, INSTR_NOOP, INSTR_NOOP, INSTR_NOOP, INSTR_NOOP]);
+            } else if (e.ctrlKey) {
+                e.preventDefault();
+                gameState.program[r][c] = INSTR_NOOP;
+            } else if (e.shiftKey) {
+                gameState.program[r][c] = INSTR_CYCLE_BACK[gameState.program[r][c]] ?? INSTR_BACKWARD;
+            } else {
+                gameState.program[r][c] = INSTR_CYCLE[gameState.program[r][c]] ?? INSTR_TOGGLE;
+            }
+            programDirty = true;
+            precomputeAndAdapt();
+        });
+
+        const updateCellMod = e => {
+            const ctrl = e.ctrlKey || e.metaKey, alt = e.altKey;
+            const mod = ctrl && alt ? 'ctrl-alt' : alt ? 'alt' : ctrl ? 'ctrl' : '';
+            if (mod) instructionScroll.dataset.mod = mod;
+            else delete instructionScroll.dataset.mod;
+        };
+        window.addEventListener('keydown', updateCellMod);
+        window.addEventListener('keyup', updateCellMod);
+        window.addEventListener('blur', () => delete instructionScroll.dataset.mod);
+
+        syncProgram = function renderInstructionGrid() {
+            const visibleRows = getVisibleRowCount();
+            ensureInstrRows(visibleRows);
+
+            while (rowCache.length < visibleRows) {
+                const row = makeRowElement();
+                const rowIdx = rowCache.length;
+                row.rowNumEl.textContent = String(rowIdx + 1);
+                row.rowNumEl.title = (rowIdx !== 16) ? `Jump to step ${rowIdx + 1}` : 'Did did you find the secret?';
+                row.rowNumEl.addEventListener('click', () => jumpToStep(rowIdx));
+                rowCache.push(row);
+                instructionScroll.appendChild(row.el);
+            }
+            while (rowCache.length > visibleRows) {
+                rowCache.pop().el.remove();
+            }
+
+            const activeRow = playbackState.status !== 'stopped' ? playbackState.step : -1;
+            const firstDimRow = visibleRows - 2;
+            const trackActive = [false, false, false, false, false, false];
+            for (let r = 0; r < visibleRows; r++) {
+                const instructionLine = gameState.program[r];
+                for (let c = 0; c < 6; c++)
+                    if (instructionLine[c] === INSTR_TOGGLE) trackActive[c] = !trackActive[c];
+                const row = rowCache[r];
+                const isActive = r === activeRow;
+                if (row.isActive !== isActive) {
+                    row.el.classList.toggle('active', isActive);
+                    row.isActive = isActive;
+                }
+                const isDim = r >= firstDimRow;
+                if (row.isDim !== isDim) {
+                    row.el.classList.toggle('dim', isDim);
+                    row.isDim = isDim;
+                }
+                for (let c = 0; c < 6; c++)
+                    applyCell(row.cells[c], c, instructionLine[c], trackActive[c]);
+            }
+
+            if (programDirty && !_suppressSolutionSync) {
+                elements.solution.value = serializeProgram(gameState.program.slice(0, Math.max(0, firstDimRow)));
+                programDirty = false;
+            }
+
+            if (activeRow !== -1 && activeRow !== lastActiveRow) {
+                const forward = lastActiveRow === -1 || activeRow > lastActiveRow;
+                const bufferRow = forward
+                    ? Math.min(activeRow + 2, rowCache.length - 1)
+                    : Math.max(activeRow - 2, 0);
+                rowCache[bufferRow]?.el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+            lastActiveRow = activeRow;
+        };
+
+        let _suppressInputSync = false;
+
+        elements.patternContainer.addEventListener('click', e => {
+            const poly = e.target.closest('polygon[data-grid-r]');
+            if (!poly) return;
+            const r = Number(poly.getAttribute('data-grid-r'));
+            const c = Number(poly.getAttribute('data-grid-c'));
+            const grid = gameState.pattern.grid;
+            if (!grid[r]) return;
+            const cur = grid[r][c];
+            // Toggle: M ↔ o
+            grid[r][c] = (cur === 'M') ? 'O' : 'M';
+            _suppressInputSync = true;
+            elements.input.value = serializeInput(gameState);
+            _suppressInputSync = false;
+            parseHexInput(gameState, elements.input.value);
+            renderPatternSVG(gameState, elements.patternContainer);
+            precomputeAndAdapt();
+        });
+
+        elements.input.addEventListener('input', () => {
+            if (_suppressInputSync) return;
+            parseHexInput(gameState, elements.input.value);
+            renderPatternSVG(gameState, elements.patternContainer);
+            precomputeAndAdapt();
+        });
+        elements.solution.addEventListener('input', () => {
+            _suppressSolutionSync = true;
+            parseHexSolution(gameState, elements.solution.value);
+            precomputeAndAdapt();
+            _suppressSolutionSync = false;
+        });
+
+        attachFitOnly(elements.container);
+        attachFitOnly(elements.patternContainer);
+
+        parseHexInput(gameState, elements.input.value);
+        parseHexSolution(gameState, elements.solution.value);
+        renderPatternSVG(gameState, elements.patternContainer);
+        render(gameState, elements);
+        schedulePrecompute(() => stopPlayback());
+    }
+
+    init(gameState, elements);
+}
+const globalState = {
+    gameState: {
+        radius: 0, cols: 0, rows: 0,
+        pattern: { grid: [], rows: 0, cols: 0, count: 0, patternRadius: 0 },
+        acceptedPatterns: 0,
+        emitter: { perimeter: [], indices: [0,0,0,0,0,0], active: [false,false,false,false,false,false], baseGrid: [], grid: [], possibleEmitterStates: [], rayCells: [] },
+        program: [], precomputedStates: [], inputParseErrors: [], solutionParseErrors: [], mode: '',
+    },
+    elements: { input: null, solution: null, container: null, patternContainer: null, stats: null },
+};
+nanofabricator(globalState);
+
+window.addEventListener('message', function(e) {
+    const data = e.data;
+    if (!data || data.input === undefined) return;
+    const inputText = data.input || '';
+    const els = globalState.elements;
+    if (els.input) {
+        els.input.value = inputText;
+        els.input.dispatchEvent(new Event('input'));
+    }
+    if (els.solution) {
+        els.solution.value = data.solution || '';
+        els.solution.dispatchEvent(new Event('input'));
+    }
+});
+</script>
+
+</html>

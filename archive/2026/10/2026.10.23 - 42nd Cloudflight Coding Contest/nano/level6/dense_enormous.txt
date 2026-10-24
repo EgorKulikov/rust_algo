@@ -1,0 +1,25 @@
+1
+11 23 45 1
+-----------*-*-*-*-*-*-*-*-*-*-*-*-----------
+----------*-M-M-M-M-M-M-O-M-M-O-O-*----------
+---------*-M-M-M-M-M-M-O-M-M-M-M-M-*---------
+--------*-O-M-M-M-M-M-M-M-M-M-M-O-M-*--------
+-------*-M-M-O-M-M-M-M-M-M-M-M-M-O-M-*-------
+------*-M-M-M-M-O-M-M-M-M-M-M-M-M-M-M-*------
+-----*-M-O-M-O-M-M-M-M-M-M-M-M-O-M-M-M-*-----
+----*-M-M-M-M-M-M-M-M-O-M-O-M-M-M-M-M-M-*----
+---*-M-M-M-M-O-M-M-M-M-M-O-M-M-M-M-M-M-M-*---
+--*-M-M-M-M-M-O-M-O-M-M-M-M-M-M-M-O-M-M-M-*--
+-*-M-M-M-M-M-M-M-M-M-M-M-M-M-M-M-M-M-M-M-M-*-
+*-M-M-M-M-M-M-M-M-M-M-M-M-O-M-M-M-M-M-M-M-M-*
+-*-M-O-M-M-M-M-M-M-M-M-M-M-M-M-M-M-M-M-O-M-*-
+--*-M-M-M-M-M-M-M-M-M-M-M-M-M-M-M-M-M-M-M-*--
+---*-M-O-M-M-M-M-M-M-M-M-M-M-M-M-O-M-M-M-*---
+----*-M-M-M-M-M-M-M-M-M-O-M-M-M-M-M-O-M-*----
+-----*-M-M-M-M-O-M-M-M-O-O-M-M-M-M-M-M-*-----
+------*-M-M-M-M-M-M-M-M-M-M-M-M-M-M-M-*------
+-------*-O-M-O-M-M-M-M-O-M-M-M-M-M-M-*-------
+--------*-M-M-M-M-M-M-M-M-M-M-M-M-M-*--------
+---------*-M-M-M-M-M-M-M-M-M-M-M-M-*---------
+----------*-M-M-O-M-M-M-M-M-M-M-O-*----------
+-----------*-*-*-*-*-*-*-*-*-*-*-*-----------

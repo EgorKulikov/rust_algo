@@ -1,0 +1,117 @@
+B F B T T T
+T T T F B F
+- - - - - -
+- - - - - -
+- - - - - -
+- - - - - -
+- - - - - -
+- - - - - -
+
+- T T - - B
+- F - - T T
+
+B B T B T T
+- T B B F B
+T B B T B B
+B F - - - F
+F B - F B F
+- - - - - -
+B F T T F B
+- - - - - -
+F B T T B F
+
+T T - F - -
+B - - - - -
+F - - T - -
+- - - - - -
+- - - - - -
+- - - - - -
+- - - - - -
+- - - - - -
+- - - - - -
+- - - - - -
+
+F B F B T T
+T T T T F B
+- - - - T -
+T - T F B F
+T T - F T -
+T T - B B -
+
+- B B - F -
+- T T - - T
+- - - - - -
+- - - - - -
+- - - - - -
+
+- - F - B -
+- T T - T -
+B B B F T -
+- F F - T -
+T B T - T -
+T F T - T -
+T B T - T -
+T F T - T -
+T B T - T -
+T F T - T -
+T B T - T -
+T F T - T -
+T B T - T -
+T F T - T -
+T B T - T -
+T F T - T -
+T B T - T -
+T F T - T -
+T B T - T -
+
+- F B - B -
+- T T - T -
+- T - - F T
+- - - - - -
+F T - - B T
+- - - - - -
+- T - - F T
+- - - - - -
+- T - - B T
+- - - - - -
+- T - - F T
+- - - - - -
+- T - - B T
+- - - - - -
+- T - - F T
+- - - - - -
+- T - - B T
+- - - - - -
+- T - - F T
+
+B T F B T F
+T F T B F F
+F - B T T T
+B F F F B -
+B - - - T -
+F B B B - T
+F - T F - T
+- - T B F -
+- B F - - B
+B - F - F -
+
+- F T F T B
+T F - T B B
+- T B F B T
+- B F B - B
+F B B B - F
+B F F F T T
+- F B F T T
+- - - - - -
+- T F B F T
+B - - B - -
+B T B - B T
+F B F - - T
+F B B B - T
+B F F F - T
+F B B B - T
+B F F F T T
+B F B - T T
+F T F - F T
+B T B - B T
+

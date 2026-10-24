@@ -1,0 +1,14 @@
+[package]
+name = "spaceship"
+version = "0.1.0"
+edition = "2021"
+
+# Standalone: not a member of the repo workspace.
+[workspace]
+
+[dependencies]
+algo_lib = { path = "../../../algo_lib" }
+
+[profile.release]
+opt-level = 3
+debug = 1

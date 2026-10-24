@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<!-- IF YOU READ THIS YOU SHOULD PROBABLY BE WORKING ON YOUR SOLUTION INSTEAD -->
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <meta name="description" content="This is a visualizer for the 41th CCC, classic edition. Use this to help verify your solutions! To use it, open this file in your browser.">
+  <title>CCC 41 | Spaceship</title>
+</head>
+<body>
+<header>
+  <div class="description-text">
+    <h1>Spaceship</h1>
+    <p>
+      This is an interactive tool to help you <strong>visualize</strong> and <strong>prototype</strong> your solutions.<br/>
+      <em>You can drag and zoom on the viewer below!</em>
+    </p>
+  </div>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="39 48 384 284" width="150" id="codinator">
+    <polygon fill="#FDDD00" points="
+      59.65 53.93 52.5 53.93 52.5 61.08 59.65 61.08 66.8 61.08 66.8 53.93 59.65 53.93
+    "/>
+    <polygon fill="#FDDD00" points="
+      173.98 311.18 173.98 318.33 181.13 318.33
+      181.13 311.18 181.13 304.04 181.13 296.89
+      173.98 296.89 173.98 304.04 173.98 311.18
+    "/>
+    <rect fill="#FDDD00" x="181.13" y="318.33" width="7.15" height="7.15"/>
+    <polygon fill="#FDDD00" points="
+      409.79 61.08 409.79 53.93 402.65 53.93 395.5 53.93 395.5 61.08 402.65 61.08 409.79 61.08
+    "/>
+    <path fill="#FDDD00" d="
+      m409.79,103.95v-14.29h-7.15v-14.29h-7.15v-14.29h-7.15v7.15h-7.15v14.29h7.15v7.15h7.15v14.29h7.15
+      v21.44h-7.15v7.15h-7.15v7.15h-71.46v7.15h-21.44v7.15h-14.29v7.15h-7.15v-7.15h-14.29v-7.15h-57.17
+      v7.15h-14.29v7.15h-7.15v-7.15h-14.29v-7.15h-21.44v-7.15h-71.46v-7.15h-7.15v-7.15h-7.15v-21.44h7.15
+      v-14.29h7.15v-7.15h7.15v-14.29h-7.15v-7.15h-7.15v14.29h-7.15v14.29h-7.15v14.29h-7.15v42.87h7.15
+      v7.15h7.15v7.15h35.73v7.15h35.73v7.15h7.15v7.15h7.15v28.58h7.15v7.15h7.15v42.87h7.15v35.73h7.15
+      v-7.15h7.15v-7.15h28.58v-7.15h14.29v-7.15h14.29v7.15h14.29v7.15h28.58v7.15h7.15v7.15h7.15
+      v-35.73h7.15v-42.87h7.15v-7.15h7.15v-28.58h7.15v-7.15h7.15v-7.15h35.73v-7.15h35.73v-7.15h7.15
+      v-7.15h7.15v-42.87h-7.15Zm-128.62,128.62v14.29h-7.15v7.15h-28.58v-14.29h14.29v-7.15h14.29
+      v-7.15h7.15v7.15Zm-71.46,21.44h-21.44v-7.15h-7.15v-21.44h7.15v7.15h14.29v7.15h14.29v14.29h-7.15Z
+    "/>
+    <polygon fill="#FDDD00" points="
+      281.17 304.04 281.17 311.18 281.17 318.33
+      288.32 318.33 288.32 311.18 288.32 304.04
+      288.32 296.89 281.17 296.89 281.17 304.04
+    "/>
+    <rect fill="#FDDD00" x="274.02" y="318.33" width="7.15" height="7.15"/>
+  </svg>
+</header>
+<main>
+  <div class="inputArea">
+    <div class="labeled-text-area">
+      <label for="levelInput">Level Input</label>
+      <textarea id="levelInput" rows="4"></textarea>
+    </div>
+    <div class="labeled-text-area">
+      <label for="levelSolution">Level Solution</label>
+      <textarea id="levelSolution" rows="4"></textarea>
+    </div>
+  </div>
+  <canvas id="canvas"></canvas>
+  <div class="controls">
+    <div class="control-group">
+      <div class="pace-count-wrapper">
+        <input id="inputStepIndex">
+        <span>/</span>
+        <span id="paceCount">Count</span>
+      </div>
+      <label for="inputStepIndex">Step Index</label>
+    </div>
+    <div class="control-group">
+      <button id="buttonReset">↺</button>
+      <small>R</small>
+    </div>
+    <div class="control-group">
+      <button id="buttonPrevStep">⏮</button>
+      <small>Left</small>
+    </div>
+    <div class="control-group">
+      <button id="buttonPlay">▶</button>
+      <small>Space</small>
+    </div>
+    <div class="control-group">
+      <button id="buttonNextStep">⏭</button>
+      <small>Right</small>
+    </div>
+    <div id="asteroidAreaControlGroup" class="control-group">
+      <div class="checkbox-label-wrapper">
+        <input type="checkbox" id="checkboxAsteroidArea">
+        <label for="checkboxAsteroidArea">Draw area<br>around asteroids</label>
+      </div>
+      <small>T</small>
+    </div>
+    <div class="control-group-info">
+      <div>
+        <span>Ship Position:</span>
+        <span id="spanShipPosition"></span>
+      </div>
+      <div>
+        <span>Mouse Position:</span>
+        <span id="spanMousePosition"></span>
+      </div>
+      <div>
+        <span><strong>Status:</strong></span>
+        <span><strong id="spanStatus"></strong></span>
+      </div>
+      <div>
+        <span id="spanStatusMessage"></span>
+      </div>
+    </div>
+  </div>
+</main>
+</body>
+
+<style>
+  *, ::before, ::after {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+  }
+
+  html {
+    color-scheme: dark;
+    background: #27272A;
+    font-family: Arial, sans-serif;
+  }
+
+  body {
+    margin: 0;
+    padding: 1rem;
+
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  h1 {
+    color: #FDDD00;
+    margin: 0;
+  }
+
+  p, label {
+    margin: 0;
+  }
+
+  strong {
+    color: #FDDD00;
+
+    &[success='false'] {
+      color: #EE1010;
+    }
+
+    &[success='true'] {
+      color: #30DD10;
+    }
+  }
+
+  textarea, input {
+    background: #27272A;
+    outline: none;
+    border: 2px solid white;
+    border-radius: 5px;
+    padding: 0.5rem;
+    resize: vertical;
+
+    &:focus-visible {
+      border: 2px solid #FDDD00;
+    }
+  }
+
+  button {
+    min-width: 5rem;
+    min-height: 3rem;
+    background: #FDDD00;
+    color: black;
+    border: 2px solid #FDDD00;
+    border-radius: 5px;
+    font-family: monospace;
+    font-size: 1.8rem;
+    cursor: pointer;
+  }
+
+  button, input[type=checkbox] {
+    &:focus-visible {
+      outline: 2px solid #FDDD00;
+      outline-offset: 2px;
+    }
+  }
+
+  button[disabled] {
+    border: 2px solid #FDDD0040;
+    background: #FDDD0040;
+    cursor: not-allowed;
+  }
+
+  header {
+    display: flex;
+  }
+
+  .description-text {
+    flex: 1;
+  }
+
+  #codinator {
+    margin: -1rem 0 -1rem 0;
+    cursor: help;
+  }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .inputArea {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .labeled-text-area {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+  }
+
+  #canvas {
+    flex: 1;
+    background-color: black;
+    margin: 0;
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
+  .controls {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .pace-count-wrapper {
+    min-width: 7rem;
+    min-height: 3rem;
+    padding: 0.25rem 0;
+  }
+
+  #inputStepIndex {
+    width: 4rem;
+    text-align: right;
+    font-size: 16px;
+  }
+
+  .checkbox-label-wrapper {
+    min-height: 3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .control-group-info {
+    display: flex;
+    flex-direction: column;
+  }
+</style>
+
+<script>
+  /**
+   * @typedef GlobalState
+   * @type {object}
+   * @property {number} level - The level of the game.
+   * @property {RenderState} render - Container for rendering context and values.
+   * @property {GameState} game - Container for all game related data.
+   */
+
+  /**
+   * @typedef RenderState
+   * @type {object}
+   * @property {CanvasRenderingContext2D} c - The canvas rendering context.
+   * @property {number} w - The width of the drawing area in pixels.
+   * @property {number} h - The height of the drawing area in pixels.
+   * @property {Array.<number>} uToPxTable - The table for the zoom levels of units to pixels.
+   * @property {number} uToPxCount - The number of entries of uToPxTable.
+   * @property {number} uToPxIndex - The index of the entry of uToPxTable.
+   * @property {number} uToPx - The current size of a unit in pixels.
+   * @property {Path2D} arrowPath - The path of an arrow.
+   */
+
+  /**
+   * @typedef GameState
+   * @type {object}
+   * @property {number} lastTimeSinceStart - Time elapsed since last requestAnimationFrame callback.
+   * @property {number} timeSinceLastLogicUpdate - Time elapsed since last logic update.
+   * @property {InputState} input - Inputs from UI.
+   * @property {V2} camera - The position of the camera.
+   * @property {V2} mouseGridPosition - The position of the mouse in grid space coordinates.
+   * @property {boolean} simPlaying - The status of the pace autoplay.
+   * @property {number} simStep - The index of the current pace.
+   * @property {number} timeLimit - The maximum allowed paces.
+   * @property {number} simLimit - The index of the last pace.
+   * @property {Entity} ship - The ship entity.
+   * @property {Entity} goal - The goal entity.
+   * @property {Array.<Entity>} asteroids - The asteroid entities.
+   * @property {boolean} drawAsteroidArea - Flag to determine whether to draw the asteroid area or not.
+   */
+
+  /**
+   * @typedef InputState
+   * @type {object}
+   * @property {boolean} up
+   * @property {boolean} down
+   * @property {boolean} left
+   * @property {boolean} right
+   * @property {boolean} shift
+   * @property {boolean} nextTick
+   * @property {boolean} prevTick
+   * @property {boolean} mouseIn
+   * @property {V2} mouseScreenPosition
+   * @property {V2} mouseNormalizedPosition
+   */
+
+  /** @type {GlobalState} */
+  const state = {};
+  state.level = 4;
+
+  const SIMULATION_TIME_PER_FRAME = 5 * 1000.0 / 60.0;
+
+  const MIN_PACE = 5;
+  const MAX_PACE = 1;
+
+  const AREA_GOAL = 5;
+  const AREA_SHIP = 5;
+  const AREA_ASTEROID = 5;
+  const AREA_COLLISION = 2;
+
+  const PACE_BAR_UNIT_SIZE = 24;
+  const PACE_BAR_MARGIN = 8;
+  const PACE_BAR_PADDING = 4;
+  const PACE_BAR_HEIGHT = 2 * (PACE_BAR_UNIT_SIZE + PACE_BAR_MARGIN) + PACE_BAR_MARGIN;
+  const PACE_CURSOR_WIDTH = 4;
+
+  const INDICATOR_SIZE = 12;
+
+  const PLAY_PAUSE_SYMBOLS = ['▶', '⏸'];
+
+  const RENDER_FULL_AREA_THRESHOLD = 2;
+
+  const PACE_COLOR_RIGHT = '#D5241C';
+  const PACE_COLOR_LEFT = '#CF30F7';
+  const PACE_COLOR_UP = '#30DD10';
+  const PACE_COLOR_DOWN = '#30DDDD';
+  const PACE_ARROW_COLOR_X = '#F7F7F7';
+  const PACE_ARROW_COLOR_Y = '#080808';
+
+  const COLOR_ASTEROID = '#FDDD00';
+  const COLOR_AREA_ASTEROID = '#3F3700';
+  const COLOR_GOAL = '#D5241C';
+  const COLOR_SHIP = '#0053FF';
+
+  const STATUS_MESSAGE_INVALID_FORMAT_INPUT = 'The input format is invalid! ';
+  const STATUS_MESSAGE_INVALID_FORMAT_SOLUTION = 'The solution format is invalid! ';
+  const STATUS_MESSAGE_SUCCESS = 'The spaceship docked successfully with the station!';
+  const STATUS_MESSAGE_EXCEEDED_TIME = 'Too many paces provided: ';
+  const STATUS_MESSAGE_COLLISION = 'The spaceship collided at step: ';
+  const STATUS_MESSAGE_MISSED = 'The spaceship did not reach the station: ';
+  const STATUS_MESSAGE_NOT_STOPPED = 'The spaceship did not stop at the station: ';
+
+  const codinator = document.getElementById('codinator');
+  const canvas = document.getElementById('canvas');
+  const levelInput = document.getElementById('levelInput');
+  const levelSolution = document.getElementById('levelSolution');
+  const paceCount = document.getElementById('paceCount');
+  const inputStepIndex = document.getElementById('inputStepIndex');
+  const buttonReset = document.getElementById('buttonReset');
+  const buttonPrevStep = document.getElementById('buttonPrevStep');
+  const buttonPlay = document.getElementById('buttonPlay');
+  const buttonNextStep = document.getElementById('buttonNextStep');
+  const checkboxAsteroidArea = document.getElementById('checkboxAsteroidArea');
+  const spanShipPosition = document.getElementById('spanShipPosition');
+  const spanMousePosition = document.getElementById('spanMousePosition');
+  const spanStatus = document.getElementById('spanStatus');
+  const spanStatusMessage = document.getElementById('spanStatusMessage');
+  const asteroidAreaControlGroup = document.getElementById('asteroidAreaControlGroup');
+
+  function init() {
+    initRenderState();
+    initGameState();
+
+    if (state.level < 7) {
+      asteroidAreaControlGroup.style.display = 'none';
+    }
+
+    codinator.addEventListener('click', () => secret());
+    addEventListener('keydown', (event) => onKey(event, true));
+    addEventListener('keyup', (event) => onKey(event, false));
+    canvas.addEventListener('mousemove', onCanvasMouseMove);
+    canvas.addEventListener('mousedown', onCanvasMouseDown);
+    canvas.addEventListener('mouseup', onCanvasMouseUp);
+    canvas.addEventListener('mouseout', onCanvasMouseOut);
+    canvas.addEventListener('wheel', onCanvasWheel);
+    levelInput.addEventListener('input', () => recalculate());
+    levelSolution.addEventListener('input', () => recalculate());
+    inputStepIndex.addEventListener('input', onInputPaceIndex);
+    buttonReset.addEventListener('click', onClickButtonReset);
+    buttonPrevStep.addEventListener('click', onClickButtonPrevStep);
+    buttonPlay.addEventListener('click', onClickButtonPlay);
+    buttonNextStep.addEventListener('click', onClickButtonNextStep);
+    checkboxAsteroidArea.addEventListener('input', onInputDrawAsteroidArea);
+
+    handleSpilloverEvents();
+
+    window.requestAnimationFrame(loop);
+  }
+
+  /**
+   * Make that elements you click on won't interact with other events.
+   * e.g. you click on a button, and it gets highlighted and when you pause (space) it gets triggered.
+   */
+  function handleSpilloverEvents() {
+    const interactiveElements = [...document.getElementsByTagName('button')];
+    interactiveElements.forEach(
+        (element) => element.addEventListener('click', event => {
+          if (event.detail !== 0) {
+            element.blur();
+          }
+        })
+    );
+  }
+
+  function initRenderState() {
+    const uToPxIndex = 4;
+    const uToPxTable = [4, 6, 8, 12, 16, 18, 24, 32, 40, 64, 96, 128];
+    const arrowPath = new Path2D();
+    arrowPath.moveTo(-1.0, -0.5);
+    arrowPath.lineTo(0.0, -0.5);
+    arrowPath.lineTo(0.0, -1.0);
+    arrowPath.lineTo(1.0, 0.0);
+    arrowPath.lineTo(0.0, 1.0);
+    arrowPath.lineTo(0.0, 0.5);
+    arrowPath.lineTo(-1.0, 0.5);
+    state.render = {
+      c: canvas.getContext('2d'),
+      w: canvas.width,
+      h: canvas.height,
+      uToPxTable,
+      uToPxCount: uToPxTable.length,
+      uToPxIndex,
+      uToPx: uToPxTable[uToPxIndex],
+      arrowPath,
+    };
+  }
+
+  function initGameState() {
+    state.game = {
+      lastTimeSinceStart: 0.0,
+      timeSinceLastLogicUpdate: 0.0,
+      input: {
+        up: false,
+        down: false,
+        left: false,
+        right: false,
+        shift: false,
+        nextTick: false,
+        prevTick: false,
+        mouseIn: false,
+        mouseScreenPosition: v2(),
+        mouseNormalizedPosition: v2(),
+      },
+      camera: v2(),
+      mouseGridPosition: v2(),
+      simPlaying: false,
+      simStep: 0,
+      timeLimit: 0,
+      simLimit: 0,
+      ship: null,
+      goal: null,
+      asteroids: [],
+      drawAsteroidArea: false,
+    };
+    levelInput.value = '3,-3 16';
+    levelSolution.value = '0 5 4 5 0\n0 -5 -4 -5 0';
+    recalculate();
+  }
+
+  /** Class representing an entity that can move and be drawn. */
+  class Entity {
+    /**
+     * Entity constructor.
+     * @param {string} type - The entity type.
+     * @param {V2} p - The entity position.
+     * @param {V2} v - The entity velocity (pace).
+     */
+    constructor(type, p = v2(), v = v2()) {
+      this.type = type;
+      this.p = p;
+      this.originalP = v2c(p);
+      this.v = v;
+      this.ticks = v2();
+    }
+
+    static createAsteroid(p, v = v2()) {
+      return new Entity('asteroid', p, v);
+    }
+
+    static createGoal(p, v = v2()) {
+      return new Entity('goal', p, v);
+    }
+
+    static createShip(p = v2(), v = v2()) {
+      return new Entity('ship', p, v);
+    }
+
+    /**
+     * Simulation function for calculating the next entity state.
+     */
+    move() {
+      if (Math.abs(this.v.x) > 0 && Math.abs(this.v.x) <= MIN_PACE) {
+        this.ticks.x += 1;
+        if (this.ticks.x >= Math.abs(this.v.x)) {
+          this.ticks.x = 0;
+          this.p.x += Math.sign(this.v.x);
+        }
+      }
+      if (Math.abs(this.v.y) > 0 && Math.abs(this.v.y) <= MIN_PACE) {
+        this.ticks.y += 1;
+        if (this.ticks.y >= Math.abs(this.v.y)) {
+          this.ticks.y = 0;
+          this.p.y += Math.sign(this.v.y);
+        }
+      }
+    }
+
+    /**
+     * @return {Entity}
+     */
+    copy() {
+      const result = new Entity(this.type, v2c(this.p), v2c(this.v));
+      result.ticks = v2c(this.ticks);
+      return result;
+    }
+  }
+
+  /**
+   * Main loop function.
+   * @param {number} timeSinceStart - The time since the start of execution.
+   */
+  function loop(timeSinceStart) {
+    const deltaTime = timeSinceStart - state.game.lastTimeSinceStart;
+    state.game.lastTimeSinceStart = timeSinceStart;
+    update(deltaTime);
+    draw(state);
+    window.requestAnimationFrame(loop);
+  }
+
+  /**
+   * Main update state function. Framerate dependent.
+   * @param {number} deltaTime - Time elapsed since last frame.
+   */
+  function update(deltaTime) {
+    state.game.timeSinceLastLogicUpdate += deltaTime;
+
+    let cameraDelta = v2();
+    if (state.game.input.up) {
+      cameraDelta.addEquals(v2(0, 1));
+    }
+    if (state.game.input.down) {
+      cameraDelta.addEquals(v2(0, -1));
+    }
+    if (state.game.input.left) {
+      cameraDelta.addEquals(v2(-1, 0));
+    }
+    if (state.game.input.right) {
+      cameraDelta.addEquals(v2(1, 0));
+    }
+    cameraDelta.mulEquals(8 / state.render.uToPx);
+    state.game.camera.addEquals(cameraDelta);
+
+    while (state.game.timeSinceLastLogicUpdate > SIMULATION_TIME_PER_FRAME) {
+      state.game.timeSinceLastLogicUpdate -= SIMULATION_TIME_PER_FRAME;
+      logicUpdate();
+    }
+
+    updateUI();
+  }
+
+  /**
+   * Logical update function. Framerate independent.
+   */
+  function logicUpdate() {
+    if (state.game.simPlaying) {
+      if (state.game.simStep < state.game.simLimit) {
+        simNextStep();
+      } else {
+        simPlay();
+      }
+    }
+  }
+
+  /**
+   * Simulation toggle.
+   */
+  function simPlay() {
+    state.game.timeSinceLastLogicUpdate = 0;
+    if (state.game.simPlaying) {
+      state.game.simPlaying = false;
+      buttonPlay.textContent = PLAY_PAUSE_SYMBOLS[0];
+    } else {
+      if (state.game.simStep === state.game.simLimit) {
+        simReset();
+      }
+      state.game.simPlaying = true;
+      buttonPlay.textContent = PLAY_PAUSE_SYMBOLS[1];
+    }
+  }
+
+  function simReset() {
+    applyStepIndex(0);
+  }
+
+  function simNextStep() {
+    applyStepIndex(Math.min(state.game.simStep + 1, state.game.simLimit));
+  }
+
+  function simPrevStep() {
+    applyStepIndex(Math.max(state.game.simStep - 1, 0));
+  }
+
+  function applyStepIndexEntity(entity, stepIndex) {
+    entity.p.x = entity.originalP.x + ((entity.v.x !== 0) ? Number.parseInt((stepIndex / entity.v.x).toPrecision()) : 0);
+    entity.ticks.x = (entity.v.x !== 0) ? (stepIndex % entity.v.x) : 0;
+    entity.p.y = entity.originalP.y + ((entity.v.y !== 0) ? Number.parseInt((stepIndex / entity.v.y).toPrecision()) : 0);
+    entity.ticks.y = (entity.v.y !== 0) ? (stepIndex % entity.v.y) : 0;
+  }
+
+  function applyStepIndex(stepIndex, skipUpdatingInput = false) {
+    const shipHistoryIndex = clamp(stepIndex, 0, state.game.ship.simLimit);
+    state.game.simStep = stepIndex;
+    state.game.ship = state.game.shipHistory[shipHistoryIndex];
+    applyStepIndexEntity(state.game.goal, stepIndex);
+    state.game.asteroids.forEach((asteroid) => applyStepIndexEntity(asteroid, stepIndex));
+    updateControls(skipUpdatingInput);
+  }
+
+  function hasShipCollided() {
+    for (const asteroid of state.game.asteroids) {
+      const d = state.game.ship.p.sub(asteroid.p);
+      if (Math.abs(d.x) <= AREA_COLLISION && Math.abs(d.y) <= AREA_COLLISION) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function updateUI() {
+    spanShipPosition.textContent = `${state.game.ship.p.x},${state.game.ship.p.y}`;
+    spanMousePosition.textContent = `${state.game.mouseGridPosition.x},${state.game.mouseGridPosition.y}`;
+  }
+
+  /**
+   * Main loop draw function. Called once per frame.
+   * @param {GlobalState} state - The global state.
+   * @param {RenderState} state.render - The renderer state.
+   * @param {GameState} state.game - The game state.
+   */
+  function draw({render, game}) {
+    drawClear(render);
+    drawAsteroids(render, game);
+    drawGrid(render, game);
+    drawGoal(render, game);
+    drawShip(render, game);
+    drawIndicators(render, game);
+    drawUI(render, game);
+  }
+
+  /**
+   * Clears the canvas. Adjusts for window or canvas resize.
+   * @param {CanvasRenderingContext2D} c - The drawing context.
+   */
+  function drawClear({c}) {
+    canvas.width = 0;
+    canvas.height = 0;
+    // NOTE(alex): setting the minimum size to 1 prevents the game from freezing when resizing the window
+    const w = Math.max(canvas.offsetWidth, 1);
+    const h = Math.max(canvas.offsetHeight, 1);
+    canvas.width = w;
+    canvas.height = h;
+    state.render.w = w;
+    state.render.h = h;
+    c.clearRect(0, 0, w, h);
+  }
+
+  function drawEntity(c, uToPx, entity, color) {
+    c.save();
+
+    const screenPosition = worldToScreenSpace(entity.p);
+    c.translate(screenPosition.x, screenPosition.y);
+
+    c.fillStyle = color;
+    c.fillRect(-0.5 * uToPx + 1, -0.5 * uToPx + 1, uToPx - 2, uToPx - 2);
+
+    c.restore();
+
+    return screenPosition;
+  }
+
+  /**
+   * Draw all asteroids and the collision area.
+   * @param {RenderState} render - Renderer state.
+   * @param {CanvasRenderingContext2D} render.c - The drawing context.
+   * @param {number} render.uToPx - The unit to pixel ratio.
+   * @param {GameState} game - Game state.
+   * @param {Array.<Entity>} asteroids - Asteroid entities.
+   */
+  function drawAsteroids({c, uToPx}, {asteroids}) {
+    if (state.game.drawAsteroidArea) {
+      for (const asteroid of asteroids) {
+        drawAsteroidArea(c, uToPx, asteroid);
+      }
+    }
+    for (const asteroid of asteroids) {
+      drawEntity(c, uToPx, asteroid, COLOR_ASTEROID);
+    }
+  }
+
+  /**
+   * Draw asteroid collision area.
+   * @param {CanvasRenderingContext2D} c - The drawing context.
+   * @param {number} uToPx - The unit to pixel ratio.
+   * @param {Entity} asteroid - The asteroid entity.
+   */
+  function drawAsteroidArea(c, uToPx, asteroid) {
+    c.save();
+
+    const screenPosition = worldToScreenSpace(asteroid.p);
+    c.translate(screenPosition.x, screenPosition.y);
+    c.fillStyle = COLOR_AREA_ASTEROID;
+    const areaSize = AREA_ASTEROID * state.render.uToPx;
+    c.fillRect(-0.5 * areaSize, -0.5 * areaSize, areaSize, areaSize);
+
+    c.restore();
+  }
+
+  /**
+   * Draw the goal.
+   * @param {RenderState} render - Renderer state.
+   * @param {CanvasRenderingContext2D} render.c - The drawing context.
+   * @param {number} render.uToPx - The unit to pixel ratio.
+   * @param {number} render.uToPxIndex - The zoom level.
+   * @param {GameState} game - Game state.
+   * @param {Entity} game.goal - The goal entity.
+   */
+  function drawGoal({c, uToPx, uToPxIndex}, {goal}) {
+    const screenPosition = drawEntity(c, uToPx, goal, COLOR_GOAL);
+    c.save();
+    c.translate(screenPosition.x, screenPosition.y);
+    c.strokeStyle = COLOR_GOAL;
+    c.lineWidth = 4;
+    c.beginPath();
+    const areaSize = 0.5 * AREA_GOAL * uToPx;
+    c.arc(0, 0, areaSize - 3, 0.0, 2 * Math.PI);
+    c.stroke();
+    if (uToPxIndex < RENDER_FULL_AREA_THRESHOLD) {
+      c.fillStyle = COLOR_GOAL;
+      c.fill();
+    }
+    c.closePath();
+    c.restore();
+  }
+
+  /**
+   * Draw the ship.
+   * @param {RenderState} render - Renderer state.
+   * @param {CanvasRenderingContext2D} render.c - The drawing context.
+   * @param {number} render.uToPx - The unit to pixel ratio.
+   * @param {number} render.uToPxIndex - The zoom level.
+   * @param {GameState} game - Game state.
+   * @param {Entity} game.ship - The ship entity.
+   */
+  function drawShip({c, uToPx, uToPxIndex}, {ship}) {
+    const screenPosition = drawEntity(c, uToPx, ship, COLOR_SHIP);
+    c.save();
+    c.translate(screenPosition.x, screenPosition.y);
+    c.strokeStyle = COLOR_SHIP;
+    c.lineWidth = 4;
+    const areaSize = AREA_SHIP * uToPx;
+    c.strokeRect(-0.5 * areaSize + 3, -0.5 * areaSize + 3, areaSize - 6, areaSize - 6);
+    if (uToPxIndex < RENDER_FULL_AREA_THRESHOLD) {
+      c.fillStyle = COLOR_SHIP;
+      c.fillRect(-0.5 * areaSize + 3, -0.5 * areaSize + 3, areaSize - 6, areaSize - 6);
+    }
+    c.restore();
+  }
+
+  /**
+   * Draw the world grid.
+   * @param {RenderState} render - Renderer state.
+   * @param {CanvasRenderingContext2D} render.c - Rendering context.
+   * @param {number} render.w - Canvas width.
+   * @param {number} render.h - Canvas height.
+   * @param {number} render.uToPx - The unit to pixel ratio.
+   * @param {GameState} game - Game state.
+   * @param {V2} game.camera - The camera in world position.
+   */
+  function drawGrid({c, w, h, uToPx}, {camera}) {
+    c.save();
+
+    c.fillStyle = 'rgb(50, 50, 50)';
+
+    const gridCountX = Math.ceil(0.5 * w / uToPx);
+    const gridOffsetX = Math.ceil(camera.x);
+    const gridFromX = gridOffsetX - gridCountX;
+    const gridToX = gridOffsetX + gridCountX;
+
+    const gridCountY = Math.ceil(0.5 * h / uToPx);
+    const gridOffsetY = Math.ceil(camera.y);
+    const gridFromY = gridOffsetY - gridCountY;
+    const gridToY = gridOffsetY + gridCountY;
+
+    for (let x = gridFromX; x <= gridToX; ++x) {
+      const gridPriority = getGridPriority(x);
+      if (gridPriority === 2) {
+        drawGridLineX(c, w, h, x, gridPriority);
+      }
+    }
+
+    for (let y = gridFromY; y <= gridToY; ++y) {
+      const gridPriority = getGridPriority(y);
+      if (gridPriority === 2) {
+        drawGridLineY(c, w, h, y, gridPriority);
+      }
+    }
+
+    for (let x = gridFromX; x <= gridToX; ++x) {
+      const gridPriority = getGridPriority(x);
+      if (gridPriority === 1) {
+        drawGridLineX(c, w, h, x, gridPriority);
+      }
+    }
+
+    for (let y = gridFromY; y <= gridToY; ++y) {
+      const gridPriority = getGridPriority(y);
+      if (gridPriority === 1) {
+        drawGridLineY(c, w, h, y, gridPriority);
+      }
+    }
+
+    drawAxis(c, w, h);
+
+    c.restore();
+  }
+
+  /**
+   * Get the grid priority for this coordinate, lower should be drawn on top.
+   * @param {number} coordinate the X or Y coordinate.
+   * @return {number} the gird priority.
+   */
+  function getGridPriority(coordinate) {
+    if (coordinate === 0) {
+      return 0;
+    } else if (coordinate % 16 === 0) {
+      return 1;
+    } else {
+      return 2;
+    }
+  }
+
+  /**
+   * Set the fill color for the grid drawing functions. The higher priority should have more contrast with the black background.
+   * @param {CanvasRenderingContext2D} c - The rendering context.
+   * @param {number} gridPriority - The grid line priority.
+   */
+  function setGridLineColor(c, gridPriority) {
+    if (gridPriority === 0) {
+      c.fillStyle = 'rgb(200, 200, 200)';
+    } else if (gridPriority === 1) {
+      c.fillStyle = 'rgb(100, 100, 100)';
+    } else if (gridPriority === 2) {
+      c.fillStyle = 'rgb(32, 32, 32)';
+    }
+  }
+
+  function drawGridLineX(c, w, h, x, gridPriority) {
+    setGridLineColor(c, gridPriority);
+    const screenPosition = worldToScreenSpace(v2(x - 0.5, 0));
+    c.fillRect(screenPosition.x - 1, 0, 2, h);
+  }
+
+  function drawGridLineY(c, w, h, y, gridPriority) {
+    setGridLineColor(c, gridPriority);
+    const screenPosition = worldToScreenSpace(v2(0, y - 0.5));
+    c.fillRect(0, screenPosition.y - 1, w, 2);
+  }
+
+  function drawAxis(c, w, h) {
+    const screenPosition = worldToScreenSpace(v2(-0.5, -0.5));
+
+    c.fillStyle = PACE_COLOR_RIGHT;
+    c.fillRect(Math.max(screenPosition.x, 0), screenPosition.y - 1, w, 2);
+
+    c.fillStyle = PACE_COLOR_LEFT;
+    c.fillRect(0, screenPosition.y - 1, Math.min(screenPosition.x, w), 2);
+
+    c.fillStyle = PACE_COLOR_UP;
+    c.fillRect(screenPosition.x - 1, 0, 2, Math.min(screenPosition.y, h));
+
+    c.fillStyle = PACE_COLOR_DOWN;
+    c.fillRect(screenPosition.x - 1, Math.max(screenPosition.y, 0), 2, h);
+  }
+
+  function drawIndicators({c, w, h, uToPx, arrowPath}, {goal, ship, camera}) {
+    drawEntityIndicator(c, w, h, uToPx, arrowPath, camera, goal, COLOR_GOAL);
+    drawEntityIndicator(c, w, h, uToPx, arrowPath, camera, ship, COLOR_SHIP);
+  }
+
+  function drawEntityIndicator(c, w, h, uToPx, arrowPath, camera, entity, color) {
+    const offsetPosition = entity.p.mul(-1).add(camera);
+    const ratioW = 0.5 * w / uToPx;
+    const ratioH = 0.5 * h / uToPx;
+    const normalizedPosition = v2(offsetPosition.x / ratioW, offsetPosition.y / ratioH);
+    const paceBarNormalSize = 2 * PACE_BAR_HEIGHT / h;
+    if (normalizedPosition.x <= -1.0 || normalizedPosition.x >= 1.0 || normalizedPosition.y <= -1.0 || normalizedPosition.y >= 1.0 - paceBarNormalSize) {
+      c.save();
+      c.fillStyle = color;
+      const arrowX = clamp(mapValue(-normalizedPosition.x, -1.0, 1.0, 0, w), INDICATOR_SIZE, w - INDICATOR_SIZE);
+      const arrowY = clamp(mapValue(normalizedPosition.y, -1.0, 1.0, 0, h), INDICATOR_SIZE, h - INDICATOR_SIZE - PACE_BAR_HEIGHT);
+      c.translate(arrowX, arrowY);
+      const angle = -Math.atan2(-normalizedPosition.y, -normalizedPosition.x);
+      c.rotate(angle);
+      c.scale(INDICATOR_SIZE, INDICATOR_SIZE);
+      c.fill(arrowPath);
+      c.restore();
+    }
+  }
+
+  /**
+   * Draws the on-canvas UI.
+   * @param {RenderState} render - Renderer state.
+   * @param {CanvasRenderingContext2D} render.c - Rendering context.
+   * @param {number} render.w - Canvas width.
+   * @param {number} render.h - Canvas height.
+   * @param {GameState} game - Game state.
+   * @param {Array.<number>} game.xPaces - The x pace array.
+   * @param {Array.<number>} game.yPaces - The y pace array.
+   * @param {number} game.simStep - The pace index.
+   */
+  function drawUI({c, w, h}, {xPaces, yPaces, simStep}) {
+    drawPaceBarBackground(c, w, h);
+    const xyOffset = PACE_BAR_MARGIN + PACE_BAR_UNIT_SIZE + PACE_BAR_MARGIN;
+    const yyOffset = PACE_BAR_MARGIN;
+
+    drawPaceBar(c, w, h, xPaces, xyOffset, PACE_COLOR_RIGHT, PACE_COLOR_LEFT, 0, PACE_ARROW_COLOR_X, simStep);
+    drawPaceBar(c, w, h, yPaces, yyOffset, PACE_COLOR_UP, PACE_COLOR_DOWN, -0.5 * Math.PI, PACE_ARROW_COLOR_Y, simStep);
+    drawPaceCursor(c, w, h);
+  }
+
+  /**
+   * UI function that draws the background of the pace bar region.
+   * @param c {CanvasRenderingContext2D} - The canvas rendering context
+   * @param w {number} - The canvas width
+   * @param h {number} - The canvas height
+   */
+  function drawPaceBarBackground(c, w, h) {
+    c.save();
+
+    c.fillStyle = 'rgba(105,110,120,1.0)';
+    const barWidth = w;
+    const barHeight = 2 * (PACE_BAR_UNIT_SIZE + PACE_BAR_MARGIN) + PACE_BAR_MARGIN;
+    c.fillRect(0, h - barHeight, barWidth, barHeight);
+
+    c.restore();
+  }
+
+  /**
+   * UI function that draws a pace bar.
+   * @param c {CanvasRenderingContext2D} - The canvas rendering context.
+   * @param w {number} - The canvas width.
+   * @param h {number} - The canvas height.
+   * @param uPaces {Array.<number>} - Array of paces.
+   * @param yOffset {number} - Vertical offset of the pace bar.
+   * @param positiveColor {string} - Pace bar positive color.
+   * @param negativeColor {string} - Pace bar negative color.
+   * @param arrowRotationOffset {number} - Pace arrow rotation offset.
+   * @param arrowColor {string} - Pace bar arrow color.
+   * @param simStep {number} - The pace index.
+   */
+  function drawPaceBar(c, w, h, uPaces, yOffset, positiveColor, negativeColor, arrowRotationOffset, arrowColor, simStep) {
+    c.save();
+
+    const xOffsetCursor = PACE_BAR_MARGIN + PACE_BAR_UNIT_SIZE * simStep;
+    let xOffset = (xOffsetCursor < 0.5 * w) ? 0 : (0.5 * w - xOffsetCursor);
+
+    let paceBarY;
+
+    for (const pace of uPaces) {
+      const paceZero = pace === 0;
+      const pacePositive = pace > 0;
+
+      const blockWidth = PACE_BAR_UNIT_SIZE * Math.max(1, Math.abs(pace));
+      c.fillStyle = paceZero ? '#00000000' : (pacePositive ? positiveColor : negativeColor);
+      const paceBarX = PACE_BAR_MARGIN + xOffset;
+      paceBarY = h - yOffset - PACE_BAR_UNIT_SIZE;
+      c.fillRect(paceBarX, paceBarY, blockWidth, PACE_BAR_UNIT_SIZE);
+      c.strokeStyle = 'rgba(32,32,32,1.0)';
+      c.lineWidth = 4;
+      c.strokeRect(paceBarX, paceBarY, blockWidth, PACE_BAR_UNIT_SIZE);
+
+      c.lineWidth = 2;
+      c.strokeStyle = 'rgba(0,0,0,0.25)';
+      for (let paceDividerIndex = 1; paceDividerIndex < Math.abs(pace); ++paceDividerIndex) {
+        const paceDividerX = paceBarX + paceDividerIndex * PACE_BAR_UNIT_SIZE;
+        c.strokeRect(paceDividerX, paceBarY, 0, PACE_BAR_UNIT_SIZE);
+      }
+
+      const arrowRotation = arrowRotationOffset + (pacePositive ? 0 : Math.PI);
+      if (!paceZero) {
+        drawPaceArrow(c, paceBarX, paceBarY, blockWidth, arrowRotation, arrowColor);
+      }
+
+      xOffset += blockWidth;
+    }
+
+    c.restore();
+  }
+
+  /**
+   *
+   * @param c {CanvasRenderingContext2D} - The canvas rendering context.
+   * @param x {number} - X offset.
+   * @param y {number} - Y offset.
+   * @param w {number} - The width of the pace bar.
+   * @param arrowRotation {number} - The rotation of the arrow.
+   * @param arrowColor {string} - The color of the arrow.
+   */
+  function drawPaceArrow(c, x, y, w, arrowRotation, arrowColor) {
+    c.save();
+    const arrowUnitSize = 8;
+
+    const arrowX = x + w - arrowUnitSize - PACE_BAR_PADDING;
+    const arrowY = y + 0.5 * PACE_BAR_UNIT_SIZE;
+
+    c.translate(arrowX, arrowY);
+    c.scale(arrowUnitSize, arrowUnitSize);
+    c.rotate(arrowRotation);
+    c.fillStyle = arrowColor;
+    c.fill(state.render.arrowPath);
+    c.restore();
+  }
+
+  /**
+   * UI function that draws the pace cursor.
+   * @param c {CanvasRenderingContext2D} - The canvas rendering context
+   * @param w {number} - The canvas width
+   * @param h {number} - The canvas height
+   */
+  function drawPaceCursor(c, w, h) {
+    c.save();
+
+    const xOffsetCursor = Math.min(PACE_BAR_MARGIN + PACE_BAR_UNIT_SIZE * state.game.simStep, 0.5 * w);
+
+    c.fillStyle = 'rgba(255,255,0,1.0)';
+    const paceCursorHeight = 2 * (PACE_BAR_UNIT_SIZE + PACE_BAR_MARGIN) + PACE_BAR_MARGIN;
+    c.fillRect(xOffsetCursor - 0.5 * PACE_CURSOR_WIDTH, h - paceCursorHeight, PACE_CURSOR_WIDTH, paceCursorHeight);
+
+    c.restore();
+  }
+
+  /**
+   * @param {KeyboardEvent} event
+   * @param {boolean} isDown
+   */
+  function onKey(event, isDown) {
+    if (event.target.tabIndex >= 0) {
+      if (isDown && event.key === 'Escape') {
+        event.target.blur();
+      }
+      return;
+    }
+
+    if (event.key === 'w' || event.key === 'W') {
+      state.game.input.up = isDown;
+    } else if (event.key === 'a' || event.key === 'A') {
+      state.game.input.left = isDown;
+    } else if (event.key === 's' || event.key === 'S') {
+      state.game.input.down = isDown;
+    } else if (event.key === 'd' || event.key === 'D') {
+      state.game.input.right = isDown;
+    }
+    if (isDown) {
+      if (event.key === ' ') {
+        simPlay();
+      } else if (event.key === 'r' || event.key === 'R') {
+        simReset();
+      } else if (event.key === 'ArrowRight') {
+        simNextStep();
+      } else if (event.key === 'ArrowLeft') {
+        simPrevStep();
+      } else if (event.key === 't' || event.key === 'T') {
+        setCheckboxAsteroidArea(!checkboxAsteroidArea.checked);
+      }
+    }
+  }
+
+  /**
+   * @param {MouseEvent} event
+   */
+  function onCanvasMouseMove(event) {
+    updateMouseInputState(event);
+    if (event.buttons & 1 || event.buttons & 4) {
+      const delta = v2(-event.movementX, event.movementY);
+      state.game.camera.addEquals(V2.div(delta, state.render.uToPx));
+    }
+  }
+
+  /**
+   * @param {MouseEvent} event
+   */
+  function onCanvasMouseDown(event) {
+    updateMouseInputState(event);
+  }
+
+  /**
+   * @param {MouseEvent} event
+   */
+  function onCanvasMouseUp(event) {
+    updateMouseInputState(event);
+  }
+
+  /**
+   *
+   */
+  function onCanvasMouseOut() {
+    state.game.input.mouseIn = false;
+  }
+
+  /**
+   * @param {WheelEvent} event
+   */
+  function onCanvasWheel(event) {
+    updateMouseInputState(event);
+    event.preventDefault();
+    if (event.deltaY > 0) {
+      zoom(-1);
+    } else if (event.deltaY < 0) {
+      zoom(1);
+    }
+  }
+
+  function zoom(delta) {
+    const newIndex = state.render.uToPxIndex + delta;
+    if (newIndex >= 0 && newIndex < state.render.uToPxCount) {
+      state.render.uToPxIndex = newIndex;
+      state.render.uToPx = state.render.uToPxTable[newIndex];
+    }
+  }
+
+  function recalculate() {
+    parseInputAndSolution();
+    updateControls();
+  }
+
+  function parseInputAndSolution() {
+    state.game.simStep = 0;
+    state.game.shipHistory = [];
+    state.game.simLimit = 0;
+
+    const inputLines = normalizeInput(levelInput.value);
+    const solutionLines = normalizeInput(levelSolution.value);
+
+    state.game.xPaces = parsePaces(solutionLines[0]);
+    state.game.yPaces = parsePaces(solutionLines[1]);
+
+    if (inputLines.length === 0) {
+      setStatusFailure(STATUS_MESSAGE_INVALID_FORMAT_INPUT + 'The first line should be GoalX,GoalY TimeLimit');
+      return;
+    }
+
+    let inputIndex = 0;
+    if (!inputLines[inputIndex].includes(',')) {
+      ++inputIndex;
+    }
+
+    const firstLine = inputLines[inputIndex++];
+    if (!firstLine.includes(' ')) {
+      setStatusFailure(STATUS_MESSAGE_INVALID_FORMAT_INPUT + 'The first line should be GoalX,GoalY TimeLimit');
+      return;
+    }
+
+    const goalLineParts = firstLine.split(' ');
+    if (goalLineParts.length !== 2 || !goalLineParts[0].includes(',')) {
+      setStatusFailure(STATUS_MESSAGE_INVALID_FORMAT_INPUT + 'The first line should be GoalX,GoalY TimeLimit');
+      return;
+    }
+
+    const goalPositionParts = goalLineParts[0].split(',');
+    if (goalPositionParts.length !== 2) {
+      setStatusFailure(STATUS_MESSAGE_INVALID_FORMAT_INPUT + 'The first line should be GoalX,GoalY TimeLimit');
+      return;
+    }
+
+    const [goalX, goalY] = goalPositionParts.map(it => Number.parseInt(it));
+    const goal = Entity.createGoal(v2(goalX, goalY));
+    state.game.timeLimit = Number.parseInt(goalLineParts[1]);
+
+    const asteroids = [];
+    if (inputLines.length > inputIndex) {
+      let asteroidCount = 1;
+      if (!inputLines[inputIndex].includes(',')) {
+        asteroidCount = Number.parseInt(inputLines[inputIndex++]);
+        if (inputLines.length < 3) {
+          setStatusFailure(STATUS_MESSAGE_INVALID_FORMAT_INPUT + 'Asteroid data is missing');
+          return;
+        }
+      }
+
+      const asteroidLineData = inputLines[inputIndex].split(' ');
+      if (asteroidLineData.length !== asteroidCount) {
+        setStatusFailure(STATUS_MESSAGE_INVALID_FORMAT_INPUT + 'Asteroid count does not match with the provided number');
+        return;
+      }
+
+      for (let asteroidIndex = 0; asteroidIndex < asteroidCount; ++asteroidIndex) {
+        const asteroidData = asteroidLineData[asteroidIndex].split(',').map(it => Number.parseInt(it));
+        if (asteroidData.length === 2) {
+          const [px, py] = asteroidData;
+          asteroids.push(Entity.createAsteroid(v2(px, py)));
+        } else if (asteroidData.length === 4) {
+          const [px, py, vx, vy] = asteroidData;
+          asteroids.push(Entity.createAsteroid(v2(px, py), v2(vx, vy)));
+        } else {
+          setStatusFailure(STATUS_MESSAGE_INVALID_FORMAT_INPUT + 'Asteroid format is invalid!');
+          return;
+        }
+      }
+    }
+
+    state.game.ship = Entity.createShip();
+    state.game.goal = goal;
+    state.game.asteroids = asteroids;
+
+    if (!state.game.xPaces.length || !state.game.yPaces.length) {
+      return;
+    }
+
+    for (const paces of [state.game.xPaces, state.game.yPaces]) {
+      if (paces[0] !== 0) {
+        setStatusFailure(STATUS_MESSAGE_INVALID_FORMAT_SOLUTION + `The first pace must be 0`);
+        return;
+      }
+
+      let lastPace = 0;
+      for (const pace of paces) {
+        const absPace = Math.abs(pace);
+        if (pace !== 0 && (absPace < MAX_PACE || absPace > MIN_PACE)) {
+          setStatusFailure(STATUS_MESSAGE_INVALID_FORMAT_SOLUTION + `Pace ${pace} is invalid!`);
+          return;
+        }
+
+        if (lastPace !== 0 && pace !== 0 && Math.sign(lastPace) !== Math.sign(pace)) {
+          setStatusFailure(STATUS_MESSAGE_INVALID_FORMAT_SOLUTION + `Pace progression ${lastPace} ${pace} is invalid! Changing directions requires a pace of 0 in between.`);
+          return;
+        }
+
+        if (!getValidPaces(lastPace).includes(pace)) {
+          setStatusFailure(STATUS_MESSAGE_INVALID_FORMAT_SOLUTION + `Pace progression ${lastPace} ${pace} is invalid!`);
+          return;
+        }
+
+        lastPace = pace;
+      }
+
+      if (lastPace !== 0) {
+        setStatusFailure(STATUS_MESSAGE_INVALID_FORMAT_SOLUTION + `The last pace must be 0`);
+        return;
+      }
+    }
+
+    const xTime = state.game.xPaces.reduce((acc, pace) => acc + Math.max(1, Math.abs(pace)), 0);
+    const yTime = state.game.yPaces.reduce((acc, pace) => acc + Math.max(1, Math.abs(pace)), 0);
+
+    if (xTime > yTime) {
+      for (let index = 0; index < xTime - yTime; ++index) {
+        state.game.yPaces.push(0);
+      }
+    } else if (xTime < yTime) {
+      for (let index = 0; index < yTime - xTime; ++index) {
+        state.game.xPaces.push(0);
+      }
+    }
+
+    const xPacesExpanded = expandPaces(state.game.xPaces);
+    const yPacesExpanded = expandPaces(state.game.yPaces);
+    const paces = xPacesExpanded.map((paceX, index) => v2(paceX, yPacesExpanded[index]));
+
+    state.game.ship = Entity.createShip();
+    state.game.shipPaces = paces;
+    state.game.simLastStep = paces.length - 1;
+
+    calculateHistory();
+  }
+
+  const PACE_REGEX = /^-?\d+( -?\d+)*$/;
+
+  /**
+   *
+   * @param {string} paceLine
+   * @return {number[]}
+   */
+  function parsePaces(paceLine) {
+    if (!paceLine) {
+      setStatusFailure(STATUS_MESSAGE_INVALID_FORMAT_SOLUTION + 'It should have exactly 2 lines.');
+      return [];
+    }
+
+    if (!PACE_REGEX.test(paceLine)) {
+      setStatusFailure(STATUS_MESSAGE_INVALID_FORMAT_SOLUTION + 'Wrong pace format');
+      return [];
+    }
+
+    return paceLine.split(' ').map(pace => Number.parseInt(pace));
+  }
+
+  /**
+   * Calculate all paces that can legally follow the given pace.
+   * @param {number} pace
+   * @return {number[]}
+   */
+  function getValidPaces(pace) {
+    switch (pace) {
+      case -MIN_PACE:
+        return [pace + 1, pace, 0];
+      case -MAX_PACE:
+        return [pace, pace - 1];
+      case 0:
+        return [-MIN_PACE, pace, MIN_PACE];
+      case MAX_PACE:
+        return [pace + 1, pace];
+      case MIN_PACE:
+        return [0, pace, pace - 1];
+      default:
+        return [pace + 1, pace, pace - 1];
+    }
+  }
+
+  function calculateHistory() {
+    state.game.simStep = 0;
+    state.game.shipHistory = [state.game.ship.copy()];
+    state.game.simLimit = Math.min(state.game.timeLimit, state.game.shipPaces.length);
+    for (let simIndex = 0; simIndex <= state.game.simLimit; ++simIndex) {
+      state.game.ship.v = state.game.shipPaces[clamp(simIndex, 0, state.game.shipPaces.length - 1)];
+      state.game.ship.move();
+      state.game.shipHistory.push(state.game.ship.copy());
+    }
+
+    for (let stepIndex = 0; stepIndex <= state.game.shipPaces.length; ++stepIndex) {
+      if (stepIndex > state.game.simLimit) {
+        setStatusFailure(STATUS_MESSAGE_EXCEEDED_TIME + `${state.game.shipPaces.length} > ${state.game.simLimit}`);
+        return;
+      }
+      applyStepIndex(stepIndex);
+      if (hasShipCollided()) {
+        setStatusFailure(STATUS_MESSAGE_COLLISION + `${stepIndex}/${state.game.simLimit}`);
+        return;
+      }
+    }
+
+    const goalDiff = state.game.ship.p.sub(state.game.goal.p);
+    const shipNotAtGoal = goalDiff.x !== 0 || goalDiff.y !== 0;
+    if (shipNotAtGoal) {
+      setStatusFailure(STATUS_MESSAGE_MISSED + `Ship Position (${state.game.ship.p.x},${state.game.ship.p.y}) ≠ Goal Position (${state.game.goal.p.x},${state.game.goal.p.y})`);
+      simReset();
+      return;
+    }
+
+    const shipNotInPaceWithGoal = state.game.ship.v.x !== 0 || state.game.ship.v.y !== 0;
+    if (shipNotInPaceWithGoal) {
+      setStatusFailure(STATUS_MESSAGE_NOT_STOPPED + `Ship pace (${state.game.ship.v.x},${state.game.ship.v.y}) ≠ (0,0)`);
+      simReset();
+      return;
+    }
+
+    setStatusSuccess(STATUS_MESSAGE_SUCCESS);
+    simReset();
+  }
+
+  /**
+   *
+   * @param {string} message
+   */
+  function setStatusSuccess(message) {
+    spanStatus.textContent = 'SUCCESS';
+    spanStatus.setAttribute('success', 'true');
+    spanStatusMessage.textContent = message;
+  }
+
+  /**
+   *
+   * @param {string} message
+   */
+  function setStatusFailure(message) {
+    spanStatus.textContent = 'FAILURE';
+    spanStatus.setAttribute('success', 'false');
+    spanStatusMessage.textContent = message;
+  }
+
+  function onInputPaceIndex() {
+    applyStepIndex(clamp(Number.parseInt(inputStepIndex.value) || 0, 0, state.game.simLimit), true);
+  }
+
+  function onClickButtonReset() {
+    simReset();
+  }
+
+  function onClickButtonPrevStep() {
+    simPrevStep();
+  }
+
+  function onClickButtonPlay() {
+    simPlay();
+  }
+
+  function onClickButtonNextStep() {
+    simNextStep();
+  }
+
+  function onInputDrawAsteroidArea() {
+    state.game.drawAsteroidArea = checkboxAsteroidArea.checked;
+  }
+
+  function setCheckboxAsteroidArea(value) {
+    checkboxAsteroidArea.checked = value;
+    state.game.drawAsteroidArea = value;
+  }
+
+  function updateControls(skipUpdatingInput = false) {
+    const stepIndex = state.game.simStep;
+    if (!skipUpdatingInput) {
+      inputStepIndex.value = `${stepIndex}`;
+    }
+    paceCount.textContent = `${state.game.shipPaces.length}`;
+
+    buttonReset.disabled = stepIndex <= 0;
+    buttonPrevStep.disabled = stepIndex <= 0;
+    buttonPlay.disabled = state.game.simLimit <= 0;
+    buttonNextStep.disabled = stepIndex >= state.game.simLimit;
+  }
+
+  /**
+   * Expand the solution paces.
+   * @param {Array.<number>} paces - the solution paces.
+   * @return {Array.<number>} the expanded list of paces.
+   */
+  function expandPaces(paces) {
+    return paces.flatMap(pace => Array(Math.max(1, Math.abs(pace))).fill(pace));
+  }
+
+  /**
+   * Cleans up the input string.
+   * Breaks input string into lines and normalizes them.
+   * 'Compresses' all adjacent spaces into one whitespace and trims the lines.
+   * @param {string} value - The input string.
+   * @returns {Array.<string>} - The normalized lines.
+   */
+  function normalizeInput(value) {
+    return value.split(/\n/)
+        .map(line => line
+            .replace(/\s+/g, ' ')
+            .trim()
+        )
+        .filter(line => line.length > 0);
+  }
+
+  function updateMouseInputState(event) {
+    state.game.input.mouseIn = true;
+    const rect = canvas.getBoundingClientRect();
+    state.game.input.mouseScreenPosition = v2(
+        event.clientX - rect.left,
+        event.clientY - rect.top,
+    );
+    state.game.input.mouseNormalizedPosition = v2(
+        mapValue(state.game.input.mouseScreenPosition.x, 0, canvas.width, -1, 1),
+        mapValue(canvas.height - state.game.input.mouseScreenPosition.y, 0, canvas.height, -1, 1),
+    );
+    const ratioW = 0.5 * state.render.c.canvas.width / state.render.uToPx;
+    const ratioH = 0.5 * state.render.c.canvas.height / state.render.uToPx;
+    const worldPosition = v2(state.game.input.mouseNormalizedPosition.x * ratioW, state.game.input.mouseNormalizedPosition.y * ratioH);
+    state.game.mouseGridPosition = worldPosition.add(v2(state.game.camera.x, state.game.camera.y));
+    state.game.mouseGridPosition.x = Math.round(state.game.mouseGridPosition.x);
+    state.game.mouseGridPosition.y = Math.round(state.game.mouseGridPosition.y);
+  }
+
+  /**
+   * Convert a point from world coordinates to screen space coordinates with respect to the camera.
+   * @param {V2} worldPosition - Point in world coordinates.
+   * @return {V2} - Point in screen space coordinates translated to the camera location.
+   */
+  function worldToScreenSpace(worldPosition) {
+    const worldCenteredX = worldPosition.x - state.game.camera.x;
+    const worldCenteredY = worldPosition.y - state.game.camera.y;
+    const screenX = Math.floor(state.render.uToPx * worldCenteredX + 0.5 * state.render.w);
+    const screenY = Math.floor(state.render.h - (state.render.uToPx * worldCenteredY + 0.5 * state.render.h));
+    return v2(screenX, screenY);
+  }
+
+  /** Class that represents a two-dimensional vector. */
+  class V2 {
+    /**
+     * Create a vector 2.
+     * @param {number} x - The first coordinate.
+     * @param {number} y - The second coordinate.
+     */
+    constructor(x = 0, y = 0) {
+      this.x = x;
+      this.y = y;
+    }
+
+    /**
+     * Add the two vectors and return the result as a new vector.
+     * @param {V2} a - The first vector.
+     * @param {V2} b - The second vector.
+     * @return {V2} The sum of the two vectors.
+     */
+    static add(a, b) {
+      return v2(
+          a.x + b.x,
+          a.y + b.y,
+      );
+    }
+
+    /**
+     * Add this vector to another and return the result as a new vector.
+     * @param {V2} v - The vector.
+     * @return {V2} The sum of the two vectors.
+     */
+    add(v) {
+      return V2.add(this, v);
+    }
+
+    /**
+     * Add a vector to this one.
+     * @param {V2} v - The vector.
+     */
+    addEquals(v) {
+      this.x += v.x;
+      this.y += v.y;
+    }
+
+    /**
+     * Subtract the two vectors and return the result as a new vector.
+     * @param {V2} a - The first vector.
+     * @param {V2} b - The second vector.
+     * @return {V2} The difference between the two vectors.
+     */
+    static sub(a, b) {
+      return v2(
+          a.x - b.x,
+          a.y - b.y,
+      );
+    }
+
+    /**
+     * Subtract this vector from another and return the result as a new vector.
+     * @param {V2} v - The vector.
+     * @return {V2} The difference between the two vectors.
+     */
+    sub(v) {
+      return V2.sub(this, v);
+    }
+
+    /**
+     * Multiply a vector by a scalar and return the result as a new vector.
+     * @param {V2} v - The vector.
+     * @param {number} s - The scalar.
+     * @return {V2} The scaled up vector.
+     */
+    static mul(v, s) {
+      return v2(
+          v.x * s,
+          v.y * s,
+      );
+    }
+
+    /**
+     * Multiply this vector by the scalar and return a new vector.
+     * @param {number} s - The scalar.
+     * @return {V2} The multiplied vector.
+     */
+    mul(s) {
+      return V2.mul(this, s);
+    }
+
+    /**
+     * Multiply this vector by a scalar.
+     * @param {number} s - The scalar.
+     */
+    mulEquals(s) {
+      this.x *= s;
+      this.y *= s;
+    }
+
+    /**
+     * Divide a vector by a scalar and return the result as a new vector.
+     * @param {V2} v - The vector.
+     * @param {number} s - The scalar.
+     * @return {V2} The divided vector.
+     */
+    static div(v, s) {
+      return v2(
+          v.x / s,
+          v.y / s,
+      );
+    }
+
+    /**
+     * Compute the dot product between two vectors.
+     * @param {V2} a - The first vector.
+     * @param {V2} b - The second vector.
+     * @return {number} The dot product.
+     */
+    static dot(a, b) {
+      return a.x * b.x + a.y * b.y;
+    }
+
+    /**
+     * Compute the squared length of a vector.
+     * @param {V2} v - The vector.
+     * @return {number} The length squared of the vector.
+     */
+    static lengthSquared(v) {
+      return V2.dot(v, v);
+    }
+
+    /**
+     * Compute the length of a vector.
+     * @param {V2} v - The vector.
+     * @return {number} The length of the vector.
+     */
+    static length(v) {
+      return Math.sqrt(V2.lengthSquared(v));
+    }
+
+    /**
+     * Rotate a vector by an angle and return it as a new vector.
+     * @param {V2} v - The vector.
+     * @param {number} a - The angle.
+     * @return {V2} The rotated vector.
+     */
+    static rotate(v, a) {
+      const cos = Math.cos(a);
+      const sin = Math.sin(a);
+      return v2(
+          v.x * cos - v.y * sin,
+          v.x * sin + v.y * cos,
+      );
+    }
+  }
+
+  /**
+   * V2 constructor function.
+   * @param {number} x
+   * @param {number} y
+   * @return {V2}
+   */
+  function v2(x = 0, y = 0) {
+    return new V2(x, y);
+  }
+
+  /**
+   * V2 copy constructor.
+   * @param {V2} v - The vector
+   * @return {V2} The copied vector
+   */
+  function v2c(v) {
+    return new V2(v.x, v.y);
+  }
+
+  /**
+   * Clamp value between min and max.
+   * @param {number} value - Value to clamp.
+   * @param {number} min - Minimum value.
+   * @param {number} max - Maximum value.
+   * @return {number} The clamped value.
+   */
+  function clamp(value, min, max) {
+    if (value < min) {
+      return min;
+    } else if (value > max) {
+      return max;
+    }
+    return value;
+  }
+
+  /**
+   * Maps the value in the given range (from, to) to (dstFrom, dstTo).
+   * @param {number} value
+   * @param {number} from
+   * @param {number} to
+   * @param {number} [dstFrom = 0]
+   * @param {number} [dstTo = 1]
+   * @return {number}
+   */
+  function mapValue(value, from, to, dstFrom = 0, dstTo = 1) {
+    const clampedValue = clamp(value, from, to);
+    const deltaValue = clampedValue - from;
+    const range = to - from;
+    return dstFrom + (deltaValue / range) * (dstTo - dstFrom);
+  }
+
+  function secret() {
+    /* SECRET */ levelInput.value = '3,6 68';
+    /* SECRET */ levelSolution.value = '0 5 4 4 5 0 -5 -4 -4 -5 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 4 5 0\n 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 4 3 3 4 5 0 0 0 0 0 0 0 0 0 0';
+    recalculate();
+    setTimeout(() => {
+        if (!state.game.simPlaying) {
+            simPlay();
+        }
+    }, 2000);
+  }
+
+  init();
+
+  // ── CCC frontend case injection ──────────────────────────────────────────
+  // The base platform's Sandbox.vue posts { input, solution } for the clicked case into this
+  // iframe. Fill the textareas and call the visualizer's own recalculate() so the clicked case
+  // renders (and re-simulates) instead of the baked-in default. Mirrors the desks/drones
+  // single-editor sandbox injection.
+  window.addEventListener('message', function (event) {
+    const data = event.data;
+    if (!data || typeof data !== 'object') return;
+    if (data.input === undefined && data.solution === undefined) return;
+
+    if (data.input !== undefined && data.input !== null && `${data.input}`.trim().length > 0) {
+      levelInput.value = `${data.input}`;
+    }
+    if (data.solution !== undefined && data.solution !== null) {
+      levelSolution.value = `${data.solution}`;
+    }
+    recalculate();
+  });
+</script>
+</html>
