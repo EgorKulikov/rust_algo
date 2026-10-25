@@ -1,5 +1,5 @@
-use crate::collections::slice_ext::bounds::Bounds;
 use crate::collections::slice_ext::indices::Indices;
+use crate::numbers::num_traits::primitive::Primitive;
 use std::cell::Cell;
 
 #[derive(Clone)]
@@ -69,10 +69,15 @@ impl DSU {
     }
 
     pub fn parts(&self) -> Vec<Vec<usize>> {
-        let roots: Vec<_> = self.iter().collect();
-        let mut res = vec![Vec::new(); roots.len()];
+        let mut slot = vec![usize::MAX; self.len()];
+        let mut res = Vec::<Vec<usize>>::with_capacity(self.count);
         for i in self.id.indices() {
-            res[roots.as_slice().bin_search(&self.find(i)).unwrap()].push(i);
+            let root = self.find(i);
+            if slot[root] == usize::MAX {
+                slot[root] = res.len();
+                res.push(Vec::with_capacity((-self.id[root].get()).to()));
+            }
+            res[slot[root]].push(i);
         }
         res
     }
